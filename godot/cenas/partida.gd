@@ -35,7 +35,9 @@ func _process(delta: float) -> void:
 	if not _respondendo:
 		return
 	_tempo_restante = maxf(0.0, _tempo_restante - delta)
-	%BarraTempo.value = _tempo_restante
+	# Atualiza a barra 10x por segundo (e não a cada quadro) para poupar o celular
+	if absf(%BarraTempo.value - _tempo_restante) >= 0.1 or _tempo_restante <= 0.0:
+		%BarraTempo.value = _tempo_restante
 	%Tempo.text = str(ceili(_tempo_restante))
 	var acabando := _tempo_restante <= 5.0
 	%Tempo.modulate = Cores.VERMELHO if acabando else Color.WHITE

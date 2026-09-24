@@ -12,7 +12,7 @@ const CURIOSIDADES := [
 
 func _ready() -> void:
 	%Curiosidade.text = CURIOSIDADES.pick_random().to_upper()
-	Animacoes.flutuar(%Fantasma, 8.0, 1.0)
+	Animacoes.pular(%Fantasma)
 	var tween := create_tween()
 	tween.tween_property(%Barra, "value", 100.0, DURACAO).set_trans(Tween.TRANS_SINE)
 	tween.tween_callback(Jogo.ir_para.bind("partida"))

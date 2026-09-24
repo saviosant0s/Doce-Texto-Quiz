@@ -2,13 +2,15 @@ class_name Animacoes
 ## Pequenas animações reutilizadas pelas telas.
 
 
-## Faz o nó subir e descer devagar, sem parar (ex.: mascotes).
-static func flutuar(no: Control, altura := 10.0, duracao := 1.4) -> void:
+## Dá um pulinho no nó (ex.: mascotes). Animação curta de propósito: animações
+## que não param obrigam a tela a ser redesenhada o tempo todo e travam o celular.
+static func pular(no: Control, altura := 18.0, atraso := 0.5) -> void:
 	await no.get_tree().process_frame  # espera o container posicionar o nó
 	var y := no.position.y
-	var tween := no.create_tween().set_loops().set_trans(Tween.TRANS_SINE)
-	tween.tween_property(no, "position:y", y - altura, duracao)
-	tween.tween_property(no, "position:y", y, duracao)
+	var tween := no.create_tween().set_trans(Tween.TRANS_QUAD)
+	tween.tween_interval(atraso)
+	tween.tween_property(no, "position:y", y - altura, 0.18).set_ease(Tween.EASE_OUT)
+	tween.tween_property(no, "position:y", y, 0.35).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 
 
 ## Faz o nó aparecer deslizando a partir de `deslocamento`.

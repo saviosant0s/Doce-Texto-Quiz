@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://cenas/partida.gd" id="1"]
 [ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
-[ext_resource type="Script" path="res://componentes/faixa_balas.gd" id="3"]
 [ext_resource type="Texture2D" path="res://assets/icones/relogio.svg" id="4"]
 [ext_resource type="Texture2D" path="res://assets/icones/som.svg" id="5"]
 [ext_resource type="Texture2D" path="res://assets/icones/casa.svg" id="6"]
@@ -25,29 +24,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2")
-
-[node name="FaixaTopo" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 84.0
-grow_horizontal = 2
-mouse_filter = 2
-script = ExtResource("3")
-
-[node name="FaixaBase" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -84.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-script = ExtResource("3")
-invertida = true
-velocidade = -18.0
+decoracao = 3
 
 [node name="Margem" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -57,9 +34,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 96
+theme_override_constants/margin_top = 48
 theme_override_constants/margin_right = 48
-theme_override_constants/margin_bottom = 96
+theme_override_constants/margin_bottom = 48
 
 [node name="Linha" type="HBoxContainer" parent="Margem"]
 layout_mode = 2
