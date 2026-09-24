@@ -425,6 +425,22 @@ func _testar_vila() -> void:
 		vila.jogador.andar(Vector3(0, 0, -1), 1.0 / 60.0)
 		await get_tree().physics_frame
 	verificar(vila.jogador.global_position.z < inicio.z - 0.5, "o doce anda para frente")
+	# câmeras: troca em ciclo, 1ª pessoa esconde o doce, a escolha fica salva
+	vila.usar_camera(Vila.Camera.AEREA)
+	vila.proxima_camera()
+	verificar(vila.modo_camera == Vila.Camera.PERTO, "botão da câmera: aérea -> perto")
+	vila.proxima_camera()
+	verificar(vila.modo_camera == Vila.Camera.PRIMEIRA_PESSOA, "perto -> 1ª pessoa")
+	verificar(not vila.jogador.get_node("Modelo").visible, "em 1ª pessoa o doce fica escondido")
+	verificar(Progresso.config["camera_vila"] == Vila.Camera.PRIMEIRA_PESSOA, "a câmera escolhida fica salva")
+	var antes := vila.jogador.global_position
+	var frente := vila._frente()
+	for i in 20:
+		vila.jogador.andar(frente, 1.0 / 60.0)
+		await get_tree().physics_frame
+	verificar((vila.jogador.global_position - antes).dot(frente) > 0.3, "em 1ª pessoa anda para onde olha")
+	vila.proxima_camera()
+	verificar(vila.modo_camera == Vila.Camera.AEREA and vila.jogador.get_node("Modelo").visible, "volta para a aérea e o doce reaparece")
 	# leva o doce até a porta da escola
 	vila.jogador.global_position = vila._portas["escola"]["porta"]
 	for i in 6:

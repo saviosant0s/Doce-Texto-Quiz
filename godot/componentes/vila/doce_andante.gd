@@ -14,6 +14,7 @@ var id := "brigadeiro"
 var passeando := false
 
 var _modelo: Node3D
+var _sombra: MeshInstance3D
 var _animacao := AnimacaoDoce.new()
 var _destino := Vector3.ZERO
 var _espera := 0.0
@@ -63,10 +64,26 @@ func andar(direcao: Vector3, delta: float) -> void:
 		_modelo.rotation.y = lerp_angle(_modelo.rotation.y, angulo, minf(1.0, GIRO * delta))
 
 
+## Vira para um ângulo (radianos, no eixo Y) sem andar.
+func virar_para_angulo(angulo: float) -> void:
+	_modelo.rotation.y = angulo
+
+
 ## Vira de frente para um ponto (ex.: ao sair de um prédio).
 func olhar_para(ponto: Vector3) -> void:
 	var direcao := ponto - global_position
 	_modelo.rotation.y = atan2(direcao.x, direcao.z)
+
+
+## Esconde o doce (câmera em primeira pessoa: a câmera fica "dentro" dele).
+func mostrar_modelo(visivel: bool) -> void:
+	_modelo.visible = visivel
+	_sombra.visible = visivel
+
+
+## Para onde o doce está virado (no chão).
+func frente() -> Vector3:
+	return Vector3(sin(_modelo.rotation.y), 0, cos(_modelo.rotation.y))
 
 
 func comemorar() -> void:
@@ -98,6 +115,7 @@ func _escolher_destino() -> void:
 ## Sombra redonda e suave no chão (leve: sem sombras de verdade).
 func _criar_sombra() -> void:
 	var sombra := MeshInstance3D.new()
+	_sombra = sombra
 	var disco := CylinderMesh.new()
 	disco.top_radius = 0.6
 	disco.bottom_radius = 0.6

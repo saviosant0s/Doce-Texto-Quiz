@@ -80,11 +80,10 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-- Última coisa feita: **Vila dos Doces, etapa 1**: vila 3D andável (joystick /
-  setas / WASD), doce do jogador = companheiro, moradores passeando, prédios
-  Escola (quiz), Confeitaria (coleção), Troféus e Fliperama (em breve). "JOGAR"
-  leva à vila. Código: `godot/cenas/vila.gd`, `godot/componentes/vila/`,
-  `godot/scripts/animacao_doce.gd` (andar, piscar, acenar).
+- Última coisa feita: **câmeras da Vila dos Doces** (botão com ícone de câmera,
+  tecla C): aérea, perto (atrás do doce, gira arrastando o dedo, não atravessa
+  paredes) e 1ª pessoa (joystick anda/vira). A escolha fica salva
+  (`Progresso.config.camera_vila`).
 - Futuro (não fazer agora): login com Google para guardar o progresso na
   nuvem; detalhes e cuidados em `PENDENCIAS.md` (seção "Futuro").
 - Ideias para depois: companheiro comemorando na tela de resultado; trocar
@@ -93,7 +92,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (607 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (613 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

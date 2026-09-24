@@ -4,11 +4,27 @@ extends Node3D
 ## pela vila e entra nos prédios: Escola (quiz), Confeitaria (coleção),
 ## Troféus e Fliperama (em breve: Doce Match). Moradores passeiam pela praça.
 ## Anda com o joystick na tela ou com as setas/WASD; Enter/Espaço entra.
+##
+## Três câmeras (botão no topo; a escolha fica salva):
+## - AÉREA: de cima e de longe, sempre olhando para o norte.
+## - PERTO: atrás do doce; acompanha quando ele anda para frente; arrastar o
+##   dedo na tela gira a visão; se um prédio ficar no meio, ela se aproxima.
+## - 1ª PESSOA: pelos olhos do doce; joystick para cima/baixo anda e para os
+##   lados vira; arrastar o dedo também vira.
 
 const METADE_MAPA := 20.0
 const CAMERA_DISTANCIA := Vector3(0, 7.5, 8.5)
 const CAMERA_SUAVIDADE := 5.0
 const ICONE_CASA := preload("res://assets/icones/casa.svg")
+const ICONE_CAMERA := preload("res://assets/icones/camera.svg")
+
+enum Camera { AEREA, PERTO, PRIMEIRA_PESSOA }
+const NOMES_CAMERA := ["AÉREA", "PERTO", "1ª PESSOA"]
+const PERTO_DISTANCIA := 4.3
+const PERTO_ALTURA := 2.3
+const ALTURA_OLHOS := 1.35
+const GIRO_JOYSTICK := 2.4  # radianos por segundo (1ª pessoa)
+const GIRO_ARRASTO := 0.008  # radianos por pixel arrastado
 const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 
 ## Prédios da vila. "cena" = tela aberta ao entrar ("" = ainda não existe).
@@ -34,6 +50,9 @@ var _portas := {}  # id -> {"porta", "area", "no"}
 var _porta_atual := ""
 var _joystick: Joystick
 var _botao_entrar: Button
+var modo_camera := Camera.AEREA
+## Para onde a câmera olha (radianos no eixo Y; 0 = norte, para dentro da vila).
+var _giro := 0.0
 
 
 func _ready() -> void:
@@ -52,6 +71,7 @@ func _ready() -> void:
 	_criar_moradores()
 	_criar_camera()
 	_criar_interface()
+	usar_camera(int(Progresso.config.get("camera_vila", Camera.AEREA)))
 
 
 # --- Controles -----------------------------------------------------------------
@@ -62,15 +82,88 @@ func _physics_process(delta: float) -> void:
 		float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
 		float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
 	direcao = (direcao + teclas + _joystick.vetor).limit_length(1.0)
-	jogador.andar(Vector3(direcao.x, 0, direcao.y), delta)
+	if modo_camera == Camera.PRIMEIRA_PESSOA:
+		# para os lados vira; para cima/baixo anda para frente/trás
+		_giro -= direcao.x * GIRO_JOYSTICK * delta
+		jogador.andar(_frente() * -direcao.y, delta)
+		jogador.virar_para_angulo(_giro + PI)
+		return
+	var direita := Vector3(cos(_giro), 0, -sin(_giro))
+	jogador.andar(direita * direcao.x + _frente() * -direcao.y, delta)
+	if modo_camera == Camera.PERTO and direcao.y < -0.3:
+		# andando para frente: a câmera vai para as costas do doce, devagar
+		var costas := atan2(-jogador.frente().x, -jogador.frente().z)
+		_giro = lerp_angle(_giro, costas, minf(1.0, 1.5 * delta))
+
+
+## Direção "para frente" da câmera, no chão.
+func _frente() -> Vector3:
+	return Vector3(-sin(_giro), 0, -cos(_giro))
 
 
 func _process(delta: float) -> void:
-	var alvo := jogador.global_position + CAMERA_DISTANCIA
-	_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, CAMERA_SUAVIDADE * delta))
+	var cabeca := jogador.global_position + Vector3(0, ALTURA_OLHOS, 0)
+	match modo_camera:
+		Camera.AEREA:
+			var alvo := jogador.global_position + CAMERA_DISTANCIA
+			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, CAMERA_SUAVIDADE * delta))
+			_camera.look_at(_camera.global_position - CAMERA_DISTANCIA + Vector3(0, 0.8, 0))
+		Camera.PERTO:
+			var alvo := cabeca - _frente() * PERTO_DISTANCIA + Vector3(0, PERTO_ALTURA - ALTURA_OLHOS + 0.6, 0)
+			alvo = _sem_atravessar_paredes(cabeca, alvo)
+			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
+			_camera.look_at(cabeca + _frente() * 1.5)
+		Camera.PRIMEIRA_PESSOA:
+			_camera.global_position = cabeca + _frente() * 0.25
+			_camera.look_at(_camera.global_position + _frente() + Vector3(0, -0.12, 0))
+
+
+## Se um prédio ficar entre o doce e a câmera, a câmera chega mais perto.
+func _sem_atravessar_paredes(de: Vector3, ate: Vector3) -> Vector3:
+	var consulta := PhysicsRayQueryParameters3D.create(de, ate)
+	consulta.exclude = [jogador.get_rid()]
+	var batida := get_world_3d().direct_space_state.intersect_ray(consulta)
+	if batida.is_empty():
+		return ate
+	# chega mais perto e sobe um pouco, para ver por cima do doce
+	var perto: Vector3 = batida["position"] + (de - ate).normalized() * 0.3
+	var encolheu := 1.0 - de.distance_to(perto) / maxf(de.distance_to(ate), 0.01)
+	return perto + Vector3(0, encolheu * 1.8, 0)
+
+
+## Troca a câmera (e salva a escolha).
+func usar_camera(modo: int) -> void:
+	modo_camera = modo as Camera
+	jogador.mostrar_modelo(modo_camera != Camera.PRIMEIRA_PESSOA)
+	if modo_camera == Camera.AEREA:
+		_giro = 0.0
+	else:
+		if ultima_porta.is_empty() and jogador.global_position.distance_to(Vector3(0, 0, 7)) < 0.5:
+			jogador.olhar_para(Vector3.ZERO)  # no começo, virado para a praça
+		# começa olhando para onde o doce está virado
+		_giro = atan2(-jogador.frente().x, -jogador.frente().z)
+	_camera.fov = 48.0 if modo_camera == Camera.AEREA else 62.0
+	if modo_camera != Camera.AEREA:
+		_camera.global_position = jogador.global_position + Vector3(0, ALTURA_OLHOS, 0) - _frente() * PERTO_DISTANCIA
+	if Progresso.config.get("camera_vila", -1) != modo:
+		Progresso.config["camera_vila"] = modo
+		Progresso.salvar()
+
+
+func proxima_camera() -> void:
+	usar_camera((modo_camera + 1) % NOMES_CAMERA.size())
+	Telas.mostrar_aviso("CÂMERA: " + NOMES_CAMERA[modo_camera])
 
 
 func _unhandled_input(evento: InputEvent) -> void:
+	# arrastar o dedo (fora do joystick) gira a visão nas câmeras de perto
+	if evento is InputEventMouseMotion and evento.button_mask & MOUSE_BUTTON_MASK_LEFT \
+			and modo_camera != Camera.AEREA:
+		_giro -= evento.relative.x * GIRO_ARRASTO
+		return
+	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_C:
+		proxima_camera()
+		return
 	if evento.is_action_pressed("ui_accept") and not _porta_atual.is_empty():
 		get_viewport().set_input_as_handled()
 		entrar(_porta_atual)
@@ -225,7 +318,6 @@ func _criar_camera() -> void:
 	_camera.fov = 48.0
 	add_child(_camera)
 	_camera.global_position = jogador.global_position + CAMERA_DISTANCIA
-	_camera.look_at(_camera.global_position - CAMERA_DISTANCIA + Vector3(0, 0.8, 0))
 
 
 func _criar_interface() -> void:
@@ -289,6 +381,16 @@ func _criar_interface() -> void:
 	valor.text = Jogo.formatar(Progresso.moedas)
 	linha.add_child(valor)
 	topo.add_child(moedas)
+	var camera := Button.new()
+	camera.name = "Camera"
+	camera.theme_type_variation = &"BotaoIconeAmarelo"
+	camera.custom_minimum_size = Vector2(72, 72)
+	camera.icon = ICONE_CAMERA
+	camera.expand_icon = true
+	camera.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	camera.tooltip_text = "Trocar a câmera (C)"
+	camera.pressed.connect(proxima_camera)
+	topo.add_child(camera)
 
 	var meio := Control.new()
 	meio.size_flags_vertical = Control.SIZE_EXPAND_FILL

@@ -13,6 +13,7 @@ extends Node
 ##   --aba=1       aba a mostrar (tela de troféus)
 ##   --tocar_nivel=1  toca no cartão desse nível (tela de níveis)
 ##   --selecionar=pudim  escolhe esse doce na tela da coleção
+##   --camera=1   na Vila dos Doces: 0 = aérea, 1 = perto, 2 = primeira pessoa
 ##   --porta=escola  na Vila dos Doces, começa na porta desse prédio
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
 ##   --companheiro=pudim  compra esse doce e o escolhe como companheiro
@@ -35,6 +36,8 @@ func _ready() -> void:
 	for i in int(args.get("historico", "0")):
 		_simular_partida(i % (int(args.get("liberar", "0")) + 1), [4, 7, 9, 6, 10, 8][i % 6])
 	Progresso.moedas = int(args.get("moedas", str(Progresso.moedas)))
+	if args.has("camera"):
+		Progresso.config["camera_vila"] = int(args["camera"])
 	if args.has("porta"):
 		Vila.ultima_porta = args["porta"]
 	if args.has("companheiro"):
