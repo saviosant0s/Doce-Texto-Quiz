@@ -8,9 +8,10 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
       @ifba.valenca.
 - [ ] Confirmar o nome do orientador "Cristian Lins" (nos créditos antigos
       aparecia só "Cristian").
-- [ ] Revisar as perguntas e respostas (`godot/dados/perguntas.json`). Algumas
-      estão erradas ou duvidosas, ex.: média ponderada = "MÉDIASE", maior valor
-      com critério = "PROC", "IRR" em vez de TIR.
+- [x] Reescrever o banco de perguntas: agora são 60 (20 por nível), cada partida
+      sorteia 10 e embaralha as alternativas.
+- [ ] Pedir para um(a) professor(a) revisar as 60 perguntas (`godot/dados/perguntas.json`)
+      e as dicas da tela de carregamento (`godot/cenas/carregamento.gd`).
 
 ## Direitos (antes do registro no INPI)
 - [x] Trocar a imagem do brigadeiro triste (tinha marca d'água): refeito em SVG.

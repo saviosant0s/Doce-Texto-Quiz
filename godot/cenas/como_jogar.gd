@@ -3,7 +3,7 @@ extends Control
 
 const PASSOS := [
 	{"icone": "camadas", "titulo": "ESCOLHA O NÍVEL",
-		"texto": "Fácil, médio ou difícil: cada nível tem 10 perguntas sobre Word e Excel."},
+		"texto": "Fácil, médio ou difícil: cada partida sorteia 10 perguntas sobre Word e Excel."},
 	{"icone": "relogio", "titulo": "RESPONDA RÁPIDO",
 		"texto": "Você tem 30 segundos por pergunta. Se o tempo acabar, conta como erro."},
 	{"icone": "grafico", "titulo": "VEJA O RESULTADO",

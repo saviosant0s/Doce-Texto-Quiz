@@ -12,7 +12,7 @@ func _ready() -> void:
 	%Continuar.pressed.connect(Jogo.ir_para.bind("resultado"))
 	for acertou in Jogo.resultados:
 		%Bolinhas.add_child(_criar_bolinha(acertou))
-	var perguntas := Jogo.perguntas_do_nivel()
+	var perguntas := Jogo.perguntas_partida
 	for i in Jogo.resultados.size():
 		var escolha: int = Jogo.respostas[i] if i < Jogo.respostas.size() else -1
 		var item := _criar_revisao(i, perguntas[i], escolha, Jogo.resultados[i])

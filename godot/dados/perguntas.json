@@ -1,11 +1,12 @@
 {
+  "_comentario": "Cada partida sorteia 10 perguntas do nível e embaralha as alternativas. 'resposta' é o índice da alternativa correta.",
   "niveis": [
     {
       "nome": "Fácil",
       "personagem": "doce_facil",
       "perguntas": [
         {
-          "enunciado": "Qual software é comumente usado para criar documentos de texto?",
+          "enunciado": "Qual programa do Office é usado principalmente para escrever textos, como trabalhos e cartas?",
           "alternativas": [
             "Word",
             "Excel",
@@ -15,92 +16,192 @@
           "resposta": 0
         },
         {
-          "enunciado": "Qual é a extensão de arquivo padrão de um documento do Word?",
+          "enunciado": "Qual programa do Office é usado para criar planilhas com cálculos?",
           "alternativas": [
-            "pptx",
-            "xlsx",
-            "docx",
-            "png"
+            "Excel",
+            "Word",
+            "PowerPoint",
+            "Outlook"
           ],
-          "resposta": 2
+          "resposta": 0
         },
         {
-          "enunciado": "Qual opção permite verificar a ortografia em um documento do Word?",
+          "enunciado": "Qual é a extensão padrão de um documento do Word?",
           "alternativas": [
-            "Layout",
-            "Formatar",
-            "Inserir",
-            "Revisar"
+            ".docx",
+            ".xlsx",
+            ".pptx",
+            ".png"
           ],
-          "resposta": 3
+          "resposta": 0
         },
         {
-          "enunciado": "O que é um 'documento' em um processador de texto?",
+          "enunciado": "Qual é a extensão padrão de uma planilha do Excel?",
           "alternativas": [
-            "Célula de dados",
-            "Arquivo de imagem",
-            "Arquivo de texto",
-            "Pasta de texto"
+            ".xlsx",
+            ".docx",
+            ".txt",
+            ".mp3"
           ],
-          "resposta": 2
+          "resposta": 0
         },
         {
-          "enunciado": "No Word, qual guia permite formatar o texto, como fonte e tamanho?",
-          "alternativas": [
-            "Revisar",
-            "Página Inicial",
-            "Layout da Página",
-            "Inserir"
-          ],
-          "resposta": 1
-        },
-        {
-          "enunciado": "Qual tecla de atalho comum é usada para copiar texto no Word?",
+          "enunciado": "Qual atalho copia o que está selecionado?",
           "alternativas": [
             "Ctrl + C",
-            "Ctrl + X",
             "Ctrl + V",
+            "Ctrl + X",
             "Ctrl + Z"
           ],
           "resposta": 0
         },
         {
-          "enunciado": "Para que serve o software Excel?",
+          "enunciado": "Qual atalho cola o que foi copiado?",
           "alternativas": [
-            "Criar apresentações",
-            "Criar códigos",
-            "Criar planilhas",
-            "Criar design"
+            "Ctrl + V",
+            "Ctrl + C",
+            "Ctrl + P",
+            "Ctrl + Z"
           ],
-          "resposta": 2
+          "resposta": 0
         },
         {
-          "enunciado": "No Excel, qual termo é usado para se referir a uma interseção de uma linha e uma coluna?",
+          "enunciado": "Qual atalho recorta o que está selecionado?",
           "alternativas": [
-            "Planilhas",
-            "Cédulas",
-            "Linhunas",
-            "Célula"
+            "Ctrl + X",
+            "Ctrl + C",
+            "Ctrl + V",
+            "Ctrl + R"
           ],
-          "resposta": 3
+          "resposta": 0
         },
         {
-          "enunciado": "Qual função do Excel é usada para somar um intervalo de valores?",
+          "enunciado": "Qual atalho desfaz a última ação?",
           "alternativas": [
-            "=MÉDIA()",
+            "Ctrl + Z",
+            "Ctrl + Y",
+            "Ctrl + D",
+            "Ctrl + X"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Excel, como se chama o encontro de uma linha com uma coluna?",
+          "alternativas": [
+            "Célula",
+            "Aba",
+            "Pasta",
+            "Guia"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Excel, como as colunas são identificadas?",
+          "alternativas": [
+            "Por letras (A, B, C...)",
+            "Por números",
+            "Por cores",
+            "Por nomes de pessoas"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Excel, como as linhas são identificadas?",
+          "alternativas": [
+            "Por números (1, 2, 3...)",
+            "Por letras",
+            "Por cores",
+            "Por símbolos"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Excel, toda fórmula começa com qual sinal?",
+          "alternativas": [
+            "=",
+            "#",
+            "@",
+            "?"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual é o endereço da célula que fica na coluna C e na linha 5?",
+          "alternativas": [
+            "C5",
+            "5C",
+            "C:5",
+            "L5C3"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, qual guia tem as opções de fonte, tamanho e cor do texto?",
+          "alternativas": [
+            "Página Inicial",
+            "Inserir",
+            "Layout",
+            "Exibir"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, qual guia usamos para colocar uma imagem ou tabela no documento?",
+          "alternativas": [
+            "Inserir",
+            "Página Inicial",
+            "Revisão",
+            "Exibir"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "O que o negrito faz com o texto?",
+          "alternativas": [
+            "Deixa as letras mais grossas",
+            "Deixa as letras inclinadas",
+            "Sublinha as letras",
+            "Muda a cor das letras"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual alinhamento deixa o texto encostado nas duas margens da página?",
+          "alternativas": [
+            "Justificado",
+            "Centralizado",
+            "À esquerda",
+            "À direita"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "O que significa uma palavra sublinhada em vermelho no Word?",
+          "alternativas": [
+            "Um possível erro de ortografia",
+            "Um link para a internet",
+            "Uma palavra em negrito",
+            "Um comentário"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel soma os valores de um intervalo?",
+          "alternativas": [
             "=SOMA()",
-            "=CONTAR()",
+            "=MÉDIA()",
+            "=CONT.SE()",
             "=SE()"
           ],
-          "resposta": 1
+          "resposta": 0
         },
         {
-          "enunciado": "Qual termo é usado para referenciar um conjunto de células adjacentes em uma planilha do Excel?",
+          "enunciado": "Como se chama um arquivo do Excel, que pode ter várias planilhas dentro?",
           "alternativas": [
-            "Intervalo",
-            "Linha",
-            "Coluna",
-            "Fórmula"
+            "Pasta de trabalho",
+            "Documento",
+            "Apresentação",
+            "Caderno"
           ],
           "resposta": 0
         }
@@ -111,104 +212,204 @@
       "personagem": "doce_medio",
       "perguntas": [
         {
-          "enunciado": "Qual recurso do Word permite criar uma lista numerada automaticamente?",
+          "enunciado": "Qual função do Excel calcula a média de um intervalo?",
           "alternativas": [
-            "Esquema",
-            "Numeração",
-            "Índice",
-            "Marcadores"
+            "=MÉDIA()",
+            "=SOMA()",
+            "=MÁXIMO()",
+            "=CONT.SE()"
           ],
-          "resposta": 1
+          "resposta": 0
         },
         {
-          "enunciado": "No Excel, o que é uma função condicional usada para verificar se uma condição é verdadeira ou falsa?",
+          "enunciado": "Qual função do Excel mostra o maior valor de um intervalo?",
           "alternativas": [
-            "=CONTAR()",
-            "=MÉDIA()",
+            "=MÁXIMO()",
+            "=MÍNIMO()",
+            "=MAIOR.VALOR()",
+            "=TOPO()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel mostra o menor valor de um intervalo?",
+          "alternativas": [
+            "=MÍNIMO()",
+            "=MÁXIMO()",
+            "=MENOR.VALOR()",
+            "=BAIXO()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel testa uma condição e mostra um resultado se for verdadeira e outro se for falsa?",
+          "alternativas": [
             "=SE()",
+            "=E()",
+            "=OU()",
             "=SOMA()"
           ],
-          "resposta": 2
+          "resposta": 0
         },
         {
-          "enunciado": "Qual comando no Excel permite dividir o conteúdo de uma célula em várias colunas com base em um separador?",
+          "enunciado": "O que representa o intervalo A1:A10 no Excel?",
           "alternativas": [
-            "Divisão de Colunas",
-            "Dividir Células",
-            "Mesclar Células",
-            "Separar Texto"
+            "Todas as células de A1 até A10",
+            "Só as células A1 e A10",
+            "A1 dividido por A10",
+            "Dez colunas da linha A"
           ],
           "resposta": 0
         },
         {
-          "enunciado": "O que significa a sigla 'CSV' quando se trata de formatos de arquivo?",
+          "enunciado": "Qual função do Excel conta quantas células atendem a uma condição?",
           "alternativas": [
-            "C... Spreadsheet Value",
-            "C... Standard View",
-            "C... Some Values",
-            "C... Separated Values"
-          ],
-          "resposta": 3
-        },
-        {
-          "enunciado": "No Word, qual recurso é usado para criar uma cópia idêntica de um texto ou objeto em um documento?",
-          "alternativas": [
-            "Clonar",
-            "Duplicar",
-            "Copiar",
-            "Repetir"
-          ],
-          "resposta": 2
-        },
-        {
-          "enunciado": "Qual função do Excel é usada para encontrar o valor máximo em um intervalo de células?",
-          "alternativas": [
-            "=MAX()",
-            "=MÁXIMO()",
-            "=CONTAR.MAX()",
-            "=MX()"
-          ],
-          "resposta": 1
-        },
-        {
-          "enunciado": "Qual extensão de arquivo é comumente associada a planilhas do Excel?",
-          "alternativas": [
-            "xcl",
-            "xwp",
-            "xltx",
-            "xlsx"
-          ],
-          "resposta": 3
-        },
-        {
-          "enunciado": "No Word, qual recurso permite criar uma tabela a partir de texto existente em um documento?",
-          "alternativas": [
-            "Converter texto - tabela",
-            "Converter texto - gráfico",
-            "Formatar tabela",
-            "Criar tabela"
+            "=CONT.SE()",
+            "=SOMA()",
+            "=CONTAR()",
+            "=SE()"
           ],
           "resposta": 0
         },
         {
-          "enunciado": "Qual recurso do Microsoft Word permite ajustar a margem de um documento?",
+          "enunciado": "Qual símbolo deixa uma referência fixa ao copiar a fórmula, como em $A$1?",
           "alternativas": [
-            "Estilo da página",
-            "Numeração de página",
-            "Configuração de página",
-            "Espaçamento"
+            "$",
+            "#",
+            "&",
+            "%"
           ],
-          "resposta": 2
+          "resposta": 0
         },
         {
-          "enunciado": "Qual é a função do Excel usada para contar o número de células não vazias em um intervalo?",
+          "enunciado": "Qual é o resultado da fórmula =2+3*4 no Excel?",
           "alternativas": [
-            "=CONT.VALOR()",
-            "=CONT.NÃO.VAZIO()",
-            "=SOMASE()",
-            "=CONTAR.SE()"
+            "14",
+            "20",
+            "24",
+            "9"
           ],
-          "resposta": 1
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, qual recurso cria uma lista 1, 2, 3 automaticamente?",
+          "alternativas": [
+            "Numeração",
+            "Marcadores",
+            "Sumário",
+            "Colunas"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, qual guia tem as opções de margens e orientação da página?",
+          "alternativas": [
+            "Layout",
+            "Página Inicial",
+            "Revisão",
+            "Exibir"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Como fica uma página com orientação \"paisagem\"?",
+          "alternativas": [
+            "Deitada: mais larga do que alta",
+            "Em pé: mais alta do que larga",
+            "Dividida em duas colunas",
+            "Com o texto de cabeça para baixo"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, qual recurso registra as mudanças feitas no texto para depois aceitá-las ou rejeitá-las?",
+          "alternativas": [
+            "Controlar Alterações",
+            "Verificar Ortografia",
+            "Mala Direta",
+            "Marca d'Água"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Excel, qual recurso mostra só as linhas que atendem a um critério, escondendo as outras?",
+          "alternativas": [
+            "Filtro",
+            "Mesclar",
+            "Congelar Painéis",
+            "Quebrar Texto"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Excel, qual recurso deixa a primeira linha sempre visível enquanto você rola a planilha?",
+          "alternativas": [
+            "Congelar Painéis",
+            "Filtro",
+            "Mesclar e Centralizar",
+            "Ocultar"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual formato é mais usado para enviar um documento pronto para leitura, que não se desconfigura?",
+          "alternativas": [
+            "PDF",
+            "DOCX",
+            "TXT",
+            "XLSX"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "O que significa a sigla CSV?",
+          "alternativas": [
+            "Valores separados por vírgula",
+            "Célula sem valor",
+            "Cópia salva de verificação",
+            "Coluna de soma de valores"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual atalho insere uma quebra de página no Word?",
+          "alternativas": [
+            "Ctrl + Enter",
+            "Shift + Enter",
+            "Alt + Enter",
+            "Ctrl + Espaço"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Excel, o que faz a fórmula =A1&B1?",
+          "alternativas": [
+            "Junta o conteúdo das duas células",
+            "Soma as duas células",
+            "Compara as duas células",
+            "Multiplica as duas células"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual tecla abre a verificação de ortografia e gramática no Word?",
+          "alternativas": [
+            "F7",
+            "F1",
+            "F5",
+            "F12"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, qual recurso coloca o mesmo texto no topo de todas as páginas?",
+          "alternativas": [
+            "Cabeçalho",
+            "Rodapé",
+            "Nota de rodapé",
+            "Título"
+          ],
+          "resposta": 0
         }
       ]
     },
@@ -217,104 +418,204 @@
       "personagem": "doce_dificil",
       "perguntas": [
         {
-          "enunciado": "No Excel, qual função é usada para encontrar a média ponderada de um conjunto de valores?",
+          "enunciado": "Qual função do Excel procura um valor na primeira coluna de uma tabela e traz um dado de outra coluna da mesma linha?",
           "alternativas": [
-            "MÉDIA",
-            "MÉDIAHARM",
-            "MÉDIAEX",
-            "MÉDIASE"
-          ],
-          "resposta": 3
-        },
-        {
-          "enunciado": "O que é ou para que serve uma 'macro' no Excel?",
-          "alternativas": [
-            "Automação de tarefas",
-            "Tipo de gráfico",
-            "Fórmula complexa",
-            "Tipo de célula"
+            "=PROCV()",
+            "=PROCH()",
+            "=CONT.SE()",
+            "=SOMASE()"
           ],
           "resposta": 0
         },
         {
-          "enunciado": "Qual é a função do Excel que retorna o valor absoluto de um número?",
+          "enunciado": "Em =PROCV(A2; B2:D10; 3; FALSO), o que significa o número 3?",
           "alternativas": [
-            "MOD",
-            "SQRT",
-            "ABS",
-            "INT"
-          ],
-          "resposta": 2
-        },
-        {
-          "enunciado": "No Excel, qual função é usada para calcular a taxa interna de retorno de um investimento?",
-          "alternativas": [
-            "NPV",
-            "IRR",
-            "MÉDIA",
-            "TAXA"
-          ],
-          "resposta": 1
-        },
-        {
-          "enunciado": "Como você pode inserir uma quebra de página manual em um documento do Word?",
-          "alternativas": [
-            "Ctrl + Enter",
-            "Alt + Enter",
-            "Shift + Enter",
-            "F12"
+            "Traz o valor da 3ª coluna do intervalo",
+            "Procura na linha 3",
+            "Soma 3 ao resultado",
+            "Mostra só 3 resultados"
           ],
           "resposta": 0
         },
         {
-          "enunciado": "No Word, qual recurso é usado para criar um índice automático com base nos títulos e subtítulos do documento?",
+          "enunciado": "Como calcular uma média ponderada no Excel?",
           "alternativas": [
+            "=SOMARPRODUTO() dividido por =SOMA() dos pesos",
+            "=MÉDIA()",
+            "=MÉDIASE()",
+            "=MÉDIA.PONDERADA()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel retorna o valor absoluto de um número (sem o sinal de menos)?",
+          "alternativas": [
+            "=ABS()",
+            "=INT()",
+            "=RAIZ()",
+            "=ARRED()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel calcula a taxa interna de retorno de um investimento?",
+          "alternativas": [
+            "=TIR()",
+            "=VPL()",
+            "=PGTO()",
+            "=JUROS.TOTAL()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel retorna o resto de uma divisão?",
+          "alternativas": [
+            "=MOD()",
+            "=QUOCIENTE()",
+            "=INT()",
+            "=RESTO()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "O que faz a fórmula =SEERRO(A1/B1; 0)?",
+          "alternativas": [
+            "Mostra 0 se a divisão der erro",
+            "Divide A1 por 0",
+            "Apaga as células com erro",
+            "Mostra erro se o resultado for 0"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual erro o Excel mostra quando uma fórmula divide um número por zero?",
+          "alternativas": [
+            "#DIV/0!",
+            "#N/D",
+            "#REF!",
+            "#VALOR!"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual erro o Excel mostra quando não reconhece o nome de uma função digitada?",
+          "alternativas": [
+            "#NOME?",
+            "#DIV/0!",
+            "#N/D",
+            "#NULO!"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel soma apenas os valores que atendem a uma condição?",
+          "alternativas": [
+            "=SOMASE()",
+            "=CONT.SE()",
+            "=SOMA()",
+            "=SE()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel mostra apenas a data de hoje, sem a hora?",
+          "alternativas": [
+            "=HOJE()",
+            "=AGORA()",
+            "=DATA()",
+            "=DIA()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel conta as células que não estão vazias?",
+          "alternativas": [
+            "=CONT.VALORES()",
+            "=CONT.NÚM()",
+            "=CONTAR.VAZIO()",
+            "=SOMA()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual função do Excel tira os espaços sobrando de um texto?",
+          "alternativas": [
+            "=ARRUMAR()",
+            "=MAIÚSCULA()",
+            "=CONCATENAR()",
+            "=EXT.TEXTO()"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual recurso do Excel resume muitos dados em uma tabela que pode ser reorganizada arrastando campos?",
+          "alternativas": [
+            "Tabela Dinâmica",
+            "Formatação Condicional",
+            "Validação de Dados",
+            "Congelar Painéis"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual extensão é usada para MODELOS de documento do Word?",
+          "alternativas": [
+            ".dotx",
+            ".docx",
+            ".xltx",
+            ".pdf"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual extensão é usada em planilhas do Excel que contêm macros?",
+          "alternativas": [
+            ".xlsm",
+            ".xlsx",
+            ".csv",
+            ".docm"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Para o Word montar o sumário automaticamente, os títulos do texto precisam usar:",
+          "alternativas": [
+            "Estilos de Título",
+            "Negrito",
+            "Letras maiúsculas",
+            "Fonte maior"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual recurso do Word cria várias cartas personalizadas a partir de uma lista de nomes e endereços?",
+          "alternativas": [
+            "Mala Direta",
+            "Controlar Alterações",
             "Sumário",
-            "Numeração",
-            "Bibliografia",
-            "Índice"
-          ],
-          "resposta": 3
-        },
-        {
-          "enunciado": "Qual extensão de arquivo é usada para MODELOS de documentos do Word?",
-          "alternativas": [
-            "docx",
-            "xlsx",
-            "dotx",
-            "pptx"
-          ],
-          "resposta": 2
-        },
-        {
-          "enunciado": "No Excel, qual função é usada para encontrar o maior valor em um intervalo que atende a um critério específico?",
-          "alternativas": [
-            "MÁXIMO",
-            "PROC",
-            "PROCV",
-            "MAXSE"
-          ],
-          "resposta": 1
-        },
-        {
-          "enunciado": "Qual é a fórmula do Excel que retorna o valor mínimo de um intervalo de células?",
-          "alternativas": [
-            "MIN",
-            "MÍNIMO",
-            "MÍN",
-            "MENOR"
+            "Hiperlink"
           ],
           "resposta": 0
         },
         {
-          "enunciado": "No Word, qual recurso permite criar um documento com um layout de duas ou mais colunas?",
+          "enunciado": "O que é uma macro no Excel ou no Word?",
           "alternativas": [
-            "Quebra de Página",
-            "Inserir Tabela",
-            "Margens",
-            "Colunas"
+            "Uma sequência de comandos gravada para automatizar tarefas",
+            "Um tipo de gráfico",
+            "Uma fonte especial",
+            "Uma célula muito grande"
           ],
-          "resposta": 3
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, para que serve uma quebra de seção?",
+          "alternativas": [
+            "Para mudar margens ou orientação só em uma parte do documento",
+            "Para começar uma nova linha",
+            "Para apagar uma página",
+            "Para dividir uma tabela em duas"
+          ],
+          "resposta": 0
         }
       ]
     }

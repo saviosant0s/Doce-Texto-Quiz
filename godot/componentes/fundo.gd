@@ -21,6 +21,12 @@ const CORES_CONFETE := [Cores.AMARELO, Cores.ROSA, Cores.AZUL, Cores.VERDE, Core
 
 var _itens: Array[Dictionary] = []
 var _tempo := 0.0
+## A estampa de balas é desenhada uma vez só neste nó filho; para animar,
+## apenas movemos o nó (bem mais leve do que redesenhar a cada quadro).
+var _estampa: Control
+const ESPACO_BALAS := Vector2(150, 120)
+## A estampa se repete a cada 2 colunas e 2 linhas (ângulos e fileiras alternam).
+const PERIODO_BALAS := ESPACO_BALAS * 2.0
 
 
 func _ready() -> void:
@@ -31,6 +37,7 @@ func _ready() -> void:
 
 
 func _gerar() -> void:
+	_atualizar_estampa()
 	_itens.clear()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2023
@@ -54,6 +61,12 @@ func _process(delta: float) -> void:
 	if decoracao != Decoracao.CONFETE and not Jogo.animacoes_continuas:
 		return
 	_tempo += delta
+	if decoracao == Decoracao.BALAS:
+		# desliza devagar na diagonal; ao andar um bloco inteiro, volta ao início
+		_estampa.position = Vector2(
+			fposmod(_tempo * 12.0, PERIODO_BALAS.x), fposmod(_tempo * 6.0, PERIODO_BALAS.y)
+		) - PERIODO_BALAS
+		return
 	if decoracao == Decoracao.CONFETE:
 		for item in _itens:
 			item["pos"].y += item["velocidade"] * delta
@@ -70,8 +83,6 @@ func _draw() -> void:
 			for item in _itens:
 				var brilho := 0.55 + 0.45 * sin(_tempo * 1.5 + item["fase"])
 				_estrela(item["pos"], item["tamanho"], Color(Cores.AMARELO, brilho))
-		Decoracao.BALAS:
-			_desenhar_estampa_balas()
 		Decoracao.CONFETE:
 			for item in _itens:
 				var angulo: float = item["fase"] + _tempo * item["giro"]
@@ -81,26 +92,40 @@ func _draw() -> void:
 			draw_set_transform(Vector2.ZERO)
 
 
+func _atualizar_estampa() -> void:
+	if decoracao != Decoracao.BALAS:
+		if _estampa:
+			_estampa.queue_free()
+			_estampa = null
+		return
+	if not _estampa:
+		_estampa = Control.new()
+		_estampa.mouse_filter = MOUSE_FILTER_IGNORE
+		_estampa.draw.connect(_desenhar_estampa_balas)
+		add_child(_estampa)
+	var area := size if size != Vector2.ZERO else Vector2(1280, 720)
+	_estampa.size = area + PERIODO_BALAS * 2.0
+	_estampa.position = -PERIODO_BALAS
+	_estampa.queue_redraw()
+
+
 ## Estampa discreta: silhuetas de balas espalhadas, quase da cor do fundo.
 func _desenhar_estampa_balas() -> void:
 	var cor := Color(Cores.ROXO_ESCURO, 0.45)
-	var espaco := Vector2(150, 120)
-	# a estampa desliza devagar na diagonal
-	var movimento := Vector2(fposmod(_tempo * 12.0, espaco.x), fposmod(_tempo * 6.0, espaco.y * 2.0))
-	var linhas := int(size.y / espaco.y) + 3
-	var colunas := int(size.x / espaco.x) + 3
+	var linhas := int(_estampa.size.y / ESPACO_BALAS.y) + 1
+	var colunas := int(_estampa.size.x / ESPACO_BALAS.x) + 1
 	for l in linhas:
 		for c in colunas:
-			var deslocamento := espaco.x / 2.0 if l % 2 == 1 else 0.0
-			var centro := Vector2(c * espaco.x + deslocamento, l * espaco.y + 40) + movimento - espaco * Vector2(1, 2)
+			var deslocamento := ESPACO_BALAS.x / 2.0 if l % 2 == 1 else 0.0
+			var centro := Vector2(c * ESPACO_BALAS.x + deslocamento, l * ESPACO_BALAS.y + 40)
 			var angulo := deg_to_rad(-25.0 if (l + c) % 2 == 0 else 20.0)
-			draw_set_transform(centro, angulo)
-			draw_colored_polygon(_elipse(Vector2.ZERO, Vector2(15, 10)), cor)
+			_estampa.draw_set_transform(centro, angulo)
+			_estampa.draw_colored_polygon(_elipse(Vector2.ZERO, Vector2(15, 10)), cor)
 			for lado in [-1.0, 1.0]:
-				draw_colored_polygon(PackedVector2Array([
+				_estampa.draw_colored_polygon(PackedVector2Array([
 					Vector2(lado * 12, 0), Vector2(lado * 25, -9), Vector2(lado * 25, 9),
 				]), cor)
-	draw_set_transform(Vector2.ZERO)
+	_estampa.draw_set_transform(Vector2.ZERO)
 
 
 func _elipse(centro: Vector2, raio: Vector2) -> PackedVector2Array:

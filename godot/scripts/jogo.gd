@@ -7,6 +7,7 @@ const CAMINHO_SALVAMENTO := "user://salvamento.json"
 ## Gerado ao publicar (commit e data do build); não existe ao rodar pelo editor.
 const CAMINHO_BUILD := "res://dados/build.json"
 const TEMPO_POR_PERGUNTA := 30.0
+const PERGUNTAS_POR_PARTIDA := 10
 const DURACAO_TRANSICAO := 0.25
 
 const CENAS := {
@@ -35,6 +36,7 @@ var niveis: Array = []
 
 # Partida atual
 var nivel_atual := 0
+var perguntas_partida: Array = []  # perguntas sorteadas, com alternativas embaralhadas
 var resultados: Array[bool] = []  # acertou/errou de cada pergunta
 var respostas: Array[int] = []  # alternativa escolhida em cada pergunta (-1 = tempo esgotado)
 var resultado := ""  # "nodoc", "noob", "pro" ou "mestre"
@@ -187,11 +189,24 @@ func iniciar_nivel(indice: int) -> void:
 	nivel_atual = indice
 	resultados.clear()
 	respostas.clear()
+	_sortear_perguntas()
 	ir_para("carregamento")
 
 
-func perguntas_do_nivel() -> Array:
-	return niveis[nivel_atual]["perguntas"]
+## Sorteia as perguntas da partida e embaralha a ordem das alternativas.
+func _sortear_perguntas() -> void:
+	var banco: Array = niveis[nivel_atual]["perguntas"].duplicate()
+	banco.shuffle()
+	perguntas_partida.clear()
+	for original in banco.slice(0, PERGUNTAS_POR_PARTIDA):
+		var alternativas: Array = original["alternativas"].duplicate()
+		var correta: String = alternativas[int(original["resposta"])]
+		alternativas.shuffle()
+		perguntas_partida.append({
+			"enunciado": original["enunciado"],
+			"alternativas": alternativas,
+			"resposta": alternativas.find(correta),
+		})
 
 
 func aproveitamento() -> int:
@@ -255,7 +270,8 @@ func _verificar_captura() -> void:
 	_modo_captura = true
 	if args.has("acertos"):
 		var acertos := int(args["acertos"])
-		var perguntas := perguntas_do_nivel()
+		_sortear_perguntas()
+		var perguntas := perguntas_partida
 		for i in perguntas.size():
 			var acertou := (i * 7) % 10 < acertos  # espalha os acertos
 			var correta := int(perguntas[i]["resposta"])

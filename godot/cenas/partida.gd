@@ -15,7 +15,7 @@ var _botoes: Array[Button] = []
 
 
 func _ready() -> void:
-	_perguntas = Jogo.perguntas_do_nivel()
+	_perguntas = Jogo.perguntas_partida
 	%Som.pressed.connect(_alternar_som)
 	%Sair.pressed.connect(Jogo.ir_para.bind("niveis"))
 	_atualizar_icone_som()

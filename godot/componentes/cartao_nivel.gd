@@ -3,7 +3,7 @@ extends Button
 
 
 func configurar(indice: int, nivel: Dictionary, acertos: int) -> void:
-	var total: int = nivel["perguntas"].size()
+	var total := Jogo.PERGUNTAS_POR_PARTIDA
 	%Personagem.texture = Personagens.textura(nivel["personagem"])
 	%Nome.text = nivel["nome"].to_upper()
 	%Numero.text = "NÍVEL %d" % (indice + 1)

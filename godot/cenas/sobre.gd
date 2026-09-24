@@ -9,7 +9,7 @@ const SECOES := [
 const NUMEROS := [
 	["2023", "CRIADO EM"],
 	["3", "NÍVEIS"],
-	["10", "QUESTÕES POR NÍVEL"],
+	["60", "PERGUNTAS"],
 	["30S", "POR QUESTÃO"],
 ]
 ## Perfis do Instagram (ver PENDENCIAS.md: confirmar/atualizar os @).
