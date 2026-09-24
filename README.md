@@ -33,10 +33,12 @@ GitHub Actions*. O link fica em `https://<usuario>.github.io/<repositorio>/`.
 
 ```bash
 pip install pygbag==0.9.3
-pygbag ppa_final
+pygbag --template web/doce_texto.tmpl --icon web/favicon.png ppa_final
 ```
 
-Abra http://localhost:8000 no navegador. Para testar no celular, deixe
+Abra http://localhost:8000 no navegador e toque/clique na tela para
+começar (o navegador só libera o som depois de uma interação). Para ver
+erros do Python, abra http://localhost:8000/#debug. Para testar no celular, deixe
 o celular na mesma rede Wi-Fi e abra `http://<IP-do-computador>:8000`.
 
 ## Estrutura
@@ -52,6 +54,7 @@ ppa_final/
 └── assets/
     ├── imagens/          # fundos de cada tela
     └── sons/       # música de fundo e efeitos (.ogg, formato aceito no navegador)
+web/                      # página (template do pygbag, em português) e ícone da versão web
 arquivos_nao_utilizados/  # arquivos do projeto original que o código não usa
 ```
 

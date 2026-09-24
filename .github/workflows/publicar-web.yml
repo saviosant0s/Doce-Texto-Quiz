@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pygbag==0.9.3
-      - run: python -m pygbag --build --title "Doce Texto Quiz" ppa_final
+      - run: python -m pygbag --build --title "Doce Texto Quiz" --template web/doce_texto.tmpl --icon web/favicon.png ppa_final
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ppa_final/build/web
