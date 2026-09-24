@@ -15,6 +15,7 @@ func _ready() -> void:
 	_testar_revisao()
 	_testar_conquistas()
 	_testar_estatisticas()
+	_testar_colecao()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -244,6 +245,37 @@ func _testar_estatisticas() -> void:
 	verificar(Jogo.total_de_perguntas() == 60, "60 perguntas no total")
 
 
+func _testar_colecao() -> void:
+	_secao("coleção de doces 3D")
+	Progresso.apagar()
+	var ids := {}
+	for doce in Colecao.LISTA:
+		verificar(not ids.has(doce["id"]), "doce com id único: %s" % doce["id"])
+		ids[doce["id"]] = true
+		verificar(not doce["curiosidade"].is_empty(), "curiosidade em %s" % doce["id"])
+		var pivo := Node3D.new()
+		verificar(Doces3D.montar(doce["id"], pivo), "monta o doce 3D %s" % doce["id"])
+		verificar(pivo.find_child("Olhos", true, false) != null, "%s tem olhos (para piscar)" % doce["id"])
+		pivo.free()
+	verificar(Colecao.tem("brigadeiro"), "começa com o brigadeiro")
+	verificar(Colecao.quantidade() == 1, "começa com 1 doce")
+	verificar(not Colecao.tem("bala"), "bala não vem de graça")
+	verificar(not Colecao.comprar("bala"), "sem moedas não compra")
+	Progresso.moedas = 150
+	verificar(Colecao.comprar("bala"), "compra a bala com 150 moedas")
+	verificar(Progresso.moedas == 50 and Colecao.tem("bala"), "cobrou 100 e a bala é sua")
+	verificar(not Colecao.comprar("bala"), "não compra o mesmo doce duas vezes")
+	Progresso.moedas = 9999
+	verificar(not Colecao.comprar("cupcake") and not Colecao.tem("cupcake"), "doce de título não se compra")
+	Progresso.titulos["pro"] = 1
+	verificar(Colecao.tem("cupcake"), "cupcake vem com o título Pro")
+	verificar(not Colecao.escolher_companheiro("pudim"), "não escolhe companheiro que não tem")
+	verificar(Colecao.escolher_companheiro("bala") and Colecao.companheiro() == "bala", "bala é a companheira")
+	var novas: Array = Conquistas.verificar({}).map(func(c): return c["id"])
+	verificar("primeira_compra" in novas, "conquista da primeira compra")
+	verificar(Progresso.colecao["doces"] == ["bala"], "salva os doces comprados")
+
+
 # --- Fluxo completo pelas telas ---------------------------------------------
 
 func _testar_fluxo_completo() -> void:
@@ -307,6 +339,7 @@ func _testar_fluxo_completo() -> void:
 	verificar(get_tree().current_scene.get_node("%ProximoNivel").visible, "oferece ir ao próximo nível")
 
 	await _testar_telas_novas()
+	await _testar_tela_colecao()
 	await _testar_configuracoes()
 
 	# Botão "voltar" fora da partida
@@ -361,6 +394,36 @@ func _testar_telas_novas() -> void:
 	var cartoes: Array = tela._paginas[1].find_children("*", "PanelContainer", true, false) \
 		.filter(func(c): return Conquistas.dados(c.name) != {})
 	verificar(cartoes.size() == Conquistas.LISTA.size(), "um cartão por conquista")
+
+
+## Tela da coleção: comprar pela tela e ver o companheiro no carregamento.
+func _testar_tela_colecao() -> void:
+	Progresso.apagar()
+	Progresso.moedas = 300
+	Telas.ir_para("colecao")
+	verificar(await _esperar_tela("Colecao"), "abre a coleção")
+	var tela := get_tree().current_scene
+	verificar(tela._cartoes.size() == Colecao.LISTA.size(), "um cartão por doce")
+	tela.selecionar("pirulito")
+	var acao: Button = tela._acao
+	verificar(acao.text == "COMPRAR POR 150", "botão mostra o preço")
+	acao.pressed.emit()
+	var caixa := await _esperar_confirmacao()
+	verificar(caixa != null, "pergunta antes de comprar")
+	if caixa:
+		caixa.get_node("%Sim").pressed.emit()
+	await get_tree().create_timer(0.5).timeout
+	verificar(Colecao.tem("pirulito") and Progresso.moedas == 150 + 20, "comprou (e ganhou a conquista)")
+	verificar(Colecao.companheiro() == "pirulito", "primeiro doce comprado vira companheiro")
+	tela.selecionar("algodao_doce")
+	verificar(acao.disabled and acao.text.begins_with("FALTAM"), "sem moedas: mostra quanto falta")
+	Jogo.preparar_partida(0)
+	Telas.ir_para("carregamento")
+	verificar(await _esperar_tela("Carregamento"), "abre o carregamento")
+	await get_tree().process_frame
+	verificar(get_tree().current_scene.find_child("Companheiro", true, false) != null, "companheiro aparece no carregamento")
+	Telas.ir_para("niveis")
+	await _esperar_tela("Niveis")
 
 
 func _testar_configuracoes() -> void:

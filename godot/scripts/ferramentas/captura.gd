@@ -12,6 +12,8 @@ extends Node
 ##   --revisao=3   depois, simula uma revisão com 3 acertos (tela de resultado)
 ##   --aba=1       aba a mostrar (tela de troféus)
 ##   --tocar_nivel=1  toca no cartão desse nível (tela de níveis)
+##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
+##   --companheiro=pudim  compra esse doce e o escolhe como companheiro
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -31,6 +33,9 @@ func _ready() -> void:
 	for i in int(args.get("historico", "0")):
 		_simular_partida(i % (int(args.get("liberar", "0")) + 1), [4, 7, 9, 6, 10, 8][i % 6])
 	Progresso.moedas = int(args.get("moedas", str(Progresso.moedas)))
+	if args.has("companheiro"):
+		Progresso.colecao["doces"].append(args["companheiro"])
+		Progresso.colecao["companheiro"] = args["companheiro"]
 	if args.has("acertos"):
 		_simular_partida(int(args.get("nivel", "0")), int(args["acertos"]))
 	if args.has("revisao"):
@@ -38,7 +43,13 @@ func _ready() -> void:
 	if args["capturar"] == "partida" and Jogo.perguntas_partida.is_empty():
 		Jogo.preparar_partida(int(args.get("nivel", "0")))
 	await get_tree().process_frame
-	get_tree().change_scene_to_file(Telas.CENAS[args["capturar"]])
+	get_tree().change_scene_to_file(Telas.CENAS.get(args["capturar"], args["capturar"]))
+	if args.has("sem_decoracao"):
+		await get_tree().process_frame  # a troca de cena acontece no quadro seguinte
+		await get_tree().process_frame
+		for fundo in get_tree().current_scene.find_children("*", "Control", true, false):
+			if fundo is Fundo:
+				fundo.decoracao = Fundo.Decoracao.NENHUMA
 	if args.has("tocar_nivel"):
 		await get_tree().create_timer(0.8).timeout
 		var cartoes := get_tree().current_scene.find_children("*", "Button", true, false) \

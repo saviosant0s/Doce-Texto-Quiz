@@ -7,6 +7,6 @@
 cd "$(dirname "$0")/.."
 mkdir -p build/prints
 timeout 60 xvfb-run -a -s "-screen 0 ${RES:-1280x720}x24" godot --path godot --rendering-driver opengl3 \
-	--resolution ${RES:-1280x720} -- --capturar="$1" --saida="$(pwd)/build/prints/$1.png" "${@:2}" 2>&1 \
+	--resolution ${RES:-1280x720} -- --capturar="$1" --saida="$(pwd)/build/prints/$(basename "$1" .tscn).png" "${@:2}" 2>&1 \
 	| grep -E "SCRIPT ERROR|Parse Error" || true
-echo "build/prints/$1.png"
+echo "build/prints/$(basename "$1" .tscn).png"

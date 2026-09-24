@@ -26,6 +26,8 @@ var perguntas := {}
 var estatisticas := {}
 ## Conquistas desbloqueadas: {id: data "AAAA-MM-DD"}.
 var conquistas := {}
+## Coleção de doces 3D: {"doces": [ids comprados], "companheiro": id} (ver Colecao).
+var colecao := {}
 
 ## Quando verdadeiro, nada é gravado em disco (usado ao gerar prints e em testes).
 var somente_memoria := false
@@ -52,6 +54,7 @@ func _zerar() -> void:
 		"melhor_sequencia": 0, "moedas_ganhas": 0,
 	}
 	conquistas = {}
+	colecao = {"doces": [], "companheiro": ""}
 
 
 # --- Consultas ---------------------------------------------------------------
@@ -166,6 +169,7 @@ func salvar() -> void:
 		"perguntas": perguntas,
 		"estatisticas": estatisticas,
 		"conquistas": conquistas,
+		"colecao": colecao,
 	}
 	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
 	if arquivo:
@@ -202,6 +206,7 @@ func carregar() -> void:
 		if chave != "tempo_total":
 			estatisticas[chave] = int(estatisticas[chave])
 	conquistas = dados.get("conquistas", {})
+	colecao.merge(dados.get("colecao", {}), true)
 	alterado.emit()
 
 

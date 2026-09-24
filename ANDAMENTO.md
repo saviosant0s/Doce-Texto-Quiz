@@ -47,17 +47,19 @@ Metas: APK para Android e registro no INPI.
 
 ## Onde parou
 
-- Última coisa feita (ajustes pedidos pelo Sávio testando no celular):
-  cartão bloqueado só com estrelas + balão ao tocar; cartões crescem se o
-  conteúdo não couber; resultado com etiquetas (acertos, moedas, pontos) em
-  vez de texto; dica do carregamento centralizada; rolagem da revisão e dos
-  troféus funciona arrastando em cima dos cartões; sem tooltips em tela de
-  toque; ícones com traço mais fino (1,8). APK e site publicados.
+- Última coisa feita: **Minha Coleção** (loja de doces 3D com moedas).
+  13 doces 3D feitos por código (`godot/scripts/doces_3d.gd`, sem IA: originais
+  do projeto); compra com confirmação; companheiro aparece no carregamento;
+  conquistas "Doce novo" e "Confeitaria dos sonhos". Também: logo na abertura
+  do app (no lugar da tela roxa vazia), personagens bloqueados em silhueta
+  limpa, cartão da pergunta mais compacto. APK e site publicados.
+- Ideias para depois: companheiro comemorando na tela de resultado; trocar
+  qualquer doce por um modelo .glb (basta salvar em `godot/assets/doces_3d/<id>.glb`).
 - Nada pela metade. Próximo passo: item 1 da etapa 6.
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (487 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (565 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

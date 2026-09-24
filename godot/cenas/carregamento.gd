@@ -59,6 +59,7 @@ static var _ultima_dica := ""
 
 func _ready() -> void:
 	%Personagem.texture = Personagens.textura(PERSONAGEM)
+	_mostrar_companheiro()
 	var e_curiosidade := randf() < 0.5
 	var lista: Array = CURIOSIDADES if e_curiosidade else DICAS
 	var dica: String = lista.filter(func(d): return d != _ultima_dica).pick_random()
@@ -66,7 +67,8 @@ func _ready() -> void:
 	%Tipo.text = "VOCÊ SABIA?" if e_curiosidade else "DICA"
 	%Texto.text = dica.to_upper()
 
-	Animacoes.flutuar(%Personagem)
+	if %Personagem.visible:
+		Animacoes.flutuar(%Personagem)
 	var tween := create_tween()
 	tween.tween_property(%Barra, "value", 100.0, DURACAO).set_trans(Tween.TRANS_SINE)
 	tween.tween_callback(Telas.ir_para.bind("partida"))
@@ -75,3 +77,21 @@ func _ready() -> void:
 ## Botão "voltar" do celular: ignorado enquanto carrega (a partida já vai começar).
 func ao_voltar() -> void:
 	pass
+
+
+## Se o jogador escolheu um companheiro na coleção, ele aparece em 3D no lugar
+## do fantasma.
+func _mostrar_companheiro() -> void:
+	var id := Colecao.companheiro()
+	if id.is_empty():
+		return
+	var doce := Doce3D.new()
+	doce.name = "Companheiro"
+	doce.id = id
+	doce.giravel = false
+	doce.distancia = 4.6  # do tamanho do fantasma
+	doce.custom_minimum_size = %Personagem.custom_minimum_size
+	doce.size_flags_horizontal = %Personagem.size_flags_horizontal
+	doce.size_flags_vertical = %Personagem.size_flags_vertical
+	%Personagem.add_sibling(doce)
+	%Personagem.visible = false

@@ -30,8 +30,11 @@ personagens, fontes) é a mesma da versão original.
   erradas (30 moedas) e +10 segundos (20 moedas).
 - Revisão: na tela de níveis, "REVISAR ERROS" joga as perguntas que você errou
   da última vez (de todos os níveis). Não muda os níveis, mas dá moedas.
-- Troféus: títulos, 14 conquistas com recompensa em moedas
+- Troféus: títulos, 16 conquistas com recompensa em moedas
   (`scripts/conquistas.gd`) e estatísticas (acerto por assunto, mais erradas).
+- Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
+  brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
+  (100 a 600). O doce escolhido como companheiro aparece no carregamento.
 
 ### Testes
 
@@ -53,6 +56,9 @@ godot/
 │   ├── jogo.gd          # regras e partida atual (sorteio, estrelas, títulos)
 │   ├── progresso.gd     # salvamento (com versão/migração), recordes, histórico
 │   ├── conquistas.gd    # lista de conquistas e quando cada uma é desbloqueada
+│   ├── colecao.gd       # catálogo da coleção: preços, compras, companheiro
+│   ├── doces_3d.gd      # os 13 doces 3D, montados por código
+│   ├── pecas_3d.gd      # peças 3D: formas, materiais, rosto, braços e pernas
 │   ├── telas.gd         # navegação, avisos, caixa de confirmação
 │   ├── audio.gd         # música e efeitos em canais separados
 │   ├── ferramentas/captura.gd  # gera prints das telas pela linha de comando
@@ -60,7 +66,8 @@ godot/
 │   └── animacoes.gd     # animações simples (entrar, flutuar, destacar)
 ├── tema/tema.tres       # visual dos botões, painéis e textos (editável no Godot)
 ├── dados/perguntas.json # perguntas de cada nível (com id fixo)
-├── testes/              # testes automáticos (rodar.sh)
+├── testes/              # testes automáticos (rodar.sh) e vitrine_3d.tscn
+│                        # (todos os doces 3D lado a lado, para conferir)
 └── assets/              # personagens, ícones (SVG), fontes (OFL) e sons
 ```
 

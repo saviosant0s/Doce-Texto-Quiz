@@ -31,6 +31,10 @@ const LISTA := [
 		"moedas": 40, "icone": "camadas"},
 	{"id": "colecionador", "nome": "COFRINHO CHEIO", "descricao": "Ganhe 500 moedas no total.",
 		"moedas": 30, "icone": "moeda"},
+	{"id": "primeira_compra", "nome": "DOCE NOVO", "descricao": "Compre um doce na sua coleção.",
+		"moedas": 20, "icone": "doce"},
+	{"id": "colecao_completa", "nome": "CONFEITARIA DOS SONHOS", "descricao": "Tenha todos os doces da coleção.",
+		"moedas": 150, "icone": "doce"},
 	{"id": "enciclopedia", "nome": "ENCICLOPÉDIA", "descricao": "Veja todas as perguntas do jogo.",
 		"moedas": 50, "icone": "interrogacao"},
 ]
@@ -110,6 +114,10 @@ static func alcancou(id: String, partida: Dictionary) -> bool:
 			return estatisticas["partidas"] >= 25
 		"colecionador":
 			return estatisticas["moedas_ganhas"] >= 500
+		"primeira_compra":
+			return not Progresso.colecao["doces"].is_empty()
+		"colecao_completa":
+			return Colecao.quantidade() == Colecao.LISTA.size()
 		"enciclopedia":
 			return Progresso.perguntas.size() >= Jogo.total_de_perguntas()
 	return false

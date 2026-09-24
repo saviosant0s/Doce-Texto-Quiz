@@ -13,6 +13,7 @@ const CENAS := {
 	"creditos": "res://cenas/creditos.tscn",
 	"sobre": "res://cenas/sobre.tscn",
 	"titulos": "res://cenas/titulos.tscn",
+	"colecao": "res://cenas/colecao.tscn",
 	"carregamento": "res://cenas/carregamento.tscn",
 	"partida": "res://cenas/partida.tscn",
 	"aproveitamento": "res://cenas/aproveitamento.tscn",

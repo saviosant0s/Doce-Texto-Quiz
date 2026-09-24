@@ -8,6 +8,7 @@ const CARTAO := preload("res://componentes/cartao_nivel.tscn")
 func _ready() -> void:
 	%Inicio.pressed.connect(Telas.ir_para.bind("inicio"))
 	%Titulos.pressed.connect(Telas.abrir.bind("titulos"))
+	%Colecao.pressed.connect(Telas.abrir.bind("colecao"))
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))
