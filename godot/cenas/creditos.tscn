@@ -101,7 +101,7 @@ text = "DESENVOLVIMENTO"
 layout_mode = 2
 theme_type_variation = &"Texto"
 theme_override_font_sizes/font_size = 18
-text = "Alunos do 1º ano de Informática"
+text = "Turma 613 de Informática (2023), hoje turma 632"
 
 [node name="Pessoas" type="VBoxContainer" parent="Margem/Coluna/Grupos/Equipe/Coluna"]
 layout_mode = 2
