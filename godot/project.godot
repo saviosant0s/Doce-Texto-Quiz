@@ -7,7 +7,7 @@ config_version=5
 
 config/name="Doce Texto Quiz"
 config/description="Quiz sobre Word e Excel."
-config/version="0.3.0"
+config/version="0.4.0"
 run/main_scene="res://cenas/inicio.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.494118, 0.341176, 0.694118, 1)
