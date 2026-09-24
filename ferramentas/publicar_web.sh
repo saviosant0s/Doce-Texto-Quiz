@@ -44,10 +44,14 @@ if [ ! -d build/gh-pages/.git ]; then
 fi
 cd build/gh-pages
 git pull -q origin gh-pages
-find . -mindepth 1 -maxdepth 1 ! -name .git ! -name apk ! -name windows -exec rm -rf {} +
+find . -mindepth 1 -maxdepth 1 ! -name .git ! -name apk ! -name windows ! -name entrega -exec rm -rf {} +
 cp -r "$RAIZ/build/web/." . && touch .nojekyll
 if [ -n "$KEYSTORE" ]; then
 	mkdir -p apk && cp "$RAIZ/build/android/doce-texto-quiz.apk" apk/
+fi
+# Pacote de entrega (ferramentas/gerar_entrega.sh), se tiver sido gerado
+if ls "$RAIZ"/build/entrega/Doce_Texto_Quiz_*.zip >/dev/null 2>&1; then
+	rm -rf entrega && mkdir -p entrega && cp "$RAIZ"/build/entrega/Doce_Texto_Quiz_* entrega/
 fi
 if [ -f "$RAIZ/build/windows/DoceTextoQuiz.zip" ]; then
 	mkdir -p windows && cp "$RAIZ/build/windows/DoceTextoQuiz.zip" windows/
