@@ -7,15 +7,15 @@
 [ext_resource type="Texture2D" path="res://assets/icones/coracao.svg" id="5"]
 
 [sub_resource type="StyleBoxFlat" id="caixa_logo"]
-content_margin_left = 10.0
-content_margin_top = 8.0
-content_margin_right = 10.0
-content_margin_bottom = 8.0
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
 bg_color = Color(0.956863, 0.878431, 0.219608, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
 
 [node name="Creditos" type="Control"]
 layout_mode = 3
@@ -38,84 +38,31 @@ script = ExtResource("2")
 decoracao = 1
 quantidade = 45
 
-[node name="Centro" type="CenterContainer" parent="."]
+[node name="Margem" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 44
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 44
+theme_override_constants/margin_bottom = 36
 
-[node name="Coluna" type="VBoxContainer" parent="Centro"]
+[node name="Coluna" type="VBoxContainer" parent="Margem"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(960, 0)
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 20
+alignment = 1
 
-[node name="Painel" type="PanelContainer" parent="Centro/Coluna"]
-layout_mode = 2
-
-[node name="Colunas" type="HBoxContainer" parent="Centro/Coluna/Painel"]
-layout_mode = 2
-theme_override_constants/separation = 40
-
-[node name="Desenvolvedores" type="VBoxContainer" parent="Centro/Coluna/Painel/Colunas"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 14
-
-[node name="Etiqueta" type="PanelContainer" parent="Centro/Coluna/Painel/Colunas/Desenvolvedores"]
-layout_mode = 2
-theme_type_variation = &"Etiqueta"
-
-[node name="Titulo" type="Label" parent="Centro/Coluna/Painel/Colunas/Desenvolvedores/Etiqueta"]
-layout_mode = 2
-theme_type_variation = &"TituloClaro"
-text = "DESENVOLVEDORES"
-horizontal_alignment = 1
-
-[node name="Nomes" type="Label" parent="Centro/Coluna/Painel/Colunas/Desenvolvedores"]
-layout_mode = 2
-theme_type_variation = &"Subtitulo"
-theme_override_font_sizes/font_size = 40
-text = "TALITA ARGOLO
-SÁVIO SANTOS
-NATALÍ ROCHA"
-horizontal_alignment = 1
-
-[node name="Orientadores" type="VBoxContainer" parent="Centro/Coluna/Painel/Colunas"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 14
-
-[node name="Etiqueta" type="PanelContainer" parent="Centro/Coluna/Painel/Colunas/Orientadores"]
-layout_mode = 2
-theme_type_variation = &"Etiqueta"
-
-[node name="Titulo" type="Label" parent="Centro/Coluna/Painel/Colunas/Orientadores/Etiqueta"]
-layout_mode = 2
-theme_type_variation = &"TituloClaro"
-text = "ORIENTADORES"
-horizontal_alignment = 1
-
-[node name="Nomes" type="Label" parent="Centro/Coluna/Painel/Colunas/Orientadores"]
-layout_mode = 2
-theme_type_variation = &"Subtitulo"
-theme_override_font_sizes/font_size = 40
-text = "EDUARDO CAMBRUZZI
-PETERSON LOBATO
-ALBA ROGÉRIA
-NELSON VALENTE
-CRISTIAN LINS"
-horizontal_alignment = 1
-
-[node name="Rodape" type="HBoxContainer" parent="Centro/Coluna"]
+[node name="Topo" type="HBoxContainer" parent="Margem/Coluna"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Voltar" type="Button" parent="Centro/Coluna/Rodape"]
+[node name="Voltar" type="Button" parent="Margem/Coluna/Topo"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(84, 84)
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 tooltip_text = "Voltar"
 theme_type_variation = &"BotaoIconeAmarelo"
@@ -123,26 +70,102 @@ icon = ExtResource("3")
 icon_alignment = 1
 expand_icon = true
 
-[node name="Logo" type="PanelContainer" parent="Centro/Coluna/Rodape"]
+[node name="Etiqueta" type="PanelContainer" parent="Margem/Coluna/Topo"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"EtiquetaAmarela"
+
+[node name="Titulo" type="Label" parent="Margem/Coluna/Topo/Etiqueta"]
+layout_mode = 2
+theme_type_variation = &"Titulo"
+text = "QUEM FEZ O DOCE TEXTO"
+
+[node name="Grupos" type="HBoxContainer" parent="Margem/Coluna"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Equipe" type="PanelContainer" parent="Margem/Coluna/Grupos"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Coluna" type="VBoxContainer" parent="Margem/Coluna/Grupos/Equipe"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Titulo" type="Label" parent="Margem/Coluna/Grupos/Equipe/Coluna"]
+layout_mode = 2
+theme_type_variation = &"Subtitulo"
+text = "DESENVOLVIMENTO"
+
+[node name="Legenda" type="Label" parent="Margem/Coluna/Grupos/Equipe/Coluna"]
+layout_mode = 2
+theme_type_variation = &"Texto"
+theme_override_font_sizes/font_size = 18
+text = "Alunos do 1º ano de Informática"
+
+[node name="Pessoas" type="VBoxContainer" parent="Margem/Coluna/Grupos/Equipe/Coluna"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Orientacao" type="PanelContainer" parent="Margem/Coluna/Grupos"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Coluna" type="VBoxContainer" parent="Margem/Coluna/Grupos/Orientacao"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Titulo" type="Label" parent="Margem/Coluna/Grupos/Orientacao/Coluna"]
+layout_mode = 2
+theme_type_variation = &"Subtitulo"
+text = "ORIENTAÇÃO"
+
+[node name="Legenda" type="Label" parent="Margem/Coluna/Grupos/Orientacao/Coluna"]
+layout_mode = 2
+theme_type_variation = &"Texto"
+theme_override_font_sizes/font_size = 18
+text = "Professores do IFBA Campus Valença"
+
+[node name="Pessoas" type="GridContainer" parent="Margem/Coluna/Grupos/Orientacao/Coluna"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="Rodape" type="HBoxContainer" parent="Margem/Coluna"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Logo" type="PanelContainer" parent="Margem/Coluna/Rodape"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("caixa_logo")
 
-[node name="Imagem" type="TextureRect" parent="Centro/Coluna/Rodape/Logo"]
-custom_minimum_size = Vector2(270, 66)
+[node name="Linha" type="HBoxContainer" parent="Margem/Coluna/Rodape/Logo"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Imagem" type="TextureRect" parent="Margem/Coluna/Rodape/Logo/Linha"]
+custom_minimum_size = Vector2(240, 64)
 layout_mode = 2
 texture = ExtResource("4")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Sobre" type="Button" parent="Centro/Coluna/Rodape"]
+[node name="Ano" type="Label" parent="Margem/Coluna/Rodape/Logo/Linha"]
+layout_mode = 2
+theme_type_variation = &"Subtitulo"
+text = "· 2023"
+
+[node name="Sobre" type="Button" parent="Margem/Coluna/Rodape"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "SOBRE O PROJETO"
 
-[node name="Apoie" type="Button" parent="Centro/Coluna/Rodape"]
+[node name="Apoie" type="Button" parent="Margem/Coluna/Rodape"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(190, 0)
+custom_minimum_size = Vector2(190, 78)
 layout_mode = 2
 text = "APOIE"
 icon = ExtResource("5")
