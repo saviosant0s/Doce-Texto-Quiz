@@ -1,0 +1,9 @@
+# Cache do editor Godot
+.godot/
+# Builds exportados
+/build/
+*.apk
+*.aab
+
+# Gerado ao publicar a versão web
+/dados/build.json

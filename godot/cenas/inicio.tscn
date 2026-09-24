@@ -1,0 +1,173 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://cenas/inicio.gd" id="1"]
+[ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/personagens/mascote_cereal.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/icones/interrogacao.svg" id="4"]
+[ext_resource type="Texture2D" path="res://assets/icones/pessoas.svg" id="5"]
+[ext_resource type="Texture2D" path="res://assets/icones/engrenagem.svg" id="engrenagem"]
+[ext_resource type="FontFile" path="res://assets/fontes/BebasNeue-Regular.ttf" id="6"]
+
+[sub_resource type="FontVariation" id="bebas_titulo"]
+base_font = ExtResource("6")
+spacing_top = -24
+spacing_bottom = -36
+
+[sub_resource type="FontVariation" id="bebas_quiz"]
+base_font = ExtResource("6")
+spacing_top = -56
+spacing_bottom = -84
+
+[sub_resource type="StyleBoxFlat" id="caixa_quiz"]
+content_margin_left = 26.0
+content_margin_top = 28.0
+content_margin_right = 26.0
+content_margin_bottom = 28.0
+bg_color = Color(0.956863, 0.878431, 0.219608, 1)
+corner_radius_top_left = 26
+corner_radius_top_right = 26
+corner_radius_bottom_right = 26
+corner_radius_bottom_left = 26
+corner_detail = 10
+shadow_color = Color(0, 0, 0, 0.18)
+shadow_size = 12
+shadow_offset = Vector2(0, 6)
+
+[node name="Inicio" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Fundo" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2")
+decoracao = 1
+quantidade = 45
+
+[node name="Centro" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Conteudo" type="HBoxContainer" parent="Centro"]
+layout_mode = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="Logo" type="VBoxContainer" parent="Centro/Conteudo"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 20
+
+[node name="DoceTexto" type="Label" parent="Centro/Conteudo/Logo"]
+layout_mode = 2
+theme_type_variation = &"TituloGrande"
+theme_override_fonts/font = SubResource("bebas_titulo")
+theme_override_font_sizes/font_size = 120
+text = "DOCE TEXTO"
+horizontal_alignment = 1
+
+[node name="PainelQuiz" type="PanelContainer" parent="Centro/Conteudo/Logo"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("caixa_quiz")
+
+[node name="Quiz" type="Label" parent="Centro/Conteudo/Logo/PainelQuiz"]
+layout_mode = 2
+theme_type_variation = &"Titulo"
+theme_override_fonts/font = SubResource("bebas_quiz")
+theme_override_font_sizes/font_size = 280
+text = "QUIZ"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Botoes" type="HBoxContainer" parent="Centro/Conteudo/Logo"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="ComoJogar" type="Button" parent="Centro/Conteudo/Logo/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+tooltip_text = "Como jogar"
+theme_type_variation = &"BotaoIconeAmarelo"
+icon = ExtResource("4")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Jogar" type="Button" parent="Centro/Conteudo/Logo/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 54
+text = "JOGAR"
+
+[node name="Creditos" type="Button" parent="Centro/Conteudo/Logo/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+tooltip_text = "Créditos"
+theme_type_variation = &"BotaoIconeAmarelo"
+icon = ExtResource("5")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Versao" type="Label" parent="."]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.6)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -36.0
+offset_right = -14.0
+offset_bottom = -8.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"TextoClaro"
+theme_override_font_sizes/font_size = 16
+text = "v0.0.0"
+horizontal_alignment = 2
+
+
+[node name="Mascote" type="TextureRect" parent="Centro/Conteudo"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(520, 460)
+layout_mode = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Configuracoes" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -100.0
+offset_top = 28.0
+offset_right = -28.0
+offset_bottom = 100.0
+grow_horizontal = 0
+tooltip_text = "Configurações"
+theme_type_variation = &"BotaoIconeAmarelo"
+icon = ExtResource("engrenagem")
+icon_alignment = 1
+expand_icon = true

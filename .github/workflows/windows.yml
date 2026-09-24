@@ -1,0 +1,45 @@
+# Testa o executável publicado para Windows numa máquina Windows de verdade:
+# baixa o .zip do site (o mesmo que os jogadores baixam), abre o jogo e confere
+# que ele iniciou sem erros; também tenta tirar um print da tela inicial.
+# Rode pela aba Actions > "Teste no Windows" > Run workflow.
+name: Teste no Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Baixar o jogo publicado
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://saviosant0s.github.io/Doce-Texto-Quiz/windows/DoceTextoQuiz.zip" -OutFile jogo.zip
+          Expand-Archive jogo.zip -DestinationPath jogo
+          Get-ChildItem jogo
+
+      - name: Abrir o jogo (sem vídeo) e conferir o log
+        shell: pwsh
+        run: |
+          $p = Start-Process jogo\DoceTextoQuiz.exe -ArgumentList "--headless","--quit-after","300","--log-file","$pwd\log.txt" -Wait -PassThru
+          Get-Content log.txt
+          if (-not (Select-String -Path log.txt -Pattern "Godot Engine" -Quiet)) { throw "O jogo não iniciou" }
+          if (Select-String -Path log.txt -Pattern "SCRIPT ERROR|Parse Error" -Quiet) { throw "Erro de script ao abrir o jogo" }
+          "Jogo abriu e fechou normalmente (código $($p.ExitCode))"
+
+      - name: Print da tela inicial (desenho por software)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          Start-Process jogo\DoceTextoQuiz.exe -ArgumentList "--rendering-driver","opengl3_angle","--","--capturar=inicio","--saida=$pwd\inicio_windows.png","--espera=3" -Wait
+          Get-ChildItem inicio_windows.png
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resultado-windows
+          path: |
+            log.txt
+            inicio_windows.png
+          if-no-files-found: ignore

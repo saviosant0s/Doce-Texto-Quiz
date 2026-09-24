@@ -1,0 +1,59 @@
+; Doce Texto Quiz — projeto Godot 4
+; Abra esta pasta no Godot (Importar → project.godot).
+
+config_version=5
+
+[application]
+
+config/name="Doce Texto Quiz"
+config/description="Quiz sobre Word e Excel."
+config/version="0.5.0"
+run/main_scene="res://cenas/inicio.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.494118, 0.341176, 0.694118, 1)
+boot_splash/show_image=true
+boot_splash/image="res://assets/abertura.png"
+boot_splash/fullsize=false
+boot_splash/use_filter=true
+run/low_processor_mode=true
+config/quit_on_go_back=false
+config/icon="res://icone.png"
+
+[autoload]
+
+Progresso="*res://scripts/progresso.gd"
+Telas="*res://scripts/telas.gd"
+Audio="*res://scripts/audio.gd"
+Jogo="*res://scripts/jogo.gd"
+Captura="*res://scripts/ferramentas/captura.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[gui]
+
+theme/custom="res://tema/tema.tres"
+
+[importer_defaults]
+
+texture={
+"mipmaps/generate": true,
+"svg/scale": 2.0
+}
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=false
+
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true
+textures/canvas_textures/default_texture_filter=2
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.494118, 0.341176, 0.694118, 1)

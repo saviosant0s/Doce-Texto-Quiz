@@ -1,0 +1,135 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://cenas/niveis.gd" id="1"]
+[ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/icones/casa.svg" id="3"]
+[ext_resource type="Texture2D" path="res://assets/icones/trofeu.svg" id="4"]
+[ext_resource type="Texture2D" path="res://assets/icones/interrogacao.svg" id="5"]
+[ext_resource type="Texture2D" path="res://assets/icones/pessoas.svg" id="6"]
+[ext_resource type="Texture2D" path="res://assets/icones/engrenagem.svg" id="engrenagem"]
+[ext_resource type="Texture2D" path="res://assets/icones/doce.svg" id="doce"]
+
+
+[node name="Niveis" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Fundo" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2")
+decoracao = 1
+quantidade = 45
+
+[node name="Margem" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 36
+
+[node name="Linha" type="HBoxContainer" parent="Margem"]
+layout_mode = 2
+theme_override_constants/separation = 36
+
+[node name="Menu" type="PanelContainer" parent="Margem/Linha"]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Botoes" type="VBoxContainer" parent="Margem/Linha/Menu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Inicio" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+tooltip_text = "Início"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("3")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Titulos" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+tooltip_text = "Troféus"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("4")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Colecao" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+tooltip_text = "Minha coleção"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("doce")
+icon_alignment = 1
+expand_icon = true
+
+[node name="ComoJogar" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+tooltip_text = "Como jogar"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("5")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Creditos" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+tooltip_text = "Créditos"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("6")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Configuracoes" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+tooltip_text = "Configurações"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("engrenagem")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Principal" type="VBoxContainer" parent="Margem/Linha"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="Titulo" type="Label" parent="Margem/Linha/Principal"]
+layout_mode = 2
+theme_type_variation = &"TituloGrande"
+theme_override_font_sizes/font_size = 76
+text = "ESCOLHA O NÍVEL"
+horizontal_alignment = 1
+
+[node name="Cartoes" type="HBoxContainer" parent="Margem/Linha/Principal"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 30
+alignment = 1

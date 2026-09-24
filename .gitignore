@@ -1,2 +1,11 @@
 __pycache__/
 *.pyc
+
+# Progresso local do jogador
+legado/pygame_2023/salvamento.json
+
+# Build da versão web (pygbag)
+legado/pygame_2023/build/
+
+# Builds exportados do Godot
+/build/
