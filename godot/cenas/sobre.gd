@@ -4,7 +4,7 @@ extends Control
 const SECOES := [
 	["O QUE É", "Um quiz lúdico e interativo para testar o que você sabe sobre editores de texto e planilhas, como o Word e o Excel."],
 	["PARA QUE SERVE", "Uma forma divertida e pedagógica de avaliar o aprendizado das principais funções desses programas."],
-	["QUEM FEZ", "Alunos da turma 613 de Informática do IFBA Campus Valença (hoje turma 632), com orientação de professores do campus."],
+	["QUEM FEZ", "Alunos da turma 613 de Informática do IFBA Campus Valença, em 2023, com orientação de professores do campus."],
 ]
 const NUMEROS := [
 	["2023", "CRIADO EM"],
