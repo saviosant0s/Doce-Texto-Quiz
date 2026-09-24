@@ -69,6 +69,6 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"TextoClaro"
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 text = "Recorde: 0/10"
 horizontal_alignment = 1

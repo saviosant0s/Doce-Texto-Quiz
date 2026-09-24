@@ -47,8 +47,10 @@ Metas: APK para Android e registro no INPI.
 
 ## Onde parou
 
-- Última coisa feita: troca da música antiga pelas 3 músicas novas do Sávio
-  (tocam em sequência aleatória, volume igualado); APK gerado de novo e publicado.
+- Última coisa feita: nitidez no celular (filtro de textura era "Nearest
+  Mipmap", agora "Linear Mipmap"; mascote 3D desenhado na resolução real da
+  tela), cartão de nível bloqueado com o mesmo tamanho dos outros, sem a dica
+  "arraste para girar" na tela inicial. APK e site publicados.
 - Nada pela metade. Próximo passo: item 1 da etapa 6.
 
 ## Como trabalhar no projeto

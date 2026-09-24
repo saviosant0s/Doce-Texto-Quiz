@@ -21,7 +21,6 @@ func _preparar_mascote() -> Control:
 		return %Mascote
 	var mascote_3d := Mascote3D.new()
 	mascote_3d.custom_minimum_size = Vector2(520, 500)
-	mascote_3d.tooltip_text = "Arraste para girar"
 	%Mascote.add_sibling(mascote_3d)
 	%Mascote.queue_free()
 	return mascote_3d

@@ -1,9 +1,13 @@
 class_name Mascote3D
-extends SubViewportContainer
+extends Control
 ## Mascote 3D que gira com o dedo. Usa o modelo em MODELO (.glb, por exemplo
 ## gerado por IA a partir do mascote original); sem ele, monta a caixa de
-## cereal com as faces tiradas das imagens do mascote (assets/mascote_3d). Arraste com o dedo ou o mouse para girar; solto,
-## ele continua girando um pouco e depois volta para a pose inicial.
+## cereal com as faces tiradas das imagens do mascote (assets/mascote_3d).
+## Arraste com o dedo ou o mouse para girar; solto, ele continua girando um
+## pouco e depois volta para a pose inicial.
+##
+## A cena 3D é desenhada na resolução real da tela (e não no tamanho lógico de
+## 1280x720 esticado), para não ficar serrilhada em celulares de tela grande.
 
 const MODELO := "res://assets/mascote_3d/mascote.glb"
 ## Altura que o modelo ocupa na cena (o .glb é redimensionado para caber).
@@ -27,6 +31,7 @@ const BRANCO := Color("#F7F5F2")
 
 var _modelo: Node3D
 var _viewport: SubViewport
+var _imagem: TextureRect
 var _girando := false
 var _velocidade := 0.0
 var _parado_ha := 0.0
@@ -34,14 +39,28 @@ var _tempo := 0.0
 
 
 func _ready() -> void:
-	stretch = true
 	mouse_filter = MOUSE_FILTER_STOP
 	_viewport = SubViewport.new()
 	_viewport.transparent_bg = true
 	_viewport.own_world_3d = true
 	_viewport.msaa_3d = Viewport.MSAA_4X
 	add_child(_viewport)
+	_imagem = TextureRect.new()
+	_imagem.texture = _viewport.get_texture()
+	_imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_imagem.mouse_filter = MOUSE_FILTER_IGNORE
+	_imagem.set_anchors_preset(PRESET_FULL_RECT)
+	add_child(_imagem)
+	resized.connect(_ajustar_resolucao)
+	get_viewport().size_changed.connect(_ajustar_resolucao)
+	_ajustar_resolucao.call_deferred()
 	_montar_cena()
+
+
+## Tamanho em pixels de verdade = tamanho na tela x escala da janela.
+func _ajustar_resolucao() -> void:
+	var escala := clampf(get_tree().root.get_final_transform().get_scale().x, 1.0, 3.0)
+	_viewport.size = Vector2i((size * escala).round()).maxi(1)
 
 
 func _gui_input(evento: InputEvent) -> void:

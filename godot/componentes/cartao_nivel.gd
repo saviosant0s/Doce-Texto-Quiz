@@ -39,13 +39,12 @@ func configurar(indice: int, nivel: Dictionary) -> void:
 		cadeado.offset_right = 36
 		cadeado.offset_bottom = 36
 		%Personagem.add_child(cadeado)
-		%Estrelas.visible = false
-		var anterior: String = Jogo.niveis[indice - 1]["nome"].to_upper()
-		%Acertos.text = "Passe no %s\npara liberar" % anterior
+		# Mesma altura dos outros cartões: estrelas apagadas e uma linha de texto
+		var anterior: String = Jogo.niveis[indice - 1]["nome"]
+		%Acertos.text = "Passe no %s antes" % anterior.to_lower()
 	elif progresso["partidas"] == 0:
 		%Acertos.text = "Ainda não jogado"
 	else:
-		%Acertos.add_theme_font_size_override("font_size", 17)  # cabe na largura do cartão
 		%Acertos.text = "Recorde %d/%d · %s pts" % [
 			progresso["recorde"], Jogo.PERGUNTAS_POR_PARTIDA, Jogo.formatar(progresso["recorde_pontos"])]
 	pressed.connect(_ao_tocar)
