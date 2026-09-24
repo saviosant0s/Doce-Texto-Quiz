@@ -29,3 +29,12 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
 ## Funcionalidades
 - [ ] Botão "Apoie" nos créditos ainda mostra "Disponível em breve".
 - [ ] Gerar o APK para Android.
+
+## Android
+- [ ] Testar o APK em celulares de verdade (um simples e um bom): instalação,
+      tela deitada, botão voltar, som, desempenho e se o progresso fica salvo
+      ao fechar e abrir. Download: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
+- [ ] Guardar a keystore (`doce_texto_quiz.keystore`) e a senha em lugar seguro.
+      Sem elas não dá para publicar atualizações na Play Store.
+- [ ] Para a Play Store: conta de desenvolvedor, política de privacidade (o jogo
+      não coleta dados), prints e formato AAB (exige o build com Gradle).
