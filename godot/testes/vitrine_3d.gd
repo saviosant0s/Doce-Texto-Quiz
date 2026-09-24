@@ -8,12 +8,13 @@ func _ready() -> void:
 	fundo.set_anchors_preset(PRESET_FULL_RECT)
 	add_child(fundo)
 	var grade := GridContainer.new()
-	grade.columns = 5
+	grade.columns = 6
 	grade.set_anchors_preset(PRESET_FULL_RECT)
 	add_child(grade)
-	for doce in Colecao.LISTA:
+	var ids: Array = Colecao.LISTA.map(func(d): return d["id"]) + Doces3D.PERSONAGENS
+	for id in ids:
 		var visor := Doce3D.new()
-		visor.id = doce["id"]
+		visor.id = id
 		visor.giravel = false
-		visor.custom_minimum_size = Vector2(250, 235)
+		visor.custom_minimum_size = Vector2(210, 200)
 		grade.add_child(visor)

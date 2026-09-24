@@ -1,9 +1,27 @@
 class_name Personagens
-## Personagens de doces do jogo, carregados pelo nome do arquivo em
-## assets/personagens. Se existir um PNG com o mesmo nome de um SVG, o PNG é
-## usado: para trocar um personagem por uma imagem nova, basta salvar o PNG lá.
+## Personagens de doces do jogo. Primeiro procura a foto do doce 3D
+## (assets/doces_3d/fotos, gerada por ferramentas/gerar_fotos_3d.sh); se não
+## houver, usa a imagem em assets/personagens (PNG ou SVG).
+
+## Personagens do jogo agora em 3D: o nome antigo (imagem 2D) aponta para a
+## foto do doce 3D equivalente (assets/doces_3d/fotos, ver Doces3D). Assim o
+## jogo todo usa o mesmo visual.
+const FOTOS_3D := {
+	"maca_noob": "maca",
+	"cupcake_pro": "cupcake",
+	"chocolate_mestre": "chocolate",
+	"brigadeiro_triste": "brigadeiro_triste",
+	"doce_facil": "bala_verde",
+	"doce_medio": "milho_doce",
+	"doce_dificil": "bala",
+	"fantasma_chocolate": "fantasma",
+}
+
 
 static func textura(nome: String) -> Texture2D:
+	var foto := "res://assets/doces_3d/fotos/%s.png" % FOTOS_3D.get(nome, nome)
+	if ResourceLoader.exists(foto):
+		return load(foto)
 	for extensao in ["png", "svg"]:
 		var caminho := "res://assets/personagens/%s.%s" % [nome, extensao]
 		if ResourceLoader.exists(caminho):

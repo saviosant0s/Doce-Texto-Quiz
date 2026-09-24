@@ -35,6 +35,9 @@ personagens, fontes) é a mesma da versão original.
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
   brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.
+- Personagens: todos são 3D, montados por código (`scripts/doces_3d.gd`). As
+  telas que mostram personagens parados usam fotos deles em
+  `assets/doces_3d/fotos`. **Mudou um modelo? Rode `ferramentas/gerar_fotos_3d.sh`.**
 
 ### Testes
 

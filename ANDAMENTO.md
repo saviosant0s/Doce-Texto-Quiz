@@ -47,19 +47,19 @@ Metas: APK para Android e registro no INPI.
 
 ## Onde parou
 
-- Última coisa feita: **Minha Coleção** (loja de doces 3D com moedas).
-  13 doces 3D feitos por código (`godot/scripts/doces_3d.gd`, sem IA: originais
-  do projeto); compra com confirmação; companheiro aparece no carregamento;
-  conquistas "Doce novo" e "Confeitaria dos sonhos". Também: logo na abertura
-  do app (no lugar da tela roxa vazia), personagens bloqueados em silhueta
-  limpa, cartão da pergunta mais compacto. APK e site publicados.
+- Última coisa feita: **padrão único de personagens 3D** no jogo todo (níveis,
+  pódio, resultado, como jogar, carregamento, coleção) usando fotos dos
+  modelos; doces de título iguais aos personagens do jogo (maçã, cupcake,
+  chocolate) com luvas brancas; coleção com rolagem pelo dedo, silhueta nos
+  doces não comprados e sem desenho de miniaturas no celular (causa provável
+  do app fechando); @ do Instagram atualizados. APK e site publicados.
 - Ideias para depois: companheiro comemorando na tela de resultado; trocar
   qualquer doce por um modelo .glb (basta salvar em `godot/assets/doces_3d/<id>.glb`).
 - Nada pela metade. Próximo passo: item 1 da etapa 6.
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (565 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (594 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

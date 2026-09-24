@@ -12,6 +12,7 @@ extends Node
 ##   --revisao=3   depois, simula uma revisão com 3 acertos (tela de resultado)
 ##   --aba=1       aba a mostrar (tela de troféus)
 ##   --tocar_nivel=1  toca no cartão desse nível (tela de níveis)
+##   --selecionar=pudim  escolhe esse doce na tela da coleção
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
 ##   --companheiro=pudim  compra esse doce e o escolhe como companheiro
 ##   --espera=1.2  segundos até tirar o print
@@ -55,6 +56,9 @@ func _ready() -> void:
 		var cartoes := get_tree().current_scene.find_children("*", "Button", true, false) \
 			.filter(func(b): return b.has_method("configurar"))
 		cartoes[int(args["tocar_nivel"])].pressed.emit()
+	if args.has("selecionar"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene.selecionar(args["selecionar"])
 	if args.has("aba"):
 		await get_tree().process_frame
 		get_tree().current_scene.mostrar_aba(int(args["aba"]))

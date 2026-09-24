@@ -11,8 +11,8 @@ class_name Colecao
 const LISTA := [
 	{"id": "brigadeiro", "nome": "BRIGADEIRO", "preco": 0, "inicial": true,
 		"curiosidade": "Criado no Brasil nos anos 1940, é presença garantida em toda festa de aniversário."},
-	{"id": "maca_do_amor", "nome": "MAÇÃ DO AMOR", "titulo": "noob",
-		"curiosidade": "Maçã coberta com calda de açúcar vermelha, clássica das festas juninas."},
+	{"id": "maca", "nome": "MAÇÃ", "titulo": "noob",
+		"curiosidade": "Existem mais de 7 mil tipos de maçã no mundo. E a do amor é doce de festa junina!"},
 	{"id": "cupcake", "nome": "CUPCAKE", "titulo": "pro",
 		"curiosidade": "O nome vem de \"bolo de xícara\": as receitas antigas mediam tudo em xícaras."},
 	{"id": "chocolate", "nome": "CHOCOLATE", "titulo": "mestre",

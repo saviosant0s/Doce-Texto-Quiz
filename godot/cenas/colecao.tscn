@@ -39,7 +39,7 @@ theme_override_constants/margin_bottom = 28
 
 [node name="Coluna" type="VBoxContainer" parent="Margem"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 26
 
 [node name="Topo" type="HBoxContainer" parent="Margem/Coluna"]
 layout_mode = 2

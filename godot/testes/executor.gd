@@ -257,6 +257,10 @@ func _testar_colecao() -> void:
 		verificar(Doces3D.montar(doce["id"], pivo), "monta o doce 3D %s" % doce["id"])
 		verificar(pivo.find_child("Olhos", true, false) != null, "%s tem olhos (para piscar)" % doce["id"])
 		pivo.free()
+	for id in Colecao.LISTA.map(func(d): return d["id"]) + Doces3D.PERSONAGENS:
+		verificar(ResourceLoader.exists("res://assets/doces_3d/fotos/%s.png" % id), "foto 3D de %s" % id)
+	for nome in Personagens.FOTOS_3D:
+		verificar(Personagens.textura(nome).resource_path.contains("doces_3d/fotos"), "%s usa a foto 3D" % nome)
 	verificar(Colecao.tem("brigadeiro"), "começa com o brigadeiro")
 	verificar(Colecao.quantidade() == 1, "começa com 1 doce")
 	verificar(not Colecao.tem("bala"), "bala não vem de graça")
@@ -404,7 +408,23 @@ func _testar_tela_colecao() -> void:
 	verificar(await _esperar_tela("Colecao"), "abre a coleção")
 	var tela := get_tree().current_scene
 	verificar(tela._cartoes.size() == Colecao.LISTA.size(), "um cartão por doce")
-	tela.selecionar("pirulito")
+	# toque curto num cartão seleciona o doce; arrastar não
+	var cartao: Control = tela._cartoes["pirulito"]
+	var toque := InputEventMouseButton.new()
+	toque.button_index = MOUSE_BUTTON_LEFT
+	toque.pressed = true
+	toque.global_position = Vector2(100, 100)
+	cartao.gui_input.emit(toque)
+	var solta: InputEventMouseButton = toque.duplicate()
+	solta.pressed = false
+	solta.global_position = Vector2(100, 160)  # arrastou 60 px: é rolagem
+	cartao.gui_input.emit(solta)
+	verificar(tela._selecionado != "pirulito", "arrastar sobre o cartão não seleciona")
+	cartao.gui_input.emit(toque)
+	solta.global_position = Vector2(103, 102)
+	cartao.gui_input.emit(solta)
+	verificar(tela._selecionado == "pirulito", "toque curto seleciona o doce")
+	verificar(tela._visor.silhueta, "doce não comprado aparece em silhueta")
 	var acao: Button = tela._acao
 	verificar(acao.text == "COMPRAR POR 150", "botão mostra o preço")
 	acao.pressed.emit()
@@ -415,6 +435,7 @@ func _testar_tela_colecao() -> void:
 	await get_tree().create_timer(0.5).timeout
 	verificar(Colecao.tem("pirulito") and Progresso.moedas == 150 + 20, "comprou (e ganhou a conquista)")
 	verificar(Colecao.companheiro() == "pirulito", "primeiro doce comprado vira companheiro")
+	verificar(not tela._visor.silhueta, "depois de comprar aparece colorido")
 	tela.selecionar("algodao_doce")
 	verificar(acao.disabled and acao.text.begins_with("FALTAM"), "sem moedas: mostra quanto falta")
 	Jogo.preparar_partida(0)

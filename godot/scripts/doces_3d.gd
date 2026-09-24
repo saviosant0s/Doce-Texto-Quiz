@@ -11,6 +11,8 @@ class_name Doces3D
 const PASTA_GLB := "res://assets/doces_3d/%s.glb"
 
 const SAPATO_ROXO := Color("#6A3DA6")
+## Personagens do jogo feitos em 3D que não estão à venda na coleção.
+const PERSONAGENS := ["brigadeiro_triste", "bala_verde", "milho_doce", "fantasma"]
 
 
 ## Monta o doce `id` dentro de `pai`. Retorna falso se o id não existir.
@@ -35,15 +37,23 @@ static func _m(cor: String, aspereza := 0.3, metal := 0.0) -> StandardMaterial3D
 
 # --- Doces ---------------------------------------------------------------------
 
-## Brigadeiro: bolinha de chocolate com granulado, na forminha de papel.
+## Brigadeiro: bolinha de chocolate com granulado e fio de chocolate branco,
+## na forminha de papel (como o brigadeiro dos personagens do jogo).
 static func _brigadeiro(c: Node3D) -> void:
 	var chocolate := _m("#5A2E17", 0.55)
 	Pecas3D.esfera(c, 0.62, Vector3(0, 0.22, 0), chocolate)
 	Pecas3D.granulado(c, Vector3(0, 0.22, 0), 0.62, 150, [Color("#2E150A"), Color("#3D1F10")], 7, -0.15, 1.0, 0.72)
-	var forminha := Pecas3D.material_textura(Pecas3D.listras([Color("#8A5A2E"), Color("#A8763F")], 24), 0.7)
+	# fio de chocolate branco em zigue-zague no topo
+	var branco := _m("#F3E3B5", 0.3)
+	var anterior := Vector3(-0.42, 0.62, 0.12)
+	for i in range(1, 7):
+		var ponto := Vector3(-0.42 + i * 0.14, 0.62 + (0.14 if i % 2 == 1 else 0.0), 0.12 + (0.05 if i % 2 == 1 else 0.0))
+		Pecas3D.cano(c, anterior, ponto, 0.035, branco)
+		anterior = ponto
+	var forminha := Pecas3D.material_textura(Pecas3D.listras([Color("#F1E4CC"), Color("#FFF6E6")], 24), 0.6)
 	Pecas3D.cilindro(c, 0.6, 0.46, 0.36, Vector3(0, -0.3, 0), forminha)
 	Pecas3D.rosto(c, Vector3(0, 0.2, 0.6), 0.95, 0.62)
-	var membro := _m("#6B3A1F", 0.5)
+	var membro := _m("#3B1E10", 0.5)
 	Pecas3D.braco(c, Vector3(-0.56, 0.05, 0.05), -1, membro)
 	Pecas3D.braco(c, Vector3(0.56, 0.08, 0.05), 1, membro, 1.0, true)
 	Pecas3D.pernas(c, Vector3(0, -0.46, 0), 0.18, 0.4, membro, _m("#E8A33D", 0.3))
@@ -148,31 +158,37 @@ static func _bala(c: Node3D) -> void:
 	Pecas3D.pernas(c, Vector3(0, -0.4, 0), 0.2, 0.45, membro, _m("#FFF6F2", 0.3))
 
 
-## Maçã do amor: maçã com calda vermelha brilhante e palito (título Noob).
-static func _maca_do_amor(c: Node3D) -> void:
-	var calda := _m("#D1162C", 0.08)
-	Pecas3D.esfera(c, 0.62, Vector3(0, 0.12, 0), calda, Vector3(1.05, 0.95, 1.0))
-	Pecas3D.cano(c, Vector3(0, 0.6, 0), Vector3(0.05, 1.12, 0), 0.045, _m("#D9B37A", 0.8))
-	Pecas3D.esfera(c, 0.13, Vector3(0.2, 0.72, 0), _m("#4CAF50", 0.4), Vector3(1.4, 0.45, 0.8), Vector3(0, 0, 25))
-	Pecas3D.rosto(c, Vector3(0, 0.1, 0.62), 0.95, 0.62)
-	var membro := _m("#4CAF50", 0.4)
-	Pecas3D.braco(c, Vector3(-0.58, -0.05, 0), -1, membro)
-	Pecas3D.braco(c, Vector3(0.58, 0.0, 0), 1, membro, 1.0, true)
-	Pecas3D.pernas(c, Vector3(0, -0.5, 0), 0.2, 0.4, membro, _m("#3A8E3E", 0.3))
+## Maçã (título Noob): vermelha, com cabinho e folha, luvas brancas e tênis
+## verde, como a maçã dos personagens do jogo.
+static func _maca(c: Node3D) -> void:
+	var casca := _m("#D8261E", 0.3)
+	Pecas3D.esfera(c, 0.64, Vector3(0, 0.1, 0), casca, Vector3(1.06, 0.94, 1.0))
+	# covinha do cabinho
+	Pecas3D.esfera(c, 0.16, Vector3(0, 0.66, 0), _m("#A81A14", 0.4), Vector3(1.2, 0.35, 1.2))
+	Pecas3D.cano(c, Vector3(0, 0.62, 0), Vector3(0.06, 0.98, 0), 0.04, _m("#6B3D1E", 0.7))
+	Pecas3D.esfera(c, 0.2, Vector3(0.3, 0.9, 0.02), _m("#3F9A35", 0.35), Vector3(1.5, 0.4, 0.8), Vector3(0, 0, 28))
+	Pecas3D.rosto(c, Vector3(0, 0.05, 0.62), 1.0, 0.64, Color("#4CAF50"))
+	var braco := _m("#C0201A", 0.35)
+	Pecas3D.braco(c, Vector3(-0.6, -0.05, 0), -1, braco)
+	Pecas3D.braco(c, Vector3(0.6, 0.0, 0), 1, braco, 1.0, true)
+	Pecas3D.pernas(c, Vector3(0, -0.46, 0), 0.2, 0.42, _m("#3B1A12", 0.5), _m("#5DAA3A", 0.35))
 
 
-## Cupcake de baunilha com cobertura rosa e confeitos (título Pro).
+## Cupcake (título Pro): forminha amarela, cobertura rosa com confeitos,
+## braços e pernas escuros, luvas brancas e sapatos rosa.
 static func _cupcake(c: Node3D) -> void:
-	_montar_cupcake(c, [Color("#F5C542"), Color("#FFDB6E")], _m("#FF7FB0", 0.2), true, false)
+	_montar_cupcake(c, [Color("#F5CF3F"), Color("#FBE58A")], _m("#FF6FAE", 0.2), true, false,
+		_m("#3B2418", 0.5), _m("#E0408A", 0.25), Color("#FF5FA0"))
 
 
 ## Cupcake de chantili com morango em cima.
 static func _cupcake_morango(c: Node3D) -> void:
-	_montar_cupcake(c, [Color("#FF8FB8"), Color("#FFF1F5")], _m("#FFF6EE", 0.35), false, true)
+	_montar_cupcake(c, [Color("#FF8FB8"), Color("#FFF1F5")], _m("#FFF6EE", 0.35), false, true,
+		_m("#FF8FB8", 0.4), _m("#6A3DA6", 0.3))
 
 
 static func _montar_cupcake(c: Node3D, cores_forminha: Array, cobertura: Material,
-		confeitos: bool, morango: bool) -> void:
+		confeitos: bool, morango: bool, membro: Material, sapato: Material, nariz := Color.TRANSPARENT) -> void:
 	var forminha := Pecas3D.material_textura(Pecas3D.listras(cores_forminha, 28), 0.5)
 	Pecas3D.cilindro(c, 0.62, 0.46, 0.62, Vector3(0, -0.32, 0), forminha)
 	Pecas3D.rosquinha(c, 0.22, 0.7, Vector3(0, 0.04, 0), cobertura, Vector3(1, 0.85, 1))
@@ -199,26 +215,29 @@ static func _montar_cupcake(c: Node3D, cores_forminha: Array, cobertura: Materia
 				Vector3(1.3, 0.35, 0.6), Vector3(0, -rad_to_deg(angulo), 20))
 	else:
 		Pecas3D.esfera(c, 0.1, Vector3(0, 0.76, 0), cobertura)
-	Pecas3D.rosto(c, Vector3(0, -0.3, 0.55), 0.8, 0.55)
-	var membro := _m(cores_forminha[0].to_html(), 0.4)
+	Pecas3D.rosto(c, Vector3(0, -0.3, 0.55), 0.8, 0.55, nariz)
 	Pecas3D.braco(c, Vector3(-0.56, -0.25, 0), -1, membro)
 	Pecas3D.braco(c, Vector3(0.56, -0.2, 0), 1, membro, 1.0, true)
-	Pecas3D.pernas(c, Vector3(0, -0.6, 0), 0.18, 0.38, membro, _m("#6A3DA6", 0.3))
+	Pecas3D.pernas(c, Vector3(0, -0.6, 0), 0.18, 0.38, membro, sapato)
 
 
-## Barra de chocolate meio embrulhada em papel dourado (título Mestre).
+## Barra de chocolate em gomos (título Mestre), com papel laminado, luvas
+## brancas e sapatos vermelhos, como o chocolate dos personagens do jogo.
 static func _chocolate(c: Node3D) -> void:
-	var chocolate := _m("#6B3A1F", 0.4)
-	Pecas3D.caixa(c, Vector3(1.1, 1.6, 0.24), Vector3(0, 0.15, 0), chocolate)
-	# gomos em cima do rosto
-	for x in [-0.27, 0.27]:
-		Pecas3D.caixa(c, Vector3(0.46, 0.3, 0.08), Vector3(x, 0.78, 0.13), _m("#7A4526", 0.4))
-	Pecas3D.caixa(c, Vector3(1.16, 0.72, 0.3), Vector3(0, -0.36, 0), _m("#F2C230", 0.22, 0.25))
-	Pecas3D.caixa(c, Vector3(1.17, 0.22, 0.31), Vector3(0, -0.36, 0), _m("#C0182E", 0.3))
-	Pecas3D.rosto(c, Vector3(0, 0.3, 0.12), 0.95, 3.0)
-	Pecas3D.braco(c, Vector3(-0.55, 0.0, 0), -1, chocolate)
-	Pecas3D.braco(c, Vector3(0.55, 0.05, 0), 1, chocolate, 1.0, true)
-	Pecas3D.pernas(c, Vector3(0, -0.7, 0), 0.25, 0.4, chocolate, _m("#C0182E", 0.3))
+	var chocolate := _m("#6B3A1F", 0.35)
+	var gomo := _m("#7A4526", 0.35)
+	Pecas3D.caixa(c, Vector3(1.1, 1.62, 0.22), Vector3(0, 0.12, 0), chocolate)
+	# gomos: 2 colunas x 4 linhas, em relevo
+	for linha in 4:
+		for coluna in 2:
+			Pecas3D.caixa(c, Vector3(0.46, 0.34, 0.06), Vector3(-0.26 + coluna * 0.52, 0.72 - linha * 0.4, 0.13), gomo)
+	# papel laminado prateado cobrindo a parte de baixo
+	Pecas3D.caixa(c, Vector3(1.16, 0.5, 0.3), Vector3(0, -0.46, 0), _m("#C9CED6", 0.2, 0.8))
+	Pecas3D.rosto(c, Vector3(0, 0.45, 0.17), 1.0, 3.0, Color("#E0262E"))
+	var membro := _m("#3A1E10", 0.5)
+	Pecas3D.braco(c, Vector3(-0.55, 0.0, 0), -1, membro)
+	Pecas3D.braco(c, Vector3(0.55, 0.05, 0), 1, membro, 1.0, true)
+	Pecas3D.pernas(c, Vector3(0, -0.7, 0), 0.25, 0.42, membro, _m("#D8262E", 0.25))
 
 
 ## Bombom de chocolate brilhante com avelã, na forminha dourada.
@@ -272,3 +291,86 @@ static func _algodao_doce(c: Node3D) -> void:
 	Pecas3D.rosto(c, centro + Vector3(0, -0.05, 0.5), 0.9, 0.52)
 	Pecas3D.braco(c, centro + Vector3(-0.72, -0.2, 0), -1, algodao)
 	Pecas3D.braco(c, centro + Vector3(0.72, -0.15, 0), 1, algodao, 1.0, true)
+
+
+# --- Personagens do jogo (não estão à venda na coleção) ------------------------------
+
+## Brigadeiro triste (quem não passou no nível).
+static func _brigadeiro_triste(c: Node3D) -> void:
+	_brigadeiro(c)
+	for no in c.get_children():
+		if String(no.name) in ["Olhos", "Boca", "Braco", "Aceno"] or no.position.distance_to(Vector3(0, 0.1, 0.6)) < 0.3:
+			c.remove_child(no)
+			no.free()
+	var chocolate := _m("#3B1E10", 0.5)
+	Pecas3D.rosto(c, Vector3(0, 0.2, 0.6), 0.95, 0.62, Color.TRANSPARENT, true)
+	Pecas3D.braco(c, Vector3(-0.56, 0.0, 0.05), -1, chocolate)
+	Pecas3D.braco(c, Vector3(0.56, 0.0, 0.05), 1, chocolate)
+
+
+## Bala verde listrada embrulhada (mascote do nível fácil).
+static func _bala_verde(c: Node3D) -> void:
+	var listras := Pecas3D.material_textura(Pecas3D.faixas([Color("#3FA84A"), Color("#A8E05F")], 10), 0.18)
+	var corpo := CapsuleMesh.new()
+	corpo.radius = 0.4
+	corpo.height = 1.35
+	var no := MeshInstance3D.new()
+	no.mesh = corpo
+	no.material_override = listras
+	no.position = Vector3(0, 0.05, 0)
+	no.rotation_degrees = Vector3(0, 0, 8)
+	c.add_child(no)
+	# ponta torcida do papel, em cima
+	var papel := _m("#57B84A", 0.25)
+	Pecas3D.cilindro(c, 0.02, 0.2, 0.25, Vector3(-0.08, 0.8, 0), papel, Vector3.ONE, Vector3(0, 0, 8))
+	for i in 4:
+		var angulo := i * TAU / 4.0
+		Pecas3D.esfera(c, 0.12, Vector3(-0.1 + cos(angulo) * 0.1, 0.98, sin(angulo) * 0.1), papel, Vector3(0.7, 1.3, 0.7), Vector3(0, 0, cos(angulo) * 30))
+	Pecas3D.rosto(c, Vector3(0.0, 0.12, 0.39), 0.85, 0.4)
+	var membro := _m("#2F8F3A", 0.4)
+	Pecas3D.braco(c, Vector3(-0.38, -0.05, 0), -1, membro)
+	Pecas3D.braco(c, Vector3(0.4, 0.05, 0), 1, membro, 1.0, true)
+	Pecas3D.pernas(c, Vector3(0.04, -0.6, 0), 0.15, 0.42, membro, _m("#2F8F3A", 0.3))
+
+
+## Milho doce (candy corn): branco, amarelo e laranja (mascote do nível médio).
+static func _milho_doce(c: Node3D) -> void:
+	# gota arredondada com três faixas: creme em cima, amarelo e laranja
+	var faixas := Pecas3D.material_textura(Pecas3D.faixas([Color("#FFF1D8"), Color("#FFC21A"), Color("#FFC21A"),
+		Color("#FF7A1A"), Color("#FF7A1A")], 5), 0.25)
+	var gota := Pecas3D.esfera(c, 0.7, Vector3(0, 0.05, 0), faixas, Vector3(0.92, 1.0, 0.72))
+	# afina em cima como um grão de milho
+	var topo := Pecas3D.esfera(c, 0.36, Vector3(0, 0.58, 0), _m("#FFF1D8", 0.25), Vector3(0.95, 0.9, 0.8))
+	topo.name = "Topo"
+	gota.name = "Gota"
+	Pecas3D.rosto(c, Vector3(0, 0.02, 0.5), 0.85, 0.6)
+	var membro := _m("#E8601A", 0.35)
+	Pecas3D.braco(c, Vector3(-0.5, -0.05, 0), -1, membro)
+	Pecas3D.braco(c, Vector3(0.5, -0.02, 0), 1, membro, 1.0, true)
+	Pecas3D.pernas(c, Vector3(0, -0.58, 0), 0.22, 0.4, membro, _m("#E8601A", 0.3))
+
+
+## Fantasminha de chocolate branco (tela de carregamento).
+static func _fantasma(c: Node3D) -> void:
+	var chocolate_branco := _m("#F3E6C4", 0.45)
+	Pecas3D.esfera(c, 0.62, Vector3(0, 0.35, 0), chocolate_branco)
+	Pecas3D.cilindro(c, 0.62, 0.7, 0.8, Vector3(0, -0.1, 0), chocolate_branco)
+	for i in 5:
+		var angulo := -PI * 0.1 - i * PI * 0.2
+		Pecas3D.esfera(c, 0.2, Vector3(cos(angulo) * 0.55, -0.52, -sin(angulo) * 0.55), chocolate_branco)
+	Pecas3D.esfera(c, 0.2, Vector3(0, -0.52, -0.55), chocolate_branco)
+	# raspas de chocolate branco na cabeça
+	Pecas3D.granulado(c, Vector3(0, 0.35, 0), 0.62, 26, [Color("#FFF4DA")], 5, 0.55, 1.8)
+	# olhos de gotas de chocolate e boquinha de susto
+	var gota := _m("#2A140A", 0.2)
+	var olhos := Node3D.new()
+	olhos.name = "Olhos"
+	olhos.position = Vector3(0, 0.36, 0.56)
+	c.add_child(olhos)
+	for lado in [-1, 1]:
+		Pecas3D.esfera(olhos, 0.1, Vector3(lado * 0.17, 0, -0.02), gota, Vector3(1, 1.1, 0.7))
+		Pecas3D.esfera(olhos, 0.025, Vector3(lado * 0.17 + 0.03, 0.04, 0.05), _m("#FFFFFF", 0.1))
+	Pecas3D.esfera(c, 0.05, Vector3(0, 0.12, 0.6), gota, Vector3(0.9, 1.2, 0.6))
+	# mãozinhas no peito
+	for lado in [-1, 1]:
+		Pecas3D.esfera(c, 0.14, Vector3(lado * 0.2, -0.05, 0.62), chocolate_branco, Vector3(1.3, 0.7, 0.8), Vector3(0, 0, lado * 25))

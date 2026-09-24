@@ -5,6 +5,10 @@ extends Visor3D
 
 ## Id do doce (ver Colecao.LISTA). Mude com `mostrar(id)`.
 @export var id := "brigadeiro"
+## Doce ainda não conquistado: aparece como silhueta de cor única (ainda se mexe).
+@export var silhueta := false
+
+const COR_SILHUETA := Color("#8C6BC0")
 
 var _corpo: Node3D
 var _olhos: Array[Node3D] = []
@@ -19,15 +23,22 @@ func _init() -> void:
 	distancia = 6.2
 
 
-## Troca o doce mostrado.
-func mostrar(novo_id: String) -> void:
+## Troca o doce mostrado (e se aparece como silhueta).
+func mostrar(novo_id: String, como_silhueta := false) -> void:
 	id = novo_id
+	silhueta = como_silhueta
 	if is_node_ready():
 		remontar()
 
 
 func _montar(pivo: Node3D) -> void:
 	Doces3D.montar(id, pivo)
+	if silhueta:
+		var cor := StandardMaterial3D.new()
+		cor.albedo_color = COR_SILHUETA
+		cor.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		for malha in pivo.find_children("*", "MeshInstance3D", true, false):
+			malha.material_override = cor
 	_corpo = pivo.get_node_or_null("Corpo")
 	_olhos.assign(pivo.find_children("Olhos", "Node3D", true, false))
 	_aceno = pivo.find_child("Aceno", true, false)

@@ -14,10 +14,13 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
       e as dicas da tela de carregamento (`godot/cenas/carregamento.gd`).
 
 ## Personagens
-- [ ] **Refazer as imagens dos personagens em alta qualidade**: hoje foram recortadas
-      de uma prancha (cada uma com ~300 px) e ficam borradas quando aparecem grandes.
-      Gerar **um personagem por imagem**, 2048×2048, fundo branco liso. Prompt e
-      nomes dos arquivos em `docs/PERSONAGENS_IA.md` (seção "Refazer em alta qualidade").
+- [x] ~~Refazer as imagens 2D dos personagens em alta qualidade~~: não é mais
+      necessário. Todos os doces agora são 3D feitos no próprio jogo
+      (`godot/scripts/doces_3d.gd`); as telas usam fotos deles
+      (`godot/assets/doces_3d/fotos`, geradas por `ferramentas/gerar_fotos_3d.sh`).
+- [ ] Só o mascote (caixa de cereal) ainda usa imagens de IA nas faces
+      (`godot/assets/mascote_3d`) e na tela "Sobre". Para trocar por um modelo 3D,
+      salvar `godot/assets/mascote_3d/mascote.glb`.
 
 ## Direitos (antes do registro no INPI)
 - [x] Trocar a imagem do brigadeiro triste (tinha marca d'água).

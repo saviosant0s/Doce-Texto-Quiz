@@ -60,6 +60,7 @@ func _montar(_pivo_do_modelo: Node3D) -> void:
 ## Troca o modelo mostrado (remove o anterior e chama _montar de novo).
 func remontar() -> void:
 	for filho in _pivo.get_children():
+		_pivo.remove_child(filho)  # sai já, para o novo modelo não achar o antigo
 		filho.queue_free()
 	_pivo.rotation = Vector3(0, angulo_inicial, 0)
 	_velocidade = 0.0

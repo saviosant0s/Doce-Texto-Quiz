@@ -8,17 +8,17 @@ const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 const ICONE_CADEADO := preload("res://assets/icones/cadeado.svg")
 const ICONE_CORACAO := preload("res://assets/icones/coracao.svg")
 const COLUNAS := 4
-const TAMANHO_MINIATURA := 200
+## Movimento máximo (px) para um toque contar como toque e não como arrasto.
+const LIMITE_TOQUE := 14.0
 
-## Miniaturas já desenhadas (continuam valendo ao voltar para a tela).
-static var _miniaturas := {}
 
 var _selecionado := ""
 var _visor: Doce3D
 var _nome: Label
 var _texto: Label
 var _acao: Button
-var _cartoes := {}  # id -> Button
+var _cartoes := {}  # id -> PanelContainer
+var _toque_inicio := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -29,14 +29,13 @@ func _ready() -> void:
 	var inicial := Colecao.companheiro()
 	selecionar(inicial if not inicial.is_empty() else Colecao.LISTA[0]["id"])
 	Animacoes.entrar(%Corpo, Vector2(0, 40))
-	_desenhar_miniaturas()
 
 
 ## Mostra o doce `id` no visor 3D e ajusta o botão de ação.
 func selecionar(id: String) -> void:
 	_selecionado = id
 	var doce := Colecao.dados(id)
-	_visor.mostrar(id)
+	_visor.mostrar(id, not Colecao.tem(id))
 	_nome.text = doce["nome"]
 	_texto.text = doce["curiosidade"]
 	for outro in _cartoes:
@@ -93,6 +92,7 @@ func _ao_tocar_acao() -> void:
 	if not sim or not Colecao.comprar(id):
 		return
 	Audio.tocar("acerto")
+	_visor.mostrar(id)  # sai da silhueta: agora é seu
 	_visor.comemorar()
 	if Colecao.companheiro().is_empty():
 		Colecao.escolher_companheiro(id)  # o primeiro doce comprado já vira companheiro
@@ -110,14 +110,14 @@ func _ao_tocar_acao() -> void:
 func _criar_painel() -> void:
 	var painel := PanelContainer.new()
 	painel.theme_type_variation = &"PainelEscuro"
-	painel.custom_minimum_size = Vector2(430, 0)
+	painel.custom_minimum_size = Vector2(400, 0)
 	%Corpo.add_child(painel)
 	var coluna := VBoxContainer.new()
 	coluna.add_theme_constant_override("separation", 6)
 	painel.add_child(coluna)
 	_visor = Doce3D.new()
 	_visor.name = "Visor"
-	_visor.custom_minimum_size = Vector2(0, 300)
+	_visor.custom_minimum_size = Vector2(0, 250)
 	_visor.size_flags_vertical = SIZE_EXPAND_FILL
 	coluna.add_child(_visor)
 	_nome = Label.new()
@@ -162,19 +162,17 @@ func _criar_grade() -> void:
 		_atualizar_cartao(doce["id"])
 
 
-func _criar_cartao(doce: Dictionary) -> Button:
-	var cartao := Button.new()
+## Cartão da grade. Não é um botão: um toque curto seleciona, e arrastar rola
+## a lista (botões "prendem" o dedo e a lista não rolava no celular).
+func _criar_cartao(doce: Dictionary) -> PanelContainer:
+	var cartao := PanelContainer.new()
 	cartao.name = doce["id"]
-	cartao.theme_type_variation = &"CartaoNivel"
 	cartao.custom_minimum_size = Vector2(0, 176)
 	cartao.size_flags_horizontal = SIZE_EXPAND_FILL
-	cartao.pressed.connect(selecionar.bind(doce["id"]))
+	cartao.mouse_filter = MOUSE_FILTER_PASS
+	cartao.add_theme_stylebox_override("panel", get_theme_stylebox("normal", &"CartaoNivel"))
+	cartao.gui_input.connect(_toque_no_cartao.bind(doce["id"]))
 	var coluna := VBoxContainer.new()
-	coluna.set_anchors_preset(PRESET_FULL_RECT)
-	coluna.offset_left = 6
-	coluna.offset_right = -6
-	coluna.offset_top = 6
-	coluna.offset_bottom = -8
 	coluna.add_theme_constant_override("separation", 0)
 	coluna.mouse_filter = MOUSE_FILTER_IGNORE
 	cartao.add_child(coluna)
@@ -184,7 +182,7 @@ func _criar_cartao(doce: Dictionary) -> Button:
 	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	imagem.mouse_filter = MOUSE_FILTER_IGNORE
-	imagem.texture = _miniaturas.get(doce["id"])
+	imagem.texture = Personagens.textura(doce["id"])
 	coluna.add_child(imagem)
 	var nome := Label.new()
 	nome.theme_type_variation = &"Subtitulo"
@@ -219,8 +217,16 @@ func _criar_cartao(doce: Dictionary) -> Button:
 
 
 ## Situação do doce no cartão: preço, "passe no nível X", "seu" ou companheiro.
+func _toque_no_cartao(evento: InputEvent, id: String) -> void:
+	if evento is InputEventMouseButton and evento.button_index == MOUSE_BUTTON_LEFT:
+		if evento.pressed:
+			_toque_inicio = evento.global_position
+		elif evento.global_position.distance_to(_toque_inicio) < LIMITE_TOQUE:
+			selecionar(id)
+
+
 func _atualizar_cartao(id: String) -> void:
-	var cartao: Button = _cartoes[id]
+	var cartao: PanelContainer = _cartoes[id]
 	var doce := Colecao.dados(id)
 	var icone: TextureRect = cartao.find_child("Icone", true, false)
 	var texto: Label = cartao.find_child("Texto", true, false)
@@ -242,46 +248,9 @@ func _atualizar_cartao(id: String) -> void:
 		texto.text = Jogo.formatar(doce["preco"])
 
 
-func _marcar_cartao(cartao: Button, marcado: bool) -> void:
+func _marcar_cartao(cartao: PanelContainer, marcado: bool) -> void:
+	var estilo: StyleBoxFlat = get_theme_stylebox("normal", &"CartaoNivel").duplicate()
 	if marcado:
-		var estilo: StyleBoxFlat = cartao.get_theme_stylebox("normal", &"CartaoNivel").duplicate()
 		estilo.border_color = Cores.CREME
 		estilo.set_border_width_all(5)
-		for estado in ["normal", "hover", "pressed", "focus"]:
-			cartao.add_theme_stylebox_override(estado, estilo)
-	else:
-		for estado in ["normal", "hover", "pressed", "focus"]:
-			cartao.remove_theme_stylebox_override(estado)
-
-
-# --- Miniaturas --------------------------------------------------------------------
-
-## Desenha a foto de cada doce uma vez (num visor escondido) para a grade.
-## Em aparelhos sem desenho (testes), fica sem foto.
-func _desenhar_miniaturas() -> void:
-	var faltam := Colecao.LISTA.filter(func(d): return not _miniaturas.has(d["id"]))
-	if faltam.is_empty() or DisplayServer.get_name() == "headless":
-		return
-	var fotografo := Doce3D.new()
-	fotografo.giravel = false
-	fotografo.distancia = 4.4  # mais perto: o doce ocupa a foto toda
-	fotografo.angulo_inicial = -0.25
-	fotografo.custom_minimum_size = Vector2(TAMANHO_MINIATURA, TAMANHO_MINIATURA)
-	fotografo.size = fotografo.custom_minimum_size
-	fotografo.position = Vector2(-TAMANHO_MINIATURA * 3, 0)  # fora da tela
-	add_child(fotografo)
-	fotografo.set_process(false)  # parado, sem piscar
-	fotografo._viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	for doce in faltam:
-		fotografo.mostrar(doce["id"])
-		await RenderingServer.frame_post_draw
-		await RenderingServer.frame_post_draw
-		if not is_inside_tree():
-			return
-		var foto := fotografo._viewport.get_texture().get_image()
-		if foto == null or foto.is_empty():
-			continue
-		_miniaturas[doce["id"]] = ImageTexture.create_from_image(foto)
-		var imagem: TextureRect = _cartoes[doce["id"]].find_child("Imagem", true, false)
-		imagem.texture = _miniaturas[doce["id"]]
-	fotografo.queue_free()
+	cartao.add_theme_stylebox_override("panel", estilo)

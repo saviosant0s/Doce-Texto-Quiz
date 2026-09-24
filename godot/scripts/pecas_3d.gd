@@ -11,6 +11,8 @@ const COR_PUPILA := Color("#1E1414")
 const COR_BOCA := Color("#5A1A22")
 const COR_LINGUA := Color("#F07A8C")
 const COR_BOCHECHA := Color("#FF7E9D")
+const COR_LUVA := Color("#F7F5F2")
+const COR_DENTES := Color("#FFFFFF")
 
 
 # --- Materiais -----------------------------------------------------------------
@@ -33,6 +35,17 @@ static func material_textura(textura: Texture2D, aspereza := 0.3, repeticao := V
 	mat.uv1_scale = repeticao
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	return mat
+
+
+## Textura de faixas horizontais (o V da malha vai de cima a baixo).
+static func faixas(cores: Array, quantidade: int, altura := 256) -> ImageTexture:
+	var imagem := Image.create(8, altura, true, Image.FORMAT_RGBA8)
+	for y in altura:
+		var cor: Color = cores[int(float(y) / altura * quantidade) % cores.size()]
+		for x in 8:
+			imagem.set_pixel(x, y, cor)
+	imagem.generate_mipmaps()
+	return ImageTexture.create_from_image(imagem)
 
 
 ## Textura de listras verticais alternando `cores` (o U da malha dá a volta).
@@ -138,7 +151,9 @@ static func granulado(pai: Node3D, centro: Vector3, raio: float, quantidade: int
 ## Rosto sorridente centrado em `centro` (na superfície da frente do doce).
 ## `curvatura` = raio da superfície (recua olhos e bochechas nas laterais).
 ## Os olhos ficam num nó "Olhos", que o Doce3D fecha para piscar.
-static func rosto(pai: Node3D, centro: Vector3, tamanho := 1.0, curvatura := 1.0) -> void:
+## Com `triste`, a boca vira para baixo e as sobrancelhas sobem no meio.
+static func rosto(pai: Node3D, centro: Vector3, tamanho := 1.0, curvatura := 1.0, nariz := Color.TRANSPARENT,
+		triste := false) -> void:
 	var recuo := func(x: float) -> float: return (x * x) / (2.0 * maxf(curvatura, 0.2))
 	var olhos := Node3D.new()
 	olhos.name = "Olhos"
@@ -157,9 +172,28 @@ static func rosto(pai: Node3D, centro: Vector3, tamanho := 1.0, curvatura := 1.0
 	for lado in [-1, 1]:
 		var x: float = lado * 0.34 * tamanho
 		esfera(pai, 0.065 * tamanho, centro + Vector3(x, -0.09 * tamanho, -recuo.call(x) - 0.01), bochecha, Vector3(1.4, 0.75, 0.35))
+	if nariz.a > 0.0:
+		esfera(pai, 0.045 * tamanho, centro + Vector3(0, -0.035 * tamanho, 0.03), material(nariz, 0.15))
+	if triste:
+		# boca em arco para baixo e sobrancelhas preocupadas
+		var escuro := material(COR_BOCA, 0.4)
+		var anterior := centro + Vector3(-0.12 * tamanho, -0.21 * tamanho, 0.0)
+		for i in range(1, 7):
+			var t := i / 6.0
+			var ponto := centro + Vector3((-0.12 + 0.24 * t) * tamanho, (-0.21 + sin(t * PI) * 0.06) * tamanho, 0.0)
+			cano(pai, anterior, ponto, 0.018 * tamanho, escuro)
+			anterior = ponto
+		for lado in [-1, 1]:
+			var x: float = lado * 0.19 * tamanho
+			var z: float = -recuo.call(x) + 0.03
+			cano(pai, centro + Vector3(x - lado * 0.09 * tamanho, 0.25 * tamanho, z),
+				centro + Vector3(x + lado * 0.07 * tamanho, 0.2 * tamanho, z), 0.018 * tamanho, escuro)
+		return
 	var boca := esfera(pai, 0.1 * tamanho, centro + Vector3(0, -0.15 * tamanho, -0.005), material(COR_BOCA, 0.4), Vector3(1.3, 0.8, 0.35))
 	boca.name = "Boca"
 	esfera(pai, 0.06 * tamanho, centro + Vector3(0, -0.19 * tamanho, 0.014), material(COR_LINGUA, 0.4), Vector3(1.3, 0.55, 0.4))
+	# dentinhos de cima
+	esfera(pai, 0.07 * tamanho, centro + Vector3(0, -0.115 * tamanho, 0.012), material(COR_DENTES, 0.2), Vector3(1.3, 0.3, 0.35))
 
 
 ## Braço com mãozinha redonda, preso no `ombro`. `lado` = -1 (esquerda da tela)
@@ -176,9 +210,12 @@ static func braco(pai: Node3D, ombro: Vector3, lado: int, mat: Material, tamanho
 		mao = Vector3(lado * 0.3, 0.26, 0.08) * tamanho
 	cano(braco, Vector3.ZERO, cotovelo, 0.055 * tamanho, mat)
 	cano(braco, cotovelo, mao, 0.055 * tamanho, mat)
-	esfera(braco, 0.095 * tamanho, mao, mat)
-	# polegar
-	esfera(braco, 0.04 * tamanho, mao + Vector3(-lado * 0.06, 0.04, 0.04) * tamanho, mat)
+	# luva branca (como a família de personagens do jogo): mão, punho e polegar
+	var luva := material(COR_LUVA, 0.45)
+	rosquinha(braco, 0.035 * tamanho, 0.075 * tamanho, cotovelo.lerp(mao, 0.72), luva, Vector3.ONE,
+		Vector3(0, 0, rad_to_deg((mao - cotovelo).angle_to(Vector3.UP)) * -signf(mao.x - cotovelo.x)))
+	esfera(braco, 0.105 * tamanho, mao, luva, Vector3(1.0, 1.05, 0.8))
+	esfera(braco, 0.045 * tamanho, mao + Vector3(-lado * 0.08, 0.05, 0.04) * tamanho, luva)
 	return braco
 
 
