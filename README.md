@@ -24,6 +24,14 @@ personagens, fontes) é a mesma da versão original.
 - Com 6 acertos ou mais, você passa no nível: ganha o título dele (Fácil →
   Noob, Médio → Pro, Difícil → Mestre) e libera o próximo.
 - Estrelas: 6 acertos = 1, 8 = 2, 10 = 3. Moedas por acerto e por estrela.
+- Pontos: cada acerto vale de 100 a 200 conforme a rapidez; 3 acertos seguidos
+  multiplicam por 1,5 e 5 seguidos por 2 (combo). Recorde de pontos por nível.
+- Ajudas pagas com moedas, uma de cada por pergunta: eliminar 2 alternativas
+  erradas (30 moedas) e +10 segundos (20 moedas).
+- Revisão: na tela de níveis, "REVISAR ERROS" joga as perguntas que você errou
+  da última vez (de todos os níveis). Não muda os níveis, mas dá moedas.
+- Troféus: títulos, 14 conquistas com recompensa em moedas
+  (`scripts/conquistas.gd`) e estatísticas (acerto por assunto, mais erradas).
 
 ### Testes
 
@@ -31,8 +39,8 @@ personagens, fontes) é a mesma da versão original.
 godot/testes/rodar.sh
 ```
 
-Confere regras, sorteio, progresso, migração de saves antigos e uma partida
-completa passando pelas telas. Rode antes de publicar qualquer mudança.
+Confere regras, sorteio, progresso, migração de saves antigos, revisão,
+conquistas, estatísticas e uma partida completa passando pelas telas. Rode antes de publicar qualquer mudança.
 
 ### Estrutura
 
@@ -44,6 +52,7 @@ godot/
 ├── scripts/
 │   ├── jogo.gd          # regras e partida atual (sorteio, estrelas, títulos)
 │   ├── progresso.gd     # salvamento (com versão/migração), recordes, histórico
+│   ├── conquistas.gd    # lista de conquistas e quando cada uma é desbloqueada
 │   ├── telas.gd         # navegação, avisos, caixa de confirmação
 │   ├── audio.gd         # música e efeitos em canais separados
 │   ├── ferramentas/captura.gd  # gera prints das telas pela linha de comando
@@ -56,12 +65,13 @@ godot/
 ```
 
 - **Perguntas:** edite `godot/dados/perguntas.json`. `resposta` é o índice
-  (começando em 0) da alternativa correta.
+  (começando em 0) da alternativa correta; `assunto` é `word`, `excel` ou `geral`.
 - **Cores e estilos:** abra `tema/tema.tres` no Godot; as variações
   (`Titulo`, `BotaoRoxo`, `PainelRoxo`, …) são usadas nas cenas.
 - **Gerar prints de uma tela:**
   `godot --path godot -- --capturar=niveis --saida=print.png`
-  (para telas de resultado, acrescente `--acertos=7`).
+  (para telas de resultado, acrescente `--acertos=7`; veja as outras opções em
+  `scripts/ferramentas/captura.gd`).
 
 ### Publicar a versão web
 

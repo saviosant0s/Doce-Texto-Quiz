@@ -5,11 +5,11 @@ const PASSOS := [
 	{"icone": "camadas", "titulo": "ESCOLHA O NÍVEL",
 		"texto": "Comece pelo fácil. Passando nele, você libera o médio, e depois o difícil."},
 	{"icone": "relogio", "titulo": "RESPONDA RÁPIDO",
-		"texto": "Cada partida tem 10 perguntas e 30 segundos para cada. Se o tempo acabar, conta como erro."},
+		"texto": "10 perguntas, 30 segundos cada. Rapidez e acertos seguidos valem mais pontos!"},
 	{"icone": "estrela", "titulo": "FAÇA 6 ACERTOS",
 		"texto": "Com 6 acertos você passa no nível. Com 8 e 10, ganha mais estrelas."},
 	{"icone": "trofeu", "titulo": "GANHE SEU TÍTULO",
-		"texto": "Cada nível vencido dá um título de doceiro. Chegue ao Mestre!"},
+		"texto": "Cada nível vencido dá um título de doceiro. Use moedas para pedir ajuda e revise seus erros!"},
 ]
 const FAIXAS := [
 	{"personagem": "brigadeiro_triste", "faixa": "MENOS DE 6", "nome": "AINDA NÃO É DOCEIRO"},

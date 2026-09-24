@@ -60,6 +60,9 @@ func _process(delta: float) -> void:
 func _mostrar_pergunta() -> void:
 	var pergunta: Dictionary = _perguntas[_indice]
 	%Contador.text = "PERGUNTA %d/%d" % [_indice + 1, _perguntas.size()]
+	if Jogo.revisao:
+		var nivel: String = Jogo.niveis[pergunta["nivel"]]["nome"].to_upper()
+		%Contador.text = "REVISÃO · %s · %d/%d" % [nivel, _indice + 1, _perguntas.size()]
 	%Enunciado.text = pergunta["enunciado"]
 	for i in _botoes.size():
 		var botao := _botoes[i]

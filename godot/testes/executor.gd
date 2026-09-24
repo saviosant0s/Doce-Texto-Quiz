@@ -12,6 +12,9 @@ func _ready() -> void:
 	_testar_sorteio()
 	_testar_progresso()
 	_testar_migracao()
+	_testar_revisao()
+	_testar_conquistas()
+	_testar_estatisticas()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -88,10 +91,10 @@ func _sem_repetidos(lista: Array) -> bool:
 
 
 ## Responde a partida preparada com `acertos` respostas certas e finaliza.
-func _jogar(acertos: int, _nivel: int) -> void:
+func _jogar(acertos: int, _nivel: int, tempo := 3.0) -> void:
 	for i in Jogo.perguntas_partida.size():
 		var correta: int = Jogo.perguntas_partida[i]["resposta"]
-		Jogo.registrar_resposta(correta if i < acertos else (correta + 1) % 4, 3.0)
+		Jogo.registrar_resposta(correta if i < acertos else (correta + 1) % 4, tempo)
 	Jogo.finalizar_partida()
 
 
@@ -134,6 +137,100 @@ func _testar_migracao() -> void:
 	verificar(novo["niveis"][0]["aprovado"] and novo["niveis"][0]["estrelas"] == 2, "8 acertos antigos = aprovado, 2 estrelas")
 	verificar(not novo["niveis"][1]["aprovado"], "3 acertos antigos = não aprovado")
 	verificar(novo["config"]["volume_musica"] == 0.0, "música desligada vira volume 0")
+
+
+# --- Revisão, conquistas e estatísticas -----------------------------------
+
+func _testar_revisao() -> void:
+	_secao("revisão de erros")
+	Progresso.apagar()
+	verificar(Jogo.perguntas_para_revisar().is_empty(), "sem erros, nada para revisar")
+	Jogo.preparar_partida(0)
+	_jogar(6, 0)  # passa com 6; erra 4
+	var erradas := []
+	for i in 10:
+		if not Jogo.resultados[i]:
+			erradas.append(Jogo.perguntas_partida[i]["id"])
+	var para_revisar := Jogo.perguntas_para_revisar().map(func(p): return p["id"])
+	verificar(para_revisar.size() == 4, "4 perguntas para revisar")
+	verificar(erradas.all(func(id): return id in para_revisar), "são as que errou")
+	var nivel_antes: Dictionary = Progresso.niveis[0].duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Jogo.preparar_revisao()
+	verificar(Jogo.revisao and Jogo.perguntas_partida.size() == 4, "revisão tem só as 4 erradas")
+	verificar(Jogo.perguntas_partida.all(func(p): return p["nivel"] == 0), "cada pergunta sabe o nível de origem")
+	_jogar(3, 0)
+	verificar(Jogo.resumo["revisao"] and Jogo.resumo["restantes"] == 1, "corrigiu 3; falta 1")
+	verificar(Progresso.niveis[0] == nivel_antes, "revisão não mexe no nível")
+	verificar(Progresso.estatisticas["revisoes"] == 1, "conta a revisão")
+	verificar(Progresso.moedas >= moedas_antes + 3 * Jogo.MOEDAS_POR_ACERTO_REVISAO, "moedas da revisão")
+	Jogo.preparar_partida(0)
+	verificar(not Jogo.revisao, "partida normal depois da revisão")
+	Jogo.preparar_revisao()
+	_jogar(1, 0)
+	verificar(Jogo.perguntas_para_revisar().is_empty(), "revisou tudo")
+	verificar(Progresso.conquistas.has("revisor"), "conquista por acertar a revisão toda")
+
+
+func _testar_conquistas() -> void:
+	_secao("conquistas")
+	Progresso.apagar()
+	var ids := {}
+	for c in Conquistas.LISTA:
+		verificar(not ids.has(c["id"]), "id de conquista único: %s" % c["id"])
+		ids[c["id"]] = true
+		verificar(ResourceLoader.exists("res://assets/icones/%s.svg" % c["icone"]), "ícone de %s existe" % c["id"])
+	Jogo.preparar_partida(0)
+	_jogar(4, 0, 10.0)
+	var novas: Array = Jogo.resumo["conquistas"].map(func(c): return c["id"])
+	verificar(novas == ["primeira_partida"], "primeira partida (e só ela): %s" % [novas])
+	var moedas := Progresso.moedas
+	verificar(Progresso.estatisticas["moedas_ganhas"] == moedas, "moedas ganhas incluem a recompensa")
+	Jogo.preparar_partida(0)
+	_jogar(10, 0, 2.0)
+	novas = Jogo.resumo["conquistas"].map(func(c): return c["id"])
+	for id in ["primeira_aprovacao", "gabarito", "embalado", "relampago"]:
+		verificar(id in novas, "desbloqueia %s" % id)
+	verificar(not "primeira_partida" in novas, "não repete conquista")
+	verificar(not "todos_niveis" in novas, "ainda não passou em todos")
+	# difícil sem ajudas
+	Progresso.niveis[1]["aprovado"] = true
+	Jogo.preparar_partida(2)
+	Jogo.ajudas_usadas = 0
+	_jogar(7, 2, 12.0)
+	novas = Jogo.resumo["conquistas"].map(func(c): return c["id"])
+	verificar("sem_rodinhas" in novas and "todos_niveis" in novas, "sem rodinhas e confeitaria completa")
+	verificar(Conquistas.quantidade_desbloqueada() == Progresso.conquistas.size(), "contagem de desbloqueadas")
+	Progresso.estatisticas["partidas"] = 24
+	Jogo.preparar_partida(0)
+	_jogar(2, 0, 20.0)
+	novas = Jogo.resumo["conquistas"].map(func(c): return c["id"])
+	verificar("persistente" in novas and "dedicado" in novas, "10 e 25 partidas")
+
+
+func _testar_estatisticas() -> void:
+	_secao("estatísticas")
+	Progresso.apagar()
+	var zerado := Jogo.acerto_por_assunto()
+	verificar(zerado["word"]["respostas"] == 0 and zerado["excel"]["respostas"] == 0, "começa sem respostas")
+	verificar(Jogo.mais_erradas(3).is_empty(), "sem erradas no começo")
+	for nivel in Jogo.niveis:
+		for p in nivel["perguntas"]:
+			verificar(p.get("assunto", "") in ["word", "excel", "geral"], "assunto válido em %s" % p["id"])
+	Jogo.preparar_partida(0)
+	_jogar(7, 0)
+	var totais := Jogo.acerto_por_assunto()
+	var respostas := 0
+	var acertos := 0
+	for assunto in totais:
+		respostas += totais[assunto]["respostas"]
+		acertos += totais[assunto]["acertos"]
+	verificar(respostas == 10 and acertos == 7, "soma por assunto bate com a partida")
+	verificar(Progresso.estatisticas["respostas"] == 10 and Progresso.estatisticas["acertos"] == 7, "totais gerais")
+	var erradas := Jogo.mais_erradas(5)
+	verificar(erradas.size() == 3 and erradas.all(func(p): return p["erros"] == 1), "3 mais erradas")
+	verificar(Jogo.pergunta_por_id("m07")["nivel"] == 1, "acha pergunta pelo id")
+	verificar(Jogo.total_de_perguntas() == 60, "60 perguntas no total")
 
 
 # --- Fluxo completo pelas telas ---------------------------------------------
@@ -190,12 +287,41 @@ func _testar_fluxo_completo() -> void:
 	verificar(Jogo.resumo["estrelas"] == 3 and Jogo.resumo["titulo"] == "noob", "3 estrelas e título Noob")
 	verificar(get_tree().current_scene.get_node("%ProximoNivel").visible, "oferece ir ao próximo nível")
 
+	await _testar_telas_novas()
 	await _testar_configuracoes()
 
 	for tela in ["niveis", "titulos", "como_jogar", "creditos", "sobre", "configuracoes", "inicio"]:
 		Telas.ir_para(tela)
 		await get_tree().create_timer(0.7).timeout
 		verificar(get_tree().current_scene.scene_file_path == Telas.CENAS[tela], "abre %s" % tela)
+
+
+## Botão de revisão na tela de níveis e abas da tela de troféus.
+func _testar_telas_novas() -> void:
+	Progresso.apagar()
+	Jogo.preparar_partida(0)
+	_jogar(6, 0)
+	Telas.ir_para("niveis")
+	verificar(await _esperar_tela("Niveis"), "volta aos níveis")
+	await get_tree().create_timer(0.2).timeout
+	var botao := get_tree().current_scene.find_child("Revisar", true, false) as Button
+	verificar(botao != null and botao.text == "REVISAR ERROS (4)", "botão de revisar com 4 erros")
+	if botao:
+		botao.pressed.emit()
+		verificar(await _esperar_tela("Partida", 8.0), "revisão abre a partida")
+		verificar(Jogo.revisao, "partida em modo revisão")
+		var contador: String = get_tree().current_scene.get_node("%Contador").text
+		verificar(contador.begins_with("REVISÃO"), "contador mostra REVISÃO")
+	Telas.ir_para("titulos")
+	verificar(await _esperar_tela("Titulos"), "abre os troféus")
+	var tela := get_tree().current_scene
+	for aba in 3:
+		tela.mostrar_aba(aba)
+		await get_tree().process_frame
+		verificar(tela._paginas[aba].visible, "aba %d visível" % aba)
+	var cartoes: Array = tela._paginas[1].find_children("*", "PanelContainer", true, false) \
+		.filter(func(c): return Conquistas.dados(c.name) != {})
+	verificar(cartoes.size() == Conquistas.LISTA.size(), "um cartão por conquista")
 
 
 func _testar_configuracoes() -> void:

@@ -21,7 +21,8 @@ var moedas := 0
 var config := {}
 ## Histórico por id de pergunta: {"vistas", "acertos", "erros", "ultima_certa"}.
 var perguntas := {}
-## Totais gerais: partidas, respostas, acertos, tempo_total (s), melhor_sequencia.
+## Totais gerais: partidas, revisoes, respostas, acertos, tempo_total (s),
+## melhor_sequencia e moedas_ganhas (tudo que já ganhou, mesmo o que gastou).
 var estatisticas := {}
 ## Conquistas desbloqueadas: {id: data "AAAA-MM-DD"}.
 var conquistas := {}
@@ -46,7 +47,10 @@ func _zerar() -> void:
 	moedas = 0
 	config = {"volume_musica": 0.8, "volume_efeitos": 1.0, "animacoes": true}
 	perguntas = {}
-	estatisticas = {"partidas": 0, "respostas": 0, "acertos": 0, "tempo_total": 0.0, "melhor_sequencia": 0}
+	estatisticas = {
+		"partidas": 0, "revisoes": 0, "respostas": 0, "acertos": 0, "tempo_total": 0.0,
+		"melhor_sequencia": 0, "moedas_ganhas": 0,
+	}
 	conquistas = {}
 
 
@@ -87,8 +91,35 @@ func registrar_partida(nivel: int, respostas: Array, titulo: String, estrelas: i
 	dados["ultimas_perguntas"] = respostas.map(func(r): return r["id"])
 	if aprovado:
 		titulos[titulo] = titulos.get(titulo, 0) + 1
-	moedas += moedas_ganhas
+	estatisticas["partidas"] += 1
+	_registrar_respostas(respostas, moedas_ganhas)
+	return mudancas
 
+
+## Guarda uma partida de revisão: só atualiza o histórico das perguntas, as
+## estatísticas e as moedas (os níveis não mudam).
+func registrar_revisao(respostas: Array, moedas_ganhas: int) -> void:
+	estatisticas["revisoes"] += 1
+	_registrar_respostas(respostas, moedas_ganhas)
+
+
+## Marca uma conquista como desbloqueada e dá a recompensa. Retorna falso se
+## ela já tinha sido desbloqueada.
+func desbloquear_conquista(id: String, recompensa: int) -> bool:
+	if conquistas.has(id):
+		return false
+	conquistas[id] = Time.get_date_string_from_system()
+	ganhar_moedas(recompensa)
+	return true
+
+
+func ganhar_moedas(quantidade: int) -> void:
+	moedas += quantidade
+	estatisticas["moedas_ganhas"] += quantidade
+	salvar()
+
+
+func _registrar_respostas(respostas: Array, moedas_ganhas: int) -> void:
 	var sequencia := 0
 	for r in respostas:
 		var h := historico(r["id"])
@@ -99,11 +130,9 @@ func registrar_partida(nivel: int, respostas: Array, titulo: String, estrelas: i
 		sequencia = sequencia + 1 if r["acertou"] else 0
 		estatisticas["melhor_sequencia"] = maxi(estatisticas["melhor_sequencia"], sequencia)
 		estatisticas["tempo_total"] += r.get("tempo", 0.0)
-	estatisticas["partidas"] += 1
-	estatisticas["respostas"] += respostas.size()
-	estatisticas["acertos"] += acertos
-	salvar()
-	return mudancas
+		estatisticas["respostas"] += 1
+		estatisticas["acertos"] += 1 if r["acertou"] else 0
+	ganhar_moedas(moedas_ganhas)  # também salva
 
 
 func gastar_moedas(quantidade: int) -> bool:
@@ -161,7 +190,17 @@ func carregar() -> void:
 	moedas = int(dados.get("moedas", 0))
 	config.merge(dados.get("config", {}), true)
 	perguntas = dados.get("perguntas", {})
-	estatisticas.merge(dados.get("estatisticas", {}), true)
+	for id in perguntas:
+		for chave in ["vistas", "acertos", "erros"]:
+			perguntas[id][chave] = int(perguntas[id][chave])
+	var estatisticas_salvas: Dictionary = dados.get("estatisticas", {})
+	if not estatisticas_salvas.has("moedas_ganhas"):
+		# saves de antes desse campo: o mínimo que já ganhou é o que tem agora
+		estatisticas_salvas["moedas_ganhas"] = moedas
+	estatisticas.merge(estatisticas_salvas, true)
+	for chave in estatisticas:
+		if chave != "tempo_total":
+			estatisticas[chave] = int(estatisticas[chave])
 	conquistas = dados.get("conquistas", {})
 	alterado.emit()
 

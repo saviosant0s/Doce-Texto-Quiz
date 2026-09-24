@@ -8,6 +8,9 @@ extends Node
 ##   --nivel=1     nível da partida simulada (0 = fácil)
 ##   --liberar=2   marca como aprovados os níveis antes deste (para ver cadeados)
 ##   --moedas=120  começa com essa quantidade de moedas
+##   --historico=6 simula 6 partidas antes (para estatísticas e conquistas)
+##   --revisao=3   depois, simula uma revisão com 3 acertos (tela de resultado)
+##   --aba=1       aba a mostrar (tela de troféus)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -24,13 +27,20 @@ func _ready() -> void:
 		Progresso.niveis[i]["estrelas"] = 3 - i
 		Progresso.niveis[i]["recorde"] = 10 - i * 2
 		Progresso.niveis[i]["partidas"] = 3
+	for i in int(args.get("historico", "0")):
+		_simular_partida(i % (int(args.get("liberar", "0")) + 1), [4, 7, 9, 6, 10, 8][i % 6])
 	Progresso.moedas = int(args.get("moedas", str(Progresso.moedas)))
 	if args.has("acertos"):
 		_simular_partida(int(args.get("nivel", "0")), int(args["acertos"]))
+	if args.has("revisao"):
+		_simular_revisao(int(args["revisao"]))
 	if args["capturar"] == "partida" and Jogo.perguntas_partida.is_empty():
 		Jogo.preparar_partida(int(args.get("nivel", "0")))
 	await get_tree().process_frame
 	get_tree().change_scene_to_file(Telas.CENAS[args["capturar"]])
+	if args.has("aba"):
+		await get_tree().process_frame
+		get_tree().current_scene.mostrar_aba(int(args["aba"]))
 	await get_tree().create_timer(float(args.get("espera", "1.2"))).timeout
 	get_viewport().get_texture().get_image().save_png(args.get("saida", "user://captura.png"))
 	get_tree().quit()
@@ -43,4 +53,12 @@ func _simular_partida(nivel: int, acertos: int) -> void:
 		var acertou := (i * 7) % 10 < acertos  # espalha os acertos
 		var escolha := correta if acertou else (-1 if i == 9 else (correta + 1) % 4)
 		Jogo.registrar_resposta(escolha, 5.0 + i)
+	Jogo.finalizar_partida()
+
+
+func _simular_revisao(acertos: int) -> void:
+	Jogo.preparar_revisao()
+	for i in Jogo.perguntas_partida.size():
+		var correta: int = Jogo.perguntas_partida[i]["resposta"]
+		Jogo.registrar_resposta(correta if i < acertos else (correta + 1) % 4, 4.0 + i)
 	Jogo.finalizar_partida()
