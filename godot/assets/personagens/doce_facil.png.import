@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bhsm1p0hymf0y"
-path="res://.godot/imported/rosquinha.svg-66756804420b5959f5398e16d0b8ce89.ctex"
+uid="uid://dxu3chjk2tylk"
+path="res://.godot/imported/doce_facil.png-427a48b2796e591cafed23a8df5d7b18.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/personagens/rosquinha.svg"
-dest_files=["res://.godot/imported/rosquinha.svg-66756804420b5959f5398e16d0b8ce89.ctex"]
+source_file="res://assets/personagens/doce_facil.png"
+dest_files=["res://.godot/imported/doce_facil.png-427a48b2796e591cafed23a8df5d7b18.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

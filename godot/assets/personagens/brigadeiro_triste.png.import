@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dbdmp3v65v4xr"
-path="res://.godot/imported/sorvete.svg-66a5deca0f166595acec03765f61477d.ctex"
+uid="uid://cpamnjhvnimov"
+path="res://.godot/imported/brigadeiro_triste.png-d8035bd398fec6edc4caf0cf7d1abb91.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/personagens/sorvete.svg"
-dest_files=["res://.godot/imported/sorvete.svg-66a5deca0f166595acec03765f61477d.ctex"]
+source_file="res://assets/personagens/brigadeiro_triste.png"
+dest_files=["res://.godot/imported/brigadeiro_triste.png-d8035bd398fec6edc4caf0cf7d1abb91.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

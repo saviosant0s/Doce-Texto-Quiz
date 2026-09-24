@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://rq8806kjibcc"
-path="res://.godot/imported/brigadeiro_feliz.svg-e06e2be0bc4d71c4d5705d1bd9d6bc24.ctex"
+uid="uid://d25g4rruoeutl"
+path="res://.godot/imported/maca_noob.png-ead99b10ffbb43d0995814fbe54113f3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/personagens/brigadeiro_feliz.svg"
-dest_files=["res://.godot/imported/brigadeiro_feliz.svg-e06e2be0bc4d71c4d5705d1bd9d6bc24.ctex"]
+source_file="res://assets/personagens/maca_noob.png"
+dest_files=["res://.godot/imported/maca_noob.png-ead99b10ffbb43d0995814fbe54113f3.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

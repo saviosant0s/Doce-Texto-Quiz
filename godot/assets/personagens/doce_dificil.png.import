@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c77naposa35sd"
-path="res://.godot/imported/pudim.svg-f15d48ef97c2ec4332ca3a859d927d44.ctex"
+uid="uid://daq1h1kr5htvg"
+path="res://.godot/imported/doce_dificil.png-265b422e5487c4abfe422f629c48e0a7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/personagens/pudim.svg"
-dest_files=["res://.godot/imported/pudim.svg-f15d48ef97c2ec4332ca3a859d927d44.ctex"]
+source_file="res://assets/personagens/doce_dificil.png"
+dest_files=["res://.godot/imported/doce_dificil.png-265b422e5487c4abfe422f629c48e0a7.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
