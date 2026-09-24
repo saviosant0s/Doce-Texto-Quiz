@@ -58,12 +58,9 @@ Metas: APK para Android e registro no INPI.
 
 ## Onde parou
 
-- Última coisa feita: **padrão único de personagens 3D** no jogo todo (níveis,
-  pódio, resultado, como jogar, carregamento, coleção) usando fotos dos
-  modelos; doces de título iguais aos personagens do jogo (maçã, cupcake,
-  chocolate) com luvas brancas; coleção com rolagem pelo dedo, silhueta nos
-  doces não comprados e sem desenho de miniaturas no celular (causa provável
-  do app fechando); @ do Instagram atualizados. APK e site publicados.
+- Última coisa feita: doces 3D vivos (giram com o dedo, piscam e acenam) também
+  nos cartões dos níveis, no pódio de troféus e no resultado; piscar e acenar
+  mais visíveis. Em aparelhos sem placa de vídeo ficam as fotos paradas.
 - Futuro (não fazer agora): login com Google para guardar o progresso na
   nuvem; detalhes e cuidados em `PENDENCIAS.md` (seção "Futuro").
 - Ideias para depois: companheiro comemorando na tela de resultado; trocar
@@ -72,7 +69,7 @@ Metas: APK para Android e registro no INPI.
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (594 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (597 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

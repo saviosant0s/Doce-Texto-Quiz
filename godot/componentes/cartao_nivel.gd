@@ -56,6 +56,10 @@ func configurar(indice: int, nivel: Dictionary) -> void:
 		%Acertos.text = "Recorde %d/%d · %s pts" % [
 			progresso["recorde"], Jogo.PERGUNTAS_POR_PARTIDA, Jogo.formatar(progresso["recorde_pontos"])]
 	pressed.connect(_ao_tocar)
+	# Doce 3D vivo no lugar da foto: gira com o dedo; um toque rápido abre o nível
+	var doce := Personagens.animar(%Personagem, nivel["personagem"], not liberado, Color("#4A3078"))
+	if doce:
+		doce.tocado.connect(_ao_tocar)
 	Animacoes.destacar_ao_passar(self)
 	_caber_conteudo.call_deferred()
 
