@@ -61,7 +61,7 @@ Metas: APK para Android e registro no INPI.
 Um mundo 3D pequeno onde o jogador anda com o seu doce (o companheiro da
 coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
 
-1. **Vila andável (MVP)** — `godot/cenas/vila.*`: chão, caminhos e enfeites de
+1. ✅ **Vila andável (MVP)** — feito em 24/09/2026 — `godot/cenas/vila.*`: chão, caminhos e enfeites de
    doce; o doce anda (joystick na tela, teclado no computador) com animação de
    andar; câmera acompanhando; prédios com porta:
    - ESCOLA → níveis do quiz · CONFEITARIA → Minha Coleção ·
@@ -80,9 +80,11 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-- Última coisa feita: doces 3D vivos (giram com o dedo, piscam e acenam) também
-  nos cartões dos níveis, no pódio de troféus e no resultado; piscar e acenar
-  mais visíveis. Em aparelhos sem placa de vídeo ficam as fotos paradas.
+- Última coisa feita: **Vila dos Doces, etapa 1**: vila 3D andável (joystick /
+  setas / WASD), doce do jogador = companheiro, moradores passeando, prédios
+  Escola (quiz), Confeitaria (coleção), Troféus e Fliperama (em breve). "JOGAR"
+  leva à vila. Código: `godot/cenas/vila.gd`, `godot/componentes/vila/`,
+  `godot/scripts/animacao_doce.gd` (andar, piscar, acenar).
 - Futuro (não fazer agora): login com Google para guardar o progresso na
   nuvem; detalhes e cuidados em `PENDENCIAS.md` (seção "Futuro").
 - Ideias para depois: companheiro comemorando na tela de resultado; trocar
@@ -91,7 +93,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (597 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (607 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

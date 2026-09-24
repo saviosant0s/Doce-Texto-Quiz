@@ -12,6 +12,7 @@ const CENAS := {
 	"sobre": "res://cenas/sobre.tscn",
 	"titulos": "res://cenas/titulos.tscn",
 	"colecao": "res://cenas/colecao.tscn",
+	"vila": "res://cenas/vila.tscn",
 	"carregamento": "res://cenas/carregamento.tscn",
 	"partida": "res://cenas/partida.tscn",
 	"aproveitamento": "res://cenas/aproveitamento.tscn",
@@ -53,6 +54,12 @@ func ir_para(nome: String) -> void:
 func abrir(nome: String) -> void:
 	_historico.push_back(get_tree().current_scene.scene_file_path)
 	_trocar_cena(CENAS[nome])
+
+
+## "Casa" do jogador: a Vila dos Doces (ou os níveis, em aparelhos sem placa
+## de vídeo, onde a vila em 3D travaria).
+func ir_para_casa() -> void:
+	ir_para("vila" if placa_rapida else "niveis")
 
 
 func voltar() -> void:

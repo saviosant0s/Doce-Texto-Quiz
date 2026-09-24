@@ -32,6 +32,10 @@ personagens, fontes) é a mesma da versão original.
   da última vez (de todos os níveis). Não muda os níveis, mas dá moedas.
 - Troféus: títulos, 16 conquistas com recompensa em moedas
   (`scripts/conquistas.gd`) e estatísticas (acerto por assunto, mais erradas).
+- Vila dos Doces: o "JOGAR" leva a uma vila 3D onde o jogador anda com o seu
+  doce (joystick na tela ou setas/WASD) e entra na Escola (quiz), Confeitaria
+  (coleção), Troféus e Fliperama (em breve). Em aparelhos sem placa de vídeo, vai
+  direto para os níveis.
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
   brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.

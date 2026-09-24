@@ -17,7 +17,7 @@ const PERSONAGENS_TITULO := {"noob": "maca_noob", "pro": "cupcake_pro", "mestre"
 func _ready() -> void:
 	var r := Jogo.resumo
 	%Detalhe.visible = false  # os números aparecem em etiquetas, sem texto corrido
-	%Inicio.pressed.connect(Telas.ir_para.bind("inicio"))
+	%Inicio.pressed.connect(Telas.ir_para_casa)
 	if r["revisao"]:
 		_mostrar_revisao(r)
 	else:

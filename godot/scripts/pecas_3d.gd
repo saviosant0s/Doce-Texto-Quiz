@@ -232,10 +232,14 @@ static func braco(pai: Node3D, ombro: Vector3, lado: int, mat: Material, tamanho
 static func pernas(pai: Node3D, quadril: Vector3, abertura: float, comprimento: float, mat: Material,
 		mat_sapato: Material, tamanho := 1.0) -> void:
 	for lado in [-1, 1]:
-		var topo := quadril + Vector3(lado * abertura, 0, 0)
-		var pe := topo + Vector3(lado * 0.03, -comprimento, 0.02)
-		cano(pai, topo, pe, 0.06 * tamanho, mat)
-		esfera(pai, 0.1 * tamanho, pe + Vector3(lado * 0.02, -0.03, 0.06) * tamanho, mat_sapato, Vector3(1.0, 0.65, 1.45))
+		# cada perna gira no quadril (nó "Perna"), para a animação de andar
+		var perna := Node3D.new()
+		perna.name = "Perna"
+		perna.position = quadril + Vector3(lado * abertura, 0, 0)
+		pai.add_child(perna)
+		var pe := Vector3(lado * 0.03, -comprimento, 0.02)
+		cano(perna, Vector3.ZERO, pe, 0.06 * tamanho, mat)
+		esfera(perna, 0.1 * tamanho, pe + Vector3(lado * 0.02, -0.03, 0.06) * tamanho, mat_sapato, Vector3(1.0, 0.65, 1.45))
 
 
 ## Carrega um modelo .glb, centraliza e ajusta a altura.

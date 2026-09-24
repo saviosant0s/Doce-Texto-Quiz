@@ -20,6 +20,7 @@ func _ready() -> void:
 	fotografo.size = fotografo.custom_minimum_size
 	add_child(fotografo)
 	fotografo.set_process(false)  # parado: sem flutuar, piscar ou acenar
+	fotografo._animacao.set_process(false)
 	fotografo._viewport.size = Vector2i(TAMANHO, TAMANHO)
 	fotografo._viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(PASTA))

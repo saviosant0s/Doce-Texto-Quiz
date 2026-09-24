@@ -4,7 +4,7 @@ extends Control
 
 func _ready() -> void:
 	%Versao.text = Telas.versao()
-	%Jogar.pressed.connect(Telas.ir_para.bind("niveis"))
+	%Jogar.pressed.connect(Telas.ir_para_casa)  # a Vila dos Doces
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))

@@ -343,6 +343,7 @@ func _testar_fluxo_completo() -> void:
 	verificar(get_tree().current_scene.get_node("%ProximoNivel").visible, "oferece ir ao próximo nível")
 
 	await _testar_telas_novas()
+	await _testar_vila()
 	await _testar_tela_colecao()
 	await _testar_configuracoes()
 
@@ -408,6 +409,41 @@ func _testar_telas_novas() -> void:
 	var cartoes: Array = tela._paginas[1].find_children("*", "PanelContainer", true, false) \
 		.filter(func(c): return Conquistas.dados(c.name) != {})
 	verificar(cartoes.size() == Conquistas.LISTA.size(), "um cartão por conquista")
+
+
+## Vila dos Doces: andar, chegar na porta, entrar e voltar para a porta.
+func _testar_vila() -> void:
+	_secao("vila dos doces")
+	Vila.ultima_porta = ""
+	Telas.ir_para("vila")
+	verificar(await _esperar_tela("Vila"), "abre a vila")
+	var vila: Vila = get_tree().current_scene
+	verificar(vila.jogador != null and vila.jogador.id == "brigadeiro", "o jogador é o brigadeiro (sem companheiro)")
+	verificar(vila.find_children("*", "DoceAndante", true, false).size() >= 3, "moradores passeando")
+	var inicio := vila.jogador.global_position
+	for i in 20:
+		vila.jogador.andar(Vector3(0, 0, -1), 1.0 / 60.0)
+		await get_tree().physics_frame
+	verificar(vila.jogador.global_position.z < inicio.z - 0.5, "o doce anda para frente")
+	# leva o doce até a porta da escola
+	vila.jogador.global_position = vila._portas["escola"]["porta"]
+	for i in 6:
+		await get_tree().physics_frame
+	verificar(vila._porta_atual == "escola", "chegou na porta da escola")
+	verificar(vila._botao_entrar.visible and vila._botao_entrar.text == "JOGAR O QUIZ", "aparece o botão de entrar")
+	vila.entrar("fliperama")
+	await get_tree().create_timer(0.3).timeout
+	verificar(get_tree().current_scene == vila, "fliperama ainda não abre nada (em breve)")
+	vila._botao_entrar.pressed.emit()
+	verificar(await _esperar_tela("Niveis"), "entrar na escola abre os níveis")
+	await get_tree().create_timer(0.4).timeout
+	get_tree().current_scene.get_node("%Inicio").pressed.emit()
+	verificar(await _esperar_tela("Vila"), "o botão de casa dos níveis volta para a vila")
+	await get_tree().create_timer(0.3).timeout
+	vila = get_tree().current_scene
+	var porta: Vector3 = vila._portas["escola"]["porta"]
+	verificar(vila.jogador.global_position.distance_to(porta) < 1.5, "volta na porta da escola")
+	Vila.ultima_porta = ""
 
 
 ## Tela da coleção: comprar pela tela e ver o companheiro no carregamento.

@@ -6,7 +6,7 @@ const CARTAO := preload("res://componentes/cartao_nivel.tscn")
 
 
 func _ready() -> void:
-	%Inicio.pressed.connect(Telas.ir_para.bind("inicio"))
+	%Inicio.pressed.connect(Telas.voltar)  # volta para a vila (ou o início)
 	%Titulos.pressed.connect(Telas.abrir.bind("titulos"))
 	%Colecao.pressed.connect(Telas.abrir.bind("colecao"))
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
