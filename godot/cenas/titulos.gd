@@ -382,6 +382,8 @@ func _criar_coluna(titulo: Dictionary) -> VBoxContainer:
 		cadeado.offset_right = 32
 		cadeado.offset_bottom = 32
 		imagem.add_child(cadeado)
+	# Doce 3D vivo no lugar da foto (gira com o dedo); silhueta clara se bloqueado
+	Personagens.animar(imagem, titulo["personagem"], not conquistado, Color("#A58AD0"))
 
 	# Degrau do pódio
 	var degrau := PanelContainer.new()

@@ -7,15 +7,17 @@ extends Visor3D
 @export var id := "brigadeiro"
 ## Doce ainda não conquistado: aparece como silhueta de cor única (ainda se mexe).
 @export var silhueta := false
+## Cor da silhueta (escura em fundo amarelo, clara em fundo roxo).
+@export var cor_silhueta := Color("#8C6BC0")
 
 const COR_SILHUETA := Color("#8C6BC0")
 
 var _corpo: Node3D
 var _olhos: Array[Node3D] = []
 var _aceno: Node3D
-var _proxima_piscada := 2.0
+var _proxima_piscada := randf_range(0.8, 2.0)
 var _acenando_ate := 0.0
-var _proximo_aceno := 4.0
+var _proximo_aceno := randf_range(0.6, 1.8)  # acena logo que aparece
 
 
 func _init() -> void:
@@ -35,7 +37,9 @@ func _montar(pivo: Node3D) -> void:
 	Doces3D.montar(id, pivo)
 	if silhueta:
 		var cor := StandardMaterial3D.new()
-		cor.albedo_color = COR_SILHUETA
+		cor.albedo_color = cor_silhueta
+		if cor_silhueta.a < 1.0:
+			cor.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		cor.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		for malha in pivo.find_children("*", "MeshInstance3D", true, false):
 			malha.material_override = cor
@@ -69,13 +73,17 @@ func _process(delta: float) -> void:
 	if _tempo > _proxima_piscada:
 		for olhos in _olhos:
 			var tween := create_tween()
-			tween.tween_property(olhos, "scale:y", 0.1, 0.07)
-			tween.tween_property(olhos, "scale:y", 1.0, 0.09)
-		_proxima_piscada = _tempo + randf_range(2.0, 4.5)
+			tween.tween_property(olhos, "scale:y", 0.08, 0.09)
+			tween.tween_interval(0.05)
+			tween.tween_property(olhos, "scale:y", 1.0, 0.12)
+			if randf() < 0.3:  # às vezes pisca duas vezes
+				tween.tween_property(olhos, "scale:y", 0.08, 0.09)
+				tween.tween_property(olhos, "scale:y", 1.0, 0.12)
+		_proxima_piscada = _tempo + randf_range(1.8, 3.5)
 	# acena de vez em quando (e quando é tocado)
 	if _tempo > _proximo_aceno:
-		_acenando_ate = _tempo + 1.2
-		_proximo_aceno = _tempo + randf_range(5.0, 8.0)
+		_acenando_ate = _tempo + 1.6
+		_proximo_aceno = _tempo + randf_range(3.5, 6.0)
 	if _aceno:
-		var alvo := sin(_tempo * 14.0) * 0.35 if _tempo < _acenando_ate else 0.0
+		var alvo := sin(_tempo * 12.0) * 0.6 if _tempo < _acenando_ate else 0.0
 		_aceno.rotation.z = lerpf(_aceno.rotation.z, alvo, minf(1.0, delta * 12.0))

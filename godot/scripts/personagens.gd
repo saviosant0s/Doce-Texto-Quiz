@@ -37,3 +37,27 @@ static func material_silhueta(cor := Color(0.29, 0.19, 0.47, 0.9)) -> ShaderMate
 	material.shader = preload("res://tema/silhueta.gdshader")
 	material.set_shader_parameter("cor", cor)
 	return material
+
+
+## Troca a imagem parada de um personagem (TextureRect) pelo doce 3D vivo, que
+## gira com o dedo, pisca e acena. O TextureRect continua no lugar (tamanho e
+## animações de entrada), só sem a imagem. Em aparelhos sem placa de vídeo, a
+## foto parada continua (3D ali travaria). Retorna o Doce3D, ou null.
+static func animar(imagem: TextureRect, nome: String, silhueta := false,
+		cor_silhueta := Color(0.29, 0.19, 0.47, 0.9)) -> Doce3D:
+	var id: String = FOTOS_3D.get(nome, nome)
+	if not Telas.placa_rapida or not ResourceLoader.exists("res://assets/doces_3d/fotos/%s.png" % id):
+		return null
+	var doce := Doce3D.new()
+	doce.name = "Doce3D"
+	doce.id = id
+	doce.silhueta = silhueta
+	doce.cor_silhueta = cor_silhueta
+	doce.distancia = 4.5  # do tamanho da foto
+	doce.set_anchors_preset(Control.PRESET_FULL_RECT)
+	imagem.add_child(doce)
+	imagem.move_child(doce, 0)  # atrás de cadeados e outros enfeites
+	imagem.texture = null
+	imagem.material = null
+	imagem.mouse_filter = Control.MOUSE_FILTER_PASS
+	return doce

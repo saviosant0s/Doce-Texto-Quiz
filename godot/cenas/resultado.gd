@@ -8,6 +8,9 @@ const ICONE_CERTO := preload("res://assets/icones/certo.svg")
 const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 const ICONE_PONTOS := preload("res://assets/icones/grafico.svg")
 const ICONE_LAMPADA := preload("res://assets/icones/lampada.svg")
+## Personagem mostrado (nome como em Personagens.textura).
+var _personagem := "brigadeiro_triste"
+
 const PERSONAGENS_TITULO := {"noob": "maca_noob", "pro": "cupcake_pro", "mestre": "chocolate_mestre"}
 
 
@@ -20,6 +23,8 @@ func _ready() -> void:
 	else:
 		_mostrar_partida(r)
 	%Destaques.visible = %Destaques.get_child_count() > 0
+	%Personagem.texture = Personagens.textura(_personagem)
+	Personagens.animar(%Personagem, _personagem)  # doce 3D vivo, se o aparelho aguentar
 	Animacoes.entrar(%Personagem, Vector2(-60, 0))
 	Animacoes.entrar(%Cartao, Vector2(60, 0), 0.1)
 	if r["aprovado"] or (r["revisao"] and r["acertos"] > 0):
@@ -31,13 +36,13 @@ func _mostrar_partida(r: Dictionary) -> void:
 	if r["aprovado"]:
 		%Chamada.text = "PARABÉNS!"
 		%Titulo.text = "VOCÊ É UM DOCEIRO %s!" % r["titulo"].to_upper()
-		%Personagem.texture = Personagens.textura(PERSONAGENS_TITULO[r["titulo"]])
+		_personagem = PERSONAGENS_TITULO[r["titulo"]]
 		%JogarDeNovo.text = "JOGAR DE NOVO"
 	else:
 		var faltaram: int = Jogo.acertos_para_passar() - r["acertos"]
 		%Chamada.text = "QUASE LÁ! FALTOU 1 ACERTO" if faltaram == 1 else "FALTARAM %d ACERTOS" % faltaram
 		%Titulo.text = "VOCÊ AINDA NÃO É UM DOCEIRO!"
-		%Personagem.texture = Personagens.textura("brigadeiro_triste")
+		_personagem = "brigadeiro_triste"
 		%JogarDeNovo.text = "TENTE NOVAMENTE"
 		%Fundo.decoracao = Fundo.Decoracao.NENHUMA
 	_mostrar_estrelas(r["estrelas"])
@@ -68,7 +73,7 @@ func _mostrar_revisao(r: Dictionary) -> void:
 		%Chamada.text = "NÃO DESISTA!"
 		%Titulo.text = "LEIA AS EXPLICAÇÕES E TENTE DE NOVO!"
 		%Fundo.decoracao = Fundo.Decoracao.NENHUMA
-	%Personagem.texture = Personagens.textura("cupcake_pro" if r["acertos"] > 0 else "brigadeiro_triste")
+	_personagem = "cupcake_pro" if r["acertos"] > 0 else "brigadeiro_triste"
 	_destaque("%d/%d" % [r["acertos"], r["total"]], ICONE_CERTO)
 	_destaque("+%d" % r["moedas"], ICONE_MOEDA)
 	_destaque(Jogo.formatar(r["pontos"]), ICONE_PONTOS)

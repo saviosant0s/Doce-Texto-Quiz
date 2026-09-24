@@ -8,7 +8,12 @@ extends Control
 ## A cena 3D é desenhada na resolução real da tela (e não no tamanho lógico de
 ## 1280x720 esticado), para não ficar serrilhada em celulares de tela grande.
 
+## Toque rápido (sem arrastar): quem usa o visor dentro de um botão (ex.: o
+## cartão do nível) liga este sinal à mesma ação do botão.
+signal tocado
+
 const SENSIBILIDADE := 0.012  # radianos por pixel arrastado
+const LIMITE_TOQUE := 14.0  # px: mexeu menos que isso, foi um toque (não um giro)
 const ATRITO := 3.0  # quanto o giro "de embalo" freia por segundo
 const ESPERA_PARA_VOLTAR := 1.5  # segundos parado até voltar para a pose inicial
 
@@ -27,6 +32,7 @@ var _girando := false
 var _velocidade := 0.0
 var _parado_ha := 0.0
 var _tempo := 0.0
+var _inicio_toque := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -79,7 +85,10 @@ func _gui_input(evento: InputEvent) -> void:
 	if evento is InputEventMouseButton and evento.button_index == MOUSE_BUTTON_LEFT:
 		_girando = evento.pressed
 		if evento.pressed:
+			_inicio_toque = evento.global_position
 			_ao_tocar()
+		elif evento.global_position.distance_to(_inicio_toque) < LIMITE_TOQUE:
+			tocado.emit()
 		accept_event()
 	elif evento is InputEventMouseMotion and _girando:
 		var giro: float = evento.relative.x * SENSIBILIDADE

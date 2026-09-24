@@ -388,7 +388,17 @@ func _testar_telas_novas() -> void:
 		verificar(Jogo.revisao, "partida em modo revisão")
 		var contador: String = get_tree().current_scene.get_node("%Contador").text
 		verificar(contador.begins_with("REVISÃO"), "contador mostra REVISÃO")
-	Telas.ir_para("titulos")
+	# Doces 3D vivos nos cartões: toque rápido no doce abre o nível
+	Telas.ir_para("niveis")
+	await _esperar_tela("Niveis")
+	await get_tree().create_timer(0.3).timeout
+	var doces := get_tree().current_scene.find_children("Doce3D", "Control", true, false)
+	verificar(doces.size() == 3, "doce 3D em cada cartão de nível (%d)" % doces.size())
+	if doces.size() == 3:
+		verificar(doces[2].silhueta and not doces[0].silhueta, "nível bloqueado (difícil) em silhueta 3D")
+		doces[0].tocado.emit()
+		verificar(await _esperar_tela("Carregamento"), "toque no doce do cartão abre o nível")
+		Telas.ir_para("titulos")
 	verificar(await _esperar_tela("Titulos"), "abre os troféus")
 	var tela := get_tree().current_scene
 	for aba in 3:

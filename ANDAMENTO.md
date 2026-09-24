@@ -4,10 +4,10 @@ Diário do que foi feito, do que falta e de onde parou, para qualquer pessoa (ou
 uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 **Atualize este arquivo a cada etapa concluída.**
 
-- Branch de trabalho: `claude/amazing-hamilton-322u3n` (ainda não juntada na `main`)
+- Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.4.0
+- Versão atual: 0.5.0 (Android, Windows e navegador)
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
 
@@ -26,7 +26,7 @@ Metas: APK para Android e registro no INPI.
 | 3 | Tela de configurações: volume da música e dos efeitos, animações, apagar progresso | ✅ feito |
 | 4 | Diversão: pontos por rapidez, combo, ajudas com moedas, revisão dos erros, 14 conquistas, estatísticas, tela de troféus com abas | ✅ feito |
 | 5 | APK Android assinado, ícones, botão voltar do celular | ✅ feito (falta testar em celular de verdade) |
-| 6 | Parte técnica: testes automáticos no GitHub (Actions), limpeza, juntar na `main` | ⏳ **próxima** |
+| 6 | Parte técnica: testes automáticos no GitHub (Actions), limpeza, juntar na `main` | ✅ feito |
 
 ## Etapa 6: o que fazer (em ordem)
 
@@ -45,30 +45,31 @@ Metas: APK para Android e registro no INPI.
 4. (Opcional) A branch `gh-pages` guarda cada APK publicado no histórico e está
    crescendo; dá para recriá-la sem histórico (branch órfã) de vez em quando.
 
-## Pedido atual (24/09/2026)
+## Pedido atual (24/09/2026) — concluído
 
 1. ✅ Documento para o INPI: `docs/inpi/memorial_descritivo.pdf` (ver `docs/inpi/LEIA-ME.md`).
-2. ✅ Etapa 6: testes no GitHub Actions, limpeza (pygame em `legado/`), PR para a `main`
-   ([#1](https://github.com/saviosant0s/Doce-Texto-Quiz/pull/1)).
-3. ✅ Rostos mais amigáveis (olhos com pouco branco, sorriso em "D") e fantasma
-   de chocolate branco refeito.
-4. ⏳ Executável para Windows (.exe): preset "Windows" + `ferramentas/gerar_exe.sh`.
+2. ✅ Etapa 6: testes no GitHub Actions, limpeza (pygame em `legado/`), PR para a
+   `main` ([#1](https://github.com/saviosant0s/Doce-Texto-Quiz/pull/1), já juntado).
+3. ✅ Rostos mais amigáveis e fantasma de chocolate branco refeito.
+4. ✅ Executável para Windows (`ferramentas/gerar_exe.sh`), publicado em
+   https://saviosant0s.github.io/Doce-Texto-Quiz/windows/DoceTextoQuiz.zip.
+   Teste num Windows de verdade: GitHub > Actions > "Teste no Windows" > Run workflow.
+5. ✅ Versão na tela só com o número (v0.5.0).
 
 ## Onde parou
 
-- Última coisa feita: **padrão único de personagens 3D** no jogo todo (níveis,
-  pódio, resultado, como jogar, carregamento, coleção) usando fotos dos
-  modelos; doces de título iguais aos personagens do jogo (maçã, cupcake,
-  chocolate) com luvas brancas; coleção com rolagem pelo dedo, silhueta nos
-  doces não comprados e sem desenho de miniaturas no celular (causa provável
-  do app fechando); @ do Instagram atualizados. APK e site publicados.
+- Última coisa feita: doces 3D vivos (giram com o dedo, piscam e acenam) também
+  nos cartões dos níveis, no pódio de troféus e no resultado; piscar e acenar
+  mais visíveis. Em aparelhos sem placa de vídeo ficam as fotos paradas.
+- Futuro (não fazer agora): login com Google para guardar o progresso na
+  nuvem; detalhes e cuidados em `PENDENCIAS.md` (seção "Futuro").
 - Ideias para depois: companheiro comemorando na tela de resultado; trocar
   qualquer doce por um modelo .glb (basta salvar em `godot/assets/doces_3d/<id>.glb`).
 - Nada pela metade. Próximo passo: item 1 da etapa 6.
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (594 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (597 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
