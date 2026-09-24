@@ -1,8 +1,13 @@
 class_name Mascote3D
 extends SubViewportContainer
-## Mascote 3D (caixa de cereal) montado com formas simples. Arraste com o dedo
-## ou o mouse para girar; solto, ele continua girando um pouco e depois volta
-## a olhar para a frente.
+## Mascote 3D que gira com o dedo. Usa o modelo em MODELO (.glb, por exemplo
+## gerado por IA a partir do mascote original); sem ele, monta uma caixa de
+## cereal com formas simples. Arraste com o dedo ou o mouse para girar; solto,
+## ele continua girando um pouco e depois volta para a pose inicial.
+
+const MODELO := "res://assets/mascote_3d/mascote.glb"
+## Altura que o modelo ocupa na cena (o .glb é redimensionado para caber).
+const ALTURA_MODELO := 2.4
 
 const SENSIBILIDADE := 0.012  # radianos por pixel arrastado
 const ATRITO := 3.0  # quanto o giro "de embalo" freia por segundo
@@ -92,6 +97,9 @@ func _montar_cena() -> void:
 	_modelo = Node3D.new()
 	_modelo.rotation.y = ANGULO_INICIAL
 	_viewport.add_child(_modelo)
+	if ResourceLoader.exists(MODELO):
+		_carregar_modelo()
+		return
 	var caixa := Node3D.new()  # a caixa fica um pouco acima do centro
 	caixa.position.y = 0.25
 	_modelo.add_child(caixa)
@@ -146,6 +154,23 @@ func _montar_cena() -> void:
 		var tornozelo := Vector3(lado * 0.3, -1.28, 0.02)
 		_cano(caixa, quadril, tornozelo, 0.05, ROSA)
 		_esfera(caixa, 0.2, tornozelo + Vector3(lado * 0.04, -0.06, 0.1), ROXO, Vector3(1.1, 0.6, 1.5))
+
+
+## Carrega o .glb, centraliza e ajusta o tamanho para caber na cena.
+func _carregar_modelo() -> void:
+	var cena: Node3D = load(MODELO).instantiate()
+	_modelo.add_child(cena)
+	var caixa := AABB()
+	var primeira := true
+	for malha in cena.find_children("*", "MeshInstance3D", true, false):
+		var limites: AABB = malha.global_transform * malha.get_aabb()
+		caixa = limites if primeira else caixa.merge(limites)
+		primeira = false
+	if primeira:
+		return
+	var escala := ALTURA_MODELO / maxf(caixa.size.y, 0.001)
+	cena.scale = Vector3.ONE * escala
+	cena.position = -caixa.get_center() * escala
 
 
 func _material(cor: Color) -> StandardMaterial3D:
