@@ -68,11 +68,20 @@ coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
      TROFÉUS → troféus · FLIPERAMA → "em breve" (o Doce Match, abaixo).
    "JOGAR" na tela inicial leva à vila (aparelhos sem placa de vídeo vão direto
    para os níveis). Ao sair de um prédio, o doce aparece na porta dele.
-2. ⏳ **Melhorias pedidas (24/09)**: andar melhor (aceleração, curvas, pulo,
-   correr, poeira), gráfico estilo desenho mais bonito (sombreado cartoon,
-   contorno, sombras, antisserrilhado, chão detalhado) e casas diferentes
-   (Escola de biscoito com torre, Confeitaria-cupcake, Troféus-torre dourada,
-   Fliperama-máquina).
+2. ✅ **Melhorias pedidas (24/09)** — feitas em 24/09/2026:
+   - Andar: acelera e freia aos poucos, inclina nas curvas, corre (joystick
+     até o fim ou Shift) soltando poeira de açúcar, pula (botão PULAR ou
+     Espaço) e "amassa" ao cair. Enter/E entra no prédio.
+   - Gráfico de desenho: luz em degraus (toon), contorno escuro nas peças
+     grandes (`tema/contorno.gdshader`, via `CenarioVila.estilo_desenho`),
+     sombras de verdade, antisserrilhado 4x na vila, grama com manchas,
+     florzinhas e tufos (MultiMesh), caminhos com biscoitos de gotas de
+     chocolate, morros de sorvete no horizonte, nuvens de algodão-doce e
+     névoa rosinha leve.
+   - Casas diferentes (`cenario_vila.gd`): Escola de biscoito com telhado de
+     duas águas e torre do sino; Confeitaria em forma de cupcake gigante;
+     torre dos Troféus com colunas de bengala e cúpula dourada; Fliperama em
+     forma de máquina (letreiro, tela e painel com botões).
 3. Outros doces da coleção passeando pela vila; placas e detalhes.
 4. Pequenas tarefas na vila (ex.: moedas espalhadas, missões curtas).
 
@@ -85,10 +94,11 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-- Última coisa feita: **câmeras da Vila dos Doces** (botão com ícone de câmera,
-  tecla C): aérea, perto (atrás do doce, gira arrastando o dedo, não atravessa
-  paredes) e 1ª pessoa (joystick anda/vira). A escolha fica salva
-  (`Progresso.config.camera_vila`).
+- Última coisa feita: **melhorias da Vila dos Doces** (andar com pulo e
+  corrida, visual de desenho, casas diferentes) — item 2 da vila acima.
+  Antes disso: câmeras aérea/perto/1ª pessoa (tecla C, escolha salva).
+- Próximo passo da vila (quando o Sávio pedir): item 3 (outros doces
+  passeando, placas e detalhes) ou item 4 (moedas espalhadas, missões).
 - Futuro (não fazer agora): login com Google para guardar o progresso na
   nuvem; detalhes e cuidados em `PENDENCIAS.md` (seção "Futuro").
 - Ideias para depois: companheiro comemorando na tela de resultado; trocar
@@ -97,7 +107,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (613 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (620 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

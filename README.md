@@ -37,6 +37,11 @@ personagens, fontes) é a mesma da versão original.
   (coleção), Troféus e Fliperama (em breve). Em aparelhos sem placa de vídeo, vai
   direto para os níveis.
   Três câmeras (botão no topo ou tecla C): aérea, perto e primeira pessoa.
+  O doce acelera e freia aos poucos, corre (joystick até o fim ou Shift) e
+  pula (botão na tela ou Espaço); Enter/E entra. Visual de desenho animado
+  (luz em degraus, contorno, sombras) e cada prédio tem o seu jeito: Escola
+  de biscoito com torre do sino, Confeitaria-cupcake, torre dos Troféus e
+  Fliperama em forma de máquina.
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
   brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.

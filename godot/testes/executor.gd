@@ -420,11 +420,46 @@ func _testar_vila() -> void:
 	var vila: Vila = get_tree().current_scene
 	verificar(vila.jogador != null and vila.jogador.id == "brigadeiro", "o jogador é o brigadeiro (sem companheiro)")
 	verificar(vila.find_children("*", "DoceAndante", true, false).size() >= 3, "moradores passeando")
+	vila.set_physics_process(false)  # só o teste controla o doce
 	var inicio := vila.jogador.global_position
 	for i in 20:
 		vila.jogador.andar(Vector3(0, 0, -1), 1.0 / 60.0)
 		await get_tree().physics_frame
 	verificar(vila.jogador.global_position.z < inicio.z - 0.5, "o doce anda para frente")
+	# joystick até o fim corre; meio caminho só anda
+	for i in 40:
+		vila.jogador.andar(Vector3(1, 0, 0), 1.0 / 60.0)
+		await get_tree().physics_frame
+	var correndo := Vector2(vila.jogador.velocity.x, vila.jogador.velocity.z).length()
+	verificar(correndo > DoceAndante.VELOCIDADE + 1.0, "joystick até o fim: corre")
+	for i in 60:
+		vila.jogador.andar(Vector3(0, 0, 0.6), 1.0 / 60.0)
+		await get_tree().physics_frame
+	var andando := Vector2(vila.jogador.velocity.x, vila.jogador.velocity.z).length()
+	verificar(andando < DoceAndante.VELOCIDADE and andando > 1.0, "joystick pela metade: anda (freia e vira aos poucos)")
+	# pulo: sobe e volta para o chão
+	for i in 30:
+		vila.jogador.andar(Vector3.ZERO, 1.0 / 60.0)
+		await get_tree().physics_frame
+	vila.jogador.pular()
+	var mais_alto := 0.0
+	for i in 90:
+		vila.jogador.andar(Vector3.ZERO, 1.0 / 60.0)
+		await get_tree().physics_frame
+		mais_alto = maxf(mais_alto, vila.jogador.global_position.y)
+	verificar(mais_alto > 0.8, "o doce pula")
+	verificar(vila.jogador.is_on_floor() and vila.jogador.global_position.y < 0.1, "e cai de volta no chão")
+	verificar(vila.find_child("Pular", true, false) is Button, "botão de pular na tela")
+	vila.set_physics_process(true)
+	# cada prédio tem o seu jeito, e tudo tem contorno de desenho
+	var pecas := {}
+	for id in ["escola", "confeitaria", "trofeus", "fliperama"]:
+		var predio: Node3D = vila.find_child("Predio_" + id, true, false)
+		pecas[predio.find_children("*", "MeshInstance3D", true, false).size()] = true
+	verificar(pecas.size() == 4, "os quatro prédios são diferentes")
+	var com_contorno := vila.find_children("*", "MeshInstance3D", true, false) \
+		.filter(func(m): return m.material_overlay != null).size()
+	verificar(com_contorno > 40, "peças com contorno de desenho")
 	# câmeras: troca em ciclo, 1ª pessoa esconde o doce, a escolha fica salva
 	vila.usar_camera(Vila.Camera.AEREA)
 	vila.proxima_camera()

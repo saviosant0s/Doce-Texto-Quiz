@@ -2,9 +2,15 @@ class_name DoceAndante
 extends CharacterBody3D
 ## Um doce que anda pela Vila dos Doces: o do jogador (controlado pelo joystick
 ## ou teclado) ou um vizinho passeando sozinho. Vira para onde anda, balança
-## pernas e braços (AnimacaoDoce) e tem uma sombrinha redonda embaixo.
+## pernas e braços (AnimacaoDoce), acelera e freia aos poucos, inclina nas
+## curvas, corre soltando poeira de açúcar e pula (amassando ao cair).
 
-const VELOCIDADE := 5.0
+const VELOCIDADE := 4.2  # andando
+const VELOCIDADE_CORRENDO := 7.0  # joystick empurrado até o fim
+const ACELERACAO := 16.0
+const FREIO := 12.0
+const FORCA_PULO := 7.5
+const GRAVIDADE := 22.0
 const ESCALA := 0.72  # os modelos têm ~2,4 de altura; na vila ficam com ~1,7
 const GIRO := 10.0
 
@@ -12,6 +18,8 @@ const GIRO := 10.0
 var id := "brigadeiro"
 ## Vizinho: anda sozinho, sem controle do jogador.
 var passeando := false
+## Sombra redonda falsa embaixo (desligada quando a luz já faz sombra de verdade).
+var sombra_redonda := true
 
 var _modelo: Node3D
 var _sombra: MeshInstance3D
@@ -19,6 +27,9 @@ var _animacao := AnimacaoDoce.new()
 var _destino := Vector3.ZERO
 var _espera := 0.0
 var _area_passeio := Rect2(-6, -6, 12, 12)
+var _no_chao := true
+var _poeira: CPUParticles3D
+var _inclinacao := 0.0
 
 
 func _ready() -> void:
@@ -38,6 +49,7 @@ func _ready() -> void:
 	add_child(_animacao)
 	_animacao.configurar(_modelo)
 	_criar_sombra()
+	_criar_poeira()
 	if passeando:
 		_escolher_destino()
 
@@ -48,20 +60,56 @@ func definir_area_passeio(area: Rect2) -> void:
 	_escolher_destino()
 
 
-## Anda na direção dada (no chão; comprimento de 0 a 1 = velocidade).
+## Anda na direção dada (no chão; comprimento de 0 a 1 = velocidade; perto de
+## 1 = correndo). Acelera e freia aos poucos e inclina nas curvas.
 func andar(direcao: Vector3, delta: float) -> void:
 	var intensidade := clampf(direcao.length(), 0.0, 1.0)
-	var alvo := direcao.normalized() * VELOCIDADE * intensidade if intensidade > 0.05 else Vector3.ZERO
-	velocity.x = alvo.x
-	velocity.z = alvo.z
-	velocity.y = 0.0 if is_on_floor() else velocity.y - 20.0 * delta
+	var maxima := VELOCIDADE_CORRENDO if intensidade > 0.85 else VELOCIDADE
+	var alvo := direcao.normalized() * maxima * intensidade if intensidade > 0.05 else Vector3.ZERO
+	var horizontal := Vector2(velocity.x, velocity.z)
+	var taxa := ACELERACAO if alvo.length() > horizontal.length() else FREIO
+	horizontal = horizontal.move_toward(Vector2(alvo.x, alvo.z), taxa * delta)
+	velocity.x = horizontal.x
+	velocity.z = horizontal.y
+	velocity.y -= GRAVIDADE * delta  # ao bater no chão, move_and_slide zera
 	move_and_slide()
-	var andando := intensidade > 0.05
+	var velocidade := horizontal.length()
+	var andando := velocidade > 0.3 and is_on_floor()
 	_animacao.andando = andando
-	_animacao.ritmo = intensidade
-	if andando:
+	_animacao.ritmo = velocidade / VELOCIDADE
+	var giro := 0.0
+	if intensidade > 0.05:
 		var angulo := atan2(direcao.x, direcao.z)
+		var antes := _modelo.rotation.y
 		_modelo.rotation.y = lerp_angle(_modelo.rotation.y, angulo, minf(1.0, GIRO * delta))
+		giro = angle_difference(antes, _modelo.rotation.y) / maxf(delta, 0.001)
+	# inclina para frente ao correr e para o lado nas curvas
+	_inclinacao = lerpf(_inclinacao, clampf(-giro * 0.05, -0.25, 0.25), minf(1.0, 8.0 * delta))
+	_modelo.rotation.x = lerpf(_modelo.rotation.x, velocidade / VELOCIDADE_CORRENDO * 0.18, minf(1.0, 8.0 * delta))
+	_modelo.rotation.z = _inclinacao
+	# poeirinha de açúcar ao correr
+	_poeira.emitting = andando and velocidade > VELOCIDADE * 0.9
+	# chegou no chão depois de um pulo: amassadinha de desenho animado
+	if is_on_floor() and not _no_chao:
+		_amassar()
+	_no_chao = is_on_floor()
+
+
+## Pula (só se estiver no chão).
+func pular() -> void:
+	if not is_on_floor():
+		return
+	velocity.y = FORCA_PULO
+	_no_chao = false
+	var tween := create_tween()
+	tween.tween_property(_modelo, "scale", Vector3(0.85, 1.2, 0.85) * ESCALA, 0.1)
+	tween.tween_property(_modelo, "scale", Vector3.ONE * ESCALA, 0.2)
+
+
+func _amassar() -> void:
+	var tween := create_tween()
+	tween.tween_property(_modelo, "scale", Vector3(1.25, 0.72, 1.25) * ESCALA, 0.07)
+	tween.tween_property(_modelo, "scale", Vector3.ONE * ESCALA, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## Vira para um ângulo (radianos, no eixo Y) sem andar.
@@ -78,7 +126,7 @@ func olhar_para(ponto: Vector3) -> void:
 ## Esconde o doce (câmera em primeira pessoa: a câmera fica "dentro" dele).
 func mostrar_modelo(visivel: bool) -> void:
 	_modelo.visible = visivel
-	_sombra.visible = visivel
+	_sombra.visible = visivel and sombra_redonda
 
 
 ## Para onde o doce está virado (no chão).
@@ -128,4 +176,38 @@ func _criar_sombra() -> void:
 	sombra.material_override = mat
 	sombra.position.y = 0.02
 	sombra.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sombra.visible = sombra_redonda
 	add_child(sombra)
+
+
+## Poeira de açúcar saindo dos pés (bolinhas brancas que sobem e somem).
+func _criar_poeira() -> void:
+	_poeira = CPUParticles3D.new()
+	_poeira.emitting = false
+	_poeira.amount = 14
+	_poeira.lifetime = 0.5
+	_poeira.local_coords = false
+	var bolinha := SphereMesh.new()
+	bolinha.radius = 0.07
+	bolinha.height = 0.14
+	bolinha.radial_segments = 8
+	bolinha.rings = 4
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1, 1, 1, 0.8)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bolinha.material = mat
+	_poeira.mesh = bolinha
+	_poeira.direction = Vector3(0, 1, 0)
+	_poeira.spread = 60.0
+	_poeira.initial_velocity_min = 0.6
+	_poeira.initial_velocity_max = 1.2
+	_poeira.gravity = Vector3(0, -1.5, 0)
+	_poeira.scale_amount_min = 0.6
+	_poeira.scale_amount_max = 1.3
+	var curva := Curve.new()
+	curva.add_point(Vector2(0, 1))
+	curva.add_point(Vector2(1, 0))
+	_poeira.scale_amount_curve = curva
+	_poeira.position.y = 0.1
+	add_child(_poeira)

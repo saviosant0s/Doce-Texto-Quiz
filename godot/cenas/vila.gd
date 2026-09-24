@@ -3,7 +3,8 @@ extends Node3D
 ## Vila dos Doces: o jogador anda com o seu doce (o companheiro da coleção)
 ## pela vila e entra nos prédios: Escola (quiz), Confeitaria (coleção),
 ## Troféus e Fliperama (em breve: Doce Match). Moradores passeiam pela praça.
-## Anda com o joystick na tela ou com as setas/WASD; Enter/Espaço entra.
+## Anda com o joystick na tela ou com as setas/WASD (Shift corre); Espaço ou o
+## botão PULAR pula; Enter/E entra no prédio.
 ##
 ## Três câmeras (botão no topo; a escolha fica salva):
 ## - AÉREA: de cima e de longe, sempre olhando para o norte.
@@ -17,6 +18,7 @@ const CAMERA_DISTANCIA := Vector3(0, 7.5, 8.5)
 const CAMERA_SUAVIDADE := 5.0
 const ICONE_CASA := preload("res://assets/icones/casa.svg")
 const ICONE_CAMERA := preload("res://assets/icones/camera.svg")
+const ICONE_PULAR := preload("res://assets/icones/pular.svg")
 
 enum Camera { AEREA, PERTO, PRIMEIRA_PESSOA }
 const NOMES_CAMERA := ["AÉREA", "PERTO", "1ª PESSOA"]
@@ -30,13 +32,13 @@ const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 ## Prédios da vila. "cena" = tela aberta ao entrar ("" = ainda não existe).
 const PREDIOS := [
 	{"id": "escola", "nome": "ESCOLA", "posicao": Vector3(0, 0, -14), "parede": "#F4E038",
-		"telhado": "#7E57B1", "enfeite": "sino", "cena": "niveis", "acao": "JOGAR O QUIZ"},
+		"telhado": "#7E57B1", "cena": "niveis", "acao": "JOGAR O QUIZ"},
 	{"id": "confeitaria", "nome": "CONFEITARIA", "posicao": Vector3(-13, 0, -2), "parede": "#FFB3D1",
-		"telhado": "#E8364F", "enfeite": "cupcake", "cena": "colecao", "acao": "MINHA COLEÇÃO"},
+		"telhado": "#E8364F", "cena": "colecao", "acao": "MINHA COLEÇÃO"},
 	{"id": "trofeus", "nome": "TROFÉUS", "posicao": Vector3(13, 0, -2), "parede": "#C9B3EC",
-		"telhado": "#F2C230", "enfeite": "trofeu", "cena": "titulos", "acao": "VER TROFÉUS"},
+		"telhado": "#F2C230", "cena": "titulos", "acao": "VER TROFÉUS"},
 	{"id": "fliperama", "nome": "FLIPERAMA", "posicao": Vector3(-10, 0, -13), "parede": "#8FD3F4",
-		"telhado": "#5E3D8E", "enfeite": "fliperama", "cena": "", "acao": "FLIPERAMA"},
+		"telhado": "#5E3D8E", "cena": "", "acao": "FLIPERAMA"},
 ]
 ## Moradores que sempre passeiam (os mascotes dos níveis).
 const MORADORES := ["bala_verde", "milho_doce"]
@@ -53,6 +55,8 @@ var _botao_entrar: Button
 var modo_camera := Camera.AEREA
 ## Para onde a câmera olha (radianos no eixo Y; 0 = norte, para dentro da vila).
 var _giro := 0.0
+var _nuvens: Array = []
+var _msaa_antes := Viewport.MSAA_DISABLED
 
 
 func _ready() -> void:
@@ -69,6 +73,7 @@ func _ready() -> void:
 	_enfeitar()
 	_criar_jogador()
 	_criar_moradores()
+	CenarioVila.estilo_desenho(self)
 	_criar_camera()
 	_criar_interface()
 	usar_camera(int(Progresso.config.get("camera_vila", Camera.AEREA)))
@@ -81,7 +86,9 @@ func _physics_process(delta: float) -> void:
 	var teclas := Vector2(
 		float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
 		float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
-	direcao = (direcao + teclas + _joystick.vetor).limit_length(1.0)
+	# no teclado anda; com Shift corre (no joystick, corre empurrando até o fim)
+	direcao = (direcao + teclas).limit_length(1.0) * (1.0 if Input.is_key_pressed(KEY_SHIFT) else 0.8)
+	direcao = (direcao + _joystick.vetor).limit_length(1.0)
 	if modo_camera == Camera.PRIMEIRA_PESSOA:
 		# para os lados vira; para cima/baixo anda para frente/trás
 		_giro -= direcao.x * GIRO_JOYSTICK * delta
@@ -102,6 +109,8 @@ func _frente() -> Vector3:
 
 
 func _process(delta: float) -> void:
+	for nuvem: Node3D in _nuvens:  # nuvens passeando devagar
+		nuvem.position.x = wrapf(nuvem.position.x + delta * 0.4, -34.0, 34.0)
 	var cabeca := jogador.global_position + Vector3(0, ALTURA_OLHOS, 0)
 	match modo_camera:
 		Camera.AEREA:
@@ -164,7 +173,13 @@ func _unhandled_input(evento: InputEvent) -> void:
 	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_C:
 		proxima_camera()
 		return
-	if evento.is_action_pressed("ui_accept") and not _porta_atual.is_empty():
+	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_SPACE:
+		get_viewport().set_input_as_handled()
+		jogador.pular()
+		return
+	var entrar_tecla: bool = evento is InputEventKey and evento.pressed and not evento.echo \
+		and evento.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_E]
+	if (entrar_tecla or evento.is_action_pressed("ui_accept")) and not _porta_atual.is_empty():
 		get_viewport().set_input_as_handled()
 		entrar(_porta_atual)
 
@@ -219,16 +234,32 @@ func _criar_ambiente() -> void:
 	ambiente.sky = sky
 	ambiente.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	ambiente.ambient_light_color = Color.WHITE
-	ambiente.ambient_light_energy = 0.5
+	ambiente.ambient_light_energy = 0.45  # luz em degraus: lado claro ~0,9, sombra ~0,45
 	# sem reflexo do céu nas superfícies (deixava tudo desbotado)
 	ambiente.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
 	var mundo := WorldEnvironment.new()
 	mundo.environment = ambiente
 	add_child(mundo)
+	# névoa rosinha ao longe: o horizonte se mistura com o céu
+	ambiente.fog_enabled = true
+	ambiente.fog_light_color = Color("#FFE3F0")
+	ambiente.fog_density = 0.004
+	ambiente.fog_sky_affect = 0.0
 	var sol := DirectionalLight3D.new()
-	sol.rotation_degrees = Vector3(-50, -35, 0)
-	sol.light_energy = 1.1
+	sol.rotation_degrees = Vector3(-55, -35, 0)
+	sol.light_energy = 0.45
+	sol.shadow_enabled = true
+	sol.shadow_opacity = 0.55  # sombra suave, de desenho
+	sol.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sol.directional_shadow_max_distance = 45.0
 	add_child(sol)
+	# antisserrilhado nas bordas (volta ao normal ao sair da vila)
+	_msaa_antes = get_viewport().msaa_3d
+	get_viewport().msaa_3d = Viewport.MSAA_4X
+
+
+func _exit_tree() -> void:
+	get_viewport().msaa_3d = _msaa_antes
 
 
 func _enfeitar() -> void:
@@ -251,6 +282,17 @@ func _enfeitar() -> void:
 				CenarioVila.arvore_pirulito(self, ponto, cores[colocados % cores.size()])
 			3:
 				CenarioVila.jujuba(self, ponto, cores[(colocados * 7) % cores.size()], sorteio.randf_range(0.8, 1.4))
+	# florzinhas pelo gramado
+	var pontos := []
+	tentativas = 0
+	while pontos.size() < 90 and tentativas < 1500:
+		tentativas += 1
+		var ponto := Vector3(sorteio.randf_range(-19, 19), 0, sorteio.randf_range(-19, 19))
+		if ponto.length() > 5.0 and _longe_dos_caminhos(ponto, 0.0) and _longe_dos_predios(ponto, 3.8):
+			pontos.append(ponto)
+	CenarioVila.flores(self, pontos, 17)
+	CenarioVila.morros(self, 31.0)
+	_nuvens = CenarioVila.nuvens(self)
 	# jujubas enfeitando a praça
 	for i in 8:
 		var angulo := i * TAU / 8.0 + 0.2
@@ -273,6 +315,13 @@ func _lugar_livre(ponto: Vector3, folga: float) -> bool:
 	return _longe_dos_caminhos(ponto, folga)
 
 
+func _longe_dos_predios(ponto: Vector3, folga: float) -> bool:
+	for dados in PREDIOS:
+		if ponto.distance_to(dados["posicao"]) < folga:
+			return false
+	return true
+
+
 func _longe_dos_caminhos(ponto: Vector3, folga: float) -> bool:
 	for id in _portas:
 		var fim: Vector3 = _portas[id]["porta"]
@@ -286,6 +335,7 @@ func _longe_dos_caminhos(ponto: Vector3, folga: float) -> bool:
 func _criar_jogador() -> void:
 	jogador = DoceAndante.new()
 	jogador.name = "Jogador"
+	jogador.sombra_redonda = false  # o sol já faz sombra de verdade
 	var id := Colecao.companheiro()
 	jogador.id = id if not id.is_empty() else "brigadeiro"
 	add_child(jogador)
@@ -307,6 +357,7 @@ func _criar_moradores() -> void:
 		var morador := DoceAndante.new()
 		morador.id = ids[i]
 		morador.passeando = true
+		morador.sombra_redonda = false
 		add_child(morador)
 		var angulo := i * TAU / ids.size()
 		morador.global_position = Vector3(cos(angulo) * 5.5, 0, sin(angulo) * 5.5)
@@ -348,6 +399,7 @@ func _criar_interface() -> void:
 	casa.icon = ICONE_CASA
 	casa.expand_icon = true
 	casa.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	casa.focus_mode = Control.FOCUS_NONE
 	casa.pressed.connect(Telas.ir_para.bind("inicio"))
 	topo.add_child(casa)
 	var titulo := PanelContainer.new()
@@ -389,6 +441,7 @@ func _criar_interface() -> void:
 	camera.expand_icon = true
 	camera.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	camera.tooltip_text = "Trocar a câmera (C)"
+	camera.focus_mode = Control.FOCUS_NONE
 	camera.pressed.connect(proxima_camera)
 	topo.add_child(camera)
 
@@ -412,5 +465,18 @@ func _criar_interface() -> void:
 	_botao_entrar.custom_minimum_size = Vector2(330, 96)
 	_botao_entrar.size_flags_vertical = Control.SIZE_SHRINK_END
 	_botao_entrar.visible = false
+	_botao_entrar.focus_mode = Control.FOCUS_NONE
 	_botao_entrar.pressed.connect(func(): entrar(_porta_atual))
 	baixo.add_child(_botao_entrar)
+	var pular := Button.new()
+	pular.name = "Pular"
+	pular.theme_type_variation = &"BotaoIconeAmarelo"
+	pular.custom_minimum_size = Vector2(112, 112)
+	pular.size_flags_vertical = Control.SIZE_SHRINK_END
+	pular.icon = ICONE_PULAR
+	pular.expand_icon = true
+	pular.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pular.focus_mode = Control.FOCUS_NONE
+	pular.button_down.connect(func(): jogador.pular())
+	baixo.add_child(pular)
+	baixo.add_theme_constant_override("separation", 18)
