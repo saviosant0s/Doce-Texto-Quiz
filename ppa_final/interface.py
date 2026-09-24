@@ -25,6 +25,10 @@ class Interface:
         pygame.mixer.init()
         pygame.display.set_caption(TITULO_JANELA)
         self.tela = pygame.display.set_mode(TAMANHO_TELA)
+        if NO_NAVEGADOR:
+            # A página ajusta o canvas antes do jogo definir o tamanho da tela;
+            # pede um novo ajuste agora que o tamanho é conhecido.
+            window.window_resize()
         self.relogio = pygame.time.Clock()
         self.fonte = pygame.font.Font(None, 46)
         self.fonte_pequena = pygame.font.Font(None, 32)
