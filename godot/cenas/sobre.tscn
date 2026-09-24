@@ -67,6 +67,16 @@ layout_mode = 2
 theme_type_variation = &"Titulo"
 text = "SOBRE O PROJETO"
 
+[node name="Espaco" type="Control" parent="Margem/Coluna/Topo"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Jogar" type="Button" parent="Margem/Coluna/Topo"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(230, 72)
+layout_mode = 2
+text = "BORA JOGAR!"
+
 [node name="Linha" type="HBoxContainer" parent="Margem/Coluna"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -76,58 +86,24 @@ theme_override_constants/separation = 24
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Conteudo" type="VBoxContainer" parent="Margem/Coluna/Linha/Painel"]
+[node name="Conteudo" type="HBoxContainer" parent="Margem/Coluna/Linha/Painel"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 32
 
-[node name="TituloOQue" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo"]
-layout_mode = 2
-theme_type_variation = &"Subtitulo"
-theme_override_font_sizes/font_size = 32
-text = "O QUE É O DOCE TEXTO QUIZ?"
-
-[node name="TextoOQue" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo"]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-theme_type_variation = &"Texto"
-theme_override_font_sizes/font_size = 20
-text = "Um quiz lúdico, interativo e pedagógico que verifica o conhecimento dos alunos sobre as principais funcionalidades dos softwares de edição de documentos e planilhas eletrônicas. Cada nível tem questões de múltipla escolha com diferentes graus de complexidade, tempo para responder e o resultado ao final."
-autowrap_mode = 3
-
-[node name="Numeros" type="HBoxContainer" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+[node name="Secoes" type="VBoxContainer" parent="Margem/Coluna/Linha/Painel/Conteudo"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 12
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.3
+theme_override_constants/separation = 22
+alignment = 1
 
-[node name="TituloQuem" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+[node name="Numeros" type="VBoxContainer" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"Subtitulo"
-theme_override_font_sizes/font_size = 32
-text = "QUEM FEZ"
-
-[node name="TextoQuem" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo"]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-theme_type_variation = &"Texto"
-theme_override_font_sizes/font_size = 20
-text = "Criado em 2023 por Sávio Santos, Talita e Natalí, alunos do primeiro ano de Informática do IFBA Campus Valença, com orientação dos professores Eduardo Cambruzzi, Peterson Lobato, Alba Rogéria, Nelson Valente e Cristian Lins."
-autowrap_mode = 3
-
-[node name="Espaco" type="Control" parent="Margem/Coluna/Linha/Painel/Conteudo"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="Convite" type="PanelContainer" parent="Margem/Coluna/Linha/Painel/Conteudo"]
-layout_mode = 2
-theme_type_variation = &"PainelRoxo"
-
-[node name="Texto" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo/Convite"]
-layout_mode = 2
-theme_type_variation = &"SubtituloClaro"
-theme_override_font_sizes/font_size = 28
-text = "PARTICIPE DESSE DESAFIO E TESTE SEUS CONHECIMENTOS!"
-horizontal_alignment = 1
-autowrap_mode = 3
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 14
 
 [node name="Redes" type="PanelContainer" parent="Margem/Coluna/Linha"]
 custom_minimum_size = Vector2(300, 0)
