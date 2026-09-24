@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+
+# Progresso local do jogador
+ppa_final/salvamento.json
