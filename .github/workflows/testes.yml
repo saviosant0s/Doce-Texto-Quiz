@@ -1,0 +1,29 @@
+# Roda os testes automáticos do jogo (godot/testes/rodar.sh) a cada envio e
+# em cada pull request. Se algum teste falhar, o GitHub marca com um X vermelho.
+name: Testes
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GODOT_VERSAO: 4.7.2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar o Godot
+        run: |
+          arquivo="Godot_v${GODOT_VERSAO}-stable_linux.x86_64"
+          curl -sSL -o godot.zip \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSAO}-stable/${arquivo}.zip"
+          unzip -q godot.zip
+          sudo mv "$arquivo" /usr/local/bin/godot
+          godot --version
+
+      - name: Rodar os testes
+        run: godot/testes/rodar.sh

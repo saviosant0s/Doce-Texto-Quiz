@@ -106,11 +106,12 @@ publica. Prints das telas: `ferramentas/capturar.sh <tela>`.
 
 Andamento do projeto e próximos passos: **`ANDAMENTO.md`**.
 
-## Versão original (pygame, `ppa_final/`)
+## Versão original de 2023 (pygame, `legado/pygame_2023/`)
 
-Mantida como referência. Para rodar:
+A primeira versão do jogo, feita pela turma em Python com pygame, fica guardada
+como histórico. Para rodar no computador:
 
 ```bash
-pip install -r requirements.txt
-python ppa_final/main.py
+pip install -r legado/pygame_2023/requirements.txt
+python legado/pygame_2023/main.py
 ```
