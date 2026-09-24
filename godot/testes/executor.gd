@@ -258,6 +258,14 @@ func _testar_fluxo_completo() -> void:
 		verificar(get_tree().current_scene == partida, "cancelar mantém a partida")
 		verificar(not partida._pausado, "cronômetro volta a andar")
 
+	# Botão "voltar" do celular: pergunta antes de sair; voltar de novo cancela
+	Telas.voltar_pelo_botao()
+	caixa = await _esperar_confirmacao()
+	verificar(caixa != null, "voltar do celular pergunta antes de sair")
+	Telas.voltar_pelo_botao()
+	await get_tree().create_timer(0.5).timeout
+	verificar(get_tree().current_scene == partida and not partida._pausado, "voltar de novo cancela e continua")
+
 	# Ajudas: sem moedas ficam desativadas; com moedas, eliminam 2 erradas e dão +10 s
 	verificar(partida._ajuda_eliminar.disabled, "sem moedas, ajuda desativada")
 	Progresso.moedas = 100
@@ -289,6 +297,26 @@ func _testar_fluxo_completo() -> void:
 
 	await _testar_telas_novas()
 	await _testar_configuracoes()
+
+	# Botão "voltar" fora da partida
+	Telas.ir_para("niveis")
+	await _esperar_tela("Niveis")
+	await get_tree().create_timer(0.4).timeout
+	Telas.abrir("creditos")
+	verificar(await _esperar_tela("Creditos"), "abre créditos")
+	await get_tree().create_timer(0.4).timeout
+	Telas.voltar_pelo_botao()
+	verificar(await _esperar_tela("Niveis"), "voltar do celular retorna à tela anterior")
+	await get_tree().create_timer(0.4).timeout
+	Telas.voltar_pelo_botao()
+	verificar(await _esperar_tela("Inicio"), "voltar nos níveis vai ao início")
+	await get_tree().create_timer(0.4).timeout
+	Telas.voltar_pelo_botao()
+	caixa = await _esperar_confirmacao()
+	verificar(caixa != null, "voltar no início pergunta se quer sair do jogo")
+	if caixa:
+		caixa.get_node("%Nao").pressed.emit()
+	await get_tree().create_timer(0.4).timeout
 
 	for tela in ["niveis", "titulos", "como_jogar", "creditos", "sobre", "configuracoes", "inicio"]:
 		Telas.ir_para(tela)

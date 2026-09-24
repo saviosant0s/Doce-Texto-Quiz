@@ -25,11 +25,9 @@ func configurar(titulo: String, texto: String, sim: String, nao: String) -> void
 	%Nao.grab_focus.call_deferred()
 
 
-func _unhandled_input(evento: InputEvent) -> void:
-	# botão "voltar" do Android e tecla Esc cancelam
-	if evento.is_action_pressed("ui_cancel"):
-		get_viewport().set_input_as_handled()
-		_responder(false)
+## Botão "voltar" do Android e tecla Esc (via Telas.voltar_pelo_botao).
+func cancelar() -> void:
+	_responder(false)
 
 
 func _responder(sim: bool) -> void:

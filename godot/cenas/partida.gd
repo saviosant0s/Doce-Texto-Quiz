@@ -97,7 +97,14 @@ func _notification(aviso: int) -> void:
 		_pausado = false
 
 
+## Botão "voltar" do celular: pergunta antes de sair (ver Telas.voltar_pelo_botao).
+func ao_voltar() -> void:
+	_perguntar_se_sai()
+
+
 func _perguntar_se_sai() -> void:
+	if _pausado:
+		return  # já está perguntando (ou o app está em segundo plano)
 	_pausado = true
 	var sair := await Telas.confirmar(
 		"SAIR DA PARTIDA?", "As respostas desta partida não serão salvas.", "SAIR", "CONTINUAR")

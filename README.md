@@ -73,6 +73,18 @@ godot/
   (para telas de resultado, acrescente `--acertos=7`; veja as outras opções em
   `scripts/ferramentas/captura.gd`).
 
+### Gerar o APK (Android)
+
+```bash
+KEYSTORE=/caminho/doce_texto_quiz.keystore KEYSTORE_SENHA=... ferramentas/gerar_apk.sh
+```
+
+Gera `build/android/doce-texto-quiz.apk` (Android 7 ou mais novo, celulares
+32 e 64 bits, sempre deitado, sem nenhuma permissão). O script explica o que
+precisa estar instalado. A keystore e a senha **não ficam no repositório**:
+guarde-as em lugar seguro, porque toda atualização do app precisa ser assinada
+com a mesma chave. Os ícones do app ficam em `godot/assets/android/`.
+
 ### Publicar a versão web
 
 No Godot: **Projeto → Exportar → Web → Exportar projeto**, salvando em

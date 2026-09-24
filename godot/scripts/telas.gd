@@ -76,6 +76,39 @@ func _trocar_cena(caminho: String) -> void:
 	_trocando = false
 
 
+## Botão "voltar" do Android (e Esc no computador). A caixa de confirmação
+## aberta é cancelada; telas com `ao_voltar()` decidem sozinhas (ex.: partida
+## pergunta se quer sair); no início, pergunta se quer fechar o jogo.
+func voltar_pelo_botao() -> void:
+	var caixas := _camada_avisos.find_children("Confirmacao", "Control", false, false)
+	if not caixas.is_empty():
+		caixas[0].cancelar()
+		return
+	var cena := get_tree().current_scene
+	if _trocando or cena == null:
+		return
+	if cena.has_method("ao_voltar"):
+		cena.ao_voltar()
+	elif cena.name == "Inicio":
+		if await confirmar("SAIR DO JOGO?", "Seu progresso fica salvo.", "SAIR", "FICAR"):
+			get_tree().quit()
+	elif not _historico.is_empty():
+		voltar()
+	else:
+		ir_para("inicio" if cena.name == "Niveis" else "niveis")
+
+
+func _notification(aviso: int) -> void:
+	if aviso == NOTIFICATION_WM_GO_BACK_REQUEST:
+		voltar_pelo_botao()
+
+
+func _unhandled_input(evento: InputEvent) -> void:
+	if evento.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		voltar_pelo_botao()
+
+
 # --- Avisos e confirmação ----------------------------------------------------
 
 ## Mostra uma mensagem curta na parte de baixo da tela.

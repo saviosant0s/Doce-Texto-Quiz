@@ -70,3 +70,8 @@ func _ready() -> void:
 	var tween := create_tween()
 	tween.tween_property(%Barra, "value", 100.0, DURACAO).set_trans(Tween.TRANS_SINE)
 	tween.tween_callback(Telas.ir_para.bind("partida"))
+
+
+## Botão "voltar" do celular: ignorado enquanto carrega (a partida já vai começar).
+func ao_voltar() -> void:
+	pass
