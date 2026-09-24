@@ -1,7 +1,11 @@
 """Constantes do jogo: tamanhos, cores, caminhos e posições dos botões."""
+import sys
 from pathlib import Path
 
 import pygame
+
+# True quando o jogo roda no navegador (celular), compilado com pygbag
+NO_NAVEGADOR = sys.platform == "emscripten"
 
 # Caminhos (relativos a este arquivo, então o jogo roda de qualquer pasta)
 PASTA_BASE = Path(__file__).resolve().parent

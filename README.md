@@ -18,11 +18,32 @@ prontos para as versões novas do Python.
 
 `ESC` fecha o jogo. O progresso fica salvo em `ppa_final/salvamento.json`.
 
+## Versão para celular (navegador)
+
+O jogo também roda no navegador de qualquer celular, na horizontal,
+compilado com [pygbag](https://pygame-web.github.io/). Em pé, o jogo
+pede para girar o aparelho. O progresso fica salvo no próprio navegador.
+
+**Publicar:** a cada push na branch `main`, o GitHub Actions
+(`.github/workflows/publicar-web.yml`) gera a versão web e publica no
+GitHub Pages. Na primeira vez, ative em *Settings → Pages → Source:
+GitHub Actions*. O link fica em `https://<usuario>.github.io/<repositorio>/`.
+
+**Testar no computador antes de publicar:**
+
+```bash
+pip install pygbag==0.9.3
+pygbag ppa_final
+```
+
+Abra http://localhost:8000 no navegador. Para testar no celular, deixe
+o celular na mesma rede Wi-Fi e abra `http://<IP-do-computador>:8000`.
+
 ## Estrutura
 
 ```
 ppa_final/
-├── main.py         # ponto de entrada e máquina de estados das telas
+├── main.py         # ponto de entrada e máquina de estados das telas (async, para o pygbag)
 ├── telas.py        # cada tela do jogo
 ├── interface.py    # janela, imagens/sons, laço de eventos e texto
 ├── perguntas.py    # banco de perguntas por nível
@@ -30,8 +51,8 @@ ppa_final/
 ├── config.py       # constantes: tamanhos, cores, tempos e posições dos botões
 └── assets/
     ├── imagens/          # fundos de cada tela
-    ├── sons/             # música de fundo e efeitos
-    └── nao_utilizados/   # arquivos do projeto original que não são usados no código
+    └── sons/       # música de fundo e efeitos (.ogg, formato aceito no navegador)
+arquivos_nao_utilizados/  # arquivos do projeto original que o código não usa
 ```
 
 Para adicionar perguntas, edite `perguntas.py`. Para ajustar a área

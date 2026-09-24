@@ -3,6 +3,7 @@
 O jogo é uma máquina de estados: cada tela principal roda até o jogador
 sair dela e retorna o nome da próxima tela.
 """
+import asyncio
 from dataclasses import dataclass, field
 
 import telas
@@ -29,14 +30,14 @@ class Jogo:
     resultado: str = ""  # faixa final: "nodoc", "noob", "pro" ou "mestre"
 
 
-def main():
+async def main():
     jogo = Jogo(ui=Interface(), salvamento=Salvamento.carregar())
     jogo.ui.tocar_musica_fundo("musica_fundo")
 
     tela_atual = "inicio"
     while True:
-        tela_atual = TELAS[tela_atual](jogo)
+        tela_atual = await TELAS[tela_atual](jogo)
 
 
-if __name__ == "__main__":
-    main()
+# O pygbag (versão para navegador) exige que asyncio.run(main()) fique no fim do arquivo
+asyncio.run(main())

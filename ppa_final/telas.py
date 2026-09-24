@@ -12,18 +12,18 @@ from perguntas import NIVEIS
 
 # --- Telas principais ---------------------------------------------------
 
-def tela_inicial(jogo):
+async def tela_inicial(jogo):
     while True:
-        escolha = jogo.ui.tela_com_botoes("inicio", c.BOTOES_INICIO)
+        escolha = await jogo.ui.tela_com_botoes("inicio", c.BOTOES_INICIO)
         if escolha == "jogar":
             return "niveis"
         if escolha == "creditos":
-            tela_creditos(jogo)
+            await tela_creditos(jogo)
         elif escolha == "dica":
-            tela_dica(jogo)
+            await tela_dica(jogo)
 
 
-def tela_niveis(jogo):
+async def tela_niveis(jogo):
     ui = jogo.ui
 
     def desenhar_progresso():
@@ -33,21 +33,21 @@ def tela_niveis(jogo):
             ui.tela.blit(texto, posicao)
 
     while True:
-        escolha = ui.tela_com_botoes("niveis", c.BOTOES_NIVEIS, desenhar_progresso)
+        escolha = await ui.tela_com_botoes("niveis", c.BOTOES_NIVEIS, desenhar_progresso)
         if escolha.startswith("nivel_"):
             jogo.nivel = int(escolha.removeprefix("nivel_")) - 1
             return "carregamento"
         if escolha == "inicio":
             return "inicio"
         if escolha == "titulos":
-            tela_titulos(jogo)
+            await tela_titulos(jogo)
         elif escolha == "dica":
-            tela_dica(jogo)
+            await tela_dica(jogo)
         elif escolha == "creditos":
-            tela_creditos(jogo)
+            await tela_creditos(jogo)
 
 
-def tela_carregamento(jogo):
+async def tela_carregamento(jogo):
     ui = jogo.ui
     fundo = ui.imagem("carregamento")
     barra = c.BARRA_CARREGAMENTO
@@ -62,13 +62,13 @@ def tela_carregamento(jogo):
             ui.tela, c.ROXO, (barra.x, barra.y, int(barra.width * progresso), barra.height),
             border_radius=10,
         )
-        ui.atualizar()
+        await ui.atualizar()
 
-    ui.esperar(c.PAUSA_APOS_CARREGAMENTO_MS)
+    await ui.esperar(c.PAUSA_APOS_CARREGAMENTO_MS)
     return "partida"
 
 
-def tela_partida(jogo):
+async def tela_partida(jogo):
     """Joga as perguntas do nível escolhido e guarda o resultado de cada uma."""
     ui = jogo.ui
     perguntas = NIVEIS[jogo.nivel]
@@ -100,7 +100,7 @@ def tela_partida(jogo):
                 acertou = False  # acabou o tempo
 
             desenhar_pergunta(ui, pergunta, areas_alternativas, tempo_passado)
-            ui.atualizar()
+            await ui.atualizar()
 
         jogo.resultados.append(acertou)
 
@@ -128,7 +128,7 @@ def desenhar_pergunta(ui, pergunta, areas_alternativas, tempo_passado):
     ui.tela.blit(cronometro, c.POSICAO_CRONOMETRO)
 
 
-def tela_aproveitamento(jogo):
+async def tela_aproveitamento(jogo):
     ui = jogo.ui
     aproveitamento = round(100 * sum(jogo.resultados) / len(jogo.resultados))
 
@@ -139,7 +139,7 @@ def tela_aproveitamento(jogo):
             centro = (c.RESULTADOS_CENTRO_X, c.RESULTADOS_Y + i * c.RESULTADOS_ESPACO)
             ui.texto_centralizado("Acertou" if acertou else "Errou", ui.fonte_resultados, c.ROXO, centro)
 
-    ui.tela_com_botoes("aproveitamento", c.BOTOES_APROVEITAMENTO, desenhar_resultados)
+    await ui.tela_com_botoes("aproveitamento", c.BOTOES_APROVEITAMENTO, desenhar_resultados)
 
     for limite, resultado, moedas in c.FAIXAS_RESULTADO:
         if aproveitamento <= limite:
@@ -152,19 +152,19 @@ def tela_aproveitamento(jogo):
     return "resultado"
 
 
-def tela_resultado(jogo):
+async def tela_resultado(jogo):
     """Mostra o título conquistado (ou a tela de "tente novamente")."""
-    jogo.ui.tela_com_botoes(jogo.resultado, c.BOTOES_RESULTADO[jogo.resultado])
+    await jogo.ui.tela_com_botoes(jogo.resultado, c.BOTOES_RESULTADO[jogo.resultado])
     return "inicio"
 
 
 # --- Telas de passagem --------------------------------------------------
 
-def tela_dica(jogo):
-    jogo.ui.tela_com_botoes("dica", c.BOTOES_DICA)
+async def tela_dica(jogo):
+    await jogo.ui.tela_com_botoes("dica", c.BOTOES_DICA)
 
 
-def tela_titulos(jogo):
+async def tela_titulos(jogo):
     ui = jogo.ui
 
     def desenhar_titulos():
@@ -173,20 +173,20 @@ def tela_titulos(jogo):
             texto = ui.fonte.render(f"{quantidade}X {titulo.upper()}", True, c.ROXO)
             ui.tela.blit(texto, posicao)
 
-    ui.tela_com_botoes("titulos", c.BOTOES_TITULOS, desenhar_titulos)
+    await ui.tela_com_botoes("titulos", c.BOTOES_TITULOS, desenhar_titulos)
 
 
-def tela_creditos(jogo):
+async def tela_creditos(jogo):
     ui = jogo.ui
     while True:
-        escolha = ui.tela_com_botoes("creditos", c.BOTOES_CREDITOS)
+        escolha = await ui.tela_com_botoes("creditos", c.BOTOES_CREDITOS)
         if escolha == "voltar":
             return
         if escolha == "sobre":
-            tela_sobre(jogo)
+            await tela_sobre(jogo)
         elif escolha == "doe":
-            ui.aviso_em_breve(c.POSICAO_AVISO_CREDITOS)
+            await ui.aviso_em_breve(c.POSICAO_AVISO_CREDITOS)
 
 
-def tela_sobre(jogo):
-    jogo.ui.tela_com_botoes("sobre", c.BOTOES_SOBRE)
+async def tela_sobre(jogo):
+    await jogo.ui.tela_com_botoes("sobre", c.BOTOES_SOBRE)
