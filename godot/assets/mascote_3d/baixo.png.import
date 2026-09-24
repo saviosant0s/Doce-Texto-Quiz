@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://x6a7hi4mequ4"
-path="res://.godot/imported/rosto.svg-0e5a1917513a281bf32a16178aa91f11.ctex"
+uid="uid://kb5b1htipx7r"
+path="res://.godot/imported/baixo.png-e543f2d8fdd5cd2a3a46e35f461cbb22.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/mascote_3d/rosto.svg"
-dest_files=["res://.godot/imported/rosto.svg-0e5a1917513a281bf32a16178aa91f11.ctex"]
+source_file="res://assets/mascote_3d/baixo.png"
+dest_files=["res://.godot/imported/baixo.png-e543f2d8fdd5cd2a3a46e35f461cbb22.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

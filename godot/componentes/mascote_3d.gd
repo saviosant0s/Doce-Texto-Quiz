@@ -1,24 +1,29 @@
 class_name Mascote3D
 extends SubViewportContainer
 ## Mascote 3D que gira com o dedo. Usa o modelo em MODELO (.glb, por exemplo
-## gerado por IA a partir do mascote original); sem ele, monta uma caixa de
-## cereal com formas simples. Arraste com o dedo ou o mouse para girar; solto,
+## gerado por IA a partir do mascote original); sem ele, monta a caixa de
+## cereal com as faces tiradas das imagens do mascote (assets/mascote_3d). Arraste com o dedo ou o mouse para girar; solto,
 ## ele continua girando um pouco e depois volta para a pose inicial.
 
 const MODELO := "res://assets/mascote_3d/mascote.glb"
 ## Altura que o modelo ocupa na cena (o .glb é redimensionado para caber).
 const ALTURA_MODELO := 2.4
+const TEXTURA_FRENTE := "res://assets/mascote_3d/frente.png"
+
+
+## Há um modelo (.glb) ou as texturas da caixa para montar o mascote 3D?
+static func disponivel() -> bool:
+	return ResourceLoader.exists(MODELO) or ResourceLoader.exists(TEXTURA_FRENTE)
 
 const SENSIBILIDADE := 0.012  # radianos por pixel arrastado
 const ATRITO := 3.0  # quanto o giro "de embalo" freia por segundo
 const ESPERA_PARA_VOLTAR := 1.5  # segundos parado até voltar para a pose inicial
 const ANGULO_INICIAL := -0.5  # levemente de lado, mostrando a lateral rosa
 
-const CONTORNO := Color("#2B1D3A")
-const AMARELO := Color("#F7DC3B")
-const ROSA := Color("#F06AA8")
-const ROXO := Color("#7E57B1")
-const BRANCO := Color("#FFFFFF")
+const ROSA := Color("#D8386A")
+const ROXO := Color("#6A3DA6")
+const ROXO_ESCURO := Color("#45256F")
+const BRANCO := Color("#F7F5F2")
 
 var _modelo: Node3D
 var _viewport: SubViewport
@@ -100,60 +105,95 @@ func _montar_cena() -> void:
 	if ResourceLoader.exists(MODELO):
 		_carregar_modelo()
 		return
-	var caixa := Node3D.new()  # a caixa fica um pouco acima do centro
-	caixa.position.y = 0.25
+	_montar_mascote()
+
+
+## Caixa de cereal com as faces tiradas das imagens do mascote (frente, costas)
+## e desenhadas (laterais, topo); braços, luvas, pernas e sapatos em 3D.
+func _montar_mascote() -> void:
+	var caixa := Node3D.new()
+	caixa.position.y = 0.32
 	_modelo.add_child(caixa)
+	var w := 1.0
+	var h := 1.6
+	var p := 0.54
+	_face(caixa, "frente", Vector2(w, h), Vector3(0, 0, p / 2), Vector3.ZERO)
+	_face(caixa, "tras", Vector2(w, h), Vector3(0, 0, -p / 2), Vector3(0, 180, 0))
+	_face(caixa, "lado", Vector2(p, h), Vector3(w / 2, 0, 0), Vector3(0, 90, 0))
+	_face(caixa, "lado", Vector2(p, h), Vector3(-w / 2, 0, 0), Vector3(0, -90, 0))
+	_face(caixa, "topo", Vector2(w, p), Vector3(0, h / 2, 0), Vector3(-90, 0, 0))
+	_face(caixa, "baixo", Vector2(w, p), Vector3(0, -h / 2, 0), Vector3(90, 0, 0))
 
-	# Caixa: frente amarela, laterais e faixa de baixo rosa
-	_bloco(caixa, Vector3(1.1, 1.5, 0.46), Vector3.ZERO, AMARELO)
+	# Braços abertos com as mãos para cima ("tcharam!")
 	for lado in [-1, 1]:
-		_bloco(caixa, Vector3(0.03, 1.52, 0.48), Vector3(lado * 0.555, 0, 0), ROSA)
-	_bloco(caixa, Vector3(1.14, 0.26, 0.5), Vector3(0, -0.64, 0), ROSA)
-	_bloco(caixa, Vector3(1.14, 0.08, 0.5), Vector3(0, 0.74, 0), ROSA)
-
-	# Rosto na frente e nas costas (para aparecer ao girar)
-	var rosto := MeshInstance3D.new()
-	var quad := QuadMesh.new()
-	quad.size = Vector2(0.95, 0.71)
-	rosto.mesh = quad
-	var mat_rosto := StandardMaterial3D.new()
-	mat_rosto.albedo_texture = load("res://assets/mascote_3d/rosto.svg")
-	mat_rosto.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-	mat_rosto.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat_rosto.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	rosto.material_override = mat_rosto
-	rosto.position = Vector3(0, 0.22, 0.236)
-	caixa.add_child(rosto)
-
-	# Tigela de cereal na frente
-	var tigela := _esfera(caixa, 0.26, Vector3(0.05, -0.33, 0.24), BRANCO, Vector3(1.3, 0.55, 0.45))
-	tigela.rotation_degrees.x = 10
-	var cores_cereal := [ROSA, ROXO, AMARELO, Color("#8FD3F4"), Color("#FF9F43")]
-	for i in 5:
-		var anel := MeshInstance3D.new()
-		var toro := TorusMesh.new()
-		toro.inner_radius = 0.025
-		toro.outer_radius = 0.06
-		anel.mesh = toro
-		anel.material_override = _material(cores_cereal[i])
-		anel.position = Vector3(-0.18 + i * 0.09 + 0.05, -0.22 + (i % 2) * 0.03, 0.3)
-		anel.rotation_degrees = Vector3(70, i * 30, 0)
-		caixa.add_child(anel)
-
-	# Braços com luvas (acenando)
-	for lado in [-1, 1]:
-		var ombro := Vector3(lado * 0.56, 0.05, 0)
-		var mao := Vector3(lado * 1.02, 0.42 if lado == 1 else 0.3, 0.12)
-		_cano(caixa, ombro, mao, 0.045, CONTORNO)
-		_esfera(caixa, 0.15, mao, BRANCO)
-		_esfera(caixa, 0.065, mao + Vector3(-lado * 0.12, 0.06, 0.05), BRANCO)
+		var ombro := Vector3(lado * 0.5, -0.1, 0.02)
+		var cotovelo := Vector3(lado * 0.82, -0.14, 0.08)
+		var pulso := Vector3(lado * 1.02, 0.02, 0.14)
+		_cano(caixa, ombro, cotovelo, 0.068, ROSA)
+		_cano(caixa, cotovelo, pulso, 0.068, ROSA)
+		_luva(caixa, pulso, lado)
 
 	# Pernas e sapatos
 	for lado in [-1, 1]:
-		var quadril := Vector3(lado * 0.24, -0.76, 0)
-		var tornozelo := Vector3(lado * 0.3, -1.28, 0.02)
-		_cano(caixa, quadril, tornozelo, 0.05, ROSA)
-		_esfera(caixa, 0.2, tornozelo + Vector3(lado * 0.04, -0.06, 0.1), ROXO, Vector3(1.1, 0.6, 1.5))
+		var quadril := Vector3(lado * 0.24, -0.78, 0.0)
+		var tornozelo := Vector3(lado * 0.26, -1.3, 0.04)
+		_cano(caixa, quadril, tornozelo, 0.085, ROSA)
+		_sapato(caixa, tornozelo + Vector3(lado * 0.02, -0.08, 0.1))
+
+
+func _face(pai: Node3D, textura: String, tamanho: Vector2, posicao: Vector3, rotacao: Vector3) -> void:
+	var face := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = tamanho
+	face.mesh = quad
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = load("res://assets/mascote_3d/%s.png" % textura)
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	mat.roughness = 0.45
+	face.material_override = mat
+	face.position = posicao
+	face.rotation_degrees = rotacao
+	pai.add_child(face)
+
+
+## Luva branca: palma, polegar, três dedos e punho.
+func _luva(pai: Node3D, pulso: Vector3, lado: int) -> void:
+	var mao := Node3D.new()
+	mao.position = pulso + Vector3(lado * 0.08, 0.1, 0.02)
+	mao.rotation_degrees = Vector3(-15, 0, -lado * 25)
+	pai.add_child(mao)
+	var punho := MeshInstance3D.new()
+	var toro := TorusMesh.new()
+	toro.inner_radius = 0.05
+	toro.outer_radius = 0.095
+	punho.mesh = toro
+	punho.material_override = _material(BRANCO)
+	punho.position = Vector3(0, -0.12, 0)
+	mao.add_child(punho)
+	_esfera(mao, 0.13, Vector3.ZERO, BRANCO, Vector3(1.05, 1.0, 0.6))
+	for i in 3:
+		var dedo_base := Vector3(-0.07 + i * 0.07, 0.08, 0.0)
+		_cano(mao, dedo_base, dedo_base + Vector3((i - 1) * 0.03, 0.13, 0.02), 0.038, BRANCO)
+	_cano(mao, Vector3(-lado * 0.1, -0.02, 0.02), Vector3(-lado * 0.2, 0.06, 0.05), 0.04, BRANCO)
+
+
+func _sapato(pai: Node3D, posicao: Vector3) -> void:
+	var sapato := Node3D.new()
+	sapato.position = posicao
+	sapato.scale = Vector3.ONE * 1.25
+	pai.add_child(sapato)
+	_esfera(sapato, 0.2, Vector3(0, 0.02, 0.04), ROXO, Vector3(1.05, 0.62, 1.45))
+	var sola := MeshInstance3D.new()
+	var cilindro := CylinderMesh.new()
+	cilindro.top_radius = 0.2
+	cilindro.bottom_radius = 0.2
+	cilindro.height = 0.06
+	sola.mesh = cilindro
+	sola.material_override = _material(ROXO_ESCURO)
+	sola.position = Vector3(0, -0.09, 0.04)
+	sola.scale = Vector3(1.1, 1.0, 1.55)
+	sapato.add_child(sola)
+	_esfera(sapato, 0.09, Vector3(0, 0.1, -0.08), ROXO, Vector3(1.0, 0.8, 1.0))
 
 
 ## Carrega o .glb, centraliza e ajusta o tamanho para caber na cena.
@@ -176,28 +216,9 @@ func _carregar_modelo() -> void:
 func _material(cor: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = cor
-	mat.roughness = 0.35
-	mat.metallic_specular = 0.6
-	# contorno de desenho animado: cópia um pouco maior, só com o lado de dentro
-	var contorno := StandardMaterial3D.new()
-	contorno.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	contorno.albedo_color = CONTORNO
-	contorno.cull_mode = BaseMaterial3D.CULL_FRONT
-	contorno.grow = true
-	contorno.grow_amount = 0.018
-	mat.next_pass = contorno
+	mat.roughness = 0.28  # plástico brilhante, como nas imagens
+	mat.metallic_specular = 0.7
 	return mat
-
-
-func _bloco(pai: Node3D, tamanho: Vector3, posicao: Vector3, cor: Color) -> MeshInstance3D:
-	var no := MeshInstance3D.new()
-	var malha := BoxMesh.new()
-	malha.size = tamanho
-	no.mesh = malha
-	no.material_override = _material(cor)
-	no.position = posicao
-	pai.add_child(no)
-	return no
 
 
 func _esfera(pai: Node3D, raio: float, posicao: Vector3, cor: Color, escala := Vector3.ONE) -> MeshInstance3D:

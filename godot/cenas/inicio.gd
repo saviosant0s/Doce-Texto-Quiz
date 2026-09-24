@@ -12,10 +12,10 @@ func _ready() -> void:
 	Animacoes.entrar(mascote, Vector2(60, 0), 0.1)
 
 
-## Se houver um modelo 3D do mascote (assets/mascote_3d/mascote.glb), troca a
-## imagem por ele, que gira com o dedo. Senão, o mascote 2D só flutua.
+## Se o mascote 3D estiver disponível (ver Mascote3D), troca a imagem por ele,
+## que gira com o dedo. Senão, o mascote 2D só flutua.
 func _preparar_mascote() -> Control:
-	if not ResourceLoader.exists(Mascote3D.MODELO):
+	if not Mascote3D.disponivel():
 		Animacoes.flutuar(%Mascote)
 		return %Mascote
 	var mascote_3d := Mascote3D.new()
