@@ -9,6 +9,13 @@ pip install -r requirements.txt
 python ppa_final/main.py
 ```
 
+No Windows, se o comando `python` não for encontrado, use `py`
+(ex.: `py -m pip install -r requirements.txt` e `py ppa_final/main.py`).
+
+Usamos o [pygame-ce](https://pyga.me/), versão da comunidade do pygame,
+compatível com o mesmo código (`import pygame`) e com instaladores
+prontos para as versões novas do Python.
+
 `ESC` fecha o jogo. O progresso fica salvo em `ppa_final/salvamento.json`.
 
 ## Estrutura
