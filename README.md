@@ -3,7 +3,7 @@
 Quiz sobre Word e Excel, com 3 níveis de 10 perguntas cada. Projeto
 desenvolvido em 2023 por alunos do IFBA Campus Valença.
 
-**Jogar no navegador (celular ou computador):** https://saviosant0s.github.io/doce-texto-quiz/
+**Jogar no navegador (celular ou computador):** https://saviosant0s.github.io/Doce-Texto-Quiz/
 
 ## Versão atual: Godot (`godot/`)
 
