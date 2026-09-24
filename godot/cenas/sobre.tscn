@@ -1,0 +1,115 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://cenas/sobre.gd" id="1"]
+[ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/icones/voltar.svg" id="3"]
+[ext_resource type="Texture2D" path="res://assets/icones/instagram.svg" id="4"]
+
+[node name="Sobre" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Fundo" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2")
+decoracao = 1
+quantidade = 45
+
+[node name="Margem" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 40
+
+[node name="Linha" type="HBoxContainer" parent="Margem"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Painel" type="PanelContainer" parent="Margem/Linha"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Coluna" type="VBoxContainer" parent="Margem/Linha/Painel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Topo" type="HBoxContainer" parent="Margem/Linha/Painel/Coluna"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Voltar" type="Button" parent="Margem/Linha/Painel/Coluna/Topo"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+tooltip_text = "Voltar"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("3")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Titulo" type="Label" parent="Margem/Linha/Painel/Coluna/Topo"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"Titulo"
+text = "DOCE TEXTO QUIZ"
+horizontal_alignment = 1
+
+[node name="Espaco" type="Control" parent="Margem/Linha/Painel/Coluna/Topo"]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+
+[node name="Texto" type="RichTextLabel" parent="Margem/Linha/Painel/Coluna"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "[center]Apresentamos a vocês o [b]Doce Texto Quiz[/b], uma atividade desenvolvida por Sávio Santos, Talita e Natalí, alunos do primeiro ano de informática do IFBA Campus Valença, sob a orientação dos professores Eduardo Cambruzzi, Peterson Lobato, Alba Rogéria, Nelson Valente e Cristian Lins.
+
+O Doce Texto Quiz foi elaborado no ano de 2023 e tem como finalidade verificar o nível de conhecimento dos alunos sobre as principais funcionalidades dos softwares de edição de documentos e planilhas eletrônicas. O quiz consiste em 10 questões de múltipla escolha, que abrangem diferentes graus de complexidade. Os participantes terão um tempo determinado para responder cada questão e poderão visualizar seu resultado ao final. O quiz é uma forma lúdica, interativa e pedagógica de avaliar o aprendizado dos alunos.
+
+[b]Convidamos vocês a participarem desse desafio e testarem seus conhecimentos.[/b][/center]"
+scroll_active = true
+
+[node name="Redes" type="PanelContainer" parent="Margem/Linha"]
+custom_minimum_size = Vector2(290, 0)
+layout_mode = 2
+
+[node name="Coluna" type="VBoxContainer" parent="Margem/Linha/Redes"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Icone" type="TextureRect" parent="Margem/Linha/Redes/Coluna"]
+modulate = Color(0.494118, 0.341176, 0.694118, 1)
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Perfis" type="Label" parent="Margem/Linha/Redes/Coluna"]
+layout_mode = 2
+theme_type_variation = &"Texto"
+theme_override_constants/line_spacing = 14
+text = "@xz_.nataa
+@savio.sant0s
+@thaly_gilmore
+@ifba.valenca"
+horizontal_alignment = 1

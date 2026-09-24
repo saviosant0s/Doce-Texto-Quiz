@@ -1,0 +1,97 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://cenas/aproveitamento.gd" id="1"]
+[ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/icones/avancar.svg" id="3"]
+
+[node name="Aproveitamento" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Fundo" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2")
+decoracao = 1
+quantidade = 45
+
+[node name="Margem" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 56
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 56
+theme_override_constants/margin_bottom = 40
+
+[node name="Linha" type="HBoxContainer" parent="Margem"]
+layout_mode = 2
+theme_override_constants/separation = 48
+
+[node name="Resumo" type="VBoxContainer" parent="Margem/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.8
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Rotulo" type="Label" parent="Margem/Linha/Resumo"]
+layout_mode = 2
+theme_type_variation = &"TituloClaro"
+text = "SEU APROVEITAMENTO"
+horizontal_alignment = 1
+
+[node name="Porcentagem" type="Label" parent="Margem/Linha/Resumo"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TituloGrande"
+theme_override_font_sizes/font_size = 200
+text = "70%"
+horizontal_alignment = 1
+
+[node name="Acertos" type="Label" parent="Margem/Linha/Resumo"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SubtituloClaro"
+text = "7 DE 10 ACERTOS"
+horizontal_alignment = 1
+
+[node name="Espaco" type="Control" parent="Margem/Linha/Resumo"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+
+[node name="Continuar" type="Button" parent="Margem/Linha/Resumo"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 84)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "CONTINUAR"
+icon = ExtResource("3")
+icon_alignment = 2
+expand_icon = true
+
+[node name="Painel" type="PanelContainer" parent="Margem/Linha"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="Lista" type="GridContainer" parent="Margem/Linha/Painel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 12
+columns = 2

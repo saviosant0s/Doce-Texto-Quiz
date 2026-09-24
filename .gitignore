@@ -6,3 +6,6 @@ ppa_final/salvamento.json
 
 # Build da versão web (pygbag)
 ppa_final/build/
+
+# Builds exportados do Godot
+/build/

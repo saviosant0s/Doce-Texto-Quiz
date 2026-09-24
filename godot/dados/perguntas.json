@@ -1,0 +1,322 @@
+{
+  "niveis": [
+    {
+      "nome": "Fácil",
+      "personagem": "doce_facil",
+      "perguntas": [
+        {
+          "enunciado": "Qual software é comumente usado para criar documentos de texto?",
+          "alternativas": [
+            "Word",
+            "Excel",
+            "PowerPoint",
+            "Paint"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual é a extensão de arquivo padrão de um documento do Word?",
+          "alternativas": [
+            "pptx",
+            "xlsx",
+            "docx",
+            "png"
+          ],
+          "resposta": 2
+        },
+        {
+          "enunciado": "Qual opção permite verificar a ortografia em um documento do Word?",
+          "alternativas": [
+            "Layout",
+            "Formatar",
+            "Inserir",
+            "Revisar"
+          ],
+          "resposta": 3
+        },
+        {
+          "enunciado": "O que é um 'documento' em um processador de texto?",
+          "alternativas": [
+            "Célula de dados",
+            "Arquivo de imagem",
+            "Arquivo de texto",
+            "Pasta de texto"
+          ],
+          "resposta": 2
+        },
+        {
+          "enunciado": "No Word, qual guia permite formatar o texto, como fonte e tamanho?",
+          "alternativas": [
+            "Revisar",
+            "Página Inicial",
+            "Layout da Página",
+            "Inserir"
+          ],
+          "resposta": 1
+        },
+        {
+          "enunciado": "Qual tecla de atalho comum é usada para copiar texto no Word?",
+          "alternativas": [
+            "Ctrl + C",
+            "Ctrl + X",
+            "Ctrl + V",
+            "Ctrl + Z"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Para que serve o software Excel?",
+          "alternativas": [
+            "Criar apresentações",
+            "Criar códigos",
+            "Criar planilhas",
+            "Criar design"
+          ],
+          "resposta": 2
+        },
+        {
+          "enunciado": "No Excel, qual termo é usado para se referir a uma interseção de uma linha e uma coluna?",
+          "alternativas": [
+            "Planilhas",
+            "Cédulas",
+            "Linhunas",
+            "Célula"
+          ],
+          "resposta": 3
+        },
+        {
+          "enunciado": "Qual função do Excel é usada para somar um intervalo de valores?",
+          "alternativas": [
+            "=MÉDIA()",
+            "=SOMA()",
+            "=CONTAR()",
+            "=SE()"
+          ],
+          "resposta": 1
+        },
+        {
+          "enunciado": "Qual termo é usado para referenciar um conjunto de células adjacentes em uma planilha do Excel?",
+          "alternativas": [
+            "Intervalo",
+            "Linha",
+            "Coluna",
+            "Fórmula"
+          ],
+          "resposta": 0
+        }
+      ]
+    },
+    {
+      "nome": "Médio",
+      "personagem": "doce_medio",
+      "perguntas": [
+        {
+          "enunciado": "Qual recurso do Word permite criar uma lista numerada automaticamente?",
+          "alternativas": [
+            "Esquema",
+            "Numeração",
+            "Índice",
+            "Marcadores"
+          ],
+          "resposta": 1
+        },
+        {
+          "enunciado": "No Excel, o que é uma função condicional usada para verificar se uma condição é verdadeira ou falsa?",
+          "alternativas": [
+            "=CONTAR()",
+            "=MÉDIA()",
+            "=SE()",
+            "=SOMA()"
+          ],
+          "resposta": 2
+        },
+        {
+          "enunciado": "Qual comando no Excel permite dividir o conteúdo de uma célula em várias colunas com base em um separador?",
+          "alternativas": [
+            "Divisão de Colunas",
+            "Dividir Células",
+            "Mesclar Células",
+            "Separar Texto"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "O que significa a sigla 'CSV' quando se trata de formatos de arquivo?",
+          "alternativas": [
+            "C... Spreadsheet Value",
+            "C... Standard View",
+            "C... Some Values",
+            "C... Separated Values"
+          ],
+          "resposta": 3
+        },
+        {
+          "enunciado": "No Word, qual recurso é usado para criar uma cópia idêntica de um texto ou objeto em um documento?",
+          "alternativas": [
+            "Clonar",
+            "Duplicar",
+            "Copiar",
+            "Repetir"
+          ],
+          "resposta": 2
+        },
+        {
+          "enunciado": "Qual função do Excel é usada para encontrar o valor máximo em um intervalo de células?",
+          "alternativas": [
+            "=MAX()",
+            "=MÁXIMO()",
+            "=CONTAR.MAX()",
+            "=MX()"
+          ],
+          "resposta": 1
+        },
+        {
+          "enunciado": "Qual extensão de arquivo é comumente associada a planilhas do Excel?",
+          "alternativas": [
+            "xcl",
+            "xwp",
+            "xltx",
+            "xlsx"
+          ],
+          "resposta": 3
+        },
+        {
+          "enunciado": "No Word, qual recurso permite criar uma tabela a partir de texto existente em um documento?",
+          "alternativas": [
+            "Converter texto - tabela",
+            "Converter texto - gráfico",
+            "Formatar tabela",
+            "Criar tabela"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual recurso do Microsoft Word permite ajustar a margem de um documento?",
+          "alternativas": [
+            "Estilo da página",
+            "Numeração de página",
+            "Configuração de página",
+            "Espaçamento"
+          ],
+          "resposta": 2
+        },
+        {
+          "enunciado": "Qual é a função do Excel usada para contar o número de células não vazias em um intervalo?",
+          "alternativas": [
+            "=CONT.VALOR()",
+            "=CONT.NÃO.VAZIO()",
+            "=SOMASE()",
+            "=CONTAR.SE()"
+          ],
+          "resposta": 1
+        }
+      ]
+    },
+    {
+      "nome": "Difícil",
+      "personagem": "doce_dificil",
+      "perguntas": [
+        {
+          "enunciado": "No Excel, qual função é usada para encontrar a média ponderada de um conjunto de valores?",
+          "alternativas": [
+            "MÉDIA",
+            "MÉDIAHARM",
+            "MÉDIAEX",
+            "MÉDIASE"
+          ],
+          "resposta": 3
+        },
+        {
+          "enunciado": "O que é ou para que serve uma 'macro' no Excel?",
+          "alternativas": [
+            "Automação de tarefas",
+            "Tipo de gráfico",
+            "Fórmula complexa",
+            "Tipo de célula"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "Qual é a função do Excel que retorna o valor absoluto de um número?",
+          "alternativas": [
+            "MOD",
+            "SQRT",
+            "ABS",
+            "INT"
+          ],
+          "resposta": 2
+        },
+        {
+          "enunciado": "No Excel, qual função é usada para calcular a taxa interna de retorno de um investimento?",
+          "alternativas": [
+            "NPV",
+            "IRR",
+            "MÉDIA",
+            "TAXA"
+          ],
+          "resposta": 1
+        },
+        {
+          "enunciado": "Como você pode inserir uma quebra de página manual em um documento do Word?",
+          "alternativas": [
+            "Ctrl + Enter",
+            "Alt + Enter",
+            "Shift + Enter",
+            "F12"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, qual recurso é usado para criar um índice automático com base nos títulos e subtítulos do documento?",
+          "alternativas": [
+            "Sumário",
+            "Numeração",
+            "Bibliografia",
+            "Índice"
+          ],
+          "resposta": 3
+        },
+        {
+          "enunciado": "Qual extensão de arquivo é usada para MODELOS de documentos do Word?",
+          "alternativas": [
+            "docx",
+            "xlsx",
+            "dotx",
+            "pptx"
+          ],
+          "resposta": 2
+        },
+        {
+          "enunciado": "No Excel, qual função é usada para encontrar o maior valor em um intervalo que atende a um critério específico?",
+          "alternativas": [
+            "MÁXIMO",
+            "PROC",
+            "PROCV",
+            "MAXSE"
+          ],
+          "resposta": 1
+        },
+        {
+          "enunciado": "Qual é a fórmula do Excel que retorna o valor mínimo de um intervalo de células?",
+          "alternativas": [
+            "MIN",
+            "MÍNIMO",
+            "MÍN",
+            "MENOR"
+          ],
+          "resposta": 0
+        },
+        {
+          "enunciado": "No Word, qual recurso permite criar um documento com um layout de duas ou mais colunas?",
+          "alternativas": [
+            "Quebra de Página",
+            "Inserir Tabela",
+            "Margens",
+            "Colunas"
+          ],
+          "resposta": 3
+        }
+      ]
+    }
+  ]
+}
