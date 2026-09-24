@@ -4,3 +4,6 @@
 /build/
 *.apk
 *.aab
+
+# Gerado ao publicar a versão web
+/dados/build.json

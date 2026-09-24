@@ -4,6 +4,8 @@ extends Node
 
 const CAMINHO_PERGUNTAS := "res://dados/perguntas.json"
 const CAMINHO_SALVAMENTO := "user://salvamento.json"
+## Gerado ao publicar (commit e data do build); não existe ao rodar pelo editor.
+const CAMINHO_BUILD := "res://dados/build.json"
 const TEMPO_POR_PERGUNTA := 30.0
 const DURACAO_TRANSICAO := 0.25
 
@@ -57,6 +59,18 @@ func _ready() -> void:
 
 
 # --- Navegação -------------------------------------------------------------
+
+## Texto da versão, ex.: "v0.2.0 · 1c262ea · 24/09 15:10".
+func versao() -> String:
+	var texto := "v" + str(ProjectSettings.get_setting("application/config/version", "0"))
+	if FileAccess.file_exists(CAMINHO_BUILD):
+		var build = JSON.parse_string(FileAccess.get_file_as_string(CAMINHO_BUILD))
+		if build is Dictionary:
+			texto += " · %s · %s" % [build.get("commit", "?"), build.get("data", "?")]
+	else:
+		texto += " · dev"
+	return texto
+
 
 ## Troca para a tela `nome` (ver CENAS) com um fade.
 func ir_para(nome: String) -> void:

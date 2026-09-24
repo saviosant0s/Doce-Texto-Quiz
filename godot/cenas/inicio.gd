@@ -3,6 +3,7 @@ extends Control
 
 
 func _ready() -> void:
+	%Versao.text = Jogo.versao()
 	%Jogar.pressed.connect(Jogo.ir_para.bind("niveis"))
 	%ComoJogar.pressed.connect(Jogo.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Jogo.abrir.bind("creditos"))
