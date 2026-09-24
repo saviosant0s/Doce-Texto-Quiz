@@ -37,6 +37,9 @@ func _ready() -> void:
 	_paginas = [%Podio, _criar_pagina_conquistas(), _criar_pagina_estatisticas()]
 	for pagina in _paginas.slice(1):
 		%Podio.get_parent().add_child(pagina)
+		var rolagem: ScrollContainer = pagina if pagina is ScrollContainer \
+			else pagina.find_children("*", "ScrollContainer", true, false)[0]
+		Interface.deixar_rolar(rolagem.get_child(0))
 	mostrar_aba(0)
 
 

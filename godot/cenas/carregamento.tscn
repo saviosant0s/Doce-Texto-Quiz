@@ -101,14 +101,14 @@ layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Dica" type="HBoxContainer" parent="Margem/Cartao/Coluna"]
+[node name="Dica" type="VBoxContainer" parent="Margem/Cartao/Coluna"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 8
 alignment = 1
 
 [node name="Etiqueta" type="PanelContainer" parent="Margem/Cartao/Coluna/Dica"]
 layout_mode = 2
-size_flags_vertical = 4
+size_flags_horizontal = 4
 theme_type_variation = &"EtiquetaAmarela"
 
 [node name="Tipo" type="Label" parent="Margem/Cartao/Coluna/Dica/Etiqueta"]
@@ -127,6 +127,7 @@ theme_type_variation = &"Subtitulo"
 theme_override_colors/font_color = Color(0.964706, 0.933333, 0.862745, 1)
 theme_override_font_sizes/font_size = 40
 text = "O CHOCOLATE BRANCO NÃO É CHOCOLATE!"
+horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 

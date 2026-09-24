@@ -39,6 +39,7 @@ func _ready() -> void:
 	_detectar_renderizacao()
 	_criar_cortina()
 	_criar_aviso_girar()
+	_tirar_dicas.call_deferred()
 
 
 # --- Navegação ---------------------------------------------------------------
@@ -71,6 +72,7 @@ func _trocar_cena(caminho: String) -> void:
 	await tween.finished
 	get_tree().change_scene_to_file(caminho)
 	await get_tree().process_frame
+	_tirar_dicas()
 	tween = create_tween()
 	tween.tween_property(_cortina, "color:a", 0.0, DURACAO_TRANSICAO)
 	_trocando = false
@@ -120,8 +122,9 @@ func mostrar_aviso(texto: String) -> void:
 	rotulo.text = texto
 	aviso.add_child(rotulo)
 	_camada_avisos.add_child(aviso)
-	aviso.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 40)
-	aviso.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	aviso.reset_size()
+	var tela := get_viewport().get_visible_rect().size
+	aviso.position = ((tela - aviso.size) * Vector2(0.5, 1.0) - Vector2(0, 40)).round()
 	aviso.modulate.a = 0.0
 	var tween := create_tween()
 	tween.tween_property(aviso, "modulate:a", 1.0, 0.2)
@@ -142,6 +145,15 @@ func confirmar(titulo: String, texto: String, sim := "SIM", nao := "NÃO") -> bo
 
 
 # --- Exibição ----------------------------------------------------------------
+
+## Em tela de toque, as dicas de botão (tooltips) aparecem ao segurar o dedo,
+## escuras e sem sentido; ficam só no computador, onde aparecem com o mouse.
+func _tirar_dicas() -> void:
+	if not DisplayServer.is_touchscreen_available() or get_tree().current_scene == null:
+		return
+	for no in get_tree().current_scene.find_children("*", "Control", true, false):
+		no.tooltip_text = ""
+
 
 ## Texto da versão, ex.: "v0.3.0 · 1c262ea · 24/09 15:10".
 func versao() -> String:

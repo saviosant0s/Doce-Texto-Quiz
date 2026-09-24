@@ -33,7 +33,6 @@ func _criar_botao_revisao() -> void:
 	botao.add_theme_color_override("icon_normal_color", Cores.AMARELO)
 	botao.add_theme_color_override("icon_hover_color", Cores.AMARELO)
 	botao.add_theme_color_override("icon_pressed_color", Cores.AMARELO)
-	botao.tooltip_text = "Jogue de novo as perguntas que você errou (não conta para os níveis)"
 	botao.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	botao.pressed.connect(Jogo.iniciar_revisao)
 	Animacoes.destacar_ao_passar(botao)

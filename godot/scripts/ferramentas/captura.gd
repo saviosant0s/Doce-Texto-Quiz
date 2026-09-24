@@ -11,6 +11,7 @@ extends Node
 ##   --historico=6 simula 6 partidas antes (para estatísticas e conquistas)
 ##   --revisao=3   depois, simula uma revisão com 3 acertos (tela de resultado)
 ##   --aba=1       aba a mostrar (tela de troféus)
+##   --tocar_nivel=1  toca no cartão desse nível (tela de níveis)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -38,6 +39,11 @@ func _ready() -> void:
 		Jogo.preparar_partida(int(args.get("nivel", "0")))
 	await get_tree().process_frame
 	get_tree().change_scene_to_file(Telas.CENAS[args["capturar"]])
+	if args.has("tocar_nivel"):
+		await get_tree().create_timer(0.8).timeout
+		var cartoes := get_tree().current_scene.find_children("*", "Button", true, false) \
+			.filter(func(b): return b.has_method("configurar"))
+		cartoes[int(args["tocar_nivel"])].pressed.emit()
 	if args.has("aba"):
 		await get_tree().process_frame
 		get_tree().current_scene.mostrar_aba(int(args["aba"]))

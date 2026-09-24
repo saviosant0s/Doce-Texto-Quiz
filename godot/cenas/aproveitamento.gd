@@ -20,6 +20,7 @@ func _ready() -> void:
 		var item := _criar_revisao(i, perguntas[i], escolha, Jogo.resultados[i])
 		%Lista.add_child(item)
 		Animacoes.entrar(item, Vector2(30, 0), 0.05 * i)
+	Interface.deixar_rolar(%Lista)
 	_animar_anel(Jogo.aproveitamento())
 
 

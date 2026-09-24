@@ -47,10 +47,12 @@ Metas: APK para Android e registro no INPI.
 
 ## Onde parou
 
-- Última coisa feita: nitidez no celular (filtro de textura era "Nearest
-  Mipmap", agora "Linear Mipmap"; mascote 3D desenhado na resolução real da
-  tela), cartão de nível bloqueado com o mesmo tamanho dos outros, sem a dica
-  "arraste para girar" na tela inicial. APK e site publicados.
+- Última coisa feita (ajustes pedidos pelo Sávio testando no celular):
+  cartão bloqueado só com estrelas + balão ao tocar; cartões crescem se o
+  conteúdo não couber; resultado com etiquetas (acertos, moedas, pontos) em
+  vez de texto; dica do carregamento centralizada; rolagem da revisão e dos
+  troféus funciona arrastando em cima dos cartões; sem tooltips em tela de
+  toque; ícones com traço mais fino (1,8). APK e site publicados.
 - Nada pela metade. Próximo passo: item 1 da etapa 6.
 
 ## Como trabalhar no projeto
