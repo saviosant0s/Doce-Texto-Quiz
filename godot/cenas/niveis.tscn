@@ -6,6 +6,8 @@
 [ext_resource type="Texture2D" path="res://assets/icones/trofeu.svg" id="4"]
 [ext_resource type="Texture2D" path="res://assets/icones/interrogacao.svg" id="5"]
 [ext_resource type="Texture2D" path="res://assets/icones/pessoas.svg" id="6"]
+[ext_resource type="Texture2D" path="res://assets/icones/engrenagem.svg" id="engrenagem"]
+
 
 [node name="Niveis" type="Control"]
 layout_mode = 3
@@ -50,7 +52,7 @@ size_flags_vertical = 4
 
 [node name="Botoes" type="VBoxContainer" parent="Margem/Linha/Menu"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 16
 
 [node name="Inicio" type="Button" parent="Margem/Linha/Menu/Botoes"]
 unique_name_in_owner = true
@@ -89,6 +91,16 @@ layout_mode = 2
 tooltip_text = "Créditos"
 theme_type_variation = &"BotaoIcone"
 icon = ExtResource("6")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Configuracoes" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+tooltip_text = "Configurações"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("engrenagem")
 icon_alignment = 1
 expand_icon = true
 

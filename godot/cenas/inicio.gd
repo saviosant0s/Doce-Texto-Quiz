@@ -7,6 +7,7 @@ func _ready() -> void:
 	%Jogar.pressed.connect(Telas.ir_para.bind("niveis"))
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
+	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))
 	var mascote := _preparar_mascote()
 	Animacoes.entrar(%Logo, Vector2(-60, 0))
 	Animacoes.entrar(mascote, Vector2(60, 0), 0.1)

@@ -1,0 +1,140 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://cenas/configuracoes.gd" id="1"]
+[ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/icones/voltar.svg" id="3"]
+
+[node name="Configuracoes" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Fundo" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2")
+decoracao = 1
+quantidade = 45
+
+[node name="Margem" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 44
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 44
+theme_override_constants/margin_bottom = 32
+
+[node name="Coluna" type="VBoxContainer" parent="Margem"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Topo" type="HBoxContainer" parent="Margem/Coluna"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Voltar" type="Button" parent="Margem/Coluna/Topo"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+tooltip_text = "Voltar"
+theme_type_variation = &"BotaoIconeAmarelo"
+icon = ExtResource("3")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Etiqueta" type="PanelContainer" parent="Margem/Coluna/Topo"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"EtiquetaAmarela"
+
+[node name="Titulo" type="Label" parent="Margem/Coluna/Topo/Etiqueta"]
+layout_mode = 2
+theme_type_variation = &"Titulo"
+text = "CONFIGURAÇÕES"
+
+[node name="Espaco" type="Control" parent="Margem/Coluna/Topo"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Versao" type="Label" parent="Margem/Coluna/Topo"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.7)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"TextoClaro"
+theme_override_font_sizes/font_size = 18
+text = "v0.0.0"
+
+[node name="Paineis" type="HBoxContainer" parent="Margem/Coluna"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="Som" type="PanelContainer" parent="Margem/Coluna/Paineis"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Linhas" type="VBoxContainer" parent="Margem/Coluna/Paineis/Som"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="Titulo" type="Label" parent="Margem/Coluna/Paineis/Som/Linhas"]
+layout_mode = 2
+theme_type_variation = &"Subtitulo"
+text = "SOM E IMAGEM"
+
+[node name="Progresso" type="PanelContainer" parent="Margem/Coluna/Paineis"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+
+[node name="Coluna" type="VBoxContainer" parent="Margem/Coluna/Paineis/Progresso"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Titulo" type="Label" parent="Margem/Coluna/Paineis/Progresso/Coluna"]
+layout_mode = 2
+theme_type_variation = &"Subtitulo"
+text = "SEU PROGRESSO"
+
+[node name="Resumo" type="Label" parent="Margem/Coluna/Paineis/Progresso/Coluna"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_type_variation = &"Texto"
+theme_override_font_sizes/font_size = 20
+text = "Resumo"
+autowrap_mode = 3
+
+[node name="Espaco" type="Control" parent="Margem/Coluna/Paineis/Progresso/Coluna"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Aviso" type="Label" parent="Margem/Coluna/Paineis/Progresso/Coluna"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_type_variation = &"Texto"
+theme_override_font_sizes/font_size = 17
+text = "Apaga estrelas, recordes, títulos, moedas e o histórico das perguntas. Os ajustes de som continuam."
+autowrap_mode = 3
+
+[node name="Apagar" type="Button" parent="Margem/Coluna/Paineis/Progresso/Coluna"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+theme_type_variation = &"BotaoPerigo"
+text = "APAGAR PROGRESSO"

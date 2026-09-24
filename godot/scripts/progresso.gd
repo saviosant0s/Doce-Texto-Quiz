@@ -44,7 +44,7 @@ func _zerar() -> void:
 		})
 	titulos = {"noob": 0, "pro": 0, "mestre": 0}
 	moedas = 0
-	config = {"volume_musica": 0.8, "volume_efeitos": 1.0}
+	config = {"volume_musica": 0.8, "volume_efeitos": 1.0, "animacoes": true}
 	perguntas = {}
 	estatisticas = {"partidas": 0, "respostas": 0, "acertos": 0, "tempo_total": 0.0, "melhor_sequencia": 0}
 	conquistas = {}

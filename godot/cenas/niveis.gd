@@ -9,6 +9,7 @@ func _ready() -> void:
 	%Titulos.pressed.connect(Telas.abrir.bind("titulos"))
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
+	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))
 	for i in Jogo.niveis.size():
 		var cartao := CARTAO.instantiate()
 		%Cartoes.add_child(cartao)

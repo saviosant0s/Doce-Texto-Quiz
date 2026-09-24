@@ -166,10 +166,45 @@ func _testar_fluxo_completo() -> void:
 	verificar(Jogo.resumo["estrelas"] == 3 and Jogo.resumo["titulo"] == "noob", "3 estrelas e título Noob")
 	verificar(get_tree().current_scene.get_node("%ProximoNivel").visible, "oferece ir ao próximo nível")
 
-	for tela in ["niveis", "titulos", "como_jogar", "creditos", "sobre", "inicio"]:
+	await _testar_configuracoes()
+
+	for tela in ["niveis", "titulos", "como_jogar", "creditos", "sobre", "configuracoes", "inicio"]:
 		Telas.ir_para(tela)
 		await get_tree().create_timer(0.7).timeout
 		verificar(get_tree().current_scene.scene_file_path == Telas.CENAS[tela], "abre %s" % tela)
+
+
+func _testar_configuracoes() -> void:
+	_secao("configurações")
+	Telas.abrir("configuracoes")
+	verificar(await _esperar_tela("Configuracoes"), "abre as configurações")
+	var tela := get_tree().current_scene
+	var controles := tela.find_children("*", "HSlider", true, false)
+	verificar(controles.size() == 2, "dois controles de volume")
+	if controles.size() == 2:
+		controles[0].value = 30
+		var db := AudioServer.get_bus_volume_db(AudioServer.get_bus_index(Audio.BUS_MUSICA))
+		verificar(is_equal_approx(Progresso.config["volume_musica"], 0.3), "volume da música salvo em 30%")
+		verificar(absf(db - linear_to_db(0.3)) < 0.01, "canal de música no volume certo")
+		controles[1].value = 0
+		verificar(AudioServer.is_bus_mute(AudioServer.get_bus_index(Audio.BUS_EFEITOS)), "efeitos em 0% = mudo")
+	var moedas := Progresso.moedas
+	verificar(moedas > 0, "tem moedas antes de apagar")
+	tela.get_node("%Apagar").pressed.emit()
+	var caixa := await _esperar_confirmacao()
+	if caixa:
+		caixa.get_node("%Nao").pressed.emit()
+	await get_tree().create_timer(0.4).timeout
+	verificar(Progresso.moedas == moedas, "cancelar não apaga nada")
+	tela.get_node("%Apagar").pressed.emit()
+	caixa = await _esperar_confirmacao()
+	if caixa:
+		caixa.get_node("%Sim").pressed.emit()
+	await get_tree().create_timer(0.4).timeout
+	verificar(Progresso.moedas == 0 and Progresso.niveis[0]["recorde"] == 0, "confirmar apaga o progresso")
+	verificar(is_equal_approx(Progresso.config["volume_musica"], 0.3), "ajustes de som continuam")
+	Progresso.config["volume_efeitos"] = 1.0
+	Audio.aplicar_volumes()
 
 
 func _esperar_tela(nome: String, limite := 4.0) -> bool:

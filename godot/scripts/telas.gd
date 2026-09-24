@@ -17,11 +17,17 @@ const CENAS := {
 	"partida": "res://cenas/partida.tscn",
 	"aproveitamento": "res://cenas/aproveitamento.tscn",
 	"resultado": "res://cenas/resultado.tscn",
+	"configuracoes": "res://cenas/configuracoes.tscn",
 }
 
-## Falso quando o navegador desenha sem placa de vídeo (renderização por
-## software): aí as animações contínuas travam o jogo e ficam desligadas.
-var animacoes_continuas := true
+## Animações que não param (mascote flutuando, estrelas piscando...). Ficam
+## desligadas se o jogador desligou nas configurações ou se o aparelho desenha
+## sem placa de vídeo (renderização por software), onde elas travam o jogo.
+var animacoes_continuas: bool:
+	get:
+		return placa_rapida and Progresso.config.get("animacoes", true)
+## Falso quando o desenho é feito por software (sem aceleração de vídeo).
+var placa_rapida := true
 
 var _historico: Array[String] = []
 var _cortina: ColorRect
@@ -128,8 +134,8 @@ func _detectar_renderizacao() -> void:
 		})()""", true)).to_lower()
 	for software in ["swiftshader", "llvmpipe", "software", "basic render"]:
 		if software in placa:
-			animacoes_continuas = false
-	print("Placa de vídeo: %s (animações contínuas: %s)" % [placa, animacoes_continuas])
+			placa_rapida = false
+	print("Placa de vídeo: %s (aceleração: %s)" % [placa, placa_rapida])
 
 
 func _criar_cortina() -> void:

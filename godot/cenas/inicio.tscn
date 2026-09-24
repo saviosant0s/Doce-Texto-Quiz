@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" path="res://assets/personagens/mascote_cereal.png" id="3"]
 [ext_resource type="Texture2D" path="res://assets/icones/interrogacao.svg" id="4"]
 [ext_resource type="Texture2D" path="res://assets/icones/pessoas.svg" id="5"]
+[ext_resource type="Texture2D" path="res://assets/icones/engrenagem.svg" id="engrenagem"]
 [ext_resource type="FontFile" path="res://assets/fontes/BebasNeue-Regular.ttf" id="6"]
 
 [sub_resource type="FontVariation" id="bebas_titulo"]
@@ -145,6 +146,7 @@ theme_override_font_sizes/font_size = 16
 text = "v0.0.0"
 horizontal_alignment = 2
 
+
 [node name="Mascote" type="TextureRect" parent="Centro/Conteudo"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(520, 460)
@@ -152,3 +154,20 @@ layout_mode = 2
 texture = ExtResource("3")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="Configuracoes" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -100.0
+offset_top = 28.0
+offset_right = -28.0
+offset_bottom = 100.0
+grow_horizontal = 0
+tooltip_text = "Configurações"
+theme_type_variation = &"BotaoIconeAmarelo"
+icon = ExtResource("engrenagem")
+icon_alignment = 1
+expand_icon = true
