@@ -14,7 +14,7 @@ func _ready() -> void:
 	var venceu := Jogo.resultado != "nodoc"
 	%Chamada.text = dados["chamada"]
 	%Titulo.text = dados["titulo"]
-	%Personagem.texture = load("res://assets/personagens/%s.png" % dados["personagem"])
+	%Personagem.texture = Personagens.textura(dados["personagem"])
 	var acertos := Jogo.resultados.count(true)
 	if venceu:
 		var moedas: int = Jogo.FAIXAS.filter(func(f): return f["id"] == Jogo.resultado)[0]["moedas"]

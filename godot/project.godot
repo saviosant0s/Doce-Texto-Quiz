@@ -32,6 +32,12 @@ window/handheld/orientation=4
 
 theme/custom="res://tema/tema.tres"
 
+[importer_defaults]
+
+texture={
+"svg/scale": 2.0
+}
+
 [input_devices]
 
 pointing/emulate_touch_from_mouse=false

@@ -13,8 +13,7 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
       com critério = "PROC", "IRR" em vez de TIR.
 
 ## Direitos (antes do registro no INPI)
-- [ ] Trocar a imagem do brigadeiro triste (`assets/personagens/brigadeiro_triste.png`):
-      tem marca d'água de banco de imagens.
+- [x] Trocar a imagem do brigadeiro triste (tinha marca d'água): refeito em SVG.
 - [ ] Confirmar a origem/licença da música de fundo e dos sons de acerto/erro.
 - [ ] Confirmar a origem/licença dos personagens (vieram das imagens de 2023).
 

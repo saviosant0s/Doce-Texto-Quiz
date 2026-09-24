@@ -2,30 +2,28 @@
 
 [ext_resource type="Script" path="res://cenas/carregamento.gd" id="1"]
 [ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
-[ext_resource type="Texture2D" path="res://assets/personagens/fantasma_chocolate.png" id="3"]
-
 [ext_resource type="FontFile" path="res://assets/fontes/BebasNeue-Regular.ttf" id="4"]
 
 [sub_resource type="FontVariation" id="bebas_titulo"]
 base_font = ExtResource("4")
-spacing_top = -16
-spacing_bottom = -24
+spacing_top = -22
+spacing_bottom = -33
 
 [sub_resource type="FontVariation" id="bebas_quiz"]
 base_font = ExtResource("4")
-spacing_top = -30
-spacing_bottom = -45
+spacing_top = -48
+spacing_bottom = -72
 
 [sub_resource type="StyleBoxFlat" id="caixa_creme"]
-content_margin_left = 22.0
-content_margin_top = 18.0
-content_margin_right = 22.0
-content_margin_bottom = 18.0
+content_margin_left = 26.0
+content_margin_top = 24.0
+content_margin_right = 26.0
+content_margin_bottom = 24.0
 bg_color = Color(0.964706, 0.933333, 0.862745, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
 
 [node name="Carregamento" type="Control"]
 layout_mode = 3
@@ -46,74 +44,95 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2")
 
-[node name="Centro" type="CenterContainer" parent="."]
+[node name="Margem" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 56
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 56
+theme_override_constants/margin_bottom = 40
 
-[node name="Cartao" type="PanelContainer" parent="Centro"]
+[node name="Cartao" type="PanelContainer" parent="Margem"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(820, 0)
 layout_mode = 2
 theme_type_variation = &"PainelEscuro"
 
-[node name="Coluna" type="VBoxContainer" parent="Centro/Cartao"]
+[node name="Coluna" type="VBoxContainer" parent="Margem/Cartao"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 22
 
-[node name="Topo" type="HBoxContainer" parent="Centro/Cartao/Coluna"]
+[node name="Topo" type="HBoxContainer" parent="Margem/Cartao/Coluna"]
 layout_mode = 2
-theme_override_constants/separation = 24
+size_flags_vertical = 3
+theme_override_constants/separation = 40
 alignment = 1
 
-[node name="Logo" type="VBoxContainer" parent="Centro/Cartao/Coluna/Topo"]
+[node name="Logo" type="VBoxContainer" parent="Margem/Cartao/Coluna/Topo"]
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_constants/separation = 14
+theme_override_constants/separation = 16
 
-[node name="DoceTexto" type="Label" parent="Centro/Cartao/Coluna/Topo/Logo"]
+[node name="DoceTexto" type="Label" parent="Margem/Cartao/Coluna/Topo/Logo"]
 layout_mode = 2
 theme_type_variation = &"TituloGrande"
 theme_override_colors/font_color = Color(0.964706, 0.933333, 0.862745, 1)
 theme_override_fonts/font = SubResource("bebas_titulo")
-theme_override_font_sizes/font_size = 80
+theme_override_font_sizes/font_size = 110
 text = "DOCE TEXTO"
 horizontal_alignment = 1
 
-[node name="Quiz" type="Label" parent="Centro/Cartao/Coluna/Topo/Logo"]
+[node name="Quiz" type="Label" parent="Margem/Cartao/Coluna/Topo/Logo"]
 layout_mode = 2
 theme_type_variation = &"Titulo"
 theme_override_fonts/font = SubResource("bebas_quiz")
-theme_override_font_sizes/font_size = 182
+theme_override_font_sizes/font_size = 240
 theme_override_styles/normal = SubResource("caixa_creme")
 text = "QUIZ"
 horizontal_alignment = 1
 
-[node name="Fantasma" type="TextureRect" parent="Centro/Cartao/Coluna/Topo"]
+[node name="Personagem" type="TextureRect" parent="Margem/Cartao/Coluna/Topo"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(250, 300)
+custom_minimum_size = Vector2(360, 330)
 layout_mode = 2
-texture = ExtResource("3")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Curiosidade" type="Label" parent="Centro/Cartao/Coluna"]
+[node name="Dica" type="HBoxContainer" parent="Margem/Cartao/Coluna"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Etiqueta" type="PanelContainer" parent="Margem/Cartao/Coluna/Dica"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"EtiquetaAmarela"
+
+[node name="Tipo" type="Label" parent="Margem/Cartao/Coluna/Dica/Etiqueta"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(700, 0)
 layout_mode = 2
 theme_type_variation = &"Subtitulo"
+theme_override_font_sizes/font_size = 34
+text = "VOCÊ SABIA?"
+
+[node name="Texto" type="Label" parent="Margem/Cartao/Coluna/Dica"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"Subtitulo"
 theme_override_colors/font_color = Color(0.964706, 0.933333, 0.862745, 1)
-theme_override_font_sizes/font_size = 32
-text = "VOCÊ SABIA QUE O CHOCOLATE BRANCO NÃO É CHOCOLATE?"
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 40
+text = "O CHOCOLATE BRANCO NÃO É CHOCOLATE!"
+vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="Barra" type="ProgressBar" parent="Centro/Cartao/Coluna"]
+[node name="Barra" type="ProgressBar" parent="Margem/Cartao/Coluna"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 26)
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 theme_type_variation = &"BarraClara"
 step = 0.0

@@ -83,7 +83,7 @@ func _criar_faixa(faixa: Dictionary) -> HBoxContainer:
 	linha.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	linha.add_theme_constant_override("separation", 8)
 	var imagem := TextureRect.new()
-	imagem.texture = load("res://assets/personagens/%s.png" % faixa["personagem"])
+	imagem.texture = Personagens.textura(faixa["personagem"])
 	imagem.custom_minimum_size = Vector2(72, 84)
 	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

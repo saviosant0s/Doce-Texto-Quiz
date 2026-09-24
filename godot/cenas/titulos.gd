@@ -25,7 +25,7 @@ func _criar_cartao(titulo: Dictionary) -> PanelContainer:
 	cartao.add_child(coluna)
 
 	var imagem := TextureRect.new()
-	imagem.texture = load("res://assets/personagens/%s.png" % titulo["personagem"])
+	imagem.texture = Personagens.textura(titulo["personagem"])
 	imagem.custom_minimum_size = Vector2(0, 220)
 	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
