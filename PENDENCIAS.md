@@ -33,6 +33,19 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
 - [ ] Botão "Apoie" nos créditos ainda mostra "Disponível em breve".
 - [ ] Gerar o APK para Android.
 
+## Futuro (não fazer agora)
+- [ ] **Login com Google para guardar o progresso na nuvem** (continuar em outro
+      aparelho). Decidido em 24/09/2026 que fica para depois. Quando for fazer:
+      - Servidor para os dados (sugestão: Firebase, do Google) e projeto no Google
+        Cloud criado com a conta do Sávio (OAuth, SHA-1 da keystore do APK).
+      - Navegador: Google Identity Services via JavaScriptBridge. Windows: login
+        pelo navegador com retorno ao jogo. Android: plugin do Google + exportação
+        com Gradle (precisa de um ambiente com acesso a dl.google.com).
+      - LGPD: o jogo passa a coletar nome/e-mail (de alunos, muitos menores):
+        política de privacidade, opção de apagar a conta, e atualizar o memorial do
+        INPI, que hoje diz que o jogo não coleta dados.
+      - Alternativa mais simples, se servir: exportar/importar o progresso por código.
+
 ## Android
 - [ ] Testar o APK em celulares de verdade (um simples e um bom): instalação,
       tela deitada, botão voltar, som, desempenho e se o progresso fica salvo

@@ -64,6 +64,8 @@ Metas: APK para Android e registro no INPI.
   chocolate) com luvas brancas; coleção com rolagem pelo dedo, silhueta nos
   doces não comprados e sem desenho de miniaturas no celular (causa provável
   do app fechando); @ do Instagram atualizados. APK e site publicados.
+- Futuro (não fazer agora): login com Google para guardar o progresso na
+  nuvem; detalhes e cuidados em `PENDENCIAS.md` (seção "Futuro").
 - Ideias para depois: companheiro comemorando na tela de resultado; trocar
   qualquer doce por um modelo .glb (basta salvar em `godot/assets/doces_3d/<id>.glb`).
 - Nada pela metade. Próximo passo: item 1 da etapa 6.
