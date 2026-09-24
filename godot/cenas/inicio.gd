@@ -3,10 +3,10 @@ extends Control
 
 
 func _ready() -> void:
-	%Versao.text = Jogo.versao()
-	%Jogar.pressed.connect(Jogo.ir_para.bind("niveis"))
-	%ComoJogar.pressed.connect(Jogo.abrir.bind("como_jogar"))
-	%Creditos.pressed.connect(Jogo.abrir.bind("creditos"))
+	%Versao.text = Telas.versao()
+	%Jogar.pressed.connect(Telas.ir_para.bind("niveis"))
+	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
+	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	var mascote := _preparar_mascote()
 	Animacoes.entrar(%Logo, Vector2(-60, 0))
 	Animacoes.entrar(mascote, Vector2(60, 0), 0.1)

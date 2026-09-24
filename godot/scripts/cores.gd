@@ -13,3 +13,4 @@ const VERMELHO := Color("#E5484D")
 const VERMELHO_ESCURO := Color("#B42F34")
 const ROSA := Color("#F06AA8")
 const AZUL := Color("#8FD3F4")
+const OURO := Color("#FF9F1C")  # estrelas conquistadas

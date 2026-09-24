@@ -19,8 +19,8 @@ const NUNITO := preload("res://assets/fontes/Nunito.ttf")
 
 
 func _ready() -> void:
-	%Voltar.pressed.connect(Jogo.voltar)
-	%Jogar.pressed.connect(Jogo.ir_para.bind("niveis"))
+	%Voltar.pressed.connect(Telas.voltar)
+	%Jogar.pressed.connect(Telas.ir_para.bind("niveis"))
 	for secao in SECOES:
 		%Secoes.add_child(_criar_secao(secao[0], secao[1]))
 	# Dois blocos por linha, todos com a mesma largura

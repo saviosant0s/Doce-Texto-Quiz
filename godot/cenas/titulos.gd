@@ -1,22 +1,23 @@
 extends Control
 ## Títulos de doceiro em forma de pódio: Mestre no centro, Pro e Noob dos lados.
+## Cada título é ganho ao passar no nível correspondente (ver Jogo.TITULOS).
 
 const ICONE_CADEADO := preload("res://assets/icones/cadeado.svg")
 
 ## Na ordem em que aparecem no pódio (da esquerda para a direita).
 const TITULOS := [
-	{"id": "pro", "nome": "PRO", "personagem": "cupcake_pro", "meta": "60 A 80%",
+	{"id": "pro", "nome": "PRO", "personagem": "cupcake_pro", "meta": "PASSE NO NÍVEL MÉDIO",
 		"altura": 150, "tamanho": 230, "cor": Color("#E4DCF2")},
-	{"id": "mestre", "nome": "MESTRE", "personagem": "chocolate_mestre", "meta": "90 A 100%",
+	{"id": "mestre", "nome": "MESTRE", "personagem": "chocolate_mestre", "meta": "PASSE NO NÍVEL DIFÍCIL",
 		"altura": 210, "tamanho": 270, "cor": Cores.AMARELO},
-	{"id": "noob", "nome": "NOOB", "personagem": "maca_noob", "meta": "40 A 50%",
+	{"id": "noob", "nome": "NOOB", "personagem": "maca_noob", "meta": "PASSE NO NÍVEL FÁCIL",
 		"altura": 105, "tamanho": 210, "cor": Color("#F1B874")},
 ]
 
 
 func _ready() -> void:
-	%Voltar.pressed.connect(Jogo.voltar)
-	%Quantidade.text = "%d MOEDAS" % Jogo.moedas
+	%Voltar.pressed.connect(Telas.voltar)
+	%Quantidade.text = "%d MOEDAS" % Progresso.moedas
 	for i in TITULOS.size():
 		var coluna := _criar_coluna(TITULOS[i])
 		%Podio.add_child(coluna)
@@ -24,7 +25,7 @@ func _ready() -> void:
 
 
 func _criar_coluna(titulo: Dictionary) -> VBoxContainer:
-	var quantidade: int = Jogo.titulos[titulo["id"]]
+	var quantidade: int = Progresso.titulos[titulo["id"]]
 	var conquistado := quantidade > 0
 
 	var coluna := VBoxContainer.new()
@@ -86,7 +87,7 @@ func _criar_coluna(titulo: Dictionary) -> VBoxContainer:
 	if conquistado:
 		detalhe.text = "CONQUISTADO %dX" % quantidade
 	else:
-		detalhe.text = "ACERTE %s EM UMA PARTIDA" % titulo["meta"]
+		detalhe.text = titulo["meta"]
 		detalhe.modulate = Color(1, 1, 1, 0.75)
 	detalhe.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	textos.add_child(detalhe)

@@ -7,9 +7,9 @@ const CORES_AVATAR := [Cores.ROSA, Cores.AZUL, Cores.VERDE, Cores.VERMELHO, Core
 
 
 func _ready() -> void:
-	%Voltar.pressed.connect(Jogo.voltar)
-	%Sobre.pressed.connect(Jogo.abrir.bind("sobre"))
-	%Apoie.pressed.connect(Jogo.mostrar_aviso.bind("DISPONÍVEL EM BREVE"))
+	%Voltar.pressed.connect(Telas.voltar)
+	%Sobre.pressed.connect(Telas.abrir.bind("sobre"))
+	%Apoie.pressed.connect(Telas.mostrar_aviso.bind("DISPONÍVEL EM BREVE"))
 	for i in DESENVOLVIMENTO.size():
 		$Margem/Coluna/Grupos/Equipe/Coluna/Pessoas.add_child(_criar_pessoa(DESENVOLVIMENTO[i], CORES_AVATAR[i], 36))
 	var grade: GridContainer = $Margem/Coluna/Grupos/Orientacao/Coluna/Pessoas

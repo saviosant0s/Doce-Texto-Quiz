@@ -58,7 +58,7 @@ func _process(delta: float) -> void:
 	if not animar or decoracao == Decoracao.NENHUMA or Engine.is_editor_hint():
 		return
 	# O confete é a animação principal da tela de resultado: mantém sempre
-	if decoracao != Decoracao.CONFETE and not Jogo.animacoes_continuas:
+	if decoracao != Decoracao.CONFETE and not Telas.animacoes_continuas:
 		return
 	_tempo += delta
 	if decoracao == Decoracao.BALAS:

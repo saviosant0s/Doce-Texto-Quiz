@@ -9,7 +9,7 @@ const ICONE_RELOGIO := preload("res://assets/icones/relogio.svg")
 func _ready() -> void:
 	var acertos := Jogo.resultados.count(true)
 	%Acertos.text = "%d DE %d ACERTOS" % [acertos, Jogo.resultados.size()]
-	%Continuar.pressed.connect(Jogo.ir_para.bind("resultado"))
+	%Continuar.pressed.connect(Telas.ir_para.bind("resultado"))
 	for acertou in Jogo.resultados:
 		%Bolinhas.add_child(_criar_bolinha(acertou))
 	var perguntas := Jogo.perguntas_partida

@@ -17,6 +17,23 @@ personagens, fontes) é a mesma da versão original.
 2. No Godot, clique em **Importar** e escolha `godot/project.godot`.
 3. Aperte **F5** para rodar.
 
+### Regras
+
+- Cada partida sorteia 10 das 20 perguntas do nível (primeiro as nunca vistas
+  e as erradas da última vez) e embaralha as alternativas.
+- Com 6 acertos ou mais, você passa no nível: ganha o título dele (Fácil →
+  Noob, Médio → Pro, Difícil → Mestre) e libera o próximo.
+- Estrelas: 6 acertos = 1, 8 = 2, 10 = 3. Moedas por acerto e por estrela.
+
+### Testes
+
+```bash
+godot/testes/rodar.sh
+```
+
+Confere regras, sorteio, progresso, migração de saves antigos e uma partida
+completa passando pelas telas. Rode antes de publicar qualquer mudança.
+
 ### Estrutura
 
 ```
@@ -25,12 +42,16 @@ godot/
 ├── cenas/               # uma cena (.tscn) + script (.gd) por tela
 ├── componentes/         # peças reutilizáveis: fundo animado, cartão de nível
 ├── scripts/
-│   ├── jogo.gd          # estado da partida, navegação entre telas, salvamento
-│   ├── audio.gd         # música de fundo e efeitos
+│   ├── jogo.gd          # regras e partida atual (sorteio, estrelas, títulos)
+│   ├── progresso.gd     # salvamento (com versão/migração), recordes, histórico
+│   ├── telas.gd         # navegação, avisos, caixa de confirmação
+│   ├── audio.gd         # música e efeitos em canais separados
+│   ├── ferramentas/captura.gd  # gera prints das telas pela linha de comando
 │   ├── cores.gd         # paleta de cores
 │   └── animacoes.gd     # animações simples (entrar, flutuar, destacar)
 ├── tema/tema.tres       # visual dos botões, painéis e textos (editável no Godot)
-├── dados/perguntas.json # perguntas de cada nível
+├── dados/perguntas.json # perguntas de cada nível (com id fixo)
+├── testes/              # testes automáticos (rodar.sh)
 └── assets/              # personagens, ícones (SVG), fontes (OFL) e sons
 ```
 

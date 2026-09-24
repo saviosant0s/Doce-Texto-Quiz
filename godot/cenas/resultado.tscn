@@ -53,7 +53,7 @@ size_flags_vertical = 4
 
 [node name="Coluna" type="VBoxContainer" parent="Centro/Linha/Cartao"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 
 [node name="Etiqueta" type="PanelContainer" parent="Centro/Linha/Cartao/Coluna"]
 layout_mode = 2
@@ -71,10 +71,16 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Titulo"
-theme_override_font_sizes/font_size = 64
+theme_override_font_sizes/font_size = 54
 text = "VOCÊ É UM DOCEIRO MESTRE!"
 horizontal_alignment = 1
 autowrap_mode = 3
+
+[node name="Estrelas" type="HBoxContainer" parent="Centro/Linha/Cartao/Coluna"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
 
 [node name="Detalhe" type="Label" parent="Centro/Linha/Cartao/Coluna"]
 unique_name_in_owner = true
@@ -84,13 +90,28 @@ text = "Você acertou 9 de 10 perguntas e ganhou 100 moedas."
 horizontal_alignment = 1
 autowrap_mode = 3
 
+[node name="Destaques" type="HFlowContainer" parent="Centro/Linha/Cartao/Coluna"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+alignment = 1
+
+[node name="ProximoNivel" type="Button" parent="Centro/Linha/Cartao/Coluna"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+theme_type_variation = &"BotaoRoxo"
+text = "PRÓXIMO NÍVEL"
+
 [node name="Botoes" type="HBoxContainer" parent="Centro/Linha/Cartao/Coluna"]
 layout_mode = 2
 theme_override_constants/separation = 14
 
 [node name="Inicio" type="Button" parent="Centro/Linha/Cartao/Coluna/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 tooltip_text = "Início"
 theme_type_variation = &"BotaoIcone"
@@ -100,7 +121,7 @@ expand_icon = true
 
 [node name="JogarDeNovo" type="Button" parent="Centro/Linha/Cartao/Coluna/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"BotaoRoxo"

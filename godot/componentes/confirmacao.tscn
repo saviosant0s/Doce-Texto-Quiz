@@ -1,0 +1,80 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://componentes/confirmacao.gd" id="1"]
+
+[node name="Confirmacao" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Escurecer" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.06, 0.2, 0.6)
+
+[node name="Centro" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Cartao" type="PanelContainer" parent="Centro"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(580, 0)
+layout_mode = 2
+
+[node name="Coluna" type="VBoxContainer" parent="Centro/Cartao"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Titulo" type="Label" parent="Centro/Cartao/Coluna"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Titulo"
+text = "TEM CERTEZA?"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Texto" type="Label" parent="Centro/Cartao/Coluna"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_type_variation = &"Texto"
+text = "Texto"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Espaco" type="Control" parent="Centro/Cartao/Coluna"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="Botoes" type="HBoxContainer" parent="Centro/Cartao/Coluna"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Nao" type="Button" parent="Centro/Cartao/Coluna/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"BotaoRoxo"
+text = "NÃO"
+
+[node name="Sim" type="Button" parent="Centro/Cartao/Coluna/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"BotaoRoxo"
+text = "SIM"

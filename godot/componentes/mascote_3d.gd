@@ -68,7 +68,7 @@ func _process(delta: float) -> void:
 			# volta devagar para a pose inicial pelo caminho mais curto
 			var alvo := ANGULO_INICIAL + roundf((_modelo.rotation.y - ANGULO_INICIAL) / TAU) * TAU
 			_modelo.rotation.y = lerp_angle(_modelo.rotation.y, alvo, 2.5 * delta)
-	if Jogo.animacoes_continuas:
+	if Telas.animacoes_continuas:
 		_modelo.position.y = sin(_tempo * 2.2) * 0.05  # flutua
 		_modelo.rotation.z = sin(_tempo * 1.4) * 0.03  # balança de leve
 

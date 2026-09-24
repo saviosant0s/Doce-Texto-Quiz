@@ -1,5 +1,7 @@
 extends Control
 ## Partida: mostra as perguntas do nível, uma por vez, com tempo limite.
+## O cronômetro pausa enquanto a caixa "sair?" está aberta ou o app está em
+## segundo plano (ex.: o jogador atendeu uma ligação).
 
 const PAUSA_APOS_RESPOSTA := 1.1
 const ICONE_SOM := preload("res://assets/icones/som.svg")
@@ -11,13 +13,14 @@ var _perguntas: Array
 var _indice := 0
 var _tempo_restante := 0.0
 var _respondendo := false
+var _pausado := false
 var _botoes: Array[Button] = []
 
 
 func _ready() -> void:
 	_perguntas = Jogo.perguntas_partida
 	%Som.pressed.connect(_alternar_som)
-	%Sair.pressed.connect(Jogo.ir_para.bind("niveis"))
+	%Sair.pressed.connect(_perguntar_se_sai)
 	_atualizar_icone_som()
 	for i in 4:
 		var botao := Button.new()
@@ -32,7 +35,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not _respondendo:
+	if not _respondendo or _pausado:
 		return
 	_tempo_restante = maxf(0.0, _tempo_restante - delta)
 	# Atualiza a barra 10x por segundo (e não a cada quadro) para poupar o celular
@@ -66,16 +69,32 @@ func _mostrar_pergunta() -> void:
 
 
 func _responder(escolha: int) -> void:
-	if _respondendo:
+	if _respondendo and not _pausado:
 		_finalizar_pergunta(escolha)
+
+
+func _notification(aviso: int) -> void:
+	# App em segundo plano (celular) ou janela sem foco: pausa o cronômetro
+	if aviso == NOTIFICATION_APPLICATION_FOCUS_OUT or aviso == NOTIFICATION_APPLICATION_PAUSED:
+		_pausado = true
+	elif aviso == NOTIFICATION_APPLICATION_FOCUS_IN or aviso == NOTIFICATION_APPLICATION_RESUMED:
+		_pausado = false
+
+
+func _perguntar_se_sai() -> void:
+	_pausado = true
+	var sair := await Telas.confirmar(
+		"SAIR DA PARTIDA?", "As respostas desta partida não serão salvas.", "SAIR", "CONTINUAR")
+	if sair:
+		Telas.ir_para("niveis")
+	else:
+		_pausado = false
 
 
 func _finalizar_pergunta(escolha: int) -> void:
 	_respondendo = false
 	var correta: int = _perguntas[_indice]["resposta"]
-	var acertou := escolha == correta
-	Jogo.resultados.append(acertou)
-	Jogo.respostas.append(escolha)
+	var acertou := Jogo.registrar_resposta(escolha, Jogo.TEMPO_POR_PERGUNTA - _tempo_restante)
 	Audio.tocar("acerto" if acertou else "erro")
 
 	for botao in _botoes:
@@ -90,7 +109,7 @@ func _finalizar_pergunta(escolha: int) -> void:
 		_mostrar_pergunta()
 	else:
 		Jogo.finalizar_partida()
-		Jogo.ir_para("aproveitamento")
+		Telas.ir_para("aproveitamento")
 
 
 ## Destaca uma alternativa (verde = correta, vermelho = escolha errada).
@@ -110,4 +129,4 @@ func _alternar_som() -> void:
 
 
 func _atualizar_icone_som() -> void:
-	%Som.icon = ICONE_SOM if Jogo.musica_ligada else ICONE_SOM_MUDO
+	%Som.icon = ICONE_SOM if Audio.musica_ligada() else ICONE_SOM_MUDO

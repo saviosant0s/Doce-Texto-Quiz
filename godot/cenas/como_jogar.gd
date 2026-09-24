@@ -3,25 +3,25 @@ extends Control
 
 const PASSOS := [
 	{"icone": "camadas", "titulo": "ESCOLHA O NÍVEL",
-		"texto": "Fácil, médio ou difícil: cada partida sorteia 10 perguntas sobre Word e Excel."},
+		"texto": "Comece pelo fácil. Passando nele, você libera o médio, e depois o difícil."},
 	{"icone": "relogio", "titulo": "RESPONDA RÁPIDO",
-		"texto": "Você tem 30 segundos por pergunta. Se o tempo acabar, conta como erro."},
-	{"icone": "grafico", "titulo": "VEJA O RESULTADO",
-		"texto": "No fim, você confere cada resposta e o seu aproveitamento."},
+		"texto": "Cada partida tem 10 perguntas e 30 segundos para cada. Se o tempo acabar, conta como erro."},
+	{"icone": "estrela", "titulo": "FAÇA 6 ACERTOS",
+		"texto": "Com 6 acertos você passa no nível. Com 8 e 10, ganha mais estrelas."},
 	{"icone": "trofeu", "titulo": "GANHE SEU TÍTULO",
-		"texto": "Quanto maior o aproveitamento, mais doce é o título que você leva!"},
+		"texto": "Cada nível vencido dá um título de doceiro. Chegue ao Mestre!"},
 ]
 const FAIXAS := [
-	{"personagem": "brigadeiro_triste", "faixa": "ATÉ 30%", "nome": "AINDA NÃO É DOCEIRO"},
-	{"personagem": "maca_noob", "faixa": "40 A 50%", "nome": "DOCEIRO NOOB"},
-	{"personagem": "cupcake_pro", "faixa": "60 A 80%", "nome": "DOCEIRO PRO"},
-	{"personagem": "chocolate_mestre", "faixa": "90 A 100%", "nome": "DOCEIRO MESTRE"},
+	{"personagem": "brigadeiro_triste", "faixa": "MENOS DE 6", "nome": "AINDA NÃO É DOCEIRO"},
+	{"personagem": "maca_noob", "faixa": "PASSOU NO FÁCIL", "nome": "DOCEIRO NOOB"},
+	{"personagem": "cupcake_pro", "faixa": "PASSOU NO MÉDIO", "nome": "DOCEIRO PRO"},
+	{"personagem": "chocolate_mestre", "faixa": "PASSOU NO DIFÍCIL", "nome": "DOCEIRO MESTRE"},
 ]
 
 
 func _ready() -> void:
-	%Voltar.pressed.connect(Jogo.voltar)
-	%Jogar.pressed.connect(Jogo.ir_para.bind("niveis"))
+	%Voltar.pressed.connect(Telas.voltar)
+	%Jogar.pressed.connect(Telas.ir_para.bind("niveis"))
 	for i in PASSOS.size():
 		var cartao := _criar_passo(i + 1, PASSOS[i])
 		%Passos.add_child(cartao)
@@ -95,7 +95,7 @@ func _criar_faixa(faixa: Dictionary) -> HBoxContainer:
 	linha.add_child(textos)
 	var porcentagem := Label.new()
 	porcentagem.theme_type_variation = &"TituloClaro"
-	porcentagem.add_theme_font_size_override("font_size", 32)
+	porcentagem.add_theme_font_size_override("font_size", 26)
 	porcentagem.text = faixa["faixa"]
 	textos.add_child(porcentagem)
 	var nome := Label.new()
