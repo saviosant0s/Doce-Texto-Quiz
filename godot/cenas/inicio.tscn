@@ -5,6 +5,32 @@
 [ext_resource type="Texture2D" path="res://assets/personagens/mascote_cereal.png" id="3"]
 [ext_resource type="Texture2D" path="res://assets/icones/interrogacao.svg" id="4"]
 [ext_resource type="Texture2D" path="res://assets/icones/pessoas.svg" id="5"]
+[ext_resource type="FontFile" path="res://assets/fontes/BebasNeue-Regular.ttf" id="6"]
+
+[sub_resource type="FontVariation" id="bebas_titulo"]
+base_font = ExtResource("6")
+spacing_top = -24
+spacing_bottom = -36
+
+[sub_resource type="FontVariation" id="bebas_quiz"]
+base_font = ExtResource("6")
+spacing_top = -56
+spacing_bottom = -84
+
+[sub_resource type="StyleBoxFlat" id="caixa_quiz"]
+content_margin_left = 26.0
+content_margin_top = 28.0
+content_margin_right = 26.0
+content_margin_bottom = 28.0
+bg_color = Color(0.956863, 0.878431, 0.219608, 1)
+corner_radius_top_left = 26
+corner_radius_top_right = 26
+corner_radius_bottom_right = 26
+corner_radius_bottom_left = 26
+corner_detail = 10
+shadow_color = Color(0, 0, 0, 0.18)
+shadow_size = 12
+shadow_offset = Vector2(0, 6)
 
 [node name="Inicio" type="Control"]
 layout_mode = 3
@@ -42,25 +68,27 @@ alignment = 1
 
 [node name="Logo" type="VBoxContainer" parent="Centro/Conteudo"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(500, 0)
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_constants/separation = 14
+theme_override_constants/separation = 20
 
 [node name="DoceTexto" type="Label" parent="Centro/Conteudo/Logo"]
 layout_mode = 2
 theme_type_variation = &"TituloGrande"
-theme_override_font_sizes/font_size = 104
+theme_override_fonts/font = SubResource("bebas_titulo")
+theme_override_font_sizes/font_size = 120
 text = "DOCE TEXTO"
 horizontal_alignment = 1
 
 [node name="PainelQuiz" type="PanelContainer" parent="Centro/Conteudo/Logo"]
 layout_mode = 2
+theme_override_styles/panel = SubResource("caixa_quiz")
 
 [node name="Quiz" type="Label" parent="Centro/Conteudo/Logo/PainelQuiz"]
 layout_mode = 2
 theme_type_variation = &"Titulo"
-theme_override_font_sizes/font_size = 220
+theme_override_fonts/font = SubResource("bebas_quiz")
+theme_override_font_sizes/font_size = 280
 text = "QUIZ"
 horizontal_alignment = 1
 vertical_alignment = 1
