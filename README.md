@@ -95,6 +95,18 @@ precisa estar instalado. A keystore e a senha **não ficam no repositório**:
 guarde-as em lugar seguro, porque toda atualização do app precisa ser assinada
 com a mesma chave. Os ícones do app ficam em `godot/assets/android/`.
 
+### Gerar o executável para Windows
+
+```bash
+ferramentas/gerar_exe.sh
+```
+
+Gera `build/windows/DoceTextoQuiz.exe`, um arquivo só, com o jogo dentro: é só
+abrir, sem instalar (Windows 64 bits). Precisa dos modelos de exportação do
+Godot para Windows. Download publicado:
+https://saviosant0s.github.io/Doce-Texto-Quiz/windows/DoceTextoQuiz.zip
+(o fluxo "Teste no Windows" do GitHub Actions abre esse arquivo num Windows de verdade).
+
 ### Publicar a versão web
 
 ```bash

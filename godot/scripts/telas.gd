@@ -3,8 +3,6 @@ extends Node
 ## de exibição. Disponível como `Telas` (autoload).
 
 const DURACAO_TRANSICAO := 0.25
-## Gerado ao publicar (commit e data do build); não existe ao rodar pelo editor.
-const CAMINHO_BUILD := "res://dados/build.json"
 
 const CENAS := {
 	"inicio": "res://cenas/inicio.tscn",
@@ -156,16 +154,9 @@ func _tirar_dicas() -> void:
 		no.tooltip_text = ""
 
 
-## Texto da versão, ex.: "v0.3.0 · 1c262ea · 24/09 15:10".
+## Texto da versão mostrado nas telas, ex.: "v0.4.0".
 func versao() -> String:
-	var texto := "v" + str(ProjectSettings.get_setting("application/config/version", "0"))
-	if FileAccess.file_exists(CAMINHO_BUILD):
-		var build = JSON.parse_string(FileAccess.get_file_as_string(CAMINHO_BUILD))
-		if build is Dictionary:
-			texto += " · %s · %s" % [build.get("commit", "?"), build.get("data", "?")]
-	else:
-		texto += " · dev"
-	return texto
+	return "v" + str(ProjectSettings.get_setting("application/config/version", "0"))
 
 
 func _detectar_renderizacao() -> void:

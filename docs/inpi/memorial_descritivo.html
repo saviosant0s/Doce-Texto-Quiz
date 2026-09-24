@@ -71,7 +71,7 @@ table.lista th { width: auto; background: var(--roxo); color: white; }
     <img class="logo" src="logo.png" alt="Doce Texto Quiz">
     <div class="tipo">Memorial descritivo<br>do programa de computador</div>
     <div class="sub">Jogo educativo de perguntas e respostas sobre editores de texto e planilhas
-      (Word e Excel), para celulares Android e navegadores.</div>
+      (Word e Excel), para celulares Android, computadores com Windows e navegadores.</div>
     <div class="doces">
       <img src="telas/doce_brigadeiro.png" alt=""><img src="telas/doce_maca.png" alt="">
       <img src="telas/doce_cupcake.png" alt=""><img src="telas/doce_chocolate.png" alt="">
@@ -82,7 +82,7 @@ table.lista th { width: auto; background: var(--roxo); color: white; }
     <b>Autores:</b> Sávio Santos Rocha, Natalí Rocha e Talita Argolo<br>
     <b>Orientação:</b> Eduardo Cambruzzi, Peterson Lobato, Alba Rogéria e Nelson Valente<br>
     <b>Instituição:</b> Instituto Federal da Bahia (IFBA) — Campus Valença · Curso Técnico em Informática, Turma 613<br>
-    <b>Versão do programa:</b> 0.4.0 · <b>Criação:</b> 2023 · <b>Este documento:</b> setembro de 2026
+    <b>Versão do programa:</b> 0.5.0 · <b>Criação:</b> 2023 · <b>Este documento:</b> setembro de 2026
   </div>
 </div>
 
@@ -109,14 +109,14 @@ table.lista th { width: auto; background: var(--roxo); color: white; }
   <h2><span class="numero">1</span>Identificação do programa</h2>
   <table>
     <tr><th>Título</th><td>Doce Texto Quiz</td></tr>
-    <tr><th>Versão descrita</th><td>0.4.0 (setembro de 2026)</td></tr>
+    <tr><th>Versão descrita</th><td>0.5.0 (setembro de 2026)</td></tr>
     <tr><th>Criação</th><td>2023, como projeto da Turma 613 do Curso Técnico em Informática do IFBA Campus Valença
       (primeira versão escrita em Python com a biblioteca pygame)</td></tr>
     <tr><th>Natureza</th><td>Jogo educativo (quiz) de perguntas e respostas</td></tr>
     <tr><th>Área de aplicação</th><td>Educação — ensino de informática básica (editores de texto e planilhas eletrônicas)</td></tr>
     <tr><th>Linguagem de programação</th><td>GDScript (motor Godot Engine 4.7), com dados em JSON</td></tr>
-    <tr><th>Plataformas</th><td>Celulares e tablets Android (versão 7 ou mais nova), em modo paisagem; navegadores web</td></tr>
-    <tr><th>Requisitos</th><td>Não precisa de internet para jogar, não pede permissões no celular e não coleta dados pessoais.
+    <tr><th>Plataformas</th><td>Celulares e tablets Android (versão 7 ou mais nova), em modo paisagem; computadores com Windows (64 bits), como um único arquivo executável; navegadores web</td></tr>
+    <tr><th>Requisitos</th><td>Não precisa de internet para jogar nem de instalação no Windows (basta abrir o executável), não pede permissões no celular e não coleta dados pessoais.
       O progresso fica salvo apenas no próprio aparelho.</td></tr>
   </table>
 </section>
@@ -159,7 +159,7 @@ table.lista th { width: auto; background: var(--roxo); color: white; }
     <li>Dar retorno imediato ao jogador, com a resposta certa e uma explicação curta para cada pergunta.</li>
     <li>Estimular a prática repetida, priorizando perguntas nunca vistas e as que o jogador errou.</li>
     <li>Mostrar ao jogador os seus pontos fortes e fracos (por exemplo, acerto em Word e em Excel).</li>
-    <li>Funcionar em aparelhos simples, sem internet, para ser usado em sala de aula ou em casa.</li>
+    <li>Funcionar em aparelhos simples e nos computadores dos laboratórios, sem internet, para ser usado em sala de aula ou em casa.</li>
   </ul>
 </section>
 
@@ -198,7 +198,7 @@ table.lista th { width: auto; background: var(--roxo); color: white; }
 <section class="quebra">
   <h2><span class="numero">7</span>Descrição das telas</h2>
   <p>A estrutura de telas é a mesma da versão de 2023, agora com mais recursos. Todas as telas são exibidas com o
-    celular deitado (modo paisagem).</p>
+    celular deitado (modo paisagem); no computador, o jogo abre em uma janela com a mesma proporção.</p>
 
   <div class="tela">
     <img src="telas/inicio.png" alt="Tela inicial">
@@ -347,8 +347,8 @@ table.lista th { width: auto; background: var(--roxo); color: white; }
 <section>
   <h2><span class="numero">10</span>Evolução do projeto (2023 a 2026)</h2>
   <table class="lista">
-    <tr><th>Aspecto</th><th>Versão de 2023</th><th>Versão atual (0.4.0)</th></tr>
-    <tr><td>Tecnologia</td><td>Python com pygame, para computador</td><td>Godot 4 (GDScript), para Android e navegador</td></tr>
+    <tr><th>Aspecto</th><th>Versão de 2023</th><th>Versão atual (0.5.0)</th></tr>
+    <tr><td>Tecnologia</td><td>Python com pygame, para computador</td><td>Godot 4 (GDScript), para Android, Windows e navegador</td></tr>
     <tr><td>Perguntas</td><td>Lista fixa, sempre na mesma ordem</td><td>60 perguntas sorteadas, com explicações</td></tr>
     <tr><td>Progressão</td><td>Aproveitamento e título ao final</td><td>Níveis liberados em ordem, estrelas, recordes e pontos</td></tr>
     <tr><td>Retorno ao aluno</td><td>Lista de questões certas/erradas</td><td>Resposta certa e explicação de cada pergunta, revisão dos erros e estatísticas</td></tr>
@@ -378,9 +378,9 @@ table.lista th { width: auto; background: var(--roxo); color: white; }
 
   <h3>11.2 Resumo digital (hash) do código-fonte</h3>
   <div class="caixa">
-    Pacote do código-fonte da versão 0.4.0: <b>doce_texto_quiz_codigo_fonte_v0.4.0.zip</b><br>
+    Pacote do código-fonte da versão 0.5.0: <b>doce_texto_quiz_codigo_fonte_v0.5.0.zip</b><br>
     Algoritmo: <b>SHA-512</b>
-    <div class="hash">0f0736fe6df91a67afe7553a5f6f8c823706be7bb0fb305558a68c0e7cbb55d84601a7b5b07a2e26c321130460844ba3e0109e69a0c437d8e5cbe426885e65f1</div>
+    <div class="hash">11393dd25b8903e2a99fe127a24b42304edfc7ecf6cb992420afb5f9819f26c1fcbca98d2359bd0427d6a7e3f0c4c9b7868b17452e2e5ba05859aecb49835c1a</div>
   </div>
   <div class="caixa aviso">
     <b>Importante:</b> qualquer mudança no código gera um hash diferente. Na hora de enviar o pedido, gere o pacote e
@@ -402,7 +402,7 @@ table.lista th { width: auto; background: var(--roxo); color: white; }
   <h2><span class="numero">12</span>Conclusão</h2>
   <p>O Doce Texto Quiz é uma ferramenta educativa que une o estudo de editores de texto e planilhas à linguagem dos
     jogos digitais. A proposta criada pela Turma 613 em 2023 — um quiz leve, colorido e cheio de doces — foi
-    preservada e ampliada: hoje o jogo funciona no celular e no navegador, explica cada resposta, adapta o sorteio
+    preservada e ampliada: hoje o jogo funciona no celular, no computador com Windows e no navegador, explica cada resposta, adapta o sorteio
     ao desempenho do aluno, acompanha a sua evolução e oferece recompensas que estimulam a prática contínua.</p>
   <p>Com isso, o jogo não apenas avalia o que o estudante já sabe, mas se torna um apoio real ao aprendizado,
     que pode ser usado em sala de aula ou em casa, em aparelhos simples e sem acesso à internet.</p>
