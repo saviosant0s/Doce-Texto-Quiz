@@ -26,7 +26,8 @@ func _ready() -> void:
 		%JogarDeNovo.text = "TENTE NOVAMENTE"
 		%Fundo.decoracao = Fundo.Decoracao.NENHUMA
 	_mostrar_estrelas(r["estrelas"])
-	if r["novo_recorde"]:
+	_destaque("%s PONTOS" % Jogo.formatar(r["pontos"]))
+	if r["novo_recorde_pontos"]:
 		_destaque("NOVO RECORDE!")
 	if r["liberou_nivel"]:
 		var proximo: String = Jogo.niveis[r["nivel"] + 1]["nome"].to_upper()

@@ -7,6 +7,8 @@ extends Node
 ## - Com NOTA_PARA_PASSAR% ou mais, o jogador passa no nível: ganha o título do
 ##   nível (Noob, Pro, Mestre) e libera o próximo.
 ## - Estrelas: 60% = 1, 80% = 2, 100% = 3. Moedas por acerto e por estrela.
+## - Pontos: cada acerto vale PONTOS_BASE + até PONTOS_RAPIDEZ pela rapidez;
+##   sequências de acertos multiplicam os pontos (combo).
 
 const CAMINHO_PERGUNTAS := "res://dados/perguntas.json"
 const TEMPO_POR_PERGUNTA := 30.0
@@ -17,6 +19,14 @@ const NOTAS_ESTRELAS := [60, 80, 100]
 const TITULOS := ["noob", "pro", "mestre"]
 const MOEDAS_POR_ACERTO := [5, 8, 12]
 const MOEDAS_POR_ESTRELA := 10
+const PONTOS_BASE := 100
+const PONTOS_RAPIDEZ := 100
+## Multiplicador de pontos por sequência de acertos: [acertos seguidos, multiplicador].
+const COMBOS := [[5, 2.0], [3, 1.5]]
+## Ajudas pagas com moedas (uma de cada por pergunta).
+const CUSTO_ELIMINAR := 30  # tira duas alternativas erradas
+const CUSTO_MAIS_TEMPO := 20  # +SEGUNDOS_EXTRAS no cronômetro
+const SEGUNDOS_EXTRAS := 10.0
 
 ## Níveis e perguntas, lidos de dados/perguntas.json.
 var niveis: Array = []
@@ -28,6 +38,11 @@ var perguntas_partida: Array = []
 var resultados: Array[bool] = []  # acertou/errou em cada pergunta
 var respostas: Array[int] = []  # alternativa escolhida (-1 = tempo esgotado)
 var tempos: Array[float] = []  # segundos gastos em cada pergunta
+var pontos := 0
+var sequencia := 0  # acertos seguidos até agora
+var ajudas_usadas := 0
+## Pontos ganhos na última resposta e o multiplicador usado (para a tela animar).
+var ultimo_ganho := {"pontos": 0, "multiplicador": 1.0}
 ## Resumo da partida terminada (ver finalizar_partida).
 var resumo := {}
 
@@ -68,6 +83,10 @@ func preparar_partida(indice: int) -> void:
 	resultados.clear()
 	respostas.clear()
 	tempos.clear()
+	pontos = 0
+	sequencia = 0
+	ajudas_usadas = 0
+	ultimo_ganho = {"pontos": 0, "multiplicador": 1.0}
 	resumo = {}
 	_sortear_perguntas()
 
@@ -79,7 +98,54 @@ func registrar_resposta(escolha: int, tempo: float) -> bool:
 	resultados.append(acertou)
 	respostas.append(escolha)
 	tempos.append(tempo)
+	sequencia = sequencia + 1 if acertou else 0
+	var ganho := pontos_da_resposta(acertou, tempo, sequencia)
+	pontos += ganho
+	ultimo_ganho = {"pontos": ganho, "multiplicador": multiplicador(sequencia)}
 	return acertou
+
+
+## Paga e registra uma ajuda. Retorna falso se não houver moedas.
+func usar_ajuda(custo: int) -> bool:
+	if not Progresso.gastar_moedas(custo):
+		return false
+	ajudas_usadas += 1
+	return true
+
+
+## Duas alternativas erradas (índices) da pergunta atual, para a ajuda "eliminar".
+func alternativas_para_eliminar() -> Array:
+	var correta: int = perguntas_partida[respostas.size()]["resposta"]
+	var erradas := [0, 1, 2, 3].filter(func(i): return i != correta)
+	erradas.shuffle()
+	return erradas.slice(0, 2)
+
+
+## Formata números com ponto de milhar: 2198 -> "2.198".
+static func formatar(numero: int) -> String:
+	var texto := str(absi(numero))
+	var partes := []
+	while texto.length() > 3:
+		partes.push_front(texto.right(3))
+		texto = texto.left(texto.length() - 3)
+	partes.push_front(texto)
+	return ("-" if numero < 0 else "") + ".".join(partes)
+
+
+func multiplicador(acertos_seguidos: int) -> float:
+	for combo in COMBOS:
+		if acertos_seguidos >= combo[0]:
+			return combo[1]
+	return 1.0
+
+
+## Acerto vale a base mais um bônus que cai conforme o tempo gasto (responder
+## na hora = bônus cheio; no fim do tempo = sem bônus), vezes o combo.
+func pontos_da_resposta(acertou: bool, tempo: float, acertos_seguidos: int) -> int:
+	if not acertou:
+		return 0
+	var rapidez := clampf(1.0 - tempo / TEMPO_POR_PERGUNTA, 0.0, 1.0)
+	return roundi((PONTOS_BASE + PONTOS_RAPIDEZ * rapidez) * multiplicador(acertos_seguidos))
 
 
 ## Calcula nota, estrelas, título e moedas, e salva no Progresso.
@@ -92,7 +158,7 @@ func finalizar_partida() -> void:
 	var lista := []
 	for i in resultados.size():
 		lista.append({"id": perguntas_partida[i]["id"], "acertou": resultados[i], "tempo": tempos[i]})
-	var mudancas := Progresso.registrar_partida(nivel_atual, lista, titulo, estrelas, moedas)
+	var mudancas := Progresso.registrar_partida(nivel_atual, lista, titulo, estrelas, moedas, pontos)
 	resumo = {
 		"nivel": nivel_atual,
 		"acertos": acertos,
@@ -102,6 +168,8 @@ func finalizar_partida() -> void:
 		"aprovado": estrelas > 0,
 		"titulo": titulo,
 		"moedas": moedas,
+		"pontos": pontos,
+		"ajudas": ajudas_usadas,
 	}
 	resumo.merge(mudancas)
 

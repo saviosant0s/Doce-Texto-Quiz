@@ -40,7 +40,7 @@ func _zerar() -> void:
 	for i in QUANTIDADE_NIVEIS:
 		niveis.append({
 			"recorde": 0, "ultima": -1, "estrelas": 0, "aprovado": false,
-			"partidas": 0, "ultimas_perguntas": [],
+			"partidas": 0, "ultimas_perguntas": [], "recorde_pontos": 0,
 		})
 	titulos = {"noob": 0, "pro": 0, "mestre": 0}
 	moedas = 0
@@ -67,7 +67,7 @@ func historico(id_pergunta: String) -> Dictionary:
 ## {"id": String, "acertou": bool, "tempo": float}. Retorna o que mudou, para a
 ## tela de resultado comemorar: novo recorde, estrelas, aprovação, nível liberado.
 func registrar_partida(nivel: int, respostas: Array, titulo: String, estrelas: int,
-		moedas_ganhas: int) -> Dictionary:
+		moedas_ganhas: int, pontos := 0) -> Dictionary:
 	var dados := niveis[nivel]
 	var acertos := respostas.filter(func(r): return r["acertou"]).size()
 	var aprovado := estrelas > 0
@@ -76,7 +76,9 @@ func registrar_partida(nivel: int, respostas: Array, titulo: String, estrelas: i
 		"primeira_aprovacao": aprovado and not dados["aprovado"],
 		"liberou_nivel": aprovado and not dados["aprovado"] and nivel + 1 < QUANTIDADE_NIVEIS,
 		"mais_estrelas": estrelas > dados["estrelas"],
+		"novo_recorde_pontos": pontos > dados["recorde_pontos"] and dados["partidas"] > 0,
 	}
+	dados["recorde_pontos"] = maxi(dados["recorde_pontos"], pontos)
 	dados["recorde"] = maxi(dados["recorde"], acertos)
 	dados["ultima"] = acertos
 	dados["estrelas"] = maxi(dados["estrelas"], estrelas)
@@ -151,7 +153,7 @@ func carregar() -> void:
 	dados = _migrar(dados)
 	for i in mini(QUANTIDADE_NIVEIS, dados.get("niveis", []).size()):
 		niveis[i].merge(dados["niveis"][i], true)
-		for chave in ["recorde", "ultima", "estrelas", "partidas"]:
+		for chave in ["recorde", "ultima", "estrelas", "partidas", "recorde_pontos"]:
 			niveis[i][chave] = int(niveis[i][chave])  # o JSON lê números como float
 	titulos.merge(dados.get("titulos", {}), true)
 	for chave in titulos:

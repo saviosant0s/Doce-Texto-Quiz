@@ -7,6 +7,7 @@ extends Node
 ##   --acertos=7   simula uma partida com 7 acertos (telas de resultado)
 ##   --nivel=1     nível da partida simulada (0 = fácil)
 ##   --liberar=2   marca como aprovados os níveis antes deste (para ver cadeados)
+##   --moedas=120  começa com essa quantidade de moedas
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -23,8 +24,11 @@ func _ready() -> void:
 		Progresso.niveis[i]["estrelas"] = 3 - i
 		Progresso.niveis[i]["recorde"] = 10 - i * 2
 		Progresso.niveis[i]["partidas"] = 3
+	Progresso.moedas = int(args.get("moedas", str(Progresso.moedas)))
 	if args.has("acertos"):
 		_simular_partida(int(args.get("nivel", "0")), int(args["acertos"]))
+	if args["capturar"] == "partida" and Jogo.perguntas_partida.is_empty():
+		Jogo.preparar_partida(int(args.get("nivel", "0")))
 	await get_tree().process_frame
 	get_tree().change_scene_to_file(Telas.CENAS[args["capturar"]])
 	await get_tree().create_timer(float(args.get("espera", "1.2"))).timeout

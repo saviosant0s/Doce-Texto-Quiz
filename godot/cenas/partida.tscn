@@ -67,6 +67,18 @@ theme_type_variation = &"SubtituloClaro"
 theme_override_font_sizes/font_size = 30
 text = "PERGUNTA 1/10"
 
+[node name="EtiquetaPontos" type="PanelContainer" parent="Margem/Linha/CartaoPergunta/Coluna/Topo"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Etiqueta"
+
+[node name="Pontos" type="Label" parent="Margem/Linha/CartaoPergunta/Coluna/Topo/EtiquetaPontos"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SubtituloClaro"
+theme_override_font_sizes/font_size = 30
+text = "0 PONTOS"
+
 [node name="Espaco" type="Control" parent="Margem/Linha/CartaoPergunta/Coluna/Topo"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -110,6 +122,7 @@ vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="Lateral" type="VBoxContainer" parent="Margem/Linha"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1

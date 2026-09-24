@@ -10,7 +10,7 @@ const ICONE_LAMPADA := preload("res://assets/icones/lampada.svg")
 
 func _ready() -> void:
 	var acertos := Jogo.resultados.count(true)
-	%Acertos.text = "%d DE %d ACERTOS" % [acertos, Jogo.resultados.size()]
+	%Acertos.text = "%d DE %d ACERTOS · %s PONTOS" % [acertos, Jogo.resultados.size(), Jogo.formatar(Jogo.pontos)]
 	%Continuar.pressed.connect(Telas.ir_para.bind("resultado"))
 	for acertou in Jogo.resultados:
 		%Bolinhas.add_child(_criar_bolinha(acertou))

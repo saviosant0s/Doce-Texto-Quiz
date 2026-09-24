@@ -41,6 +41,12 @@ func _testar_regras() -> void:
 	verificar(Jogo.estrelas_para(80) == 2, "80% = 2 estrelas")
 	verificar(Jogo.estrelas_para(100) == 3, "100% = 3 estrelas")
 	verificar(Jogo.acertos_para_passar() == 6, "passa com 6 de 10")
+	verificar(Jogo.pontos_da_resposta(true, 0.0, 1) == 200, "resposta imediata vale 200")
+	verificar(Jogo.pontos_da_resposta(true, 30.0, 1) == 100, "resposta no fim do tempo vale 100")
+	verificar(Jogo.pontos_da_resposta(false, 1.0, 0) == 0, "erro vale 0")
+	verificar(Jogo.multiplicador(2) == 1.0 and Jogo.multiplicador(3) == 1.5 and Jogo.multiplicador(5) == 2.0, "combos x1,5 e x2")
+	verificar(Jogo.pontos_da_resposta(true, 15.0, 5) == 300, "meio tempo com combo x2 = 300")
+	verificar(Jogo.formatar(2198) == "2.198" and Jogo.formatar(1234567) == "1.234.567" and Jogo.formatar(12) == "12", "formata milhar")
 	var ids := {}
 	for nivel in Jogo.niveis:
 		verificar(nivel["perguntas"].size() >= Jogo.PERGUNTAS_POR_PARTIDA, "nível com perguntas suficientes")
@@ -112,6 +118,8 @@ func _testar_progresso() -> void:
 	Jogo.preparar_partida(0)
 	_jogar(3, 0)
 	verificar(Progresso.niveis[0]["recorde"] == 8, "recorde continua 8 depois de jogar pior")
+	verificar(Progresso.niveis[0]["recorde_pontos"] > 0, "guarda recorde de pontos")
+	verificar(not Jogo.resumo["novo_recorde_pontos"], "jogar pior não é recorde de pontos")
 	verificar(Progresso.niveis[0]["ultima"] == 3, "última partida = 3")
 	verificar(Progresso.niveis[0]["estrelas"] == 2, "estrelas não diminuem")
 	verificar(Progresso.moedas == moedas_antes + 3 * Jogo.MOEDAS_POR_ACERTO[0], "moedas por acerto")
@@ -152,6 +160,22 @@ func _testar_fluxo_completo() -> void:
 		await get_tree().create_timer(0.5).timeout
 		verificar(get_tree().current_scene == partida, "cancelar mantém a partida")
 		verificar(not partida._pausado, "cronômetro volta a andar")
+
+	# Ajudas: sem moedas ficam desativadas; com moedas, eliminam 2 erradas e dão +10 s
+	verificar(partida._ajuda_eliminar.disabled, "sem moedas, ajuda desativada")
+	Progresso.moedas = 100
+	partida._atualizar_ajudas()
+	verificar(not partida._ajuda_eliminar.disabled, "com moedas, ajuda ativada")
+	partida._ajuda_eliminar.pressed.emit()
+	var desativadas: int = partida._botoes.filter(func(b): return b.disabled).size()
+	verificar(desativadas == 2, "eliminar desativa 2 alternativas")
+	verificar(not partida._botoes[Jogo.perguntas_partida[0]["resposta"]].disabled, "a correta nunca é eliminada")
+	verificar(Progresso.moedas == 100 - Jogo.CUSTO_ELIMINAR, "cobra as moedas")
+	verificar(partida._ajuda_eliminar.disabled, "eliminar só uma vez por pergunta")
+	var antes: float = partida._tempo_restante
+	partida._ajuda_tempo.pressed.emit()
+	verificar(partida._tempo_restante > antes + 9.0, "ganha +10 segundos")
+	verificar(Jogo.ajudas_usadas == 2, "conta as ajudas usadas")
 
 	for i in Jogo.PERGUNTAS_POR_PARTIDA:
 		await get_tree().create_timer(0.25).timeout
