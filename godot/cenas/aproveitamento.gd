@@ -1,9 +1,11 @@
 extends Control
-## Aproveitamento da partida e revisão de cada pergunta (sua resposta x resposta certa).
+## Aproveitamento da partida e revisão de cada pergunta: sua resposta, a certa
+## e uma explicação curta do porquê.
 
 const ICONE_CERTO := preload("res://assets/icones/certo.svg")
 const ICONE_ERRADO := preload("res://assets/icones/errado.svg")
 const ICONE_RELOGIO := preload("res://assets/icones/relogio.svg")
+const ICONE_LAMPADA := preload("res://assets/icones/lampada.svg")
 
 
 func _ready() -> void:
@@ -87,7 +89,25 @@ func _criar_revisao(indice: int, pergunta: Dictionary, escolha: int, acertou: bo
 		else:
 			textos.add_child(_resposta(ICONE_ERRADO, "Você respondeu: " + pergunta["alternativas"][escolha], Cores.VERMELHO_ESCURO))
 		textos.add_child(_resposta(ICONE_CERTO, "Resposta certa: " + correta, Cores.VERDE_ESCURO))
+	var explicacao: String = pergunta.get("explicacao", "")
+	if not explicacao.is_empty():
+		var linha_explicacao := _resposta(ICONE_LAMPADA, explicacao, Color(Cores.ROXO_ESCURO, 0.9))
+		linha_explicacao.get_child(1).add_theme_font_override("font", _fonte_explicacao())
+		textos.add_child(linha_explicacao)
 	return cartao
+
+
+## Explicação em texto normal (não negrito), para diferenciar das respostas.
+var _fonte_cache: FontVariation
+
+func _fonte_explicacao() -> Font:
+	if _fonte_cache:
+		return _fonte_cache
+	var fonte := FontVariation.new()
+	_fonte_cache = fonte
+	fonte.base_font = preload("res://assets/fontes/Nunito.ttf")
+	fonte.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): 600}
+	return fonte
 
 
 func _resposta(icone: Texture2D, texto: String, cor: Color) -> HBoxContainer:
@@ -97,6 +117,7 @@ func _resposta(icone: Texture2D, texto: String, cor: Color) -> HBoxContainer:
 	imagem.texture = icone
 	imagem.modulate = cor
 	imagem.custom_minimum_size = Vector2(20, 20)
+	imagem.size_flags_vertical = Control.SIZE_SHRINK_BEGIN  # alinhado à 1ª linha do texto
 	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	linha.add_child(imagem)

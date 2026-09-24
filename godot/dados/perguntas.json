@@ -1,5 +1,5 @@
 {
-  "_comentario": "Cada partida sorteia 10 perguntas do nível (priorizando as nunca vistas e as erradas) e embaralha as alternativas. 'id' identifica a pergunta no histórico do jogador: não reutilize um id para uma pergunta diferente. 'resposta' é o índice da alternativa correta.",
+  "_comentario": "Cada partida sorteia 10 perguntas do nível (priorizando as nunca vistas e as erradas) e embaralha as alternativas. 'id' identifica a pergunta no histórico do jogador: não reutilize um id para uma pergunta diferente. 'resposta' é o índice da alternativa correta. 'explicacao' aparece na revisão, depois da partida.",
   "niveis": [
     {
       "nome": "Fácil",
@@ -14,7 +14,8 @@
             "PowerPoint",
             "Paint"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O Word é o processador de texto do Office. O Excel é para planilhas, o PowerPoint para apresentações e o Paint para desenhos."
         },
         {
           "id": "f02",
@@ -25,7 +26,8 @@
             "PowerPoint",
             "Outlook"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O Excel organiza os dados em linhas e colunas e faz cálculos automáticos com fórmulas."
         },
         {
           "id": "f03",
@@ -36,7 +38,8 @@
             ".pptx",
             ".png"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Desde o Office 2007, o Word salva em .docx. O .xlsx é do Excel e o .pptx é do PowerPoint."
         },
         {
           "id": "f04",
@@ -47,7 +50,8 @@
             ".txt",
             ".mp3"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O .xlsx é o formato padrão do Excel desde 2007. As versões antigas usavam .xls."
         },
         {
           "id": "f05",
@@ -58,7 +62,8 @@
             "Ctrl + X",
             "Ctrl + Z"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Ctrl + C copia: o conteúdo fica guardado na área de transferência até você colar."
         },
         {
           "id": "f06",
@@ -69,7 +74,8 @@
             "Ctrl + P",
             "Ctrl + Z"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Ctrl + V cola o que está na área de transferência. As teclas C, X e V ficam lado a lado de propósito."
         },
         {
           "id": "f07",
@@ -80,7 +86,8 @@
             "Ctrl + V",
             "Ctrl + R"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Recortar tira o conteúdo do lugar e guarda para você colar em outro. Dica: o X lembra uma tesoura."
         },
         {
           "id": "f08",
@@ -91,7 +98,8 @@
             "Ctrl + D",
             "Ctrl + X"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Ctrl + Z desfaz a última ação. Dá para apertar várias vezes para voltar vários passos."
         },
         {
           "id": "f09",
@@ -102,7 +110,8 @@
             "Pasta",
             "Guia"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A célula é cada quadradinho da planilha, formado pelo encontro de uma linha com uma coluna. É nela que ficam os dados."
         },
         {
           "id": "f10",
@@ -113,7 +122,8 @@
             "Por cores",
             "Por nomes de pessoas"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "As colunas usam letras: A, B, C... Depois do Z vêm AA, AB, AC e assim por diante."
         },
         {
           "id": "f11",
@@ -124,7 +134,8 @@
             "Por cores",
             "Por símbolos"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "As linhas são numeradas: 1, 2, 3... Juntando a letra da coluna com o número da linha, você tem o endereço da célula."
         },
         {
           "id": "f12",
@@ -135,7 +146,8 @@
             "@",
             "?"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O sinal de igual avisa ao Excel que vem uma fórmula. Sem ele, o que você digitar vira texto ou número comum."
         },
         {
           "id": "f13",
@@ -146,7 +158,8 @@
             "C:5",
             "L5C3"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O endereço é sempre a letra da coluna seguida do número da linha: coluna C, linha 5 = C5."
         },
         {
           "id": "f14",
@@ -157,7 +170,8 @@
             "Layout",
             "Exibir"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A guia Página Inicial reúne as opções mais usadas: fonte, tamanho, cor, negrito, alinhamento e estilos."
         },
         {
           "id": "f15",
@@ -168,7 +182,8 @@
             "Revisão",
             "Exibir"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A guia Inserir tem tudo o que se coloca no documento: imagens, tabelas, formas, gráficos e links."
         },
         {
           "id": "f16",
@@ -179,7 +194,8 @@
             "Sublinha as letras",
             "Muda a cor das letras"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O negrito destaca o texto deixando as letras mais grossas. O itálico inclina e o sublinhado coloca uma linha embaixo."
         },
         {
           "id": "f17",
@@ -190,7 +206,8 @@
             "À esquerda",
             "À direita"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O justificado ajusta os espaços entre as palavras para o texto encostar nas duas margens. É muito usado em trabalhos escolares."
         },
         {
           "id": "f18",
@@ -201,7 +218,8 @@
             "Uma palavra em negrito",
             "Um comentário"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O sublinhado vermelho indica uma palavra que o Word não reconheceu, geralmente um erro de digitação. Clique com o botão direito para ver sugestões."
         },
         {
           "id": "f19",
@@ -212,7 +230,8 @@
             "=CONT.SE()",
             "=SE()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=SOMA soma todos os valores do intervalo, por exemplo =SOMA(A1:A10). A MÉDIA calcula a média e o CONT.SE conta."
         },
         {
           "id": "f20",
@@ -223,7 +242,8 @@
             "Apresentação",
             "Caderno"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O arquivo do Excel se chama pasta de trabalho. Cada aba dentro dela é uma planilha."
         }
       ]
     },
@@ -240,7 +260,8 @@
             "=MÁXIMO()",
             "=CONT.SE()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=MÉDIA(A1:A10) soma os valores e divide pela quantidade de números."
         },
         {
           "id": "m02",
@@ -251,7 +272,8 @@
             "=MAIOR.VALOR()",
             "=TOPO()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=MÁXIMO mostra o maior valor do intervalo, por exemplo =MÁXIMO(B2:B20). No Excel em português o nome é MÁXIMO."
         },
         {
           "id": "m03",
@@ -262,7 +284,8 @@
             "=MENOR.VALOR()",
             "=BAIXO()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=MÍNIMO mostra o menor valor do intervalo, por exemplo =MÍNIMO(B2:B20)."
         },
         {
           "id": "m04",
@@ -273,7 +296,8 @@
             "=OU()",
             "=SOMA()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=SE(teste; se verdadeiro; se falso). Exemplo: =SE(A1>=6; \"Aprovado\"; \"Reprovado\")."
         },
         {
           "id": "m05",
@@ -284,7 +308,8 @@
             "A1 dividido por A10",
             "Dez colunas da linha A"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Os dois pontos significam \"até\": A1:A10 são as 10 células da coluna A, da linha 1 até a 10."
         },
         {
           "id": "m06",
@@ -295,7 +320,8 @@
             "=CONTAR()",
             "=SE()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=CONT.SE(intervalo; critério) conta as células que atendem à condição. Exemplo: =CONT.SE(A1:A10; \">5\")."
         },
         {
           "id": "m07",
@@ -306,7 +332,8 @@
             "&",
             "%"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O $ trava a coluna e a linha: ao copiar a fórmula, $A$1 continua apontando para A1. A tecla F4 coloca os cifrões para você."
         },
         {
           "id": "m08",
@@ -317,7 +344,8 @@
             "24",
             "9"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O Excel segue a ordem da matemática: primeiro a multiplicação (3*4 = 12), depois a soma (2 + 12 = 14). Para somar primeiro, use parênteses: =(2+3)*4 dá 20."
         },
         {
           "id": "m09",
@@ -328,7 +356,8 @@
             "Sumário",
             "Colunas"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A Numeração cria listas 1, 2, 3 automaticamente. Os Marcadores fazem listas com símbolos, como bolinhas."
         },
         {
           "id": "m10",
@@ -339,7 +368,8 @@
             "Revisão",
             "Exibir"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A guia Layout tem margens, orientação, tamanho do papel e colunas. Em versões antigas ela se chama Layout da Página."
         },
         {
           "id": "m11",
@@ -350,7 +380,8 @@
             "Dividida em duas colunas",
             "Com o texto de cabeça para baixo"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Paisagem é a página deitada, mais larga do que alta. A página em pé, que é o padrão, se chama Retrato."
         },
         {
           "id": "m12",
@@ -361,7 +392,8 @@
             "Mala Direta",
             "Marca d'Água"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Controlar Alterações, na guia Revisão, marca cada mudança no texto para depois aceitar ou rejeitar. É ótimo para trabalhos em grupo."
         },
         {
           "id": "m13",
@@ -372,7 +404,8 @@
             "Congelar Painéis",
             "Quebrar Texto"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O Filtro, na guia Dados, esconde as linhas que não atendem ao critério, sem apagar nada."
         },
         {
           "id": "m14",
@@ -383,7 +416,8 @@
             "Mesclar e Centralizar",
             "Ocultar"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Congelar Painéis, na guia Exibir, deixa linhas ou colunas fixas na tela, como o cabeçalho de uma tabela grande."
         },
         {
           "id": "m15",
@@ -394,7 +428,8 @@
             "TXT",
             "XLSX"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O PDF mantém a mesma aparência em qualquer computador ou celular, por isso é o ideal para enviar a versão final."
         },
         {
           "id": "m16",
@@ -405,7 +440,8 @@
             "Cópia salva de verificação",
             "Coluna de soma de valores"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "CSV vem do inglês Comma-Separated Values: é um texto simples com os valores separados por vírgula (ou ponto e vírgula) e abre no Excel."
         },
         {
           "id": "m17",
@@ -416,7 +452,8 @@
             "Alt + Enter",
             "Ctrl + Espaço"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Ctrl + Enter começa uma nova página. É melhor do que apertar Enter várias vezes, porque não desconfigura quando o texto muda."
         },
         {
           "id": "m18",
@@ -427,7 +464,8 @@
             "Compara as duas células",
             "Multiplica as duas células"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O & junta textos. Se A1 tem \"Doce\" e B1 tem \"Texto\", =A1&B1 mostra \"DoceTexto\". Faz o mesmo que CONCATENAR."
         },
         {
           "id": "m19",
@@ -438,7 +476,8 @@
             "F5",
             "F12"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "F7 abre a verificação de ortografia e gramática, que também fica na guia Revisão."
         },
         {
           "id": "m20",
@@ -449,7 +488,8 @@
             "Nota de rodapé",
             "Título"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O Cabeçalho, na guia Inserir, repete o mesmo conteúdo no topo de todas as páginas. O Rodapé faz o mesmo embaixo."
         }
       ]
     },
@@ -466,7 +506,8 @@
             "=CONT.SE()",
             "=SOMASE()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "PROCV quer dizer procura vertical: busca o valor na primeira coluna da tabela e traz o dado de outra coluna da mesma linha."
         },
         {
           "id": "d02",
@@ -477,7 +518,8 @@
             "Soma 3 ao resultado",
             "Mostra só 3 resultados"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O 3 é o número da coluna dentro do intervalo B2:D10 (B = 1, C = 2, D = 3), então a fórmula traz o valor da coluna D. O FALSO pede correspondência exata."
         },
         {
           "id": "d03",
@@ -488,7 +530,8 @@
             "=MÉDIASE()",
             "=MÉDIA.PONDERADA()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "Na média ponderada, cada valor é multiplicado pelo seu peso e o total é dividido pela soma dos pesos: =SOMARPRODUTO(notas; pesos)/SOMA(pesos)."
         },
         {
           "id": "d04",
@@ -499,7 +542,8 @@
             "=RAIZ()",
             "=ARRED()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=ABS devolve o valor absoluto, ou seja, o número sem sinal: =ABS(-7) dá 7."
         },
         {
           "id": "d05",
@@ -510,7 +554,8 @@
             "=PGTO()",
             "=JUROS.TOTAL()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A TIR (taxa interna de retorno) mostra a rentabilidade de um investimento a partir das entradas e saídas de dinheiro. Em inglês a função se chama IRR."
         },
         {
           "id": "d06",
@@ -521,7 +566,8 @@
             "=INT()",
             "=RESTO()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=MOD devolve o resto da divisão: =MOD(10; 3) dá 1, porque 10 dividido por 3 dá 3 e sobra 1."
         },
         {
           "id": "d07",
@@ -532,7 +578,8 @@
             "Apaga as células com erro",
             "Mostra erro se o resultado for 0"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=SEERRO mostra o resultado normal da fórmula; se ela der erro, como uma divisão por zero, mostra o valor alternativo, aqui o 0."
         },
         {
           "id": "d08",
@@ -543,7 +590,8 @@
             "#REF!",
             "#VALOR!"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "#DIV/0! aparece quando uma fórmula divide por zero ou por uma célula vazia."
         },
         {
           "id": "d09",
@@ -554,7 +602,8 @@
             "#N/D",
             "#NULO!"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "#NOME? aparece quando o Excel não conhece a função, por exemplo ao digitar =SOMMA em vez de =SOMA."
         },
         {
           "id": "d10",
@@ -565,7 +614,8 @@
             "=SOMA()",
             "=SE()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=SOMASE(intervalo; critério) soma só os valores que atendem à condição. Exemplo: =SOMASE(A1:A10; \">100\")."
         },
         {
           "id": "d11",
@@ -576,7 +626,8 @@
             "=DATA()",
             "=DIA()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=HOJE() mostra só a data de hoje. =AGORA() mostra a data e a hora."
         },
         {
           "id": "d12",
@@ -587,7 +638,8 @@
             "=CONTAR.VAZIO()",
             "=SOMA()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=CONT.VALORES conta as células que não estão vazias, com texto ou número. =CONT.NÚM conta só as que têm números."
         },
         {
           "id": "d13",
@@ -598,7 +650,8 @@
             "=CONCATENAR()",
             "=EXT.TEXTO()"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "=ARRUMAR remove os espaços do início e do fim do texto e deixa apenas um espaço entre as palavras."
         },
         {
           "id": "d14",
@@ -609,7 +662,8 @@
             "Validação de Dados",
             "Congelar Painéis"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A Tabela Dinâmica, na guia Inserir, resume, soma e agrupa muitos dados, e você reorganiza tudo arrastando os campos."
         },
         {
           "id": "d15",
@@ -620,7 +674,8 @@
             ".xltx",
             ".pdf"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O .dotx é um modelo: ao abrir, o Word cria um documento novo a partir dele, sem alterar o modelo original."
         },
         {
           "id": "d16",
@@ -631,7 +686,8 @@
             ".csv",
             ".docm"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O \"m\" do .xlsm vem de macro. O formato comum, .xlsx, não guarda macros."
         },
         {
           "id": "d17",
@@ -642,7 +698,8 @@
             "Letras maiúsculas",
             "Fonte maior"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "O sumário automático, na guia Referências, usa os estilos Título 1, Título 2 etc. Por isso os títulos do texto precisam usar esses estilos."
         },
         {
           "id": "d18",
@@ -653,7 +710,8 @@
             "Sumário",
             "Hiperlink"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A Mala Direta, na guia Correspondências, junta um modelo de carta com uma lista de nomes e cria uma carta personalizada para cada pessoa."
         },
         {
           "id": "d19",
@@ -664,7 +722,8 @@
             "Uma fonte especial",
             "Uma célula muito grande"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A macro grava uma sequência de ações para você repetir tudo com um clique. Por trás, ela é escrita na linguagem VBA."
         },
         {
           "id": "d20",
@@ -675,7 +734,8 @@
             "Para apagar uma página",
             "Para dividir uma tabela em duas"
           ],
-          "resposta": 0
+          "resposta": 0,
+          "explicacao": "A quebra de seção divide o documento em partes com configurações próprias, por exemplo uma única página em paisagem no meio do texto."
         }
       ]
     }

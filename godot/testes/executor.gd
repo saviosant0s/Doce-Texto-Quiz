@@ -41,9 +41,13 @@ func _testar_regras() -> void:
 	verificar(Jogo.estrelas_para(80) == 2, "80% = 2 estrelas")
 	verificar(Jogo.estrelas_para(100) == 3, "100% = 3 estrelas")
 	verificar(Jogo.acertos_para_passar() == 6, "passa com 6 de 10")
+	var ids := {}
 	for nivel in Jogo.niveis:
 		verificar(nivel["perguntas"].size() >= Jogo.PERGUNTAS_POR_PARTIDA, "nível com perguntas suficientes")
 		for p in nivel["perguntas"]:
+			verificar(not ids.has(p["id"]), "id único: %s" % p["id"])
+			ids[p["id"]] = true
+			verificar(not str(p.get("explicacao", "")).strip_edges().is_empty(), "explicação em %s" % p["id"])
 			var alternativas: Array = p["alternativas"]
 			verificar(alternativas.size() == 4, "4 alternativas em %s" % p["id"])
 			verificar(int(p["resposta"]) >= 0 and int(p["resposta"]) < 4, "resposta válida em %s" % p["id"])
