@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://cenas/sobre.gd" id="1"]
 [ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
 [ext_resource type="Texture2D" path="res://assets/icones/voltar.svg" id="3"]
-[ext_resource type="Texture2D" path="res://assets/icones/instagram.svg" id="4"]
+[ext_resource type="Texture2D" path="res://assets/personagens/mascote_cereal.png" id="4"]
 
 [node name="Sobre" type="Control"]
 layout_mode = 3
@@ -33,83 +33,126 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 48
-theme_override_constants/margin_bottom = 40
+theme_override_constants/margin_left = 44
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 44
+theme_override_constants/margin_bottom = 36
 
-[node name="Linha" type="HBoxContainer" parent="Margem"]
+[node name="Coluna" type="VBoxContainer" parent="Margem"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 20
 
-[node name="Painel" type="PanelContainer" parent="Margem/Linha"]
+[node name="Topo" type="HBoxContainer" parent="Margem/Coluna"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_constants/separation = 16
 
-[node name="Coluna" type="VBoxContainer" parent="Margem/Linha/Painel"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Topo" type="HBoxContainer" parent="Margem/Linha/Painel/Coluna"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Voltar" type="Button" parent="Margem/Linha/Painel/Coluna/Topo"]
+[node name="Voltar" type="Button" parent="Margem/Coluna/Topo"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(64, 64)
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 tooltip_text = "Voltar"
-theme_type_variation = &"BotaoIcone"
+theme_type_variation = &"BotaoIconeAmarelo"
 icon = ExtResource("3")
 icon_alignment = 1
 expand_icon = true
 
-[node name="Titulo" type="Label" parent="Margem/Linha/Painel/Coluna/Topo"]
+[node name="Etiqueta" type="PanelContainer" parent="Margem/Coluna/Topo"]
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_type_variation = &"EtiquetaAmarela"
+
+[node name="Titulo" type="Label" parent="Margem/Coluna/Topo/Etiqueta"]
+layout_mode = 2
 theme_type_variation = &"Titulo"
-text = "DOCE TEXTO QUIZ"
-horizontal_alignment = 1
+text = "SOBRE O PROJETO"
 
-[node name="Espaco" type="Control" parent="Margem/Linha/Painel/Coluna/Topo"]
-custom_minimum_size = Vector2(64, 0)
-layout_mode = 2
-
-[node name="Texto" type="RichTextLabel" parent="Margem/Linha/Painel/Coluna"]
+[node name="Linha" type="HBoxContainer" parent="Margem/Coluna"]
 layout_mode = 2
 size_flags_vertical = 3
-bbcode_enabled = true
-text = "[center]Apresentamos a vocês o [b]Doce Texto Quiz[/b], uma atividade desenvolvida por Sávio Santos, Talita e Natalí, alunos do primeiro ano de informática do IFBA Campus Valença, sob a orientação dos professores Eduardo Cambruzzi, Peterson Lobato, Alba Rogéria, Nelson Valente e Cristian Lins.
+theme_override_constants/separation = 24
 
-O Doce Texto Quiz foi elaborado no ano de 2023 e tem como finalidade verificar o nível de conhecimento dos alunos sobre as principais funcionalidades dos softwares de edição de documentos e planilhas eletrônicas. O quiz consiste em 10 questões de múltipla escolha, que abrangem diferentes graus de complexidade. Os participantes terão um tempo determinado para responder cada questão e poderão visualizar seu resultado ao final. O quiz é uma forma lúdica, interativa e pedagógica de avaliar o aprendizado dos alunos.
+[node name="Painel" type="PanelContainer" parent="Margem/Coluna/Linha"]
+layout_mode = 2
+size_flags_horizontal = 3
 
-[b]Convidamos vocês a participarem desse desafio e testarem seus conhecimentos.[/b][/center]"
-scroll_active = true
+[node name="Conteudo" type="VBoxContainer" parent="Margem/Coluna/Linha/Painel"]
+layout_mode = 2
+theme_override_constants/separation = 10
 
-[node name="Redes" type="PanelContainer" parent="Margem/Linha"]
-custom_minimum_size = Vector2(290, 0)
+[node name="TituloOQue" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+layout_mode = 2
+theme_type_variation = &"Subtitulo"
+theme_override_font_sizes/font_size = 32
+text = "O QUE É O DOCE TEXTO QUIZ?"
+
+[node name="TextoOQue" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_type_variation = &"Texto"
+theme_override_font_sizes/font_size = 20
+text = "Um quiz lúdico, interativo e pedagógico que verifica o conhecimento dos alunos sobre as principais funcionalidades dos softwares de edição de documentos e planilhas eletrônicas. Cada nível tem questões de múltipla escolha com diferentes graus de complexidade, tempo para responder e o resultado ao final."
+autowrap_mode = 3
+
+[node name="Numeros" type="HBoxContainer" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TituloQuem" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+layout_mode = 2
+theme_type_variation = &"Subtitulo"
+theme_override_font_sizes/font_size = 32
+text = "QUEM FEZ"
+
+[node name="TextoQuem" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_type_variation = &"Texto"
+theme_override_font_sizes/font_size = 20
+text = "Criado em 2023 por Sávio Santos, Talita e Natalí, alunos do primeiro ano de Informática do IFBA Campus Valença, com orientação dos professores Eduardo Cambruzzi, Peterson Lobato, Alba Rogéria, Nelson Valente e Cristian Lins."
+autowrap_mode = 3
+
+[node name="Espaco" type="Control" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Convite" type="PanelContainer" parent="Margem/Coluna/Linha/Painel/Conteudo"]
+layout_mode = 2
+theme_type_variation = &"PainelRoxo"
+
+[node name="Texto" type="Label" parent="Margem/Coluna/Linha/Painel/Conteudo/Convite"]
+layout_mode = 2
+theme_type_variation = &"SubtituloClaro"
+theme_override_font_sizes/font_size = 28
+text = "PARTICIPE DESSE DESAFIO E TESTE SEUS CONHECIMENTOS!"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Redes" type="PanelContainer" parent="Margem/Coluna/Linha"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 
-[node name="Coluna" type="VBoxContainer" parent="Margem/Linha/Redes"]
+[node name="Coluna" type="VBoxContainer" parent="Margem/Coluna/Linha/Redes"]
 layout_mode = 2
-theme_override_constants/separation = 18
-alignment = 1
+theme_override_constants/separation = 12
 
-[node name="Icone" type="TextureRect" parent="Margem/Linha/Redes/Coluna"]
-modulate = Color(0.494118, 0.341176, 0.694118, 1)
-custom_minimum_size = Vector2(0, 60)
+[node name="Titulo" type="Label" parent="Margem/Coluna/Linha/Redes/Coluna"]
 layout_mode = 2
+theme_type_variation = &"Subtitulo"
+text = "SIGA A GENTE"
+horizontal_alignment = 1
+
+[node name="Perfis" type="VBoxContainer" parent="Margem/Coluna/Linha/Redes/Coluna"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Mascote" type="TextureRect" parent="Margem/Coluna/Linha/Redes/Coluna"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+size_flags_vertical = 3
 texture = ExtResource("4")
 expand_mode = 1
 stretch_mode = 5
-
-[node name="Perfis" type="Label" parent="Margem/Linha/Redes/Coluna"]
-layout_mode = 2
-theme_type_variation = &"Texto"
-theme_override_constants/line_spacing = 14
-text = "@xz_.nataa
-@savio.sant0s
-@thaly_gilmore
-@ifba.valenca"
-horizontal_alignment = 1
