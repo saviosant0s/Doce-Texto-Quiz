@@ -6,6 +6,10 @@ sair dela e retorna o nome da próxima tela.
 import asyncio
 from dataclasses import dataclass, field
 
+# O pygbag (versão para navegador) só carrega os pacotes importados aqui no
+# main.py; sem esta linha o pygame chega incompleto aos outros módulos.
+import pygame  # noqa: F401
+
 import telas
 from interface import Interface
 from salvamento import Salvamento
