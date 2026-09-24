@@ -45,15 +45,14 @@ Metas: APK para Android e registro no INPI.
 4. (Opcional) A branch `gh-pages` guarda cada APK publicado no histórico e está
    crescendo; dá para recriá-la sem histórico (branch órfã) de vez em quando.
 
-## Pedido atual (24/09/2026), nesta ordem
+## Pedido atual (24/09/2026)
 
-1. **Documento para o INPI**: atualizar o PDF enviado em 2023 (não aprovado),
-   mantendo a estrutura pedida pela professora e melhorando a organização.
-   Original em `docs/inpi/2023_original.pdf`; versão nova em `docs/inpi/`.
-2. **Etapa 6**: GitHub Actions com os testes, limpeza do repositório, PR para a `main`.
-3. **Por último (menos importante)**: rostos dos doces 3D mais amigáveis (olhos
-   menos arregalados, sorriso) e refazer o fantasma de chocolate branco do
-   carregamento. Depois de mudar os modelos: `ferramentas/gerar_fotos_3d.sh`.
+1. ✅ Documento para o INPI: `docs/inpi/memorial_descritivo.pdf` (ver `docs/inpi/LEIA-ME.md`).
+2. ✅ Etapa 6: testes no GitHub Actions, limpeza (pygame em `legado/`), PR para a `main`
+   ([#1](https://github.com/saviosant0s/Doce-Texto-Quiz/pull/1)).
+3. ✅ Rostos mais amigáveis (olhos com pouco branco, sorriso em "D") e fantasma
+   de chocolate branco refeito.
+4. ⏳ Executável para Windows (.exe): preset "Windows" + `ferramentas/gerar_exe.sh`.
 
 ## Onde parou
 

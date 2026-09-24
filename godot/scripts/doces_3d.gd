@@ -350,27 +350,17 @@ static func _milho_doce(c: Node3D) -> void:
 	Pecas3D.pernas(c, Vector3(0, -0.58, 0), 0.22, 0.4, membro, _m("#E8601A", 0.3))
 
 
-## Fantasminha de chocolate branco (tela de carregamento).
+## Fantasminha de chocolate branco (tela de carregamento): corpo liso, barra
+## ondulada embaixo, rosto sorridente e bracinhos.
 static func _fantasma(c: Node3D) -> void:
-	var chocolate_branco := _m("#F3E6C4", 0.45)
-	Pecas3D.esfera(c, 0.62, Vector3(0, 0.35, 0), chocolate_branco)
-	Pecas3D.cilindro(c, 0.62, 0.7, 0.8, Vector3(0, -0.1, 0), chocolate_branco)
-	for i in 5:
-		var angulo := -PI * 0.1 - i * PI * 0.2
-		Pecas3D.esfera(c, 0.2, Vector3(cos(angulo) * 0.55, -0.52, -sin(angulo) * 0.55), chocolate_branco)
-	Pecas3D.esfera(c, 0.2, Vector3(0, -0.52, -0.55), chocolate_branco)
-	# raspas de chocolate branco na cabeça
-	Pecas3D.granulado(c, Vector3(0, 0.35, 0), 0.62, 26, [Color("#FFF4DA")], 5, 0.55, 1.8)
-	# olhos de gotas de chocolate e boquinha de susto
-	var gota := _m("#2A140A", 0.2)
-	var olhos := Node3D.new()
-	olhos.name = "Olhos"
-	olhos.position = Vector3(0, 0.36, 0.56)
-	c.add_child(olhos)
-	for lado in [-1, 1]:
-		Pecas3D.esfera(olhos, 0.1, Vector3(lado * 0.17, 0, -0.02), gota, Vector3(1, 1.1, 0.7))
-		Pecas3D.esfera(olhos, 0.025, Vector3(lado * 0.17 + 0.03, 0.04, 0.05), _m("#FFFFFF", 0.1))
-	Pecas3D.esfera(c, 0.05, Vector3(0, 0.12, 0.6), gota, Vector3(0.9, 1.2, 0.6))
-	# mãozinhas no peito
-	for lado in [-1, 1]:
-		Pecas3D.esfera(c, 0.14, Vector3(lado * 0.2, -0.05, 0.62), chocolate_branco, Vector3(1.3, 0.7, 0.8), Vector3(0, 0, lado * 25))
+	var chocolate_branco := _m("#F6EBCF", 0.3)
+	# cabeça redonda + corpo que alarga um pouco para baixo
+	Pecas3D.esfera(c, 0.62, Vector3(0, 0.3, 0), chocolate_branco)
+	Pecas3D.cilindro(c, 0.62, 0.68, 0.72, Vector3(0, -0.06, 0), chocolate_branco)
+	# barra ondulada: bolinhas em volta da borda de baixo
+	for i in 10:
+		var angulo := i * TAU / 10.0
+		Pecas3D.esfera(c, 0.17, Vector3(cos(angulo) * 0.56, -0.42, sin(angulo) * 0.56), chocolate_branco)
+	Pecas3D.rosto(c, Vector3(0, 0.22, 0.61), 1.1, 0.62)
+	Pecas3D.braco(c, Vector3(-0.6, -0.02, 0.05), -1, chocolate_branco)
+	Pecas3D.braco(c, Vector3(0.6, 0.02, 0.05), 1, chocolate_branco, 1.0, true)

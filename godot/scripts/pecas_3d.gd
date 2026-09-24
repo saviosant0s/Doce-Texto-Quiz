@@ -157,17 +157,18 @@ static func rosto(pai: Node3D, centro: Vector3, tamanho := 1.0, curvatura := 1.0
 	var recuo := func(x: float) -> float: return (x * x) / (2.0 * maxf(curvatura, 0.2))
 	var olhos := Node3D.new()
 	olhos.name = "Olhos"
-	olhos.position = centro + Vector3(0, 0.07 * tamanho, 0)
+	olhos.position = centro + Vector3(0, 0.06 * tamanho, 0)
 	pai.add_child(olhos)
 	var branco := material(COR_OLHO, 0.12)
 	var pupila := material(COR_PUPILA, 0.08)
 	for lado in [-1, 1]:
-		var x: float = lado * 0.19 * tamanho
+		var x: float = lado * 0.17 * tamanho
 		var z: float = -recuo.call(x)
-		esfera(olhos, 0.13 * tamanho, Vector3(x, 0, z), branco, Vector3(0.88, 1.12, 0.5))
-		esfera(olhos, 0.092 * tamanho, Vector3(x + lado * -0.012 * tamanho, -0.012 * tamanho, z + 0.042 * tamanho), pupila, Vector3(0.88, 1.1, 0.5))
-		esfera(olhos, 0.03 * tamanho, Vector3(x + 0.035 * tamanho, 0.04 * tamanho, z + 0.085 * tamanho), branco)
-		esfera(olhos, 0.014 * tamanho, Vector3(x - 0.03 * tamanho, -0.035 * tamanho, z + 0.085 * tamanho), branco)
+		# olho simpático: quase todo pupila, com pouco branco em volta (sem ar de susto)
+		esfera(olhos, 0.105 * tamanho, Vector3(x, 0, z), branco, Vector3(0.9, 1.08, 0.5))
+		esfera(olhos, 0.088 * tamanho, Vector3(x, -0.008 * tamanho, z + 0.03 * tamanho), pupila, Vector3(0.9, 1.08, 0.5))
+		esfera(olhos, 0.03 * tamanho, Vector3(x + 0.03 * tamanho, 0.035 * tamanho, z + 0.07 * tamanho), branco)
+		esfera(olhos, 0.013 * tamanho, Vector3(x - 0.028 * tamanho, -0.03 * tamanho, z + 0.07 * tamanho), branco)
 	var bochecha := material(COR_BOCHECHA, 0.6)
 	for lado in [-1, 1]:
 		var x: float = lado * 0.34 * tamanho
@@ -189,11 +190,19 @@ static func rosto(pai: Node3D, centro: Vector3, tamanho := 1.0, curvatura := 1.0
 			cano(pai, centro + Vector3(x - lado * 0.09 * tamanho, 0.25 * tamanho, z),
 				centro + Vector3(x + lado * 0.07 * tamanho, 0.2 * tamanho, z), 0.018 * tamanho, escuro)
 		return
-	var boca := esfera(pai, 0.1 * tamanho, centro + Vector3(0, -0.15 * tamanho, -0.005), material(COR_BOCA, 0.4), Vector3(1.3, 0.8, 0.35))
+	# sorriso aberto em "D": meia esfera com o lado reto para cima
+	var meia := SphereMesh.new()
+	meia.radius = 0.11 * tamanho
+	meia.height = 0.11 * tamanho
+	meia.is_hemisphere = true
+	meia.radial_segments = 32
+	meia.rings = 12
+	var boca := _no(pai, meia, material(COR_BOCA, 0.4), centro + Vector3(0, -0.1 * tamanho, -0.01),
+		Vector3(1.25, 0.95, 0.35), Vector3(180, 0, 0))
 	boca.name = "Boca"
-	esfera(pai, 0.06 * tamanho, centro + Vector3(0, -0.19 * tamanho, 0.014), material(COR_LINGUA, 0.4), Vector3(1.3, 0.55, 0.4))
+	esfera(pai, 0.055 * tamanho, centro + Vector3(0, -0.165 * tamanho, 0.018), material(COR_LINGUA, 0.4), Vector3(1.35, 0.6, 0.4))
 	# dentinhos de cima
-	esfera(pai, 0.07 * tamanho, centro + Vector3(0, -0.115 * tamanho, 0.012), material(COR_DENTES, 0.2), Vector3(1.3, 0.3, 0.35))
+	esfera(pai, 0.075 * tamanho, centro + Vector3(0, -0.108 * tamanho, 0.02), material(COR_DENTES, 0.2), Vector3(1.4, 0.26, 0.3))
 
 
 ## Braço com mãozinha redonda, preso no `ombro`. `lado` = -1 (esquerda da tela)
