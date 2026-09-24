@@ -87,9 +87,14 @@ com a mesma chave. Os ícones do app ficam em `godot/assets/android/`.
 
 ### Publicar a versão web
 
-No Godot: **Projeto → Exportar → Web → Exportar projeto**, salvando em
-`build/web/index.html`. Os arquivos gerados vão para a branch `gh-pages`,
-que o GitHub Pages publica.
+```bash
+ferramentas/publicar_web.sh
+```
+
+Exporta a versão web e envia para a branch `gh-pages`, que o GitHub Pages
+publica. Prints das telas: `ferramentas/capturar.sh <tela>`.
+
+Andamento do projeto e próximos passos: **`ANDAMENTO.md`**.
 
 ## Versão original (pygame, `ppa_final/`)
 
