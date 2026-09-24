@@ -73,6 +73,7 @@ func _finalizar_pergunta(escolha: int) -> void:
 	var correta: int = _perguntas[_indice]["resposta"]
 	var acertou := escolha == correta
 	Jogo.resultados.append(acertou)
+	Jogo.respostas.append(escolha)
 	Audio.tocar("acerto" if acertou else "erro")
 
 	for botao in _botoes:

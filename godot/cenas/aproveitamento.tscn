@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://cenas/aproveitamento.gd" id="1"]
 [ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
-[ext_resource type="Texture2D" path="res://assets/icones/avancar.svg" id="3"]
+[ext_resource type="Script" path="res://componentes/anel_progresso.gd" id="3"]
 
 [node name="Aproveitamento" type="Control"]
 layout_mode = 3
@@ -32,21 +32,20 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 56
-theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 56
-theme_override_constants/margin_bottom = 40
+theme_override_constants/margin_left = 44
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 44
+theme_override_constants/margin_bottom = 32
 
 [node name="Linha" type="HBoxContainer" parent="Margem"]
 layout_mode = 2
-theme_override_constants/separation = 48
+theme_override_constants/separation = 36
 
 [node name="Resumo" type="VBoxContainer" parent="Margem/Linha"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.8
-theme_override_constants/separation = 4
+theme_override_constants/separation = 14
 alignment = 1
 
 [node name="Rotulo" type="Label" parent="Margem/Linha/Resumo"]
@@ -55,13 +54,27 @@ theme_type_variation = &"TituloClaro"
 text = "SEU APROVEITAMENTO"
 horizontal_alignment = 1
 
-[node name="Porcentagem" type="Label" parent="Margem/Linha/Resumo"]
+[node name="Anel" type="Control" parent="Margem/Linha/Resumo"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 260)
 layout_mode = 2
+size_flags_horizontal = 4
+script = ExtResource("3")
+valor = 0.0
+
+[node name="Porcentagem" type="Label" parent="Margem/Linha/Resumo/Anel"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_type_variation = &"TituloGrande"
-theme_override_font_sizes/font_size = 200
-text = "70%"
+theme_override_font_sizes/font_size = 110
+text = "0%"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Acertos" type="Label" parent="Margem/Linha/Resumo"]
 unique_name_in_owner = true
@@ -70,28 +83,43 @@ theme_type_variation = &"SubtituloClaro"
 text = "7 DE 10 ACERTOS"
 horizontal_alignment = 1
 
+[node name="Bolinhas" type="HBoxContainer" parent="Margem/Linha/Resumo"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
 [node name="Espaco" type="Control" parent="Margem/Linha/Resumo"]
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
 [node name="Continuar" type="Button" parent="Margem/Linha/Resumo"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(300, 84)
+custom_minimum_size = Vector2(300, 80)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "CONTINUAR"
-icon = ExtResource("3")
-icon_alignment = 2
-expand_icon = true
+text = "VER MEU TÍTULO"
 
 [node name="Painel" type="PanelContainer" parent="Margem/Linha"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 4
 
-[node name="Lista" type="GridContainer" parent="Margem/Linha/Painel"]
+[node name="Coluna" type="VBoxContainer" parent="Margem/Linha/Painel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Titulo" type="Label" parent="Margem/Linha/Painel/Coluna"]
+layout_mode = 2
+theme_type_variation = &"Subtitulo"
+text = "REVISE SUAS RESPOSTAS"
+
+[node name="Rolagem" type="ScrollContainer" parent="Margem/Linha/Painel/Coluna"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Lista" type="VBoxContainer" parent="Margem/Linha/Painel/Coluna/Rolagem"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/h_separation = 14
-theme_override_constants/v_separation = 12
-columns = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10

@@ -36,6 +36,7 @@ var niveis: Array = []
 # Partida atual
 var nivel_atual := 0
 var resultados: Array[bool] = []  # acertou/errou de cada pergunta
+var respostas: Array[int] = []  # alternativa escolhida em cada pergunta (-1 = tempo esgotado)
 var resultado := ""  # "nodoc", "noob", "pro" ou "mestre"
 
 # Progresso salvo
@@ -164,6 +165,7 @@ func mostrar_aviso(texto: String) -> void:
 func iniciar_nivel(indice: int) -> void:
 	nivel_atual = indice
 	resultados.clear()
+	respostas.clear()
 	ir_para("carregamento")
 
 
@@ -232,8 +234,12 @@ func _verificar_captura() -> void:
 	_modo_captura = true
 	if args.has("acertos"):
 		var acertos := int(args["acertos"])
-		for i in 10:
-			resultados.append(i < acertos)
+		var perguntas := perguntas_do_nivel()
+		for i in perguntas.size():
+			var acertou := (i * 7) % 10 < acertos  # espalha os acertos
+			var correta := int(perguntas[i]["resposta"])
+			resultados.append(acertou)
+			respostas.append(correta if acertou else (-1 if i == 9 else (correta + 1) % 4))
 		finalizar_partida()
 	await get_tree().process_frame
 	get_tree().change_scene_to_file(CENAS[args["capturar"]])
