@@ -3,9 +3,9 @@
 Itens em aberto do projeto. Marque com [x] quando resolver.
 
 ## Conteúdo
-- [ ] **Atualizar os @ do Instagram** da tela "Sobre" (`godot/cenas/sobre.gd`,
-      constante `PERFIS`). Hoje: @xz_.nataa, @savio.sant0s, @thaly_gilmore,
-      @ifba.valenca.
+- [x] Atualizar os @ do Instagram da tela "Sobre" (`godot/cenas/sobre.gd`,
+      constante `PERFIS`): @naatyrch, @savio.rocha_, @ifba.valenca.
+- [ ] Atualizar o @ da Thalita (ainda está o antigo, @thaly_gilmore).
 - [ ] Confirmar o nome do orientador "Cristian Lins" (nos créditos antigos
       aparecia só "Cristian").
 - [x] Reescrever o banco de perguntas: agora são 60 (20 por nível), cada partida

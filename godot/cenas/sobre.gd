@@ -13,7 +13,7 @@ const NUMEROS := [
 	["30S", "POR QUESTÃO"],
 ]
 ## Perfis do Instagram (ver PENDENCIAS.md: confirmar/atualizar os @).
-const PERFIS := ["xz_.nataa", "savio.sant0s", "thaly_gilmore", "ifba.valenca"]
+const PERFIS := ["naatyrch", "savio.rocha_", "thaly_gilmore", "ifba.valenca"]
 const ICONE_INSTAGRAM := preload("res://assets/icones/instagram.svg")
 const NUNITO := preload("res://assets/fontes/Nunito.ttf")
 
