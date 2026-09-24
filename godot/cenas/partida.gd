@@ -79,9 +79,16 @@ func _mostrar_pergunta() -> void:
 	_usou_tempo = false
 	_respondendo = true
 	_atualizar_ajudas()
+	_igualar_altura.call_deferred()
 	Animacoes.entrar(%CartaoPergunta, Vector2(-30, 0))
 	for i in _botoes.size():
 		Animacoes.entrar(_botoes[i], Vector2(30, 0), 0.05 * i)
+
+
+## O cartão da pergunta fica da altura do bloco de alternativas (e não da tela
+## toda); se o enunciado for grande, o cartão cresce o quanto precisar.
+func _igualar_altura() -> void:
+	%CartaoPergunta.custom_minimum_size.y = %Alternativas.get_combined_minimum_size().y
 
 
 func _responder(escolha: int) -> void:

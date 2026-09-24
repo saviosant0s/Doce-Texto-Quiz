@@ -31,7 +31,7 @@ func configurar(indice: int, nivel: Dictionary) -> void:
 	# (só com estrelas) ficarem do mesmo tamanho dos outros
 	var altura_caixa: float = %Caixa.get_combined_minimum_size().y
 	if not liberado:
-		%Personagem.self_modulate = Color(0.22, 0.13, 0.36, 0.85)
+		%Personagem.material = Personagens.material_silhueta()
 		var cadeado := TextureRect.new()
 		cadeado.texture = ICONE_CADEADO
 		cadeado.modulate = Cores.AMARELO

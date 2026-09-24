@@ -10,3 +10,12 @@ static func textura(nome: String) -> Texture2D:
 			return load(caminho)
 	push_error("Personagem não encontrado: " + nome)
 	return null
+
+
+## Material que desenha o personagem como silhueta de cor única (bloqueado).
+## Em fundo claro use a cor padrão (roxo escuro); em fundo roxo, uma cor clara.
+static func material_silhueta(cor := Color(0.29, 0.19, 0.47, 0.9)) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://tema/silhueta.gdshader")
+	material.set_shader_parameter("cor", cor)
+	return material

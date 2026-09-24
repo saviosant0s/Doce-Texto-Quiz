@@ -369,7 +369,7 @@ func _criar_coluna(titulo: Dictionary) -> VBoxContainer:
 	if conquistado:
 		Animacoes.flutuar.call_deferred(imagem, 8.0)  # depois de entrar na tela
 	else:
-		imagem.self_modulate = Color(0.22, 0.13, 0.36, 0.85)
+		imagem.material = Personagens.material_silhueta(Color(1, 1, 1, 0.28))
 		var cadeado := TextureRect.new()
 		cadeado.texture = ICONE_CADEADO
 		cadeado.modulate = Cores.AMARELO
