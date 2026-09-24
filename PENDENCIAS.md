@@ -46,6 +46,9 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
         INPI, que hoje diz que o jogo não coleta dados.
       - Alternativa mais simples, se servir: exportar/importar o progresso por código.
 
+- [ ] **Doce Match** (minijogo estilo Candy Crush no Fliperama da Vila dos
+      Doces), com símbolos de informática próprios — ver `ANDAMENTO.md`.
+
 ## Android
 - [ ] Testar o APK em celulares de verdade (um simples e um bom): instalação,
       tela deitada, botão voltar, som, desempenho e se o progresso fica salvo

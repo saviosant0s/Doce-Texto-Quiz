@@ -56,6 +56,28 @@ Metas: APK para Android e registro no INPI.
    Teste num Windows de verdade: GitHub > Actions > "Teste no Windows" > Run workflow.
 5. ✅ Versão na tela só com o número (v0.5.0).
 
+## Vila dos Doces (em andamento — pedido de 24/09/2026)
+
+Um mundo 3D pequeno onde o jogador anda com o seu doce (o companheiro da
+coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
+
+1. **Vila andável (MVP)** — `godot/cenas/vila.*`: chão, caminhos e enfeites de
+   doce; o doce anda (joystick na tela, teclado no computador) com animação de
+   andar; câmera acompanhando; prédios com porta:
+   - ESCOLA → níveis do quiz · CONFEITARIA → Minha Coleção ·
+     TROFÉUS → troféus · FLIPERAMA → "em breve" (o Doce Match, abaixo).
+   "JOGAR" na tela inicial leva à vila (aparelhos sem placa de vídeo vão direto
+   para os níveis). Ao sair de um prédio, o doce aparece na porta dele.
+2. Outros doces da coleção passeando pela vila; placas e detalhes.
+3. Pequenas tarefas na vila (ex.: moedas espalhadas, missões curtas).
+
+### Futuro: Doce Match (NÃO fazer agora)
+Minijogo no estilo Candy Crush dentro do FLIPERAMA da vila: trocar peças
+vizinhas para alinhar 3 iguais. No lugar dos doces, **símbolos de informática
+feitos por nós** (folha com "W" azul, planilha com "X" verde, gráfico, célula,
+atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
+(marcas registradas da Microsoft; atrapalharia o registro no INPI).
+
 ## Onde parou
 
 - Última coisa feita: doces 3D vivos (giram com o dedo, piscam e acenam) também
