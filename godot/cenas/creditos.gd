@@ -2,7 +2,7 @@ extends Control
 ## Créditos: equipe de desenvolvimento, orientadores e instituição.
 
 const DESENVOLVIMENTO := ["Talita Argolo", "Sávio Santos", "Natalí Rocha"]
-const ORIENTACAO := ["Eduardo Cambruzzi", "Peterson Lobato", "Alba Rogéria", "Nelson Valente", "Cristian Lins"]
+const ORIENTACAO := ["Eduardo Cambruzzi", "Peterson Lobato", "Alba Rogéria", "Nelson Valente"]
 const CORES_AVATAR := [Cores.ROSA, Cores.AZUL, Cores.VERDE, Cores.VERMELHO, Cores.ROXO]
 
 

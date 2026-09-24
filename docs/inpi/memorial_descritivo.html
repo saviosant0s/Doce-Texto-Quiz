@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Doce Texto Quiz — Memorial descritivo</title>
+<!--
+  Memorial descritivo do programa de computador "Doce Texto Quiz".
+  Fonte editável do PDF (memorial_descritivo.pdf). Para gerar o PDF de novo:
+    ferramentas/gerar_memorial_pdf.sh
+  Os prints das telas ficam em telas/ (gerados com ferramentas/capturar.sh).
+-->
+<style>
+@font-face { font-family: "Bebas"; src: url("../../godot/assets/fontes/BebasNeue-Regular.ttf"); }
+@font-face { font-family: "Nunito"; src: url("../../godot/assets/fontes/Nunito.ttf"); font-weight: 200 1000; }
+@page { size: A4; margin: 18mm 17mm 18mm 17mm; }
+@page :first { margin: 0; }
+:root { --roxo: #7E57B1; --roxo-escuro: #5E3D8E; --amarelo: #F4E038; --creme: #F6EEDC; --texto: #2B2233; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Nunito", sans-serif; color: var(--texto); font-size: 10.5pt; line-height: 1.5; }
+h1, h2, h3 { font-family: "Bebas", sans-serif; font-weight: normal; letter-spacing: .5px; color: var(--roxo-escuro); }
+h2 { font-size: 22pt; margin: 0 0 6pt; padding-bottom: 3pt; border-bottom: 3px solid var(--amarelo); break-after: avoid; }
+h3 { font-size: 15pt; margin: 14pt 0 3pt; break-after: avoid; }
+p { margin: 0 0 7pt; text-align: justify; }
+ul { margin: 0 0 7pt; padding-left: 16pt; }
+li { margin-bottom: 2pt; }
+section { margin-bottom: 16pt; }
+.quebra { break-before: page; }
+.numero { color: var(--roxo); margin-right: 6pt; }
+
+/* Capa */
+.capa { height: 297mm; background: var(--roxo); color: white; display: flex; flex-direction: column;
+  justify-content: space-between; padding: 26mm 20mm 20mm; break-after: page; }
+.capa img.logo { width: 92mm; }
+.capa .tipo { font-family: "Bebas"; font-size: 26pt; color: var(--amarelo); margin: 16mm 0 3mm; line-height: 1.05; }
+.capa .sub { font-size: 13pt; max-width: 150mm; opacity: .95; }
+.capa .doces { display: flex; gap: 2mm; margin-top: 10mm; }
+.capa .doces img { width: 27mm; }
+.capa .rodape { font-size: 11pt; line-height: 1.6; border-top: 2px solid rgba(255,255,255,.35); padding-top: 6mm; }
+.capa .rodape b { color: var(--amarelo); font-weight: 800; }
+
+/* Tabelas e caixas */
+table { width: 100%; border-collapse: collapse; margin: 4pt 0 9pt; font-size: 10pt; break-inside: avoid; }
+th, td { text-align: left; vertical-align: top; padding: 4.5pt 7pt; border-bottom: 1px solid #E4DCF2; }
+th { width: 34%; color: var(--roxo-escuro); font-weight: 800; background: #F7F3FC; }
+table.lista th { width: auto; background: var(--roxo); color: white; }
+.caixa { background: var(--creme); border-left: 5px solid var(--amarelo); padding: 8pt 11pt; margin: 6pt 0 10pt;
+  border-radius: 4pt; break-inside: avoid; }
+.caixa.aviso { border-left-color: var(--roxo); background: #F3EEFA; }
+.hash { font-family: monospace; font-size: 8.3pt; word-break: break-all; background: white; padding: 5pt 7pt;
+  border: 1px dashed var(--roxo); border-radius: 4pt; margin-top: 4pt; }
+.pessoas { display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; margin: 4pt 0 10pt; }
+.pessoas div { background: #F7F3FC; border-radius: 6pt; padding: 7pt 10pt; }
+.pessoas b { display: block; font-family: "Bebas"; font-weight: normal; font-size: 14pt; color: var(--roxo-escuro); }
+
+/* Telas */
+.tela { break-inside: avoid; margin: 8pt 0 14pt; }
+.tela img { width: 78%; margin: 0 auto; border-radius: 6pt; box-shadow: 0 1.5pt 5pt rgba(0,0,0,.18); display: block; }
+.tela h3 { margin-top: 6pt; }
+.duas { display: grid; grid-template-columns: 1fr 1fr; gap: 9pt; width: 92%; margin-left: auto; margin-right: auto; break-inside: avoid; margin: 6pt 0 10pt; }
+.duas img { width: 100%; border-radius: 5pt; box-shadow: 0 1.5pt 5pt rgba(0,0,0,.18); display: block; }
+.legenda { font-size: 8.5pt; color: #6B5F78; margin-top: 2pt; text-align: center; }
+.sumario li { list-style: none; margin: 0; padding: 2.5pt 0; border-bottom: 1px dotted #D8CCEA; }
+.sumario { padding-left: 0; }
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<div class="capa">
+  <div>
+    <img class="logo" src="logo.png" alt="Doce Texto Quiz">
+    <div class="tipo">Memorial descritivo<br>do programa de computador</div>
+    <div class="sub">Jogo educativo de perguntas e respostas sobre editores de texto e planilhas
+      (Word e Excel), para celulares Android e navegadores.</div>
+    <div class="doces">
+      <img src="telas/doce_brigadeiro.png" alt=""><img src="telas/doce_maca.png" alt="">
+      <img src="telas/doce_cupcake.png" alt=""><img src="telas/doce_chocolate.png" alt="">
+      <img src="telas/doce_rosquinha.png" alt=""><img src="telas/doce_pirulito.png" alt="">
+    </div>
+  </div>
+  <div class="rodape">
+    <b>Autores:</b> Sávio Santos Rocha, Natalí Rocha e Talita Argolo<br>
+    <b>Orientação:</b> Eduardo Cambruzzi, Peterson Lobato, Alba Rogéria e Nelson Valente<br>
+    <b>Instituição:</b> Instituto Federal da Bahia (IFBA) — Campus Valença · Curso Técnico em Informática, Turma 613<br>
+    <b>Versão do programa:</b> 0.4.0 · <b>Criação:</b> 2023 · <b>Este documento:</b> setembro de 2026
+  </div>
+</div>
+
+<!-- SUMÁRIO -->
+<section>
+  <h2>Sumário</h2>
+  <ul class="sumario">
+    <li><span class="numero">1</span>Identificação do programa</li>
+    <li><span class="numero">2</span>Autoria</li>
+    <li><span class="numero">3</span>Resumo</li>
+    <li><span class="numero">4</span>Introdução e objetivos</li>
+    <li><span class="numero">5</span>Justificativa e público-alvo</li>
+    <li><span class="numero">6</span>Como o jogo funciona</li>
+    <li><span class="numero">7</span>Descrição das telas</li>
+    <li><span class="numero">8</span>Conteúdo pedagógico</li>
+    <li><span class="numero">9</span>Tecnologia e arquitetura</li>
+    <li><span class="numero">10</span>Evolução do projeto (2023 a 2026)</li>
+    <li><span class="numero">11</span>Informações para o registro no INPI</li>
+    <li><span class="numero">12</span>Conclusão</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="numero">1</span>Identificação do programa</h2>
+  <table>
+    <tr><th>Título</th><td>Doce Texto Quiz</td></tr>
+    <tr><th>Versão descrita</th><td>0.4.0 (setembro de 2026)</td></tr>
+    <tr><th>Criação</th><td>2023, como projeto da Turma 613 do Curso Técnico em Informática do IFBA Campus Valença
+      (primeira versão escrita em Python com a biblioteca pygame)</td></tr>
+    <tr><th>Natureza</th><td>Jogo educativo (quiz) de perguntas e respostas</td></tr>
+    <tr><th>Área de aplicação</th><td>Educação — ensino de informática básica (editores de texto e planilhas eletrônicas)</td></tr>
+    <tr><th>Linguagem de programação</th><td>GDScript (motor Godot Engine 4.7), com dados em JSON</td></tr>
+    <tr><th>Plataformas</th><td>Celulares e tablets Android (versão 7 ou mais nova), em modo paisagem; navegadores web</td></tr>
+    <tr><th>Requisitos</th><td>Não precisa de internet para jogar, não pede permissões no celular e não coleta dados pessoais.
+      O progresso fica salvo apenas no próprio aparelho.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="numero">2</span>Autoria</h2>
+  <div class="pessoas">
+    <div><b>Desenvolvimento (alunos)</b>Sávio Santos Rocha<br>Natalí Rocha<br>Talita Argolo</div>
+    <div><b>Orientação (professores do IFBA Campus Valença)</b>Eduardo Cambruzzi<br>Peterson Lobato<br>Alba Rogéria<br>Nelson Valente</div>
+  </div>
+  <p><b>Agradecimento especial:</b> Prof. Wagner Ribeiro de Carvalho.</p>
+  <p>O jogo foi idealizado, desenhado e programado pelos alunos acima, com orientação dos professores do campus.
+    A versão atual (reconstruída em 2026) mantém a mesma autoria, o mesmo nome, a mesma proposta pedagógica,
+    a identidade visual (roxo e amarelo) e a estrutura de telas da versão de 2023.</p>
+</section>
+
+<section>
+  <h2><span class="numero">3</span>Resumo</h2>
+  <p>O Doce Texto Quiz é um jogo educativo de perguntas e respostas sobre editores de texto e planilhas eletrônicas,
+    com foco no Microsoft Word e no Microsoft Excel. O jogador escolhe um de três níveis (fácil, médio e difícil) e
+    responde a 10 perguntas sorteadas de um banco de 60, com 30 segundos para cada uma. Acertando 6 ou mais, passa de
+    nível e conquista um título de “doceiro” (Noob, Pro e Mestre). Ao final de cada partida, o jogo mostra o
+    aproveitamento e explica, pergunta por pergunta, qual era a resposta certa e por quê.</p>
+  <p>Para manter a motivação, o jogo usa elementos de jogos digitais: estrelas, pontos por rapidez, sequências de
+    acertos, moedas, ajudas, conquistas, estatísticas de desempenho e uma coleção de personagens em 3D — todos
+    doces, que dão nome e identidade ao jogo (“Doce Texto”).</p>
+</section>
+
+<section>
+  <h2><span class="numero">4</span>Introdução e objetivos</h2>
+  <p>Editores de texto e planilhas estão entre as ferramentas mais usadas nos estudos e no trabalho. Mesmo assim,
+    muitos alunos usam apenas uma pequena parte dos seus recursos. O Doce Texto Quiz nasceu para tornar o estudo
+    desses programas mais leve e divertido, transformando a revisão do conteúdo em um jogo.</p>
+  <h3>Objetivo geral</h3>
+  <p>Avaliar e reforçar, de forma lúdica e interativa, o conhecimento sobre os conceitos, funções e recursos de
+    editores de texto e planilhas eletrônicas.</p>
+  <h3>Objetivos específicos</h3>
+  <ul>
+    <li>Revisar conteúdos de informática básica em três níveis de dificuldade progressiva.</li>
+    <li>Dar retorno imediato ao jogador, com a resposta certa e uma explicação curta para cada pergunta.</li>
+    <li>Estimular a prática repetida, priorizando perguntas nunca vistas e as que o jogador errou.</li>
+    <li>Mostrar ao jogador os seus pontos fortes e fracos (por exemplo, acerto em Word e em Excel).</li>
+    <li>Funcionar em aparelhos simples, sem internet, para ser usado em sala de aula ou em casa.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="numero">5</span>Justificativa e público-alvo</h2>
+  <p>Jogos educativos aumentam o engajamento e a fixação do conteúdo, porque unem desafio, retorno imediato e
+    recompensa. Ao contrário de uma lista de exercícios, o quiz convida o aluno a jogar de novo para melhorar a
+    sua marca — e cada nova partida é uma nova revisão do conteúdo.</p>
+  <p><b>Público-alvo:</b> estudantes de cursos técnicos e do ensino médio, alunos de cursos de informática básica e
+    qualquer pessoa que queira testar e aprimorar seus conhecimentos de Word e Excel. O jogo também pode ser usado
+    por professores como atividade de revisão em sala de aula.</p>
+</section>
+
+<section>
+  <h2><span class="numero">6</span>Como o jogo funciona</h2>
+  <table>
+    <tr><th>Níveis</th><td>Fácil, médio e difícil. O primeiro começa liberado; cada nível vencido libera o seguinte.</td></tr>
+    <tr><th>Partida</th><td>10 perguntas sorteadas entre as 20 do nível, com as alternativas embaralhadas.
+      O sorteio prioriza as perguntas nunca vistas e as erradas, e evita repetir a partida anterior.</td></tr>
+    <tr><th>Tempo</th><td>30 segundos por pergunta. Se o tempo acabar, a pergunta conta como erro.</td></tr>
+    <tr><th>Aprovação e estrelas</th><td>Com 6 acertos o jogador passa no nível (1 estrela); com 8, ganha 2 estrelas; com 10, 3 estrelas.</td></tr>
+    <tr><th>Títulos</th><td>Passar no fácil, no médio e no difícil dá os títulos Doceiro Noob, Doceiro Pro e Doceiro Mestre.</td></tr>
+    <tr><th>Pontos</th><td>Cada acerto vale de 100 a 200 pontos, conforme a rapidez. Três acertos seguidos multiplicam
+      os pontos por 1,5 e cinco seguidos, por 2 (combo). Cada nível guarda o recorde de pontos.</td></tr>
+    <tr><th>Moedas e ajudas</th><td>Acertos, estrelas e conquistas rendem moedas. Durante a partida, é possível usar
+      ajudas: eliminar duas alternativas erradas (30 moedas) ou ganhar 10 segundos (20 moedas).</td></tr>
+    <tr><th>Revisão dos erros</th><td>Uma partida especial só com as perguntas que o jogador errou da última vez,
+      de todos os níveis. Não altera os níveis, mas corrige o histórico e dá moedas.</td></tr>
+    <tr><th>Conquistas</th><td>16 metas especiais (ex.: acertar 10 de 10, responder em menos de 3 segundos,
+      jogar 25 partidas), cada uma com recompensa em moedas.</td></tr>
+    <tr><th>Coleção de doces</th><td>13 personagens em 3D. Um vem de graça, três são ganhos com os títulos e nove
+      são comprados com moedas. O doce escolhido como “companheiro” aparece na tela de carregamento.</td></tr>
+  </table>
+</section>
+
+<section class="quebra">
+  <h2><span class="numero">7</span>Descrição das telas</h2>
+  <p>A estrutura de telas é a mesma da versão de 2023, agora com mais recursos. Todas as telas são exibidas com o
+    celular deitado (modo paisagem).</p>
+
+  <div class="tela">
+    <img src="telas/inicio.png" alt="Tela inicial">
+    <h3>7.1 Tela inicial</h3>
+    <ul>
+      <li>Logotipo do jogo e o mascote em 3D, que gira quando o jogador arrasta o dedo sobre ele.</li>
+      <li>Botão <b>Jogar</b> no centro; botão de <b>Como jogar</b> (“?”) à esquerda; botão de <b>Créditos</b> à direita.</li>
+      <li>Botão de <b>Configurações</b> no canto superior direito.</li>
+    </ul>
+  </div>
+
+  <div class="tela">
+    <img src="telas/como_jogar.png" alt="Como jogar">
+    <h3>7.2 Como jogar</h3>
+    <ul>
+      <li>As regras básicas em quatro passos e a tabela “Qual doceiro você é?”, que mostra os títulos.</li>
+      <li>Botão de voltar e atalho “Bora jogar!”.</li>
+    </ul>
+  </div>
+
+  <div class="tela">
+    <img src="telas/niveis.png" alt="Tela de níveis">
+    <h3>7.3 Tela de níveis</h3>
+    <ul>
+      <li>Escolha do nível: fácil (1), médio (2) e difícil (3), cada um com o seu personagem, estrelas e recorde.</li>
+      <li>Níveis ainda bloqueados aparecem com cadeado e o personagem em silhueta.</li>
+      <li>Menu lateral: início, troféus, minha coleção, como jogar, créditos e configurações.</li>
+      <li>Botão “Revisar erros”, quando há perguntas erradas para rever.</li>
+    </ul>
+  </div>
+
+  <div class="tela">
+    <img src="telas/carregamento.png" alt="Tela de carregamento">
+    <h3>7.4 Tela de carregamento</h3>
+    <ul>
+      <li>Mostra uma dica de Word/Excel ou uma curiosidade sobre doces, sorteada entre 40, enquanto a partida é preparada.</li>
+      <li>Exibe o fantasminha de chocolate branco ou o doce escolhido pelo jogador como companheiro.</li>
+    </ul>
+  </div>
+
+  <div class="tela">
+    <img src="telas/partida.png" alt="Tela de perguntas">
+    <h3>7.5 Tela de perguntas</h3>
+    <ul>
+      <li>Enunciado, número da pergunta, pontos e cronômetro de 30 segundos, com barra de tempo.</li>
+      <li>Quatro alternativas, apenas uma correta. Ao responder, a certa fica verde e a errada, vermelha.</li>
+      <li>Coluna central com o botão de som, o botão de sair (com confirmação) e as ajudas pagas com moedas.</li>
+      <li>O cronômetro pausa se o celular receber uma ligação ou o jogo for para segundo plano.</li>
+    </ul>
+  </div>
+
+  <div class="tela">
+    <img src="telas/aproveitamento.png" alt="Tela de aproveitamento">
+    <h3>7.6 Tela de aproveitamento</h3>
+    <ul>
+      <li>Porcentagem de acertos em um anel animado, total de acertos e de pontos.</li>
+      <li>“Revise suas respostas”: cada pergunta com a resposta dada, a correta e uma explicação curta.</li>
+    </ul>
+  </div>
+
+  <h3>7.7 Tela de resultado</h3>
+  <div class="duas">
+    <div><img src="telas/resultado.png" alt=""><div class="legenda">Aprovado: título conquistado</div></div>
+    <div><img src="telas/reprovado.png" alt=""><div class="legenda">Não aprovado: quantos acertos faltaram</div></div>
+  </div>
+  <ul>
+    <li>Aprovado: “Parabéns! Você é um doceiro Noob/Pro/Mestre!”, estrelas, acertos, moedas e pontos,
+      destaque de recorde e de nível liberado, e atalho para o próximo nível.</li>
+    <li>Não aprovado: quantos acertos faltaram e botão “Tente novamente”.</li>
+    <li>Conquistas desbloqueadas na partida aparecem no canto superior da tela.</li>
+  </ul>
+
+  <h3>7.8 Troféus: títulos, conquistas e estatísticas</h3>
+  <div class="tela"><img src="telas/titulos.png" alt=""><div class="legenda">Títulos: pódio com Mestre, Pro e Noob</div></div>
+  <div class="duas">
+    <div><img src="telas/conquistas.png" alt=""><div class="legenda">Conquistas e recompensas</div></div>
+    <div><img src="telas/estatisticas.png" alt=""><div class="legenda">Estatísticas de desempenho</div></div>
+  </div>
+  <ul>
+    <li><b>Títulos:</b> quantas vezes cada título foi conquistado.</li>
+    <li><b>Conquistas:</b> as 16 metas, desbloqueadas ou não, com a data em que foram ganhas.</li>
+    <li><b>Estatísticas:</b> partidas, taxa de acerto, tempo médio, recordes por nível, acerto em Word, Excel e
+      Office em geral, e as perguntas mais erradas (“para estudar”).</li>
+  </ul>
+
+  <div class="tela">
+    <img src="telas/colecao.png" alt="Minha coleção">
+    <h3>7.9 Minha coleção</h3>
+    <ul>
+      <li>À esquerda, o doce escolhido em 3D: respira, pisca, acena e gira com o dedo.</li>
+      <li>À direita, os 13 doces: os que o jogador ainda não tem aparecem em silhueta, com o preço ou o nível que os libera.</li>
+      <li>Botões para comprar (com confirmação) e para escolher o doce como companheiro.</li>
+    </ul>
+  </div>
+
+  <div class="duas">
+    <div><img src="telas/configuracoes.png" alt=""><div class="legenda">7.10 Configurações</div></div>
+    <div><img src="telas/creditos.png" alt=""><div class="legenda">7.11 Créditos</div></div>
+  </div>
+  <ul>
+    <li><b>Configurações:</b> volume da música e dos efeitos, liga/desliga das animações de fundo, resumo do
+      progresso e opção de apagar o progresso (com confirmação).</li>
+    <li><b>Créditos:</b> alunos desenvolvedores e professores orientadores, com o logotipo do IFBA Campus Valença,
+      e acesso à tela “Sobre o projeto”.</li>
+  </ul>
+
+  <div class="tela">
+    <img src="telas/sobre.png" alt="Sobre o projeto">
+    <h3>7.12 Sobre o projeto</h3>
+    <ul>
+      <li>O que é o jogo, para que serve e quem o fez, com números do projeto e os perfis da equipe nas redes sociais.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="numero">8</span>Conteúdo pedagógico</h2>
+  <table class="lista">
+    <tr><th>Item</th><th>Quantidade</th><th>Observação</th></tr>
+    <tr><td>Perguntas</td><td>60 (20 por nível)</td><td>Word: 17 · Excel: 34 · Office em geral: 9</td></tr>
+    <tr><td>Explicações</td><td>60</td><td>Uma por pergunta, exibida na revisão das respostas</td></tr>
+    <tr><td>Dicas e curiosidades</td><td>40</td><td>20 dicas de Word/Excel e 20 curiosidades, na tela de carregamento</td></tr>
+  </table>
+  <p>Os assuntos vão do básico (programas do Office, extensões de arquivos, atalhos de copiar, colar e desfazer,
+    células, linhas e colunas) ao avançado (funções SE, CONT.SE, SOMASE, PROCV, SEERRO, tabela dinâmica, referências
+    absolutas, mala direta, sumário automático, macros e quebras de seção). As perguntas ficam em um arquivo de dados
+    separado do código (<i>perguntas.json</i>), o que facilita a revisão por professores e a inclusão de novas perguntas.</p>
+</section>
+
+<section>
+  <h2><span class="numero">9</span>Tecnologia e arquitetura</h2>
+  <ul>
+    <li><b>Motor e linguagem:</b> Godot Engine 4.7 (software livre, licença MIT) e linguagem GDScript.</li>
+    <li><b>Organização do código:</b> uma cena por tela; módulos separados para regras do jogo, progresso salvo
+      (com versão e conversão de salvamentos antigos), navegação entre telas, áudio, conquistas, coleção e personagens 3D.</li>
+    <li><b>Personagens:</b> todos os doces em 3D são modelados por código, a partir de formas geométricas, dentro do
+      próprio projeto — são criações originais, sem arquivos de terceiros.</li>
+    <li><b>Qualidade:</b> conjunto de testes automáticos (594 verificações) que confere as regras, o sorteio, o
+      salvamento, a coleção e uma partida completa passando pelas telas.</li>
+    <li><b>Desempenho:</b> animações leves e detecção de aparelhos sem aceleração de vídeo, para rodar em celulares simples.</li>
+    <li><b>Privacidade:</b> não usa internet, não pede permissões e não coleta dados; o progresso fica só no aparelho.</li>
+    <li><b>Fontes tipográficas:</b> Bebas Neue e Nunito, sob a licença SIL Open Font License.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="numero">10</span>Evolução do projeto (2023 a 2026)</h2>
+  <table class="lista">
+    <tr><th>Aspecto</th><th>Versão de 2023</th><th>Versão atual (0.4.0)</th></tr>
+    <tr><td>Tecnologia</td><td>Python com pygame, para computador</td><td>Godot 4 (GDScript), para Android e navegador</td></tr>
+    <tr><td>Perguntas</td><td>Lista fixa, sempre na mesma ordem</td><td>60 perguntas sorteadas, com explicações</td></tr>
+    <tr><td>Progressão</td><td>Aproveitamento e título ao final</td><td>Níveis liberados em ordem, estrelas, recordes e pontos</td></tr>
+    <tr><td>Retorno ao aluno</td><td>Lista de questões certas/erradas</td><td>Resposta certa e explicação de cada pergunta, revisão dos erros e estatísticas</td></tr>
+    <tr><td>Motivação</td><td>Títulos de doceiro</td><td>Títulos, moedas, ajudas, 16 conquistas e coleção de doces 3D</td></tr>
+    <tr><td>Personagens</td><td>Ilustrações 2D</td><td>Personagens 3D originais, feitos no próprio projeto</td></tr>
+    <tr><td>Configurações</td><td>Botão de som</td><td>Volumes separados, animações e apagar progresso</td></tr>
+  </table>
+</section>
+
+<section class="quebra">
+  <h2><span class="numero">11</span>Informações para o registro no INPI</h2>
+  <p>O registro de programa de computador no INPI é regido pela Lei nº 9.609/1998 (Lei do Software). O pedido é
+    feito pela internet e não exige o envio do código-fonte: o requerente informa um <b>resumo digital (hash)</b> do
+    código, que comprova a sua autoria, e guarda o código original em segurança.</p>
+
+  <h3>11.1 Dados do programa para o formulário</h3>
+  <table>
+    <tr><th>Título</th><td>Doce Texto Quiz</td></tr>
+    <tr><th>Data de criação</th><td>2023 (informar a data exata da primeira versão, conforme os registros da turma)</td></tr>
+    <tr><th>Linguagem</th><td>GDScript (Godot Engine); versão original em Python</td></tr>
+    <tr><th>Campo de aplicação</th><td>Educação — escolher o código correspondente na tabela de campos de aplicação do INPI</td></tr>
+    <tr><th>Tipo de programa</th><td>Jogo educacional — escolher o código correspondente na tabela de tipos de programa do INPI</td></tr>
+    <tr><th>Autores</th><td>Sávio Santos Rocha, Natalí Rocha e Talita Argolo</td></tr>
+    <tr><th>Titular</th><td>A definir com o Núcleo de Inovação Tecnológica (NIT) do IFBA: por ter sido desenvolvido na
+      instituição, com orientação de professores, a titularidade costuma ser da instituição, com os alunos como autores.</td></tr>
+  </table>
+
+  <h3>11.2 Resumo digital (hash) do código-fonte</h3>
+  <div class="caixa">
+    Pacote do código-fonte da versão 0.4.0: <b>doce_texto_quiz_codigo_fonte_v0.4.0.zip</b><br>
+    Algoritmo: <b>SHA-512</b>
+    <div class="hash">0f0736fe6df91a67afe7553a5f6f8c823706be7bb0fb305558a68c0e7cbb55d84601a7b5b07a2e26c321130460844ba3e0109e69a0c437d8e5cbe426885e65f1</div>
+  </div>
+  <div class="caixa aviso">
+    <b>Importante:</b> qualquer mudança no código gera um hash diferente. Na hora de enviar o pedido, gere o pacote e
+    o hash novamente com o comando <i>ferramentas/hash_inpi.sh</i> (no repositório do projeto), informe o novo hash no
+    formulário e guarde o arquivo .zip gerado <b>sem nenhuma alteração</b> — ele é a prova de autoria.
+  </div>
+
+  <h3>11.3 Pendências antes do pedido</h3>
+  <ul>
+    <li>Confirmar a origem e a licença da música de fundo (três faixas) e dos efeitos sonoros de acerto e erro.</li>
+    <li>Confirmar os termos de uso da ferramenta de inteligência artificial usada nas imagens do mascote (caixa de
+      cereal) ou substituí-las por uma versão feita pela equipe.</li>
+    <li>Pedir a um professor da área a revisão final das 60 perguntas e das 40 dicas.</li>
+    <li>Definir o titular com o NIT do IFBA e reunir os dados pessoais dos autores exigidos no formulário.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="numero">12</span>Conclusão</h2>
+  <p>O Doce Texto Quiz é uma ferramenta educativa que une o estudo de editores de texto e planilhas à linguagem dos
+    jogos digitais. A proposta criada pela Turma 613 em 2023 — um quiz leve, colorido e cheio de doces — foi
+    preservada e ampliada: hoje o jogo funciona no celular e no navegador, explica cada resposta, adapta o sorteio
+    ao desempenho do aluno, acompanha a sua evolução e oferece recompensas que estimulam a prática contínua.</p>
+  <p>Com isso, o jogo não apenas avalia o que o estudante já sabe, mas se torna um apoio real ao aprendizado,
+    que pode ser usado em sala de aula ou em casa, em aparelhos simples e sem acesso à internet.</p>
+</section>
+
+</body>
+</html>
