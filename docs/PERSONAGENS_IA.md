@@ -16,7 +16,49 @@ da tela de carregamento) e colocar no jogo.
 > imagens geradas podem ser usadas comercialmente e se os direitos ficam com
 > vocês. Anote qual ferramenta e qual prompt geraram cada imagem.
 
-## Prompt base (copie e troque só o `[PERSONAGEM]`)
+## Refazer em alta qualidade (pendência atual)
+
+Os personagens atuais foram recortados de uma prancha com todos juntos, então
+cada um ficou pequeno (~300 px). Para ficar nítido, gere **um por imagem**:
+
+1. Anexe a prancha "PERSONAGENS ORIGINAIS DO DOCE TEXTO QUIZ" (versão 3D) como referência.
+2. Cole o prompt abaixo trocando `[NOME DO PERSONAGEM]`.
+3. Um personagem por vez. Mande as imagens para o Claude (ele remove o fundo e
+   coloca no jogo) ou salve com o nome da tabela em `godot/assets/personagens/`.
+
+```
+Using the attached image as reference, create a single high-resolution image
+of ONLY the [NOME DO PERSONAGEM] character. Keep it exactly the same design,
+colors, face, pose and 3D render style as in the reference.
+
+Requirements:
+- Square image, 2048x2048 pixels
+- Only one character, centered, full body (head to shoes), filling about
+  80% of the image height
+- Plain solid white background (or transparent PNG if possible)
+- No text, no labels, no frame, no card, no shadow on the background
+- Sharp details, soft studio lighting, high quality 3D render
+```
+
+| `[NOME DO PERSONAGEM]` | Salvar como | Onde aparece |
+|---|---|---|
+| cereal box mascot (yellow and pink box with a bowl of cereal) | `mascote_cereal.png` | Tela inicial |
+| green striped wrapped candy | `doce_facil.png` | Nível fácil |
+| candy corn | `doce_medio.png` | Nível médio |
+| red and white peppermint candy | `doce_dificil.png` | Nível difícil |
+| red apple | `maca_noob.png` | Título Noob |
+| pink frosting cupcake with yellow paper cup | `cupcake_pro.png` | Título Pro |
+| chocolate bar with red shoes | `chocolate_mestre.png` | Título Mestre |
+| sad brigadeiro (chocolate truffle with sprinkles) | `brigadeiro_triste.png` | "Você não é um doceiro" |
+| white chocolate ghost | `fantasma_chocolate.png` | Carregamento |
+| chocolate popsicle | `picole_chocolate.png` | Extra |
+| strawberry cupcake with chocolate cup | `cupcake_morango.png` | Extra |
+
+Dicas: se a IA mudar o personagem, acrescente "Do not change the character
+design. Same proportions and colors as the reference."; se aparecer texto ou
+moldura, gere de novo com "no text, no border".
+
+## Prompt base para criar personagens novos (copie e troque só o `[PERSONAGEM]`)
 
 Os geradores costumam entender melhor em inglês:
 

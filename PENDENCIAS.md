@@ -13,8 +13,16 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
 - [ ] Pedir para um(a) professor(a) revisar as 60 perguntas (`godot/dados/perguntas.json`)
       e as dicas da tela de carregamento (`godot/cenas/carregamento.gd`).
 
+## Personagens
+- [ ] **Refazer as imagens dos personagens em alta qualidade**: hoje foram recortadas
+      de uma prancha (cada uma com ~300 px) e ficam borradas quando aparecem grandes.
+      Gerar **um personagem por imagem**, 2048×2048, fundo branco liso. Prompt e
+      nomes dos arquivos em `docs/PERSONAGENS_IA.md` (seção "Refazer em alta qualidade").
+
 ## Direitos (antes do registro no INPI)
-- [x] Trocar a imagem do brigadeiro triste (tinha marca d'água): refeito em SVG.
+- [x] Trocar a imagem do brigadeiro triste (tinha marca d'água).
+- [ ] Confirmar os termos de uso da ferramenta de IA usada nos personagens (uso
+      comercial e titularidade) e anotar ferramenta + prompt de cada imagem.
 - [ ] Confirmar a origem/licença da música de fundo e dos sons de acerto/erro.
 - [ ] Confirmar a origem/licença dos personagens (vieram das imagens de 2023).
 
