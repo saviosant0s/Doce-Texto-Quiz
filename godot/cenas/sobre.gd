@@ -47,7 +47,7 @@ func _ready() -> void:
 		botao.pressed.connect(OS.shell_open.bind("https://instagram.com/" + perfil))
 		%Perfis.add_child(botao)
 	Animacoes.entrar(%Coluna, Vector2(0, 30))
-	Animacoes.pular(%Mascote)
+	Animacoes.flutuar(%Mascote)
 
 
 func _criar_numero(valor: String, legenda: String) -> PanelContainer:

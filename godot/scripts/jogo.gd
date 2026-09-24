@@ -45,6 +45,10 @@ var titulos := {"noob": 0, "pro": 0, "mestre": 0}
 var moedas := 0
 var musica_ligada := true
 
+## Falso quando o navegador desenha sem placa de vídeo (renderização por
+## software): aí as animações contínuas travam o jogo e ficam desligadas.
+var animacoes_continuas := true
+
 var _historico: Array[String] = []
 var _modo_captura := false  # não salva nada ao gerar prints
 var _cortina: ColorRect
@@ -54,9 +58,26 @@ var _trocando := false
 func _ready() -> void:
 	niveis = JSON.parse_string(FileAccess.get_file_as_string(CAMINHO_PERGUNTAS))["niveis"]
 	carregar()
+	_detectar_renderizacao()
 	_criar_cortina()
 	_criar_aviso_girar()
 	_verificar_captura()
+
+
+func _detectar_renderizacao() -> void:
+	var placa := RenderingServer.get_video_adapter_name().to_lower()
+	if OS.has_feature("web"):
+		# No navegador o Godot só vê "WebGL"; o nome real vem da extensão de depuração
+		placa = str(JavaScriptBridge.eval("""(function () {
+			var gl = document.createElement('canvas').getContext('webgl2');
+			if (!gl) return 'software';
+			var info = gl.getExtension('WEBGL_debug_renderer_info');
+			return info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+		})()""", true)).to_lower()
+	for software in ["swiftshader", "llvmpipe", "software", "basic render"]:
+		if software in placa:
+			animacoes_continuas = false
+	print("Placa de vídeo: %s (animações contínuas: %s)" % [placa, animacoes_continuas])
 
 
 # --- Navegação -------------------------------------------------------------

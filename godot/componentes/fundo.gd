@@ -13,8 +13,8 @@ enum Decoracao { NENHUMA, ESTRELAS, CONFETE, BALAS }
 	set(valor):
 		quantidade = valor
 		_gerar()
-## Faz o confete cair. As outras decorações são estáticas (desenhadas uma vez só,
-## para não pesar no celular).
+## Anima a decoração: confete caindo, estrelas piscando, balas deslizando.
+## Desligado sozinho em aparelhos sem aceleração de vídeo.
 @export var animar := true
 
 const CORES_CONFETE := [Cores.AMARELO, Cores.ROSA, Cores.AZUL, Cores.VERDE, Cores.CREME]
@@ -48,15 +48,18 @@ func _gerar() -> void:
 
 
 func _process(delta: float) -> void:
-	# Só o confete é animado; o resto não precisa ser redesenhado a cada quadro
-	if not animar or decoracao != Decoracao.CONFETE or Engine.is_editor_hint():
+	if not animar or decoracao == Decoracao.NENHUMA or Engine.is_editor_hint():
+		return
+	# O confete é a animação principal da tela de resultado: mantém sempre
+	if decoracao != Decoracao.CONFETE and not Jogo.animacoes_continuas:
 		return
 	_tempo += delta
-	for item in _itens:
-		item["pos"].y += item["velocidade"] * delta
-		item["pos"].x += sin(_tempo + item["fase"]) * 20.0 * delta
-		if item["pos"].y > size.y + 10:
-			item["pos"].y = -10
+	if decoracao == Decoracao.CONFETE:
+		for item in _itens:
+			item["pos"].y += item["velocidade"] * delta
+			item["pos"].x += sin(_tempo + item["fase"]) * 20.0 * delta
+			if item["pos"].y > size.y + 10:
+				item["pos"].y = -10
 	queue_redraw()
 
 
@@ -65,7 +68,7 @@ func _draw() -> void:
 	match decoracao:
 		Decoracao.ESTRELAS:
 			for item in _itens:
-				var brilho := 0.55 + 0.45 * sin(item["fase"])
+				var brilho := 0.55 + 0.45 * sin(_tempo * 1.5 + item["fase"])
 				_estrela(item["pos"], item["tamanho"], Color(Cores.AMARELO, brilho))
 		Decoracao.BALAS:
 			_desenhar_estampa_balas()
@@ -82,12 +85,14 @@ func _draw() -> void:
 func _desenhar_estampa_balas() -> void:
 	var cor := Color(Cores.ROXO_ESCURO, 0.45)
 	var espaco := Vector2(150, 120)
-	var linhas := int(size.y / espaco.y) + 2
-	var colunas := int(size.x / espaco.x) + 2
+	# a estampa desliza devagar na diagonal
+	var movimento := Vector2(fposmod(_tempo * 12.0, espaco.x), fposmod(_tempo * 6.0, espaco.y * 2.0))
+	var linhas := int(size.y / espaco.y) + 3
+	var colunas := int(size.x / espaco.x) + 3
 	for l in linhas:
 		for c in colunas:
 			var deslocamento := espaco.x / 2.0 if l % 2 == 1 else 0.0
-			var centro := Vector2(c * espaco.x + deslocamento, l * espaco.y + 40)
+			var centro := Vector2(c * espaco.x + deslocamento, l * espaco.y + 40) + movimento - espaco * Vector2(1, 2)
 			var angulo := deg_to_rad(-25.0 if (l + c) % 2 == 0 else 20.0)
 			draw_set_transform(centro, angulo)
 			draw_colored_polygon(_elipse(Vector2.ZERO, Vector2(15, 10)), cor)

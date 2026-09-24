@@ -28,4 +28,4 @@ func _ready() -> void:
 	Animacoes.entrar(%Personagem, Vector2(-60, 0))
 	Animacoes.entrar(%Cartao, Vector2(60, 0), 0.1)
 	if venceu:
-		Animacoes.pular(%Personagem)
+		Animacoes.flutuar(%Personagem)

@@ -40,7 +40,7 @@ func _ready() -> void:
 	%Tipo.text = DICAS[indice][0]
 	%Texto.text = DICAS[indice][1].to_upper()
 
-	Animacoes.pular(%Personagem)
+	Animacoes.flutuar(%Personagem)
 	var tween := create_tween()
 	tween.tween_property(%Barra, "value", 100.0, DURACAO).set_trans(Tween.TRANS_SINE)
 	tween.tween_callback(Jogo.ir_para.bind("partida"))

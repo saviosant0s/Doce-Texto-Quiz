@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://componentes/cartao_nivel.gd" id="1"]
 
 [node name="CartaoNivel" type="Button"]
-custom_minimum_size = Vector2(270, 390)
+custom_minimum_size = Vector2(270, 420)
 theme_type_variation = &"CartaoNivel"
 script = ExtResource("1")
 
@@ -27,7 +27,7 @@ theme_override_constants/separation = 6
 
 [node name="Personagem" type="TextureRect" parent="Margem/Coluna"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
