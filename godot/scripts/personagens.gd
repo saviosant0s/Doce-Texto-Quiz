@@ -43,6 +43,10 @@ static func material_silhueta(cor := Color(0.29, 0.19, 0.47, 0.9)) -> ShaderMate
 ## gira com o dedo, pisca e acena. O TextureRect continua no lugar (tamanho e
 ## animações de entrada), só sem a imagem. Em aparelhos sem placa de vídeo, a
 ## foto parada continua (3D ali travaria). Retorna o Doce3D, ou null.
+## Folga em volta do doce 3D (fração do tamanho da imagem, em cada lado).
+const FOLGA_3D := 0.22
+
+
 static func animar(imagem: TextureRect, nome: String, silhueta := false,
 		cor_silhueta := Color(0.29, 0.19, 0.47, 0.9)) -> Doce3D:
 	var id: String = FOTOS_3D.get(nome, nome)
@@ -53,8 +57,14 @@ static func animar(imagem: TextureRect, nome: String, silhueta := false,
 	doce.id = id
 	doce.silhueta = silhueta
 	doce.cor_silhueta = cor_silhueta
-	doce.distancia = 4.5  # do tamanho da foto
-	doce.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Área de desenho maior que o espaço da imagem (folga em volta), para a mão
+	# que acena e o pulinho não serem cortados pela borda; a câmera se afasta
+	# na mesma proporção, então o doce continua do mesmo tamanho na tela.
+	doce.distancia = 4.5 * (1.0 + 2.0 * FOLGA_3D)
+	doce.anchor_left = -FOLGA_3D
+	doce.anchor_top = -FOLGA_3D
+	doce.anchor_right = 1.0 + FOLGA_3D
+	doce.anchor_bottom = 1.0 + FOLGA_3D
 	imagem.add_child(doce)
 	imagem.move_child(doce, 0)  # atrás de cadeados e outros enfeites
 	imagem.texture = null
