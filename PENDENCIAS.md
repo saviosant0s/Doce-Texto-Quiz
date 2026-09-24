@@ -23,7 +23,8 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
 - [x] Trocar a imagem do brigadeiro triste (tinha marca d'água).
 - [ ] Confirmar os termos de uso da ferramenta de IA usada nos personagens (uso
       comercial e titularidade) e anotar ferramenta + prompt de cada imagem.
-- [ ] Confirmar a origem/licença da música de fundo e dos sons de acerto/erro.
+- [ ] Confirmar a origem/licença das 3 músicas novas (`godot/assets/sons/musica_1..3.ogg`,
+      enviadas em 24/09/2026) e dos sons de acerto/erro. Anotar autor e licença de cada uma.
 - [ ] Confirmar a origem/licença dos personagens (vieram das imagens de 2023).
 
 ## Funcionalidades

@@ -1,17 +1,28 @@
 extends Node
 ## Música de fundo e efeitos sonoros, em canais (buses) separados para que cada
 ## um tenha seu volume. Disponível como `Audio` (autoload).
+##
+## As músicas tocam uma depois da outra, em ordem aleatória, sem repetir a
+## mesma em seguida. Para trocar as músicas, edite MUSICAS.
 
 const EFEITOS := {
 	"acerto": preload("res://assets/sons/acerto.ogg"),
 	"erro": preload("res://assets/sons/erro.ogg"),
 }
+const MUSICAS := [
+	"res://assets/sons/musica_1.ogg",
+	"res://assets/sons/musica_2.ogg",
+	"res://assets/sons/musica_3.ogg",
+]
 const BUS_MUSICA := "Musica"
 const BUS_EFEITOS := "Efeitos"
 const VOLUME_PADRAO_MUSICA := 0.8
 
 var _musica := AudioStreamPlayer.new()
 var _efeitos := AudioStreamPlayer.new()
+## Ordem das músicas da rodada atual (índices de MUSICAS) e posição nela.
+var _fila: Array[int] = []
+var musica_atual := -1
 
 
 func _ready() -> void:
@@ -20,15 +31,27 @@ func _ready() -> void:
 			AudioServer.add_bus()
 			AudioServer.set_bus_name(AudioServer.bus_count - 1, bus)
 			AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
-	var musica: AudioStreamOggVorbis = load("res://assets/sons/musica_fundo.ogg")
-	musica.loop = true
-	_musica.stream = musica
 	_musica.bus = BUS_MUSICA
+	_musica.finished.connect(proxima_musica)
 	_efeitos.bus = BUS_EFEITOS
 	add_child(_musica)
 	add_child(_efeitos)
 	aplicar_volumes()
 	Progresso.alterado.connect(aplicar_volumes)
+	proxima_musica()
+
+
+## Toca a próxima música da fila (embaralha de novo quando a fila acaba).
+func proxima_musica() -> void:
+	if _fila.is_empty():
+		for i in MUSICAS.size():
+			_fila.append(i)
+		_fila.shuffle()
+		# não repete a música que acabou de tocar
+		if _fila.size() > 1 and _fila[0] == musica_atual:
+			_fila.push_back(_fila.pop_front())
+	musica_atual = _fila.pop_front()
+	_musica.stream = load(MUSICAS[musica_atual])
 	_musica.play()
 
 

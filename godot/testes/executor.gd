@@ -50,6 +50,17 @@ func _testar_regras() -> void:
 	verificar(Jogo.multiplicador(2) == 1.0 and Jogo.multiplicador(3) == 1.5 and Jogo.multiplicador(5) == 2.0, "combos x1,5 e x2")
 	verificar(Jogo.pontos_da_resposta(true, 15.0, 5) == 300, "meio tempo com combo x2 = 300")
 	verificar(Jogo.formatar(2198) == "2.198" and Jogo.formatar(1234567) == "1.234.567" and Jogo.formatar(12) == "12", "formata milhar")
+	# Músicas: uma rodada toca todas, sem repetir a última em seguida
+	Audio._fila.clear()  # começa uma rodada nova
+	for rodada in 5:
+		var tocadas := []
+		for i in Audio.MUSICAS.size():
+			var anterior := Audio.musica_atual
+			Audio.proxima_musica()
+			verificar(Audio.musica_atual != anterior, "não repete a música em seguida")
+			tocadas.append(Audio.musica_atual)
+		tocadas.sort()
+		verificar(tocadas == range(Audio.MUSICAS.size()), "a rodada toca todas as músicas")
 	var ids := {}
 	for nivel in Jogo.niveis:
 		verificar(nivel["perguntas"].size() >= Jogo.PERGUNTAS_POR_PARTIDA, "nível com perguntas suficientes")

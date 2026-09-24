@@ -47,13 +47,13 @@ Metas: APK para Android e registro no INPI.
 
 ## Onde parou
 
-- Última coisa feita: etapa 5 concluída e publicada; scripts de publicação e
-  de prints trazidos para `ferramentas/`.
+- Última coisa feita: troca da música antiga pelas 3 músicas novas do Sávio
+  (tocam em sequência aleatória, volume igualado); APK gerado de novo e publicado.
 - Nada pela metade. Próximo passo: item 1 da etapa 6.
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (467 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (487 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
