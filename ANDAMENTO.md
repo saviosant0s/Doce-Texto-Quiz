@@ -68,8 +68,13 @@ coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
      TROFÉUS → troféus · FLIPERAMA → "em breve" (o Doce Match, abaixo).
    "JOGAR" na tela inicial leva à vila (aparelhos sem placa de vídeo vão direto
    para os níveis). Ao sair de um prédio, o doce aparece na porta dele.
-2. Outros doces da coleção passeando pela vila; placas e detalhes.
-3. Pequenas tarefas na vila (ex.: moedas espalhadas, missões curtas).
+2. ⏳ **Melhorias pedidas (24/09)**: andar melhor (aceleração, curvas, pulo,
+   correr, poeira), gráfico estilo desenho mais bonito (sombreado cartoon,
+   contorno, sombras, antisserrilhado, chão detalhado) e casas diferentes
+   (Escola de biscoito com torre, Confeitaria-cupcake, Troféus-torre dourada,
+   Fliperama-máquina).
+3. Outros doces da coleção passeando pela vila; placas e detalhes.
+4. Pequenas tarefas na vila (ex.: moedas espalhadas, missões curtas).
 
 ### Futuro: Doce Match (NÃO fazer agora)
 Minijogo no estilo Candy Crush dentro do FLIPERAMA da vila: trocar peças
