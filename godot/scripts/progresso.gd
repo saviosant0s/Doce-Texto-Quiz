@@ -38,6 +38,8 @@ var baus := {}
 var missoes := {}
 ## Nível e experiência do jogador (ver Experiencia).
 var jogador := {}
+## Doce Match: {"estrelas": {"1": 3, ...}} por nível (ver DoceMatch).
+var doce_match := {}
 
 ## Quando verdadeiro, nada é gravado em disco (usado ao gerar prints e em testes).
 var somente_memoria := false
@@ -70,6 +72,7 @@ func _zerar() -> void:
 	baus = Baus.padrao()
 	missoes = Missoes.padrao()
 	jogador = {"xp": 0, "nivel": 1}
+	doce_match = {"estrelas": {}}
 
 
 # --- Consultas ---------------------------------------------------------------
@@ -190,6 +193,7 @@ func salvar() -> void:
 		"baus": baus,
 		"missoes": missoes,
 		"jogador": jogador,
+		"doce_match": doce_match,
 	}
 	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
 	if arquivo:
@@ -236,6 +240,7 @@ func carregar() -> void:
 		baus["fechados"][tipo] = int(baus["fechados"][tipo])
 	missoes.merge(dados.get("missoes", {}), true)
 	jogador.merge(dados.get("jogador", {}), true)
+	doce_match.merge(dados.get("doce_match", {}), true)
 	jogador["xp"] = int(jogador["xp"])
 	jogador["nivel"] = int(jogador["nivel"])
 	for chave in ["fragmentos", "niveis"]:

@@ -784,14 +784,12 @@ func _testar_tela_confeitaria() -> void:
 
 func _testar_doce_match() -> void:
 	_secao("doce match")
-	var jogo := DoceMatch.new(7)
+	var jogo := DoceMatch.new({}, 7)
 	verificar(jogo.filas().is_empty(), "o tabuleiro começa sem filas prontas")
 	verificar(not jogo.jogada_possivel().is_empty(), "e com pelo menos uma jogada")
 	verificar(not jogo.trocar(Vector2i(0, 0), Vector2i(2, 0)), "só troca peças vizinhas")
 	# tabuleiro montado à mão: trocar (2,1) com (2,0) forma uma fila de 3 na linha 0
-	for y in DoceMatch.ALTURA:
-		for x in DoceMatch.LARGURA:
-			jogo.grade[y][x] = (x + y * 2) % 3 + 3  # tipos 3,4,5 sem filas
+	_grade_sem_filas(jogo)
 	jogo.grade[0][0] = 0
 	jogo.grade[0][1] = 0
 	jogo.grade[0][2] = 1
@@ -805,52 +803,246 @@ func _testar_doce_match() -> void:
 	verificar(jogo.trocar(Vector2i(2, 1), Vector2i(2, 0)) and jogo.jogadas <= antes - 1, "troca que forma fila vale e gasta uma jogada")
 	var passos := jogo.resolver()
 	verificar(passos.size() >= 1 and jogo.pontos >= 3 * DoceMatch.PONTOS_POR_PECA, "a fila some e dá pontos")
+	verificar(jogo.coletados["folha"] >= 3, "as peças que somem contam para o objetivo de juntar")
 	var vazias := 0
 	for linha in jogo.grade:
 		vazias += linha.count(-1)
 	verificar(vazias == 0 and jogo.filas().is_empty(), "as peças caem e o tabuleiro fica cheio, sem filas")
 	verificar(passos.size() < 2 or passos[1]["combo"] == 2, "cascata conta como combo")
-	var outro := DoceMatch.new(3)
-	outro.jogadas = 0
-	var jogada := outro.jogada_possivel()
-	verificar(outro.acabou() and not outro.trocar(jogada[0], jogada[1]), "sem jogadas, a partida acaba")
-	outro.pontos = DoceMatch.METAS[1]
-	verificar(outro.estrelas() == 2 and outro.moedas() > 0, "estrelas pela pontuação e moedas no fim")
+
+	# peças especiais
+	var e := DoceMatch.new(DoceMatch.dados_nivel(1), 3)
+	_grade_sem_filas(e)
+	for x in [0, 1, 3]:
+		e.grade[0][x] = 0
+	e.grade[1][2] = 0
+	e.trocar(Vector2i(2, 1), Vector2i(2, 0))
+	var p := e.passo(1)
+	verificar(p["criadas"].size() == 1 and p["criadas"][0][1] == DoceMatch.Especial.LINHA and p["criadas"][0][0] == Vector2i(2, 0),
+		"fila de 4 deitada vira peça LISTRADA onde a peça foi trocada")
+	verificar(e.especial_em(Vector2i(2, 0)) == DoceMatch.Especial.LINHA, "(a listrada fica no tabuleiro)")
+	# explodir a listrada: some a linha inteira
+	var l := DoceMatch.new(DoceMatch.dados_nivel(1), 4)
+	_grade_sem_filas(l)
+	l.grade[3][0] = 1
+	l.grade[3][1] = 1
+	l.grade[3][2] = 1
+	l.especial[3][1] = DoceMatch.Especial.LINHA
+	p = l.passo(1)
+	verificar(p["somem"].size() == DoceMatch.LARGURA and p["efeitos"].size() == 1 and p["efeitos"][0]["tipo"] == "linha",
+		"a listrada explode a linha toda")
+	var c := DoceMatch.new(DoceMatch.dados_nivel(1), 4)
+	_grade_sem_filas(c)
+	for y in [0, 1, 2]:
+		c.grade[y][4] = 1
+	c.especial[1][4] = DoceMatch.Especial.EMBRULHO
+	p = c.passo(1)
+	verificar(p["somem"].size() == 3 + 6 and p["efeitos"][0]["tipo"] == "embrulho", "a embrulhada explode as casas em volta")
+	# L/T vira embrulhada; fila de 5 vira bomba
+	var t := DoceMatch.new(DoceMatch.dados_nivel(1), 5)
+	_grade_sem_filas(t)
+	for x in [0, 1, 2]:
+		t.grade[0][x] = 1
+	for y in [1, 2]:
+		t.grade[y][0] = 1
+	p = t.passo(1)
+	verificar(p["criadas"].size() == 1 and p["criadas"][0][1] == DoceMatch.Especial.EMBRULHO and p["criadas"][0][0] == Vector2i(0, 0),
+		"fila em L vira peça EMBRULHADA na quina")
+	var b := DoceMatch.new(DoceMatch.dados_nivel(1), 6)
+	_grade_sem_filas(b)
+	for x in 5:
+		b.grade[5][x] = 2
+	p = b.passo(1)
+	verificar(p["criadas"].size() == 1 and p["criadas"][0][1] == DoceMatch.Especial.BOMBA and b.tipo(p["criadas"][0][0]) == DoceMatch.BOMBA,
+		"fila de 5 vira a BOMBA de confeito")
+	# a bomba trocada com uma peça leva todas daquele tipo (sem precisar de fila)
+	var bomba: Vector2i = p["criadas"][0][0]
+	b.resolver()
+	var cai_em := Vector2i(bomba.x, DoceMatch.ALTURA - 1)
+	for y in range(DoceMatch.ALTURA - 1, -1, -1):
+		if b.tipo(Vector2i(bomba.x, y)) == DoceMatch.BOMBA:
+			cai_em = Vector2i(bomba.x, y)
+	var vizinha := cai_em + (Vector2i(0, -1) if cai_em.y > 0 else Vector2i(1, 0))
+	var alvo := b.tipo(vizinha)
+	var quantas := 0
+	for linha in b.grade:
+		quantas += linha.count(alvo)
+	var jogadas_antes := b.jogadas
+	verificar(b.trocar(cai_em, vizinha) and b.jogadas == jogadas_antes - 1, "trocar a bomba sempre vale")
+	p = b.passo(1)
+	verificar(p["efeitos"].any(func(f): return f["tipo"] == "bomba") and p["somem"].size() >= quantas + 1,
+		"a bomba some com todas as peças daquele tipo")
+
+	# gelatina e objetivos
+	var g := DoceMatch.new(DoceMatch.dados_nivel(4), 8)
+	verificar(g.gelatinas_total == 16 and g.gelatinas_restantes() == 16 and not g.venceu(), "nível 4: 16 gelatinas no centro")
+	_grade_sem_filas(g)
+	for x in [2, 3, 4]:
+		g.grade[2][x] = 0
+	p = g.passo(1)
+	verificar(p["gelatinas"].size() == 3 and g.gelatinas_restantes() == 13, "a fila em cima da gelatina limpa a gelatina")
+	verificar(g.progresso_objetivo({"tipo": "gelatina"}) == [3, 16], "o objetivo conta a gelatina limpa")
+	for y in DoceMatch.ALTURA:
+		for x in DoceMatch.LARGURA:
+			g.gelatina[y][x] = false
+	verificar(g.venceu() and g.acabou(), "limpou tudo: venceu e o nível acaba")
+	g.jogadas = 3
+	var pontos_antes := g.pontos
+	verificar(g.bonus_de_jogadas() == 3 * DoceMatch.BONUS_JOGADA and g.pontos == pontos_antes + 3 * DoceMatch.BONUS_JOGADA,
+		"cada jogada que sobrou vira pontos")
+	var perdeu := DoceMatch.new(DoceMatch.dados_nivel(2), 9)
+	perdeu.jogadas = 0
+	var jogada := perdeu.jogada_possivel()
+	verificar(perdeu.acabou() and not perdeu.venceu() and perdeu.estrelas() == 0 and not perdeu.trocar(jogada[0], jogada[1]),
+		"sem jogadas e sem objetivo: perdeu, 0 estrelas")
+	var ganhou := DoceMatch.new(DoceMatch.dados_nivel(1), 9)
+	ganhou.pontos = int(ganhou.nivel["objetivos"][0]["meta"])
+	verificar(ganhou.venceu() and ganhou.estrelas() >= 1, "venceu: pelo menos 1 estrela")
+	ganhou.pontos = int(ganhou.nivel["estrelas"][2])
+	verificar(ganhou.estrelas() == 3, "pontos da 3ª meta: 3 estrelas")
+
+	# os níveis do arquivo fazem sentido
+	var niveis := DoceMatch.niveis()
+	verificar(niveis.size() == 30, "30 níveis no Doce Match")
+	var ok := true
+	for i in niveis.size():
+		var n: Dictionary = niveis[i]
+		var est: Array = n["estrelas"]
+		if int(n["numero"]) != i + 1 or int(n["jogadas"]) < 10 or n["objetivos"].is_empty() \
+				or not (int(est[0]) > 0 and int(est[0]) < int(est[1]) and int(est[1]) < int(est[2])):
+			ok = false
+			print("  nível com problema: ", n["numero"])
+		for o in n["objetivos"]:
+			if o["tipo"] == "gelatina" and _conta_gelatina(n) == 0:
+				ok = false
+			if o["tipo"] == "pontos" and int(o["meta"]) > int(est[0]):
+				ok = false
+				print("  meta de pontos acima da 1ª estrela: ", n["numero"])
+	verificar(ok, "todo nível tem jogadas, objetivo, gelatina desenhada e estrelas crescentes")
+
+	# progresso: liberar níveis, estrelas e prêmios
+	var guardado: Dictionary = Progresso.doce_match.duplicate(true)
+	var moedas := Progresso.moedas
+	var baus_prata := Baus.quantos("prata")
+	Progresso.doce_match = {"estrelas": {}}
+	verificar(DoceMatch.liberado(1) and not DoceMatch.liberado(2) and DoceMatch.proximo_nivel() == 1, "começa só com o nível 1 liberado")
+	var premio := DoceMatch.concluir(1, 2)
+	verificar(premio["primeira"] and DoceMatch.liberado(2) and DoceMatch.estrelas_do_nivel(1) == 2 and DoceMatch.proximo_nivel() == 2,
+		"vencer libera o próximo nível")
+	verificar(Progresso.moedas == moedas + premio["moedas"] and premio["moedas"] >= DoceMatch.MOEDAS_NIVEL + 2 * DoceMatch.MOEDAS_POR_ESTRELA,
+		"a primeira vitória dá moedas pelo nível e pelas estrelas")
+	var de_novo := DoceMatch.concluir(1, 1)
+	verificar(de_novo["moedas"] == 0 and DoceMatch.estrelas_do_nivel(1) == 2, "repetir com menos estrelas não dá nada nem tira estrela")
+	var mais := DoceMatch.concluir(1, 3)
+	verificar(mais["novas"] == 1 and mais["moedas"] > 0 and DoceMatch.total_estrelas() == 3, "estrela nova numa repetição dá moedas")
+	for i in range(2, 6):
+		DoceMatch.concluir(i, 1)
+	verificar(Baus.quantos("prata") == baus_prata + 1, "o nível 5 dá um baú de prata")
+	DoceMatch.concluir(5, 3)
+	verificar(Baus.quantos("prata") == baus_prata + 1, "(só na primeira vez)")
+	verificar(DoceMatch.bau_do_nivel(15) == "ouro" and DoceMatch.bau_do_nivel(10) == "prata" and DoceMatch.bau_do_nivel(7) == "",
+		"baús nos níveis 5, 10, 15... (15 e 30 de ouro)")
+	Progresso.doce_match = guardado
+	Progresso.moedas = moedas
+
+
+## Enche a grade com os tipos 3, 4 e 5 sem nenhuma fila (para montar casos à mão).
+func _grade_sem_filas(jogo: DoceMatch) -> void:
+	for y in DoceMatch.ALTURA:
+		for x in DoceMatch.LARGURA:
+			jogo.grade[y][x] = (x + y * 2) % 3 + 3
+			jogo.especial[y][x] = DoceMatch.Especial.NENHUM
+
+
+func _conta_gelatina(n: Dictionary) -> int:
+	var total := 0
+	for linha in n.get("gelatina", []):
+		total += str(linha).count("g")
+	return total
 
 
 func _testar_tela_doce_match() -> void:
-	# sem açúcar, não joga: aviso com atalho para o quiz
+	var guardado: Dictionary = Progresso.doce_match.duplicate(true)
+	Progresso.doce_match = {"estrelas": {}}
+	# o Fliperama abre o mapa dos níveis
 	Progresso.confeitaria["acucar"] = 10
 	Telas.ir_para("doce_match")
 	verificar(await _esperar_tela("DoceMatch"), "abre o Doce Match")
 	await get_tree().create_timer(0.3).timeout
-	verificar(get_tree().current_scene.find_child("JogarQuiz", true, false) is Button and Confeitaria.acucar() == 10, "sem açúcar: aviso e botão para o quiz")
+	var tela := get_tree().current_scene
+	verificar(tela.find_child("Nivel_1", true, false) is Button and tela.find_child("Nivel_30", true, false) is Button,
+		"o mapa mostra os 30 níveis")
+	verificar(tela.find_child("Nivel_1", true, false).find_child("Jogador", true, false) != null, "o doce do jogador fica no nível atual")
+	tela.find_child("Nivel_2", true, false).pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	verificar(tela.find_child("Jogar", true, false) == null, "nível trancado não abre")
+	tela.find_child("Nivel_1", true, false).pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	verificar(tela.find_child("Jogar", true, false) is Button, "tocar no nível mostra o objetivo e o botão de jogar")
+	# sem açúcar, não joga: aviso com atalho para o quiz
+	tela.find_child("Jogar", true, false).pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	verificar(tela.find_child("JogarQuiz", true, false) is Button and Confeitaria.acucar() == 10, "sem açúcar: aviso e botão para o quiz")
 	Progresso.confeitaria["acucar"] = 2 * DoceMatch.CUSTO_ACUCAR
 	Telas.ir_para("niveis")
 	await _esperar_tela("Niveis")
 	get_tree().current_scene.find_child("DoceMatch", true, false).pressed.emit()
-	verificar(await _esperar_tela("DoceMatch"), "abre o Doce Match")
-	var tela := get_tree().current_scene
-	await get_tree().create_timer(0.4).timeout
-	verificar(tela._tabuleiro.get_child_count() == DoceMatch.LARGURA * DoceMatch.ALTURA, "64 peças no tabuleiro")
-	verificar(Confeitaria.acucar() == DoceMatch.CUSTO_ACUCAR, "a partida gastou açúcar (e o menu dos níveis abre o jogo)")
-	var jogada: Array = tela.jogo.jogada_possivel()
-	await tela.jogar(jogada[0], jogada[1])
-	verificar(tela.jogo.jogadas == DoceMatch.JOGADAS - 1 and tela.jogo.pontos > 0, "jogada pela tela conta pontos")
-	var cheias := 0
+	verificar(await _esperar_tela("DoceMatch"), "o menu dos níveis abre o Doce Match")
+	tela = get_tree().current_scene
+	await get_tree().create_timer(0.2).timeout
+	tela.abrir_nivel(1)
+	await get_tree().create_timer(0.1).timeout
+	tela.find_child("Jogar", true, false).pressed.emit()
+	await get_tree().create_timer(0.5).timeout
+	var pecas := 0
 	for linha in tela._pecas:
 		for peca in linha:
 			if peca != null:
+				pecas += 1
+	verificar(pecas == 64 and tela.numero_nivel == 1, "64 peças no tabuleiro do nível 1")
+	verificar(Confeitaria.acucar() == DoceMatch.CUSTO_ACUCAR, "a tentativa gastou açúcar")
+	var jogadas: int = tela.jogo.jogadas
+	var jogada: Array = tela.jogo.jogada_possivel()
+	await tela.jogar(jogada[0], jogada[1])
+	verificar(tela.jogo.jogadas == jogadas - 1 and tela.jogo.pontos > 0, "jogada pela tela conta pontos")
+	var cheias := 0
+	for linha in tela._pecas:
+		for peca in linha:
+			if peca != null and is_instance_valid(peca) and not peca.is_queued_for_deletion():
 				cheias += 1
 	verificar(cheias == 64, "depois da cascata, todas as casas têm peça")
-	var moedas := Progresso.moedas
+	# uma peça especial na tela: explode com efeito e continua tudo certo
+	tela.jogo.especial[4][4] = DoceMatch.Especial.EMBRULHO
+	tela._criar_pecas()
+	verificar(tela._pecas[4][4].find_child("Especial", false, false) != null, "a peça especial aparece com o embrulho")
+	# perder: acabam as jogadas sem cumprir o objetivo
 	tela.jogo.jogadas = 1
+	tela.jogo.pontos = 0
 	jogada = tela.jogo.jogada_possivel()
 	await tela.jogar(jogada[0], jogada[1])
-	verificar(tela.find_child("Fim", true, false) != null, "acabaram as jogadas: aparece o fim da partida")
-	verificar(Progresso.moedas == moedas + tela.jogo.moedas(), "o fim dá as moedas")
-	tela.find_child("JogarDeNovo", true, false).pressed.emit()
-	verificar(tela.jogo.jogadas == DoceMatch.JOGADAS and Confeitaria.acucar() == 0, "jogar de novo recomeça (e paga de novo)")
+	if tela.jogo.venceu():
+		print("  (a última jogada venceu sem querer; o teste da derrota fica para a próxima)")
+	else:
+		verificar(tela.find_child("TentarDeNovo", true, false) is Button and DoceMatch.estrelas_do_nivel(1) == 0,
+			"acabaram as jogadas: aparece a derrota e o nível não conta")
+		tela.find_child("TentarDeNovo", true, false).pressed.emit()
+		await get_tree().create_timer(0.3).timeout
+		verificar(Confeitaria.acucar() == 0 and tela.jogo.jogadas == int(DoceMatch.dados_nivel(1)["jogadas"]),
+			"tentar de novo recomeça (e paga de novo)")
+	# vencer: cumpre o objetivo na próxima jogada
+	var moedas := Progresso.moedas
+	var partidas: int = Progresso.estatisticas.get("match_partidas", 0)
+	tela.jogo.jogadas = 3
+	tela.jogo.pontos = int(tela.jogo.nivel["objetivos"][0]["meta"]) - 10  # a próxima jogada completa
+	jogada = tela.jogo.jogada_possivel()
+	await tela.jogar(jogada[0], jogada[1])
+	verificar(tela.find_child("Proximo", true, false) is Button and DoceMatch.estrelas_do_nivel(1) >= 1, "venceu: estrelas e botão do próximo nível")
+	verificar(Progresso.moedas > moedas and int(Progresso.estatisticas["match_partidas"]) == partidas + 1, "a vitória dá moedas e conta a partida")
+	verificar(tela.jogo.jogadas == 0, "as jogadas que sobraram viraram pontos")
+	tela.find_child("Mapa", true, false).pressed.emit()
+	await get_tree().create_timer(0.8).timeout
+	verificar(tela.find_child("Nivel_2", true, false) is Button and tela.find_child("Nivel_2", true, false).text == "2", "de volta ao mapa, o nível 2 está liberado")
+	Progresso.doce_match = guardado
 
 func _testar_configuracoes() -> void:
 	_secao("configurações")

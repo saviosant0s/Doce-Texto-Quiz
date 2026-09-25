@@ -23,6 +23,11 @@ extends Node
 ##   --ver_predio=confeitaria  na Vila, câmera de perto olhando a fachada desse prédio
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
 ##   --companheiro=pudim  compra esse doce e o escolhe como companheiro
+##   --match=N  Doce Match: os N primeiros níveis vencidos (3, 2, 3, 1... estrelas)
+##   --match_nivel=N  Doce Match: já começa jogando o nível N
+##   --match_especiais  Doce Match: põe peças especiais no tabuleiro
+##   --match_explodir  Doce Match: troca a bomba (use com --match_especiais)
+##   --match_fim=venceu  Doce Match: mostra o fim do nível (venceu ou perdeu)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -68,6 +73,9 @@ func _ready() -> void:
 		var fases := Laboratorio.fases()
 		for i in mini(int(args["lab"]), fases.size()):
 			Progresso.laboratorio["estrelas"][fases[i]["id"]] = [3, 2, 3, 1][i % 4]
+	if args.has("match"):
+		for i in int(args["match"]):
+			Progresso.doce_match["estrelas"][str(i + 1)] = [3, 2, 3, 1][i % 4]
 	if args.has("baus"):
 		for tipo in Baus.TIPOS:
 			Baus.ganhar(tipo, int(args["baus"]))
@@ -122,6 +130,34 @@ func _ready() -> void:
 				get_tree().current_scene._tocar_palavra(int(t))
 			else:
 				get_tree().current_scene.fazer(t)
+	if args.has("match_nivel"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.confeitaria["acucar"] = 200
+		var tela := get_tree().current_scene
+		tela.comecar_nivel(int(args["match_nivel"]))
+		if args.has("match_especiais"):
+			for c in [[2, 3, DoceMatch.Especial.LINHA], [5, 2, DoceMatch.Especial.COLUNA], [3, 6, DoceMatch.Especial.EMBRULHO]]:
+				tela.jogo.especial[c[1]][c[0]] = c[2]
+			tela.jogo.grade[5][6] = DoceMatch.BOMBA
+			tela.jogo.especial[5][6] = DoceMatch.Especial.BOMBA
+			tela._criar_pecas()
+		if args.has("match_explodir"):
+			await get_tree().create_timer(0.6).timeout
+			tela.jogar(Vector2i(6, 5), Vector2i(6, 4))  # troca a bomba: explode tudo de um tipo
+		if args.has("match_fim"):
+			await get_tree().create_timer(0.5).timeout
+			if args["match_fim"] == "venceu":
+				tela.jogo.pontos = int(tela.jogo.nivel["estrelas"][1]) + 200
+				for obj in tela.jogo.nivel["objetivos"]:
+					if obj["tipo"] == "coletar":
+						tela.jogo.coletados[obj["peca"]] = obj["quantidade"]
+				for linha in tela.jogo.gelatina:
+					linha.fill(false)
+				tela.jogo.jogadas = 0
+			else:
+				tela.jogo.jogadas = 0
+				tela.jogo.pontos = 1830
+			tela._terminar()
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()

@@ -102,7 +102,7 @@ coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
 - **Mostrar quando o doce está correndo** no joystick (ainda sem escolha).
 - Só gerar APK/executável quando o Sávio pedir (juntar vários pedidos).
 
-### ✅ Doce Match (feito em 25/09)
+### ✅ Doce Match (feito em 25/09; níveis em 28/09, ver "Onde parou")
 `scripts/doce_match.gd` (regras, testável sem tela) e `cenas/doce_match.*`
 (tela). Abre pelo FLIPERAMA da vila. Tabuleiro 8x8, 6 peças desenhadas por
 nós (`assets/doce_match/*.svg`: folha com W, planilha com X, gráfico, célula,
@@ -121,6 +121,29 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 (marcas registradas da Microsoft; atrapalharia o registro no INPI).
 
 ## Onde parou
+
+- 28/09 (pedidos do Sávio depois de jogar a 0.10.2), **ainda sem APK novo**:
+  - Feito antes (commit `edb8b1c`): câmera da vila e da cozinha sem tremer
+    (posição suavizada entre os passos da física, física no ritmo da tela),
+    açúcar visível na vila e "-X AÇÚCAR" nas máquinas da cozinha (o açúcar
+    do laboratório entrava, mas as máquinas gastavam sem mostrar), tela
+    inicial só com JOGAR, "Como jogar" com abas para cada parte do jogo.
+  - **Doce Match com 30 níveis** (como no Candy Crush): mapa de níveis com
+    estrelas, cadeados, o doce do jogador no nível atual e baús nos níveis 5,
+    10, 15... (prata; 15 e 30 de ouro). Cada nível tem jogadas e objetivos:
+    pontos, juntar peças de um tipo ou limpar a **gelatina** rosa. Peças
+    especiais: fila de 4 = LISTRADA (explode linha/coluna), L ou T =
+    EMBRULHADA (explode em volta), fila de 5 = BOMBA de confeito (leva todas
+    as peças de um tipo); reação em cadeia. Efeitos: raios, ondas, confete,
+    tabuleiro tremendo, palavras DOCE!/DELICIOSO!/INCRÍVEL!/DIVINO!, peças
+    voando até o objetivo, jogadas que sobram viram pontos. Sons novos
+    (explosão, especial, vitória). Tentativa custa 30 de açúcar (era 40).
+  - Níveis em `godot/dados/doce_match.json`, gerados por
+    `ferramentas/gerar_niveis_match.py` e calibrados com um robô
+    (`godot/testes/calibrar_doce_match.tscn`: joga cada nível 10 vezes e
+    mostra vitórias e pontos). Estrelas em `ferramentas/doce_match_estrelas.json`.
+  - Próximos (escolhidos pelo Sávio): pódio novo + visual dos doces por
+    nível; mais doces no catálogo; vila maior com terrenos.
 
 - 27/09: **telas conferidas em 20:9 (celular comprido), 16:10 e 4:3
   (tablets)**, além do 16:9 de sempre. Ajustes: mapa do laboratório usa a
@@ -311,7 +334,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.449 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.583 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

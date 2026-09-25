@@ -62,7 +62,10 @@ personagens, fontes) é a mesma da versão original.
   por `scripts/formulas.gd`) e de Word (formatar uma página), chefes, estrelas
   e baús. Fases em `godot/dados/laboratorio.json`.
 - Doce Match (Fliperama da vila): jogo de combinar 3 com peças de informática
-  desenhadas por nós (`scripts/doce_match.gd`, `cenas/doce_match.*`).
+  desenhadas por nós, 30 níveis com objetivos (pontos, juntar peças, limpar
+  gelatina) e peças especiais (listrada, embrulhada, bomba)
+  (`scripts/doce_match.gd`, `cenas/doce_match.*`, níveis em
+  `godot/dados/doce_match.json`).
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
   brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.

@@ -65,7 +65,7 @@ Bônus do companheiro (só o escolhido vale; raridade multiplica: 1 / 1,25 /
 | Brigadeiro (cozinha) | 5 por doce | 2 a 4 por doce + 2 de gorjeta por cliente | 0,4 a 1,2 |
 | Maçã do amor | 8 | 4 a 8 + gorjeta | 0,5 a 1,1 |
 | Cupcake | 12 | 7 a 13 + gorjeta | 0,6 a 1,2 |
-| Doce Match (partida) | 40 | pontos/100 + 8 por estrela (~15 a 55) | 0,4 a 1,4 |
+| Doce Match (tentativa de um nível) | 30 | 1ª vitória: 10 + 5 por estrela (~15 a 25); estrela nova depois: 5 cada; baú de prata nos níveis 5, 10, 20, 25 e de ouro no 15 e 30 | 0 (perdeu) a 0,8 |
 
 ## Gastos
 
