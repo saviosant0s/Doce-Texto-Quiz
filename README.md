@@ -38,7 +38,8 @@ personagens, fontes) é a mesma da versão original.
   de vídeo, vai direto para os níveis.
   Três câmeras (botão no topo ou tecla C): aérea, perto e primeira pessoa.
   O doce acelera e freia aos poucos, corre (joystick até o fim ou Shift) e
-  pula (botão na tela ou Espaço); Enter/E entra. Visual de desenho animado
+  pula (botão na tela ou Espaço); Enter/E entra (a porta abre e o doce
+  entra, com animação). Visual de desenho animado
   (luz em degraus, contorno, sombras) e cada prédio tem o seu jeito: Escola
   de biscoito com torre do sino, Confeitaria-cupcake, torre dos Troféus e
   Fliperama em forma de máquina.

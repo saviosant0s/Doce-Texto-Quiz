@@ -133,6 +133,13 @@ func olhar_para(ponto: Vector3) -> void:
 	_modelo.rotation.y = atan2(direcao.x, direcao.z)
 
 
+## Liga/desliga as colisões (ex.: para atravessar a porta de um prédio).
+func atravessar(sim: bool) -> void:
+	sem_colisao = sim
+	collision_layer = 0 if sim else 1
+	collision_mask = 0 if sim else 1
+
+
 ## Nó à frente do doce, na altura das mãos, onde vai a pilha de coisas que
 ## ele carrega (doces da confeitaria). Vira junto com o doce; tamanho normal
 ## (sem a escala do modelo).

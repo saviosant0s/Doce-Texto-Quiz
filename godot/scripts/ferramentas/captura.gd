@@ -16,6 +16,7 @@ extends Node
 ##   --camera=1   na Vila dos Doces: 0 = aérea, 1 = perto, 2 = primeira pessoa
 ##   --porta=escola  na Vila dos Doces, começa na porta desse prédio
 ##   --confeitaria  Minha Confeitaria já em andamento (máquinas, bandejas, açúcar)
+##   --entrar=escola  na Vila, começa a animação de entrar nesse prédio (use --espera=0.9)
 ##   --movimento  na cozinha: clientes chegando e o doce carregando uma pilha
 ##   --ver_predio=confeitaria  na Vila, câmera de perto olhando a fachada desse prédio
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
@@ -96,6 +97,12 @@ func _ready() -> void:
 		cozinha.jogador.olhar_para(Vector3(-2.5, 0, 3))
 		cozinha.caixa = 18
 		cozinha._atualizar_moedas_visiveis()
+	if args.has("entrar"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var vila_entrada: Vila = get_tree().current_scene
+		vila_entrada.jogador.global_position = vila_entrada._portas[args["entrar"]]["porta"]
+		vila_entrada.entrar(args["entrar"])
 	if args.has("ver_predio"):
 		await get_tree().process_frame
 		await get_tree().process_frame

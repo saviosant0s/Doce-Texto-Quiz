@@ -138,7 +138,8 @@ static func praca(pai: Node3D, raio: float) -> void:
 ## (Escola de biscoito com torre do sino, Confeitaria-cupcake, torre dos
 ## Troféus, Fliperama em forma de máquina). `dados`: {id, nome, posicao,
 ## parede, telhado}. Retorna {"porta": ponto em frente à porta,
-## "area": Area3D da porta, "no": o prédio}.
+## "area": Area3D da porta, "no": o prédio, "folha": dobradiça da porta,
+## "entrada": ponto já do lado de dentro}.
 static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 	var no := Node3D.new()
 	no.name = "Predio_" + dados["id"]
@@ -166,7 +167,7 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 	fachada.position.z = frente
 	fachada.rotation.x = forma.get("inclinacao", 0.0)
 	no.add_child(fachada)
-	_porta(fachada, 0.0)
+	var folha := _porta(fachada, 0.0)
 	if not forma.get("placa_propria", false):
 		_placa(fachada, dados["nome"], Vector3(0, forma["placa"], 0.1))
 	# área na frente da porta: quando o doce entra, aparece o botão "ENTRAR"
@@ -179,19 +180,28 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 	forma_area.shape = caixa
 	area.add_child(forma_area)
 	no.add_child(area)
-	return {"porta": no.to_global(Vector3(0, 0, frente + 1.6)), "area": area, "no": no}
+	return {"porta": no.to_global(Vector3(0, 0, frente + 1.6)), "area": area, "no": no,
+		"folha": folha, "entrada": no.to_global(Vector3(0, 0, frente - 0.6))}
 
 
 ## Porta de barra de chocolate com arco e maçaneta, na frente (z = `frente`).
-static func _porta(no: Node3D, frente: float) -> void:
+## A folha da porta gira numa dobradiça (nó "Folha", do lado esquerdo) e
+## atrás dela fica o escuro do lado de dentro. Retorna a dobradiça.
+static func _porta(no: Node3D, frente: float) -> Node3D:
 	var chocolate := _m("#5A2E17", 0.4)
-	Pecas3D.caixa(no, Vector3(1.2, 1.9, 0.12), Vector3(0, 0.95, frente + 0.04), chocolate)
+	Pecas3D.caixa(no, Vector3(1.2, 1.9, 0.02), Vector3(0, 0.95, frente + 0.005), _m("#2A1D45", 0.9))  # lado de dentro
 	Pecas3D.esfera(no, 0.6, Vector3(0, 1.9, frente + 0.02), chocolate, Vector3(1, 0.55, 0.2))
+	var dobradica := Node3D.new()
+	dobradica.name = "Folha"
+	dobradica.position = Vector3(-0.6, 0, frente + 0.04)
+	no.add_child(dobradica)
+	Pecas3D.caixa(dobradica, Vector3(1.2, 1.9, 0.12), Vector3(0.6, 0.95, 0), chocolate)
 	var gomo := _m("#6B3A1F", 0.35)
 	for linha in 3:
 		for coluna in 2:
-			Pecas3D.caixa(no, Vector3(0.44, 0.44, 0.06), Vector3(-0.25 + coluna * 0.5, 0.35 + linha * 0.52, frente + 0.12), gomo)
-	Pecas3D.esfera(no, 0.08, Vector3(0.45, 0.95, frente + 0.2), _m("#F4E038", 0.2, 0.5))
+			Pecas3D.caixa(dobradica, Vector3(0.44, 0.44, 0.06), Vector3(0.35 + coluna * 0.5, 0.35 + linha * 0.52, 0.08), gomo)
+	Pecas3D.esfera(dobradica, 0.08, Vector3(1.05, 0.95, 0.16), _m("#F4E038", 0.2, 0.5))
+	return dobradica
 
 
 ## Placa roxa com o nome em amarelo.

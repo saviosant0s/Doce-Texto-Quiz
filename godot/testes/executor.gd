@@ -516,6 +516,10 @@ func _testar_vila() -> void:
 	await get_tree().create_timer(0.3).timeout
 	verificar(get_tree().current_scene == vila, "fliperama ainda não abre nada (em breve)")
 	vila._botao_entrar.pressed.emit()
+	verificar(vila._entrando and not vila._botao_entrar.visible, "entrar começa a animação")
+	await get_tree().create_timer(0.6).timeout
+	verificar(vila._portas["escola"]["folha"].rotation.y < -1.0, "a porta abre")
+	verificar(get_tree().current_scene == vila, "a tela do prédio espera a animação")
 	verificar(await _esperar_tela("Niveis"), "entrar na escola abre os níveis")
 	await get_tree().create_timer(0.4).timeout
 	get_tree().current_scene.get_node("%Inicio").pressed.emit()
@@ -524,6 +528,8 @@ func _testar_vila() -> void:
 	vila = get_tree().current_scene
 	var porta: Vector3 = vila._portas["escola"]["porta"]
 	verificar(vila.jogador.global_position.distance_to(porta) < 1.5, "volta na porta da escola")
+	await get_tree().create_timer(1.2).timeout
+	verificar(is_zero_approx(vila._portas["escola"]["folha"].rotation.y), "a porta fecha atrás do doce")
 	Vila.ultima_porta = ""
 
 

@@ -56,6 +56,10 @@ var modo_camera := Camera.AEREA
 ## Para onde a câmera olha (radianos no eixo Y; 0 = norte, para dentro da vila).
 var _giro := 0.0
 var _nuvens: Array = []
+## Animação de entrar num prédio em andamento.
+var _entrando := false
+var _cena_entrando := ""
+var _passos_entrada: Array = []
 var _botao_pular: Button
 var _botao_camera: Button
 ## Segundos desde a última vez que o jogador girou a visão com o dedo (a
@@ -89,6 +93,9 @@ func _ready() -> void:
 # --- Controles -----------------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
+	if _entrando:
+		_andar_na_entrada(delta)
+		return
 	var direcao := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	var teclas := Vector2(
 		float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
@@ -195,6 +202,13 @@ func _input(evento: InputEvent) -> void:
 
 
 func _unhandled_input(evento: InputEvent) -> void:
+	if _entrando:
+		# um toque ou tecla durante a animação pula direto para dentro
+		if (evento is InputEventScreenTouch or evento is InputEventMouseButton or evento is InputEventKey) \
+				and evento.is_pressed():
+			get_viewport().set_input_as_handled()
+			_terminar_entrada()
+		return
 	# arrastar um dedo (fora do joystick) gira a visão nas câmeras de perto,
 	# mesmo com o outro dedo andando no joystick
 	if evento is InputEventScreenDrag and evento.index != _joystick.dedo \
@@ -233,8 +247,52 @@ func entrar(id: String) -> void:
 		jogador.comemorar()
 		Telas.mostrar_aviso("EM BREVE: DOCE MATCH, O JOGO DAS PEÇAS DO OFFICE!")
 		return
+	if _entrando:
+		return
 	ultima_porta = id
-	Telas.abrir(dados["cena"])
+	_entrar_animado(id, dados["cena"])
+
+
+## Animação de entrar: o doce vai até a porta, ela abre, ele entra e a tela
+## escurece. Um toque na tela (ou tecla) pula direto para dentro.
+func _entrar_animado(id: String, cena: String) -> void:
+	_entrando = true
+	_botao_entrar.visible = false
+	_cena_entrando = cena
+	var predio: Dictionary = _portas[id]
+	var folha: Node3D = predio["folha"]
+	jogador.atravessar(true)
+	# primeiro vai para o meio da frente da porta (fora do giro da folha),
+	# depois entra
+	_passos_entrada = [predio["porta"], predio["entrada"]]
+	if modo_camera == Camera.PRIMEIRA_PESSOA:
+		usar_camera(Camera.PERTO)
+	var tween := create_tween()
+	tween.tween_interval(0.1)
+	tween.tween_property(folha, "rotation:y", deg_to_rad(-105), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(1.0)
+	tween.tween_callback(_terminar_entrada)
+
+
+func _terminar_entrada() -> void:
+	if _cena_entrando.is_empty():
+		return
+	var cena := _cena_entrando
+	_cena_entrando = ""
+	Telas.abrir(cena)
+
+
+## Anda sozinho pelos pontos da entrada (usado durante a animação).
+func _andar_na_entrada(delta: float) -> void:
+	if _passos_entrada.is_empty():
+		jogador.andar(Vector3.ZERO, delta)
+		return
+	var alvo: Vector3 = _passos_entrada[0]
+	var caminho := alvo - jogador.global_position
+	caminho.y = 0.0
+	if caminho.length() < 0.2:
+		_passos_entrada.pop_front()
+	jogador.andar(caminho.normalized() * 0.7, delta)
 
 
 func _chegou_na_porta(corpo: Node3D, id: String) -> void:
@@ -400,6 +458,12 @@ func _criar_jogador() -> void:
 		var porta: Vector3 = _portas[ultima_porta]["porta"]
 		jogador.global_position = porta + porta.direction_to(Vector3.ZERO) * 0.4
 		jogador.olhar_para(Vector3.ZERO)
+		# acabou de sair: a porta está aberta e fecha atrás dele
+		var folha: Node3D = _portas[ultima_porta]["folha"]
+		folha.rotation.y = deg_to_rad(-105)
+		var tween := create_tween()
+		tween.tween_interval(0.5)
+		tween.tween_property(folha, "rotation:y", 0.0, 0.35).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	else:
 		jogador.global_position = Vector3(0, 0, 7)
 		jogador.olhar_para(Vector3(0, 0, 20))  # de frente para a câmera

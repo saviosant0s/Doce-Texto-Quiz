@@ -87,8 +87,7 @@ coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
 4. Pequenas tarefas na vila (ex.: moedas espalhadas, missões curtas).
 
 ### Ideias do Sávio (25/09) — NÃO fazer ainda, só anotadas
-- **Animação ao entrar num prédio** (porta abre, o doce entra, tela escurece)
-  ao tocar no botão ou chegar na porta.
+- ✅ **Animação ao entrar num prédio** — feita em 25/09.
 - ✅ **Jogo de confeitaria — 1ª versão feita (25/09, v0.6.0)**: "Minha
   Confeitaria" (`scripts/confeitaria.gd`, `cenas/confeitaria.*`). Açúcar vem
   dos acertos no quiz (10 por acerto, também na revisão); 3 máquinas
@@ -97,8 +96,9 @@ coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
   encomendas (2 abertas, pagam mais); fora do jogo produz no máximo 2 h.
   Próximos passos possíveis: mais máquinas para os outros doces da coleção,
   segunda confeitaria, interior 3D da confeitaria, conquistas da confeitaria.
-- **Gráfico mais caprichado sem perder o jeito de desenho** (grama com
-  volume, texturas pintadas, luz mais suave). Ver a conversa de 25/09.
+- ✅ **Gráfico mais caprichado** (1ª parte, 25/09): renderizador Mobile e
+  grama com volume. Falta (se quiser): casas com textura/cantos arredondados
+  (modelos do Blender), árvores balançando, chocolate da fonte animado.
 - **Mostrar quando o doce está correndo** no joystick (ainda sem escolha).
 - Só gerar APK/executável quando o Sávio pedir (juntar vários pedidos).
 
@@ -111,6 +111,10 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 25/09: **Animação de entrar nos prédios**: a porta tem dobradiça
+  (`folha` em `CenarioVila.predio`), abre, o doce anda até o escuro de
+  dentro e só então a tela do prédio abre (~1,5 s; um toque pula). Ao sair,
+  a porta fecha atrás dele.
 - 25/09: **Gráfico melhor**: APK e Windows usam o renderizador **Mobile**
   (Vulkan; cai para o modo leve se o aparelho não tiver Vulkan); o navegador
   continua no modo leve (Compatibility). As luzes mudam conforme o modo
@@ -148,7 +152,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (660 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (664 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
