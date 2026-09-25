@@ -34,14 +34,21 @@ personagens, fontes) é a mesma da versão original.
   (`scripts/conquistas.gd`) e estatísticas (acerto por assunto, mais erradas).
 - Vila dos Doces: o "JOGAR" leva a uma vila 3D onde o jogador anda com o seu
   doce (joystick na tela ou setas/WASD) e entra na Escola (quiz), Confeitaria
-  (coleção), Troféus e Fliperama (em breve). Em aparelhos sem placa de vídeo, vai
-  direto para os níveis.
+  (Minha Confeitaria), Troféus e Fliperama (em breve). Em aparelhos sem placa
+  de vídeo, vai direto para os níveis.
   Três câmeras (botão no topo ou tecla C): aérea, perto e primeira pessoa.
   O doce acelera e freia aos poucos, corre (joystick até o fim ou Shift) e
   pula (botão na tela ou Espaço); Enter/E entra. Visual de desenho animado
   (luz em degraus, contorno, sombras) e cada prédio tem o seu jeito: Escola
   de biscoito com torre do sino, Confeitaria-cupcake, torre dos Troféus e
   Fliperama em forma de máquina.
+- Minha Confeitaria (`scripts/confeitaria.gd`, `cenas/confeitaria.*`): cada
+  acerto no quiz dá 10 de açúcar; máquinas (panela de brigadeiro, tacho de maçã
+  do amor e forno de cupcake, liberadas passando nos níveis) transformam açúcar
+  em doces sozinhas. Os doces vão para o estoque (ampliável) e são vendidos ou
+  entregues em encomendas dos moradores, que pagam mais. Moedas melhoram as
+  máquinas (3 níveis). Com o jogo fechado, produz no máximo 2 horas.
+  Entrada: prédio da Confeitaria na vila ou botão no menu dos níveis.
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
   brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.

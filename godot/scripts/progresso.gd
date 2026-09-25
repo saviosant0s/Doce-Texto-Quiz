@@ -28,6 +28,8 @@ var estatisticas := {}
 var conquistas := {}
 ## Coleção de doces 3D: {"doces": [ids comprados], "companheiro": id} (ver Colecao).
 var colecao := {}
+## Minha Confeitaria: açúcar, máquinas, estoque e encomendas (ver Confeitaria).
+var confeitaria := {}
 
 ## Quando verdadeiro, nada é gravado em disco (usado ao gerar prints e em testes).
 var somente_memoria := false
@@ -55,6 +57,7 @@ func _zerar() -> void:
 	}
 	conquistas = {}
 	colecao = {"doces": [], "companheiro": ""}
+	confeitaria = Confeitaria.padrao()
 
 
 # --- Consultas ---------------------------------------------------------------
@@ -170,6 +173,7 @@ func salvar() -> void:
 		"estatisticas": estatisticas,
 		"conquistas": conquistas,
 		"colecao": colecao,
+		"confeitaria": confeitaria,
 	}
 	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
 	if arquivo:
@@ -207,6 +211,7 @@ func carregar() -> void:
 			estatisticas[chave] = int(estatisticas[chave])
 	conquistas = dados.get("conquistas", {})
 	colecao.merge(dados.get("colecao", {}), true)
+	confeitaria.merge(dados.get("confeitaria", {}), true)
 	alterado.emit()
 
 

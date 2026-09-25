@@ -8,6 +8,7 @@ const ICONE_CERTO := preload("res://assets/icones/certo.svg")
 const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 const ICONE_PONTOS := preload("res://assets/icones/grafico.svg")
 const ICONE_LAMPADA := preload("res://assets/icones/lampada.svg")
+const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
 ## Personagem mostrado (nome como em Personagens.textura).
 var _personagem := "brigadeiro_triste"
 
@@ -22,6 +23,8 @@ func _ready() -> void:
 		_mostrar_revisao(r)
 	else:
 		_mostrar_partida(r)
+	if r.get("acucar", 0) > 0:  # vai para a Minha Confeitaria
+		_destaque("+%d" % r["acucar"], ICONE_ACUCAR)
 	%Destaques.visible = %Destaques.get_child_count() > 0
 	%Personagem.texture = Personagens.textura(_personagem)
 	Personagens.animar(%Personagem, _personagem)  # doce 3D vivo, se o aparelho aguentar

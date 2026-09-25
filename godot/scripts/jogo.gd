@@ -11,6 +11,8 @@ extends Node
 ##   sequências de acertos multiplicam os pontos (combo).
 ## - Revisão: uma partida só com as perguntas que o jogador errou da última vez
 ##   (de qualquer nível). Não conta para os níveis, mas corrige o histórico.
+## - Cada acerto (partida ou revisão) também dá açúcar para a Minha
+##   Confeitaria (Confeitaria.ACUCAR_POR_ACERTO).
 
 const CAMINHO_PERGUNTAS := "res://dados/perguntas.json"
 const TEMPO_POR_PERGUNTA := 30.0
@@ -281,6 +283,8 @@ func finalizar_partida() -> void:
 		var titulo: String = TITULOS[nivel_atual]
 		resumo.merge({"estrelas": estrelas, "aprovado": estrelas > 0, "titulo": titulo, "moedas": moedas})
 		resumo.merge(Progresso.registrar_partida(nivel_atual, lista, titulo, estrelas, moedas, pontos))
+	resumo["acucar"] = acertos * Confeitaria.ACUCAR_POR_ACERTO
+	Confeitaria.ganhar_acucar(resumo["acucar"])
 	resumo["conquistas"] = Conquistas.verificar(resumo)
 
 

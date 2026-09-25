@@ -15,6 +15,7 @@ extends Node
 ##   --selecionar=pudim  escolhe esse doce na tela da coleção
 ##   --camera=1   na Vila dos Doces: 0 = aérea, 1 = perto, 2 = primeira pessoa
 ##   --porta=escola  na Vila dos Doces, começa na porta desse prédio
+##   --confeitaria  Minha Confeitaria já em andamento (máquinas, estoque, açúcar)
 ##   --ver_predio=confeitaria  na Vila, câmera de perto olhando a fachada desse prédio
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
 ##   --companheiro=pudim  compra esse doce e o escolhe como companheiro
@@ -44,6 +45,17 @@ func _ready() -> void:
 	if args.has("companheiro"):
 		Progresso.colecao["doces"].append(args["companheiro"])
 		Progresso.colecao["companheiro"] = args["companheiro"]
+	if args.has("confeitaria"):
+		Progresso.niveis[0]["aprovado"] = true
+		Progresso.moedas = 320
+		Progresso.config["viu_confeitaria"] = true
+		Confeitaria.construir("brigadeiro")
+		Confeitaria.construir("maca")
+		Confeitaria.melhorar("brigadeiro")
+		Progresso.confeitaria["acucar"] = 140
+		Progresso.confeitaria["estoque"] = {"brigadeiro": 14, "maca": 3}
+		Progresso.confeitaria["maquinas"]["maca"]["progresso"] = 18.0
+		Progresso.moedas = 320
 	if args.has("acertos"):
 		_simular_partida(int(args.get("nivel", "0")), int(args["acertos"]))
 	if args.has("revisao"):

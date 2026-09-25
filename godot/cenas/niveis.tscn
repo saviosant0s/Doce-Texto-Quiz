@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" path="res://assets/icones/pessoas.svg" id="6"]
 [ext_resource type="Texture2D" path="res://assets/icones/engrenagem.svg" id="engrenagem"]
 [ext_resource type="Texture2D" path="res://assets/icones/doce.svg" id="doce"]
+[ext_resource type="Texture2D" path="res://assets/icones/confeitaria.svg" id="confeitaria"]
 
 
 [node name="Niveis" type="Control"]
@@ -82,6 +83,16 @@ layout_mode = 2
 tooltip_text = "Minha coleção"
 theme_type_variation = &"BotaoIcone"
 icon = ExtResource("doce")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Confeitaria" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+tooltip_text = "Minha confeitaria"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("confeitaria")
 icon_alignment = 1
 expand_icon = true
 

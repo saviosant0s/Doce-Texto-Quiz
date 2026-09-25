@@ -7,7 +7,8 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.5.0 (Android, Windows e navegador)
+- Versão atual: 0.6.0 (Android, Windows e navegador). O pacote do INPI
+  (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
 
@@ -88,9 +89,14 @@ coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
 ### Ideias do Sávio (25/09) — NÃO fazer ainda, só anotadas
 - **Animação ao entrar num prédio** (porta abre, o doce entra, tela escurece)
   ao tocar no botão ou chegar na porta.
-- **Jogo de confeitaria** (estilo "tycoon"/idle): construir a confeitaria,
-  comprar e melhorar máquinas que fazem os doces da coleção, aumentar o
-  estoque, ampliar e abrir outras confeitarias.
+- ✅ **Jogo de confeitaria — 1ª versão feita (25/09, v0.6.0)**: "Minha
+  Confeitaria" (`scripts/confeitaria.gd`, `cenas/confeitaria.*`). Açúcar vem
+  dos acertos no quiz (10 por acerto, também na revisão); 3 máquinas
+  (brigadeiro grátis; maçã do amor ao passar no fácil, 150 moedas; cupcake ao
+  passar no médio, 300) com 3 níveis; estoque 30/60/120; vender ou entregar
+  encomendas (2 abertas, pagam mais); fora do jogo produz no máximo 2 h.
+  Próximos passos possíveis: mais máquinas para os outros doces da coleção,
+  segunda confeitaria, interior 3D da confeitaria, conquistas da confeitaria.
 - **Gráfico mais caprichado sem perder o jeito de desenho** (grama com
   volume, texturas pintadas, luz mais suave). Ver a conversa de 25/09.
 - **Mostrar quando o doce está correndo** no joystick (ainda sem escolha).
@@ -105,6 +111,9 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 25/09 (v0.6.0): **Minha Confeitaria** (1ª versão) — o prédio da
+  Confeitaria na vila agora abre ela (a coleção fica no botão dentro dela e no
+  menu dos níveis). APK e executável gerados.
 - 25/09: placa da Confeitaria não atravessa mais o cupcake; no celular dá
   para andar no joystick e, com outro dedo, girar a visão ou apertar PULAR/
   ENTRAR/câmera ao mesmo tempo. (Gravado no GitHub; APK ainda não gerado.)
@@ -121,7 +130,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (624 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (654 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
