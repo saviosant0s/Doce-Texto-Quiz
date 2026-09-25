@@ -120,10 +120,12 @@ static func _fica_de_fora(peca: Node, raiz: Node, excluir: Array) -> bool:
 
 ## Materiais iguais (mesma cor, textura, brilho...) viram um só.
 static func _chave(mat: StandardMaterial3D) -> String:
-	return "%s|%.2f|%.2f|%d|%d|%s|%s|%.2f|%d|%d" % [mat.albedo_color.to_html(), mat.roughness, mat.metallic,
+	return "%s|%.2f|%.2f|%d|%d|%s|%s|%.2f|%d|%d|%d|%s" % [mat.albedo_color.to_html(), mat.roughness, mat.metallic,
 		mat.albedo_texture.get_instance_id() if mat.albedo_texture else 0, mat.transparency,
 		mat.emission.to_html() if mat.emission_enabled else "-", str(mat.uv1_scale), mat.emission_energy_multiplier,
-		mat.texture_filter, mat.shading_mode]
+		mat.texture_filter, mat.shading_mode,
+		mat.normal_texture.get_instance_id() if mat.normal_enabled and mat.normal_texture else 0,
+		"t" if mat.uv1_triplanar else "-"]
 
 
 ## Acrescenta a peça ao bloco de contorno da cor dela, gravando em cada vértice

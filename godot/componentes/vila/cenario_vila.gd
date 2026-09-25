@@ -11,6 +11,24 @@ static func _m(cor: String, aspereza := 0.5, metal := 0.0) -> StandardMaterial3D
 	return Pecas3D.material(Color(cor), aspereza, metal)
 
 
+## Material com textura de relevo (assets/texturas, ver
+## scripts/ferramentas/gerar_texturas.gd): biscoito, telhas, pedras, glacê.
+## Projetada pelo mundo (triplanar), então fica certa em qualquer forma e
+## continua certa depois de as peças serem juntadas. `escala` = repetições
+## por metro.
+static func _texturizado(cor: String, textura: String, escala := 1.0, aspereza := 0.7) -> StandardMaterial3D:
+	var mat := _m(cor, aspereza)
+	mat.albedo_texture = load("res://assets/texturas/%s.png" % textura)
+	mat.normal_enabled = true
+	mat.normal_texture = load("res://assets/texturas/%s_relevo.png" % textura)
+	mat.uv1_triplanar = true
+	mat.uv1_world_triplanar = true
+	mat.uv1_triplanar_sharpness = 4.0
+	mat.uv1_scale = Vector3.ONE * escala
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	return mat
+
+
 ## Colisão em forma de caixa (paredes, bancos...).
 static func _parede(pai: Node3D, tamanho: Vector3, posicao: Vector3) -> void:
 	var corpo := StaticBody3D.new()
@@ -89,7 +107,7 @@ static func caminho(pai: Node3D, de: Vector3, ate: Vector3, largura := 2.4) -> v
 	no.position = (de + ate) / 2.0 + Vector3(0, 0.02, 0)
 	no.rotation.y = atan2(ate.x - de.x, ate.z - de.z)
 	pai.add_child(no)
-	var biscoito := _m("#D9A05B", 0.9)
+	var biscoito := _texturizado("#D9A05B", "biscoito", 2.5, 0.9)
 	var gota := _m("#5A2E17", 0.4)
 	var acucar := _m("#FFFFFF", 0.4)
 	var lateral := (ate - de).normalized().cross(Vector3.UP)
@@ -108,11 +126,11 @@ static func caminho(pai: Node3D, de: Vector3, ate: Vector3, largura := 2.4) -> v
 
 ## Praça redonda com a fonte de chocolate no meio.
 static func praca(pai: Node3D, raio: float) -> void:
-	Pecas3D.cilindro(pai, raio, raio, 0.08, Vector3(0, 0.04, 0), _m("#F2D6A2", 0.9))
+	Pecas3D.cilindro(pai, raio, raio, 0.08, Vector3(0, 0.04, 0), _texturizado("#F2D6A2", "pedras", 0.6, 0.9))
 	Pecas3D.rosquinha(pai, raio - 0.25, raio + 0.1, Vector3(0, 0.08, 0), _m("#E9B97A", 0.8), Vector3(1, 0.4, 1))
 	# fonte: bacia, coluna e pratinhos com chocolate escorrendo
 	var chocolate := _m("#5A2E17", 0.15)
-	var borda := _m("#FFF1F5", 0.3)
+	var borda := _texturizado("#FFF1F5", "glace", 1.5, 0.3)
 	Pecas3D.cilindro(pai, 2.0, 2.2, 0.7, Vector3(0, 0.35, 0), borda)
 	Pecas3D.cilindro(pai, 1.8, 1.8, 0.06, Vector3(0, 0.68, 0), chocolate)
 	Pecas3D.cilindro(pai, 0.3, 0.35, 2.2, Vector3(0, 1.4, 0), borda)
@@ -236,7 +254,7 @@ static func _casa_simples(no: Node3D, dados: Dictionary) -> Dictionary:
 	var largura := 4.6
 	var altura := 3.2
 	var fundo := 3.8
-	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), _m(dados.get("parede", "#FFB3D1"), 0.6))
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), _texturizado(dados.get("parede", "#FFB3D1"), "pedras", 0.8))
 	Pecas3D.cilindro(no, 0.0, largura * 0.78, 2.0, Vector3(0, altura + 1.15, 0),
 		_m(dados.get("telhado", "#7E57B1"), 0.35), Vector3(1, 1, fundo / largura), Vector3(0, 45, 0))
 	for lado in [-1, 1]:
@@ -251,8 +269,8 @@ static func _escola(no: Node3D) -> Dictionary:
 	var largura := 5.4
 	var altura := 3.3
 	var fundo := 4.2
-	var biscoito := _m("#A86A36", 0.85)
-	var glace := _m("#FFFFFF", 0.35)
+	var biscoito := _texturizado("#B5733B", "biscoito", 0.7, 0.85)
+	var glace := _texturizado("#FFFFFF", "glace", 1.5, 0.35)
 	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), biscoito)
 	# glacê nos cantos e no rodapé da frente
 	for x in [-1, 1]:
@@ -262,7 +280,7 @@ static func _escola(no: Node3D) -> Dictionary:
 	# telhado de duas águas (cumeeira de frente para trás), com beiral
 	var telhado := PrismMesh.new()
 	telhado.size = Vector3(largura + 0.8, 2.3, fundo + 0.6)
-	var roxo := _m("#7E57B1", 0.4)
+	var roxo := _texturizado("#8A62C0", "telhas", 0.55, 0.5)
 	var no_telhado := MeshInstance3D.new()
 	no_telhado.mesh = telhado
 	no_telhado.material_override = roxo
@@ -313,8 +331,8 @@ static func _confeitaria(no: Node3D) -> Dictionary:
 	var forminha := Pecas3D.material_textura(Pecas3D.listras([Color("#FF8FB8"), Color("#FFFFFF")], 28), 0.5)
 	Pecas3D.cilindro(no, raio_topo, raio_base, altura, Vector3(0, altura / 2.0, 0), forminha)
 	# cobertura: rosquinhas empilhadas, cada vez menores
-	var rosa := _m("#FFC2DA", 0.3)
-	var creme := _m("#FFF1F5", 0.3)
+	var rosa := _texturizado("#FFC2DA", "glace", 1.2, 0.3)
+	var creme := _texturizado("#FFF1F5", "glace", 1.2, 0.3)
 	var camadas := [[2.3, 3.3, 0.0], [1.5, 2.6, 0.75], [0.7, 1.8, 1.4]]
 	for i in camadas.size():
 		var c: Array = camadas[i]
@@ -358,12 +376,12 @@ static func _torre_trofeus(no: Node3D) -> Dictionary:
 	var altura := 3.5
 	var fundo := 4.2
 	var ouro := _m("#F2C230", 0.15, 0.6)
-	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), _m("#B497E4", 0.6))
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), _texturizado("#B497E4", "pedras", 0.8))
 	Pecas3D.caixa(no, Vector3(largura + 0.3, 0.25, fundo + 0.3), Vector3(0, altura + 0.12, 0), ouro)
 	# segundo andar e cúpula
 	var andar := 1.5
 	var base_andar := altura + 0.25
-	Pecas3D.caixa(no, Vector3(3.2, andar, 3.0), Vector3(0, base_andar + andar / 2.0, 0), _m("#9272CC", 0.6))
+	Pecas3D.caixa(no, Vector3(3.2, andar, 3.0), Vector3(0, base_andar + andar / 2.0, 0), _texturizado("#9272CC", "pedras", 0.8))
 	Pecas3D.caixa(no, Vector3(3.5, 0.2, 3.3), Vector3(0, base_andar + andar + 0.1, 0), ouro)
 	var cupula := SphereMesh.new()
 	cupula.radius = 1.45

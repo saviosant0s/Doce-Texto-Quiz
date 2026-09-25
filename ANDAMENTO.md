@@ -111,6 +111,21 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 25/09 (pedido depois de testar a 0.7.0 no celular):
+  - **Desempenho**: `scripts/juntar_malhas.gd` junta as peças paradas do
+    cenário em poucos blocos (um por material; contornos um por cor) e tira
+    faces das formas pequenas; bonecos juntam as peças de cada parte que se
+    mexe. Vila: 865 peças/1,2 mi triângulos -> 208/200 mil; cozinha 209 mil ->
+    25 mil. 3D a 80% da tela + antisserrilhado 2x. **Shader Baker** ligado
+    (Android/Windows) e exportação com Vulkan (`ferramentas/godot_exportar.sh`)
+    para o jogo não engasgar ao abrir.
+  - **Braços**: o braço do "oi" fica abaixado parado/andando e só sobe para
+    acenar; os dois balançam ao andar.
+  - **Cozinha com 3 câmeras** (de cima/padrão, perto, 1ª pessoa; botão ou C;
+    salva em `config.camera_cozinha`); paredes altas e teto só nas de perto.
+  - **Casas com textura de relevo** (`assets/texturas`, geradas por
+    `scripts/ferramentas/gerar_texturas.gd`): biscoito, telhas, pedras,
+    glacê (projeção triplanar pelo mundo).
 - 25/09: **Animação de entrar nos prédios**: a porta tem dobradiça
   (`folha` em `CenarioVila.predio`), abre, o doce anda até o escuro de
   dentro e só então a tela do prédio abre (~1,5 s; um toque pula). Ao sair,
@@ -152,7 +167,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (664 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (671 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
