@@ -122,6 +122,26 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 26/09 (noite, pedido "pode fazer tudo"; partes 2 e 3 do plano "estilo
+  Vikings Rise"), **v0.10.0 publicada (APK e Windows)**:
+  - **Baús surpresa** (`scripts/baus.gd`, tela `cenas/baus.*`): DOCE (partida
+    aprovada, até 5/dia), PRATA e OURO. Abrem tremendo e mostram cartas na cor
+    da raridade. Garantia de épico/lendário em 10 baús.
+  - **Companheiros com raridade, nível e bônus** (`scripts/companheiros.gd`):
+    pedaços dos baús (10 = ganha o doce; mais pedaços + moedas = nível até 5).
+    Só o companheiro escolhido dá bônus (açúcar, moedas, tempo, ajuda grátis,
+    Doce Match, gorjeta, XP). A coleção mostra raridade (borda colorida),
+    nível, bônus, pedaços e o botão MELHORAR.
+  - **Missões** (`scripts/missoes.gd`, tela `cenas/missoes.*`): 3 do dia e 3 da
+    semana (sorteadas pela data), RESGATAR dá moedas + XP, as 3 dão baú;
+    prêmio por entrar em 7 dias seguidos (7º = baú de ouro).
+  - **Nível do jogador** (`scripts/experiencia.gd`): XP de tudo; subir de
+    nível dá baú. Resultado do quiz mostra "+1 BAÚ" e "+XP".
+  - **Na tela inicial e na vila**: nível + botões MISSÕES e BAÚS com bolinha
+    vermelha (`componentes/botoes_progresso.gd`). Na vila, "!" pulando em
+    cima do Laboratório (baú pronto) e da Confeitaria (bandeja cheia).
+  - Tabelas em `docs/economia.md`. Ideias para depois: eventos temporários
+    (semana do Excel), mais fases no laboratório, conquistas dos baús.
 - 26/09: **Laboratório do Office** (pedido do Sávio, primeira parte do plano
   "estilo Vikings Rise": aventura + recompensas). Prédio novo na vila (um
   computador gigante com teclado de degrau e frasco no telhado) e botão no
@@ -245,7 +265,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.379 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.449 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

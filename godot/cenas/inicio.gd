@@ -8,6 +8,11 @@ func _ready() -> void:
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))
+	# nível, missões e baús no canto de cima
+	var progresso := BotoesProgresso.new()
+	progresso.name = "Progresso"
+	progresso.position = Vector2(28, 28)
+	add_child(progresso)
 	var mascote := _preparar_mascote()
 	Animacoes.entrar(%Logo, Vector2(-60, 0))
 	Animacoes.entrar(mascote, Vector2(60, 0), 0.1)

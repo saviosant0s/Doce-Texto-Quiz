@@ -220,7 +220,9 @@ static func pegar(id: String, quantos := 1) -> int:
 ## pegar (ver receber()).
 static func cobrar(doce: String, quantos: int) -> int:
 	_estado()["atendidos"] = int(_estado()["atendidos"]) + 1
-	return quantos * valor(maquina_do_doce(doce)) + GORJETA
+	Missoes.registrar("clientes", 1)
+	Experiencia.ganhar(Experiencia.XP_CLIENTE)
+	return quantos * valor(maquina_do_doce(doce)) + GORJETA + int(Companheiros.bonus("cozinha"))
 
 
 ## Vende a bandeja inteira de uma vez (painel simples). Retorna as moedas.
@@ -229,6 +231,7 @@ static func vender_bandeja(id: String) -> int:
 	if quantos == 0:
 		return 0
 	var ganho := quantos * valor(id)
+	Missoes.registrar("clientes", 1)
 	Progresso.ganhar_moedas(ganho)  # também salva
 	return ganho
 

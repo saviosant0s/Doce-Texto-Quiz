@@ -53,11 +53,11 @@ static func tem(id: String) -> bool:
 	var doce := dados(id)
 	if doce.is_empty():
 		return false
-	if doce.get("inicial", false):
-		return true
+	if doce.get("inicial", false) or id in Progresso.colecao["doces"]:
+		return true  # comprado ou ganho com fragmentos dos baús
 	if doce.has("titulo"):
 		return Progresso.titulos.get(doce["titulo"], 0) > 0
-	return id in Progresso.colecao["doces"]
+	return false
 
 
 static func a_venda(id: String) -> bool:

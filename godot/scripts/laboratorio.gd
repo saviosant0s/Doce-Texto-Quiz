@@ -122,6 +122,11 @@ static func concluir(id: String, n_estrelas: int) -> Dictionary:
 		moedas += MOEDAS_CHEFE if f.get("chefe", false) else MOEDAS_FASE
 	if n_estrelas > antes:
 		_estado()["estrelas"][id] = n_estrelas
+	Missoes.registrar("lab_fases", 1)
+	if primeira:
+		Experiencia.ganhar(Experiencia.XP_CHEFE if f.get("chefe", false) else Experiencia.XP_FASE)
+	else:
+		Experiencia.ganhar(Experiencia.XP_FASE_REPETIDA)
 	if acucar > 0:
 		Confeitaria.ganhar_acucar(acucar)  # também salva
 	if moedas > 0:

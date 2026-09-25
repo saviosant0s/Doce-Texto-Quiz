@@ -73,8 +73,8 @@ func _mostrar_pergunta() -> void:
 		botao.remove_theme_stylebox_override("disabled")
 		botao.remove_theme_color_override("font_disabled_color")
 		botao.remove_theme_color_override("icon_disabled_color")
-	_tempo_restante = Jogo.TEMPO_POR_PERGUNTA
-	%BarraTempo.max_value = Jogo.TEMPO_POR_PERGUNTA
+	_tempo_restante = Jogo.tempo_por_pergunta()
+	%BarraTempo.max_value = Jogo.tempo_por_pergunta()
 	_usou_eliminar = false
 	_usou_tempo = false
 	_respondendo = true
@@ -207,7 +207,11 @@ func _criar_botao_ajuda(icone: Texture2D, custo: int, dica: String) -> Button:
 func _atualizar_ajudas() -> void:
 	var moedas := Progresso.moedas
 	_saldo.text = Jogo.formatar(moedas)
-	_ajuda_eliminar.disabled = not _respondendo or _usou_eliminar or moedas < Jogo.CUSTO_ELIMINAR
+	var gratis := Jogo.eliminar_gratis()
+	_ajuda_eliminar.disabled = not _respondendo or _usou_eliminar or (moedas < Jogo.CUSTO_ELIMINAR and not gratis)
+	# com ajuda grátis do companheiro, o preço vira "GRÁTIS"
+	var preco: Label = _ajuda_eliminar.get_parent().find_children("*", "Label", true, false)[0]
+	preco.text = "GRÁTIS" if gratis else str(Jogo.CUSTO_ELIMINAR)
 	_ajuda_tempo.disabled = not _respondendo or _usou_tempo or moedas < Jogo.CUSTO_MAIS_TEMPO
 
 

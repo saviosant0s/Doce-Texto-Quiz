@@ -53,6 +53,10 @@ personagens, fontes) é a mesma da versão original.
   2 horas. Sem placa de vídeo, abre um painel 2D simples.
 - Texturas reais do cenário (grama, pedra, reboco, telhado, madeira): fotos
   CC0 do Poly Haven e ambientCG (`godot/assets/texturas/reais/LEIA-ME.md`).
+- Baús surpresa, companheiros e missões: partidas, missões do dia/semana,
+  prêmio por entrar e subir de nível dão baús com pedaços de doces (raridades
+  comum a lendário). Cada doce companheiro dá um bônus que cresce com o nível
+  (`scripts/baus.gd`, `companheiros.gd`, `missoes.gd`, `experiencia.gd`).
 - Laboratório do Office (prédio da vila e menu dos níveis): mapa de aventura
   com 24 fases práticas de Excel (planilha com fórmulas de verdade, calculadas
   por `scripts/formulas.gd`) e de Word (formatar uma página), chefes, estrelas

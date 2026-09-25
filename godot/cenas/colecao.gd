@@ -17,6 +17,11 @@ var _visor: Doce3D
 var _nome: Label
 var _texto: Label
 var _acao: Button
+var _raridade: Label
+var _bonus: Label
+var _pedacos: ProgressBar
+var _pedacos_texto: Label
+var _melhorar: Button
 var _cartoes := {}  # id -> PanelContainer
 var _toque_inicio := Vector2.ZERO
 
@@ -38,6 +43,7 @@ func selecionar(id: String) -> void:
 	_visor.mostrar(id, not Colecao.tem(id))
 	_nome.text = doce["nome"]
 	_texto.text = doce["curiosidade"]
+	_atualizar_companheiro()
 	for outro in _cartoes:
 		_marcar_cartao(_cartoes[outro], outro == id)
 	_atualizar_acao()
@@ -72,6 +78,7 @@ func _atualizar_acao() -> void:
 		else:
 			_acao.text = "FALTAM %s MOEDAS" % Jogo.formatar(preco - Progresso.moedas)
 			_acao.disabled = true
+	_atualizar_companheiro()
 
 
 func _ao_tocar_acao() -> void:
@@ -117,29 +124,100 @@ func _criar_painel() -> void:
 	painel.add_child(coluna)
 	_visor = Doce3D.new()
 	_visor.name = "Visor"
-	_visor.custom_minimum_size = Vector2(0, 250)
+	_visor.custom_minimum_size = Vector2(0, 150)
 	_visor.size_flags_vertical = SIZE_EXPAND_FILL
 	coluna.add_child(_visor)
 	_nome = Label.new()
 	_nome.theme_type_variation = &"TituloClaro"
-	_nome.add_theme_font_size_override("font_size", 44)
+	_nome.add_theme_font_size_override("font_size", 38)
 	_nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	coluna.add_child(_nome)
 	_texto = Label.new()
 	_texto.theme_type_variation = &"TextoClaro"
-	_texto.add_theme_font_size_override("font_size", 18)
+	_texto.add_theme_font_size_override("font_size", 16)
 	_texto.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_texto.custom_minimum_size = Vector2(200, 52)
+	_texto.custom_minimum_size = Vector2(200, 44)
+	_texto.max_lines_visible = 2
 	coluna.add_child(_texto)
 	_acao = Button.new()
 	_acao.name = "Acao"
-	_acao.custom_minimum_size = Vector2(0, 64)
-	_acao.add_theme_font_size_override("font_size", 32)
+	_acao.custom_minimum_size = Vector2(0, 56)
+	_acao.add_theme_font_size_override("font_size", 28)
 	_acao.expand_icon = true
 	_acao.add_theme_constant_override("icon_max_width", 30)
 	_acao.pressed.connect(_ao_tocar_acao)
 	coluna.add_child(_acao)
+	_melhorar = Button.new()
+	_melhorar.name = "Melhorar"
+	_melhorar.theme_type_variation = &"BotaoRoxo"
+	_melhorar.custom_minimum_size = Vector2(0, 50)
+	_melhorar.add_theme_font_size_override("font_size", 22)
+	_melhorar.pressed.connect(_ao_melhorar)
+	coluna.add_child(_melhorar)
+	# raridade, bônus e pedaços (fragmentos dos baús surpresa), logo abaixo do nome
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 2)
+	coluna.add_child(info)
+	coluna.move_child(info, _nome.get_index() + 1)
+	_raridade = Label.new()
+	_raridade.name = "Raridade"
+	_raridade.theme_type_variation = &"TituloClaro"
+	_raridade.add_theme_font_size_override("font_size", 22)
+	_raridade.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info.add_child(_raridade)
+	_bonus = Label.new()
+	_bonus.name = "Bonus"
+	_bonus.theme_type_variation = &"SubtituloClaro"
+	_bonus.add_theme_font_size_override("font_size", 19)
+	_bonus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bonus.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_child(_bonus)
+	var linha := HBoxContainer.new()
+	linha.add_theme_constant_override("separation", 8)
+	info.add_child(linha)
+	_pedacos = ProgressBar.new()
+	_pedacos.theme_type_variation = &"BarraClara"
+	_pedacos.show_percentage = false
+	_pedacos.custom_minimum_size = Vector2(0, 18)
+	_pedacos.size_flags_horizontal = SIZE_EXPAND_FILL
+	_pedacos.size_flags_vertical = SIZE_SHRINK_CENTER
+	linha.add_child(_pedacos)
+	_pedacos_texto = Label.new()
+	_pedacos_texto.theme_type_variation = &"TextoClaro"
+	_pedacos_texto.add_theme_font_size_override("font_size", 17)
+	linha.add_child(_pedacos_texto)
+
+
+## Raridade, nível, bônus e pedaços do doce escolhido; botão de melhorar.
+func _atualizar_companheiro() -> void:
+	var id := _selecionado
+	var n := Companheiros.nivel(id)
+	_raridade.text = Companheiros.nome_raridade(id) + ("  ·  NÍVEL %d" % n if n > 0 else "")
+	_raridade.add_theme_color_override("font_color", Companheiros.cor(id))
+	_bonus.text = "BÔNUS: " + Companheiros.descrever_bonus(id)
+	var precisa := Companheiros.fragmentos_precisos(id)
+	_pedacos.max_value = maxi(precisa, 1)
+	_pedacos.value = mini(Companheiros.fragmentos(id), maxi(precisa, 1))
+	if precisa == 0:
+		_pedacos_texto.text = "NÍVEL MÁXIMO"
+	else:
+		_pedacos_texto.text = "%d/%d PEDAÇOS" % [Companheiros.fragmentos(id), precisa]
+	_melhorar.visible = n >= 1 and n < Companheiros.NIVEL_MAXIMO
+	if _melhorar.visible:
+		_melhorar.text = "MELHORAR (%d PEDAÇOS + %d MOEDAS)" % [precisa, Companheiros.preco_melhoria(id)]
+		_melhorar.disabled = not Companheiros.pode_melhorar(id)
+
+
+func _ao_melhorar() -> void:
+	if not Companheiros.melhorar(_selecionado):
+		return
+	Audio.tocar("construir")
+	_visor.comemorar()
+	Telas.mostrar_aviso("%s AGORA É NÍVEL %d!" % [Colecao.dados(_selecionado)["nome"], Companheiros.nivel(_selecionado)])
+	_atualizar_topo()
+	_atualizar_companheiro()
+	_atualizar_cartao(_selecionado)
 
 
 # --- Grade de doces ----------------------------------------------------------------
@@ -239,7 +317,10 @@ func _atualizar_cartao(id: String) -> void:
 		texto.text = "COMPANHEIRO"
 	elif tem:
 		icone.visible = false
-		texto.text = "NA COLEÇÃO"
+		texto.text = "NÍVEL %d" % Companheiros.nivel(id)
+	elif Companheiros.fragmentos(id) > 0:
+		icone.visible = false
+		texto.text = "%d/%d PEDAÇOS" % [Companheiros.fragmentos(id), Companheiros.FRAGMENTOS_PARA_GANHAR]
 	elif doce.has("titulo"):
 		icone.texture = ICONE_CADEADO
 		texto.text = "NÍVEL " + Colecao.NIVEL_DO_TITULO[doce["titulo"]]
@@ -250,6 +331,9 @@ func _atualizar_cartao(id: String) -> void:
 
 func _marcar_cartao(cartao: PanelContainer, marcado: bool) -> void:
 	var estilo: StyleBoxFlat = get_theme_stylebox("normal", &"CartaoNivel").duplicate()
+	# borda na cor da raridade (comum, raro, épico, lendário)
+	estilo.border_color = Companheiros.cor(cartao.name)
+	estilo.set_border_width_all(4)
 	if marcado:
 		estilo.border_color = Cores.CREME
 		estilo.set_border_width_all(5)

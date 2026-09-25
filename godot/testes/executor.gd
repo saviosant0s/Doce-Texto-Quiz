@@ -21,6 +21,8 @@ func _ready() -> void:
 	_testar_formulas()
 	_testar_documento_word()
 	_testar_laboratorio()
+	_testar_companheiros_e_baus()
+	_testar_missoes_e_nivel()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -359,6 +361,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_tela_confeitaria()
 	await _testar_tela_doce_match()
 	await _testar_tela_laboratorio()
+	await _testar_telas_baus_e_missoes()
 	await _testar_configuracoes()
 
 	# Botão "voltar" fora da partida
@@ -684,10 +687,11 @@ func _testar_confeitaria() -> void:
 	Progresso.apagar()
 	Jogo.preparar_partida(0)
 	_jogar(7, 0)
-	verificar(Jogo.resumo["acucar"] == 70 and Confeitaria.acucar() == 70, "cada acerto no quiz dá 10 de açúcar")
+	# 10 por acerto, +10% do brigadeiro (companheiro inicial)
+	verificar(Jogo.resumo["acucar"] == 77 and Confeitaria.acucar() == 77, "cada acerto no quiz dá 10 de açúcar (+ bônus)")
 	Jogo.preparar_revisao()
 	_jogar(2, 0)
-	verificar(Confeitaria.acucar() == 70 + Jogo.resumo["acertos"] * 10, "a revisão também dá açúcar")
+	verificar(Confeitaria.acucar() == 77 + Companheiros.com_bonus("acucar", Jogo.resumo["acertos"] * 10), "a revisão também dá açúcar")
 	Progresso.apagar()
 
 
@@ -1171,3 +1175,203 @@ func _testar_tela_laboratorio() -> void:
 	await get_tree().create_timer(1.8).timeout
 	verificar(not mapa.find_child("Pegar", true, false).disabled, "depois da animação dá para pegar o prêmio")
 	Progresso.laboratorio = antes
+
+
+func _testar_companheiros_e_baus() -> void:
+	_secao("companheiros e baús surpresa")
+	var colecao_antes: Dictionary = Progresso.colecao.duplicate(true)
+	var baus_antes: Dictionary = Progresso.baus.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.colecao = {"doces": [], "companheiro": "", "fragmentos": {}, "niveis": {}}
+	Progresso.baus = Baus.padrao()
+	for id in Companheiros.DOCES:
+		verificar(not Colecao.dados(id).is_empty(), "%s existe na coleção" % id)
+	verificar(Companheiros.DOCES.size() == Colecao.LISTA.size(), "todos os doces têm raridade e bônus")
+	verificar(Companheiros.nivel("brigadeiro") == 1 and Companheiros.nivel("pudim") == 0, "nível: tem = 1, não tem = 0")
+	verificar(Companheiros.bonus("acucar") == 10.0, "brigadeiro (inicial) dá +10% de açúcar")
+	verificar(Companheiros.com_bonus("acucar", 100) == 110 and Companheiros.com_bonus("moedas_quiz", 100) == 100, "bônus só do tipo do companheiro")
+	verificar(not Companheiros.receber_fragmentos("pudim", 6) and Companheiros.fragmentos("pudim") == 6, "junta fragmentos")
+	verificar(Companheiros.receber_fragmentos("pudim", 5) and Colecao.tem("pudim") and Companheiros.fragmentos("pudim") == 1, "10 fragmentos = ganha o doce")
+	verificar(Companheiros.valor_bonus("pudim") == 2.0 and Companheiros.valor_bonus("pudim", 5) == 8.0, "épico: gorjeta +2 no nível 1, +8 no 5")
+	Colecao.escolher_companheiro("pudim")
+	verificar(Companheiros.bonus("cozinha") == 2.0 and Companheiros.bonus("acucar") == 0.0, "trocar de companheiro troca o bônus")
+	Progresso.moedas = 1000
+	verificar(not Companheiros.melhorar("pudim"), "sem fragmentos não melhora")
+	Companheiros.receber_fragmentos("pudim", 9)
+	verificar(Companheiros.melhorar("pudim") and Companheiros.nivel("pudim") == 2 and Progresso.moedas == 950, "melhorar gasta fragmentos e moedas")
+	verificar(Companheiros.descrever_bonus("pudim") == "+3 DE GORJETA POR CLIENTE", "descreve o bônus")
+	verificar(Companheiros.valor_bonus("algodao_doce", 1) == 2.0 and Companheiros.valor_bonus("cupcake", 5) == 3.0, "ajudas grátis por raridade e nível")
+	# baús
+	verificar(Baus.abrir("doce").is_empty(), "sem baú não abre")
+	Baus.ganhar("doce", 3)
+	Baus.ganhar("ouro")
+	verificar(Baus.total_fechados() == 4, "conta os baús fechados")
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = 42
+	var itens := Baus.abrir("doce", sorteio)
+	verificar(itens.size() == Baus.ITENS["doce"] and itens[0]["tipo"] == "fragmentos", "baú de doce: 2 itens, o 1º é fragmento")
+	var ouro := Baus.abrir("ouro", sorteio)
+	verificar(ouro.size() == 4 and Baus.quantos("ouro") == 0, "baú de ouro: 4 itens")
+	# garantia de épico
+	Progresso.baus["sem_epico"] = Baus.GARANTIA_EPICO - 1
+	var garantido := Baus.abrir("doce", sorteio)
+	verificar(garantido.any(func(i): return i["tipo"] == "fragmentos" and i["raridade"] >= Companheiros.Raridade.EPICO), "garantia: o 10º baú traz épico ou lendário")
+	verificar(Progresso.baus["sem_epico"] == 0, "garantia zera depois do épico")
+	# muitos baús: raridades aparecem e nada quebra
+	Baus.ganhar("prata", 200)
+	var raridades := {}
+	for i in 200:
+		for item in Baus.abrir("prata", sorteio):
+			if item["tipo"] == "fragmentos":
+				raridades[item["raridade"]] = true
+	verificar(raridades.size() == 4, "200 baús de prata trazem as 4 raridades")
+	verificar(Colecao.quantidade() >= 8, "fragmentos dos baús dão doces novos")
+	# baú do quiz: até 5 por dia
+	Progresso.baus = Baus.padrao()
+	Missoes.dia_fixo = 20000
+	var ganhos := 0
+	for i in 7:
+		if Baus.ganhar_do_quiz():
+			ganhos += 1
+	verificar(ganhos == Baus.QUIZ_POR_DIA and Baus.quantos("doce") == 5, "até 5 baús do quiz por dia")
+	Missoes.dia_fixo = 20001
+	verificar(Baus.ganhar_do_quiz(), "no outro dia volta a dar baú")
+	Missoes.dia_fixo = -1
+	Progresso.colecao = colecao_antes
+	Progresso.baus = baus_antes
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_missoes_e_nivel() -> void:
+	_secao("missões e nível do jogador")
+	var missoes_antes: Dictionary = Progresso.missoes.duplicate(true)
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	var baus_antes: Dictionary = Progresso.baus.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.missoes = Missoes.padrao()
+	Progresso.jogador = {"xp": 0, "nivel": 1}
+	Progresso.baus = Baus.padrao()
+	Missoes.dia_fixo = 20355  # uma segunda-feira
+	var d := Missoes.diarias()
+	verificar(d.size() == 3 and Missoes.semanais().size() == 3, "3 missões do dia e 3 da semana")
+	var tipos := {}
+	for m in d:
+		tipos[m["tipo"]] = true
+	verificar(tipos.size() == 3, "missões do dia de tipos diferentes")
+	verificar(Missoes.diarias() == d, "mesmas missões o dia todo")
+	var primeira: Dictionary = d[0]
+	verificar(Missoes.resgatar("dia", 0).is_empty(), "missão não cumprida não resgata")
+	Missoes.registrar(primeira["tipo"], 999)
+	verificar(Missoes.cumprida(primeira) and int(primeira["progresso"]) == int(primeira["meta"]), "registrar cumpre a missão (sem passar da meta)")
+	var moedas := Progresso.moedas
+	var p := Missoes.resgatar("dia", 0)
+	verificar(p["moedas"] == Missoes.PREMIO_DIA["moedas"] and Progresso.moedas == moedas + p["moedas"] and not p.has("bau"), "resgatar dá moedas e XP")
+	verificar(Missoes.resgatar("dia", 0).is_empty(), "não resgata duas vezes")
+	for i in [1, 2]:
+		Missoes.registrar(d[i]["tipo"], 999)
+	Missoes.resgatar("dia", 1)
+	var ultima := Missoes.resgatar("dia", 2)
+	verificar(ultima.get("bau", "") == "prata" and Baus.quantos("prata") == 1, "as 3 do dia = baú de prata")
+	Missoes.dia_fixo = 20356
+	verificar(not Missoes.diarias().any(func(m): return m["resgatada"]), "outro dia, missões novas")
+	verificar(Missoes.semanais()[0]["tipo"] == Progresso.missoes["semanais"][0]["tipo"] and Progresso.missoes["semana"] == Missoes.semana(), "a semana continua a mesma")
+	Missoes.dia_fixo = 20362
+	verificar(Progresso.missoes["semana"] != Missoes.semana() or Missoes.semana() != floori((20356 + 3) / 7.0), "segunda seguinte troca a semana")
+	# prêmio por entrar
+	Progresso.missoes = Missoes.padrao()
+	Missoes.dia_fixo = 20400
+	verificar(Missoes.entrada_disponivel() and Missoes.dia_da_sequencia() == 1, "prêmio do 1º dia disponível")
+	var e1 := Missoes.resgatar_entrada()
+	verificar(e1["dia"] == 1 and e1.has("moedas") and not Missoes.entrada_disponivel(), "resgata uma vez por dia")
+	for dia in range(20401, 20407):
+		Missoes.dia_fixo = dia
+		var premio := Missoes.resgatar_entrada()
+		if dia == 20406:
+			verificar(premio["dia"] == 7 and premio["bau"] == "ouro", "7º dia seguido = baú de ouro")
+	Missoes.dia_fixo = 20409
+	verificar(Missoes.dia_da_sequencia() == 1, "pulou um dia: volta ao 1º")
+	# nível
+	Progresso.jogador = {"xp": 0, "nivel": 1}
+	Progresso.baus = Baus.padrao()
+	Experiencia.subidas_pendentes.clear()
+	verificar(Experiencia.ganhar(50) == 0 and Experiencia.xp() == 50, "junta XP")
+	verificar(Experiencia.ganhar(60) == 1 and Experiencia.nivel() == 2 and Experiencia.xp() == 10, "sobe de nível e sobra XP")
+	verificar(Baus.quantos("prata") == 1 and Experiencia.subidas_pendentes.size() == 1, "subir de nível dá baú de prata")
+	Experiencia.ganhar(Experiencia.xp_para(2) + Experiencia.xp_para(3) + Experiencia.xp_para(4))
+	verificar(Experiencia.nivel() == 5 and Baus.quantos("ouro") == 1, "nível 5 dá baú de ouro")
+	Experiencia.subidas_pendentes.clear()
+	Missoes.dia_fixo = -1
+	Progresso.missoes = missoes_antes
+	Progresso.jogador = jogador_antes
+	Progresso.baus = baus_antes
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_telas_baus_e_missoes() -> void:
+	_secao("telas de baús, missões e coleção")
+	var baus_antes: Dictionary = Progresso.baus.duplicate(true)
+	var missoes_antes: Dictionary = Progresso.missoes.duplicate(true)
+	var colecao_antes: Dictionary = Progresso.colecao.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.baus = Baus.padrao()
+	Baus.ganhar("prata", 2)
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	var bolinha: Label = get_tree().current_scene.find_child("BausSurpresa", true, false).get_node("Bolinha")
+	verificar(bolinha.visible and bolinha.text == "2", "tela inicial mostra os baús fechados")
+	get_tree().current_scene.find_child("BausSurpresa", true, false).pressed.emit()
+	verificar(await _esperar_tela("Baus"), "abre a tela de baús")
+	var tela := get_tree().current_scene
+	await get_tree().process_frame
+	verificar(tela.find_child("Abrir_doce", true, false).disabled and not tela.find_child("Abrir_prata", true, false).disabled, "só abre o baú que tem")
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = 3
+	tela.abrir_bau("prata", sorteio)
+	await get_tree().create_timer(3.0).timeout
+	verificar(tela.find_child("Cartas", true, false).get_child_count() == 3 and Baus.quantos("prata") == 1, "baú de prata abre com 3 cartas")
+	verificar(not tela.find_child("Pronto", true, false).disabled, "depois das cartas dá para fechar")
+	tela.find_child("Pronto", true, false).pressed.emit()
+	# missões
+	Progresso.missoes = Missoes.padrao()
+	Missoes.dia_fixo = 20500
+	var d := Missoes.diarias()
+	Missoes.registrar(d[0]["tipo"], 999)
+	Telas.ir_para("missoes")
+	verificar(await _esperar_tela("Missoes"), "abre a tela de missões")
+	tela = get_tree().current_scene
+	await get_tree().process_frame
+	var resgatar: Button = tela.find_child("Resgatar_dia_0", true, false)
+	verificar(resgatar != null and resgatar.text == "RESGATAR", "missão cumprida mostra RESGATAR")
+	verificar(tela.find_child("Resgatar_dia_1", true, false).disabled, "missão não cumprida fica esperando")
+	var moedas := Progresso.moedas
+	resgatar.pressed.emit()
+	await get_tree().process_frame
+	verificar(Progresso.moedas == moedas + Missoes.PREMIO_DIA["moedas"], "resgatar pela tela dá o prêmio")
+	verificar(tela.find_child("Resgatar_dia_0", true, false).text == "FEITO!", "depois fica FEITO!")
+	var dia1: Button = tela.find_child("Dia1", true, false)
+	verificar(dia1 != null and not dia1.disabled, "prêmio por entrar do dia disponível")
+	dia1.pressed.emit()
+	await get_tree().process_frame
+	verificar(not Missoes.entrada_disponivel() and tela.find_child("Dia1", true, false).disabled, "prêmio por entrar pego")
+	Missoes.dia_fixo = -1
+	# coleção: raridade e melhorar
+	Progresso.moedas = 500
+	Companheiros.receber_fragmentos("brigadeiro", 10)
+	Telas.ir_para("colecao")
+	await _esperar_tela("Colecao")
+	tela = get_tree().current_scene
+	tela.selecionar("brigadeiro")
+	verificar(tela.find_child("Raridade", true, false).text.begins_with("COMUM"), "coleção mostra a raridade")
+	verificar(tela.find_child("Bonus", true, false).text.contains("AÇÚCAR"), "coleção mostra o bônus")
+	var melhorar: Button = tela.find_child("Melhorar", true, false)
+	verificar(melhorar.visible and not melhorar.disabled, "com pedaços e moedas, dá para melhorar")
+	melhorar.pressed.emit()
+	verificar(Companheiros.nivel("brigadeiro") == 2 and Companheiros.bonus("acucar") == 15.0, "melhorar pela tela sobe o nível e o bônus")
+	Progresso.baus = baus_antes
+	Progresso.missoes = missoes_antes
+	Progresso.colecao = colecao_antes
+	Progresso.moedas = moedas_antes

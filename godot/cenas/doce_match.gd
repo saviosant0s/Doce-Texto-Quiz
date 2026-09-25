@@ -246,7 +246,9 @@ func _pulinho(peca: Control) -> void:
 
 func _mostrar_fim() -> void:
 	var estrelas := jogo.estrelas()
-	var moedas := jogo.moedas()
+	var moedas := Companheiros.com_bonus("match", jogo.moedas())
+	Missoes.registrar("match", 1)
+	Experiencia.ganhar(Experiencia.XP_MATCH)
 	var recorde: int = Progresso.estatisticas.get("match_recorde", 0)
 	var novo_recorde := jogo.pontos > recorde
 	Progresso.estatisticas["match_recorde"] = maxi(recorde, jogo.pontos)

@@ -31,6 +31,31 @@ uma vez: ele também é estudo (fórmulas e formatação na prática).
 Partidas típicas: fácil 7/10 com 1 estrela = 45 moedas + 70 de açúcar; médio
 8/10 com 2 estrelas = 84 + 80; difícil 9/10 com 2 estrelas = 128 + 90.
 
+## Baús surpresa, missões e nível (tudo sem compra)
+
+| De onde | O quê |
+|---|---|
+| Partida do quiz aprovada | 1 baú de DOCE (até 5 por dia) |
+| Missão do dia (3 por dia) | 20 moedas + 25 XP; as 3 = baú de PRATA |
+| Missão da semana (3 por semana) | 60 moedas + 80 XP; as 3 = baú de OURO |
+| Prêmio por entrar (dias seguidos) | 20 moedas, 30 açúcar, 40 moedas, baú de doce, 60 moedas, 60 açúcar, baú de OURO |
+| Subir de nível | baú de PRATA (a cada 5 níveis, OURO) |
+
+Baús: doce 2 itens, prata 3, ouro 4. O 1º item é sempre pedaço de doce; os
+outros podem ser pedaços (60%), moedas (25%: 10–25 / 25–50 / 50–100) ou açúcar
+(15%). Chance de raridade (comum/raro/épico/lendário): doce 70/25/4,5/0,5;
+prata 50/35/13/2; ouro 30/40/24/6. Garantia: épico ou lendário em até 10 baús.
+10 pedaços = ganha o doce; melhorar: 10+50, 20+100, 30+200, 50+400 (pedaços +
+moedas), até o nível 5.
+
+XP: acerto no quiz 5 (revisão 3), fase do laboratório 30 (chefe 60, repetir
+10), Doce Match 15, cliente na cozinha 2. Nível n → n+1: 100 + 40×(n−1) XP.
+
+Bônus do companheiro (só o escolhido vale; raridade multiplica: 1 / 1,25 /
+1,5 / 2): +10% a +30% de açúcar, de moedas no quiz, no Doce Match ou de XP;
++3 a +7 s por pergunta; +1 a +5 de gorjeta; 1 a 3 ajudas "tirar 2" grátis. Ver
+`scripts/companheiros.gd`.
+
 ## Transformar açúcar em moedas
 
 | Onde | Custo em açúcar | Moedas | Moedas por açúcar |

@@ -68,6 +68,21 @@ func _ready() -> void:
 		var fases := Laboratorio.fases()
 		for i in mini(int(args["lab"]), fases.size()):
 			Progresso.laboratorio["estrelas"][fases[i]["id"]] = [3, 2, 3, 1][i % 4]
+	if args.has("baus"):
+		for tipo in Baus.TIPOS:
+			Baus.ganhar(tipo, int(args["baus"]))
+	if args.has("pedacos"):
+		# --pedacos=N: pedaços em vários doces (para a coleção mostrar o progresso)
+		for id in ["bala", "pirulito", "macaron", "pudim", "algodao_doce", "brigadeiro"]:
+			Companheiros.receber_fragmentos(id, int(args["pedacos"]))
+	if args.has("missao"):
+		var d := Missoes.diarias()
+		Missoes.registrar(d[0]["tipo"], 999)
+		Missoes.registrar(d[1]["tipo"], 1)
+		Missoes.registrar(Missoes.semanais()[0]["tipo"], 3)
+	if args.has("xp"):
+		Experiencia.ganhar(int(args["xp"]))
+		Experiencia.subidas_pendentes.clear()
 	if args.has("lab_fase"):
 		Laboratorio.fase_atual = args["lab_fase"]
 	if args.has("acertos"):
@@ -89,6 +104,11 @@ func _ready() -> void:
 		var cartoes := get_tree().current_scene.find_children("*", "Button", true, false) \
 			.filter(func(b): return b.has_method("configurar"))
 		cartoes[int(args["tocar_nivel"])].pressed.emit()
+	if args.has("abrir_bau"):
+		await get_tree().create_timer(0.5).timeout
+		var semente := RandomNumberGenerator.new()
+		semente.seed = int(args.get("semente", "5"))
+		get_tree().current_scene.abrir_bau(args["abrir_bau"], semente)
 	if args.has("digitar"):
 		await get_tree().create_timer(0.5).timeout
 		var campo: LineEdit = get_tree().current_scene.find_child("Formula", true, false)

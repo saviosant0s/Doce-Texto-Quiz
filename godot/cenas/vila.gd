@@ -107,6 +107,7 @@ func _ready() -> void:
 	_criar_camera()
 	_criar_interface()
 	_criar_tutorial()
+	_criar_avisos()
 	usar_camera(int(Progresso.config.get("camera_vila", Camera.AEREA)))
 
 
@@ -208,7 +209,7 @@ func _criar_tutorial() -> void:
 	_dica.theme_type_variation = &"EtiquetaAmarela"
 	_dica.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dica.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	_dica.position.y = 120
+	_dica.position.y = 190
 	var texto := Label.new()
 	texto.theme_type_variation = &"Titulo"
 	texto.text = DICAS[passo_tutorial]
@@ -219,6 +220,43 @@ func _criar_tutorial() -> void:
 	_dica.add_child(texto)
 	_interface.add_child(_dica)
 	_dica.grow_horizontal = Control.GROW_DIRECTION_BOTH
+
+
+## Prédios com algo esperando o jogador (baú pronto no laboratório, bandeja
+## cheia na confeitaria) ganham um "!" pulando em cima.
+static func predios_com_aviso() -> Array:
+	var lista := []
+	if Laboratorio.baus_prontos() > 0:
+		lista.append("laboratorio")
+	if Confeitaria.alguma_construida():
+		Confeitaria.atualizar()
+		for m in Confeitaria.MAQUINAS:
+			if Confeitaria.construida(m["id"]) and Confeitaria.bandeja(m["id"]) >= Confeitaria.capacidade_bandeja(m["id"]):
+				lista.append("confeitaria")
+				break
+	return lista
+
+
+func _criar_avisos() -> void:
+	for id in predios_com_aviso():
+		if id == passo_tutorial:
+			continue  # a seta do tutorial já aponta para ele
+		var porta: Vector3 = _portas[id]["porta"]
+		var aviso := Label3D.new()
+		aviso.name = "Aviso_" + id
+		aviso.text = "!"
+		aviso.font_size = 220
+		aviso.pixel_size = 0.006
+		aviso.outline_size = 40
+		aviso.outline_modulate = Color("#5E3D8E")
+		aviso.modulate = Color("#F4E038")
+		aviso.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		aviso.no_depth_test = true
+		aviso.position = porta - porta.normalized() * 1.0 + Vector3(0, 3.0, 0)
+		add_child(aviso)
+		var tween := aviso.create_tween().set_loops()
+		tween.tween_property(aviso, "position:y", 3.5, 0.45).set_trans(Tween.TRANS_SINE)
+		tween.tween_property(aviso, "position:y", 3.0, 0.45).set_trans(Tween.TRANS_SINE)
 
 
 func _posicao_perto(cabeca: Vector3, distancia: float, altura: float) -> Vector3:
@@ -659,6 +697,14 @@ func _criar_interface() -> void:
 	camera.pressed.connect(proxima_camera)
 	_botao_camera = camera
 	topo.add_child(camera)
+
+	var linha_progresso := HBoxContainer.new()
+	linha_progresso.alignment = BoxContainer.ALIGNMENT_END
+	linha_progresso.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coluna.add_child(linha_progresso)
+	var progresso := BotoesProgresso.new()
+	progresso.name = "Progresso"
+	linha_progresso.add_child(progresso)
 
 	var meio := Control.new()
 	meio.size_flags_vertical = Control.SIZE_EXPAND_FILL

@@ -9,6 +9,7 @@ const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 const ICONE_PONTOS := preload("res://assets/icones/grafico.svg")
 const ICONE_LAMPADA := preload("res://assets/icones/lampada.svg")
 const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
+const ICONE_BAU := preload("res://assets/baus/bau_doce.svg")
 ## Personagem mostrado (nome como em Personagens.textura).
 var _personagem := "brigadeiro_triste"
 
@@ -25,6 +26,10 @@ func _ready() -> void:
 		_mostrar_partida(r)
 	if r.get("acucar", 0) > 0:  # vai para a Minha Confeitaria
 		_destaque("+%d" % r["acucar"], ICONE_ACUCAR)
+	if r.get("bau", false):  # baú surpresa (partida aprovada)
+		_destaque("+1 BAÚ", ICONE_BAU, true)
+	if r.get("xp", 0) > 0:
+		_destaque("+%d XP" % r["xp"])
 	%Destaques.visible = %Destaques.get_child_count() > 0
 	%Personagem.texture = Personagens.textura(_personagem)
 	Personagens.animar(%Personagem, _personagem)  # doce 3D vivo, se o aparelho aguentar
@@ -33,6 +38,7 @@ func _ready() -> void:
 	if r["aprovado"] or (r["revisao"] and r["acertos"] > 0):
 		Animacoes.flutuar(%Personagem)
 	_anunciar_conquistas(r["conquistas"])
+	Experiencia.anunciar.call_deferred()  # "NÍVEL 3! GANHOU UM BAÚ DE PRATA"
 
 
 func _mostrar_partida(r: Dictionary) -> void:
