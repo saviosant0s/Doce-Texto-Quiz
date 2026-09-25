@@ -780,11 +780,21 @@ func _testar_doce_match() -> void:
 
 
 func _testar_tela_doce_match() -> void:
+	# sem açúcar, não joga: aviso com atalho para o quiz
+	Progresso.confeitaria["acucar"] = 10
 	Telas.ir_para("doce_match")
+	verificar(await _esperar_tela("DoceMatch"), "abre o Doce Match")
+	await get_tree().create_timer(0.3).timeout
+	verificar(get_tree().current_scene.find_child("JogarQuiz", true, false) is Button and Confeitaria.acucar() == 10, "sem açúcar: aviso e botão para o quiz")
+	Progresso.confeitaria["acucar"] = 2 * DoceMatch.CUSTO_ACUCAR
+	Telas.ir_para("niveis")
+	await _esperar_tela("Niveis")
+	get_tree().current_scene.find_child("DoceMatch", true, false).pressed.emit()
 	verificar(await _esperar_tela("DoceMatch"), "abre o Doce Match")
 	var tela := get_tree().current_scene
 	await get_tree().create_timer(0.4).timeout
 	verificar(tela._tabuleiro.get_child_count() == DoceMatch.LARGURA * DoceMatch.ALTURA, "64 peças no tabuleiro")
+	verificar(Confeitaria.acucar() == DoceMatch.CUSTO_ACUCAR, "a partida gastou açúcar (e o menu dos níveis abre o jogo)")
 	var jogada: Array = tela.jogo.jogada_possivel()
 	await tela.jogar(jogada[0], jogada[1])
 	verificar(tela.jogo.jogadas == DoceMatch.JOGADAS - 1 and tela.jogo.pontos > 0, "jogada pela tela conta pontos")
@@ -801,7 +811,7 @@ func _testar_tela_doce_match() -> void:
 	verificar(tela.find_child("Fim", true, false) != null, "acabaram as jogadas: aparece o fim da partida")
 	verificar(Progresso.moedas == moedas + tela.jogo.moedas(), "o fim dá as moedas")
 	tela.find_child("JogarDeNovo", true, false).pressed.emit()
-	verificar(tela.jogo.jogadas == DoceMatch.JOGADAS, "jogar de novo recomeça")
+	verificar(tela.jogo.jogadas == DoceMatch.JOGADAS and Confeitaria.acucar() == 0, "jogar de novo recomeça (e paga de novo)")
 
 func _testar_configuracoes() -> void:
 	_secao("configurações")

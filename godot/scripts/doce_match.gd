@@ -5,6 +5,9 @@ extends RefCounted
 ## oficiais do Word/Excel): folha (W), planilha (X), gráfico, célula, tecla
 ## Ctrl e disquete.
 ##
+## - Cada partida custa CUSTO_ACUCAR de açúcar (o mesmo da confeitaria, que
+##   vem dos acertos no quiz): o minijogo não vira um jeito de ganhar moedas
+##   sem estudar.
 ## - Tabuleiro LARGURA x ALTURA; troca duas peças vizinhas. A troca só vale se
 ##   formar uma fila de 3 ou mais iguais (na linha ou na coluna).
 ## - As filas somem, as peças de cima caem e novas entram por cima; se isso
@@ -19,6 +22,7 @@ const LARGURA := 8
 const ALTURA := 8
 const TIPOS := ["folha", "planilha", "grafico", "celula", "tecla", "disquete"]
 const JOGADAS := 20
+const CUSTO_ACUCAR := 40
 const METAS := [1200, 2400, 3600]  # pontos para 1, 2 e 3 estrelas
 const PONTOS_POR_PECA := 20
 const BONUS_FILA_GRANDE := 60  # por peça além da 3ª numa fila
@@ -209,4 +213,4 @@ func acabou() -> bool:
 
 ## Moedas ganhas no fim da partida.
 func moedas() -> int:
-	return pontos / 60 + estrelas() * 10
+	return pontos / 100 + estrelas() * 8

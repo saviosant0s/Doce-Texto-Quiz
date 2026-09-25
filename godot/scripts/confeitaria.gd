@@ -188,6 +188,16 @@ static func construir_ou_melhorar(id: String) -> bool:
 	return true
 
 
+## Gasta açúcar em outra coisa (ex.: uma partida do Doce Match).
+static func gastar_acucar(quantidade: int) -> bool:
+	if acucar() < quantidade:
+		return false
+	atualizar()
+	_estado()["acucar"] = acucar() - quantidade
+	Progresso.salvar()
+	return true
+
+
 static func aumentar_carregar() -> bool:
 	var custo := preco_carregar()
 	if custo < 0 or Progresso.moedas < custo:

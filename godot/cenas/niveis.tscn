@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/icones/engrenagem.svg" id="engrenagem"]
 [ext_resource type="Texture2D" path="res://assets/icones/doce.svg" id="doce"]
 [ext_resource type="Texture2D" path="res://assets/icones/confeitaria.svg" id="confeitaria"]
+[ext_resource type="Texture2D" path="res://assets/icones/controle.svg" id="controle"]
 
 
 [node name="Niveis" type="Control"]
@@ -54,11 +55,11 @@ size_flags_vertical = 4
 
 [node name="Botoes" type="VBoxContainer" parent="Margem/Linha/Menu"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="Inicio" type="Button" parent="Margem/Linha/Menu/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 tooltip_text = "Início"
 theme_type_variation = &"BotaoIcone"
@@ -68,7 +69,7 @@ expand_icon = true
 
 [node name="Titulos" type="Button" parent="Margem/Linha/Menu/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 tooltip_text = "Troféus"
 theme_type_variation = &"BotaoIcone"
@@ -78,7 +79,7 @@ expand_icon = true
 
 [node name="Colecao" type="Button" parent="Margem/Linha/Menu/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 tooltip_text = "Minha coleção"
 theme_type_variation = &"BotaoIcone"
@@ -88,7 +89,7 @@ expand_icon = true
 
 [node name="Confeitaria" type="Button" parent="Margem/Linha/Menu/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 tooltip_text = "Minha confeitaria"
 theme_type_variation = &"BotaoIcone"
@@ -96,9 +97,19 @@ icon = ExtResource("confeitaria")
 icon_alignment = 1
 expand_icon = true
 
+[node name="DoceMatch" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+tooltip_text = "Doce Match"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("controle")
+icon_alignment = 1
+expand_icon = true
+
 [node name="ComoJogar" type="Button" parent="Margem/Linha/Menu/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 tooltip_text = "Como jogar"
 theme_type_variation = &"BotaoIcone"
@@ -108,7 +119,7 @@ expand_icon = true
 
 [node name="Creditos" type="Button" parent="Margem/Linha/Menu/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 tooltip_text = "Créditos"
 theme_type_variation = &"BotaoIcone"
@@ -118,7 +129,7 @@ expand_icon = true
 
 [node name="Configuracoes" type="Button" parent="Margem/Linha/Menu/Botoes"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 tooltip_text = "Configurações"
 theme_type_variation = &"BotaoIcone"

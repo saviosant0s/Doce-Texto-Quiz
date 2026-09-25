@@ -10,6 +10,7 @@ func _ready() -> void:
 	%Titulos.pressed.connect(Telas.abrir.bind("titulos"))
 	%Colecao.pressed.connect(Telas.abrir.bind("colecao"))
 	%Confeitaria.pressed.connect(Telas.abrir_confeitaria)
+	%DoceMatch.pressed.connect(Telas.abrir.bind("doce_match"))
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))

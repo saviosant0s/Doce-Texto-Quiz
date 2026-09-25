@@ -37,6 +37,21 @@ var _fim: Control
 func _ready() -> void:
 	jogo = DoceMatch.new()
 	_montar_tela()
+	_comecar()
+
+
+## Nova partida: paga o açúcar e monta o tabuleiro; sem açúcar, mostra o
+## aviso com o atalho para o quiz.
+func _comecar() -> void:
+	if is_instance_valid(_fim):
+		_fim.queue_free()
+	if not Confeitaria.gastar_acucar(DoceMatch.CUSTO_ACUCAR):
+		jogo.jogadas = 0
+		_criar_pecas()
+		_atualizar_placar()
+		_mostrar_sem_acucar()
+		return
+	jogo = DoceMatch.new()
 	_criar_pecas()
 	_atualizar_placar()
 
@@ -237,15 +252,9 @@ func _mostrar_fim() -> void:
 	Progresso.estatisticas["match_recorde"] = maxi(recorde, jogo.pontos)
 	Progresso.estatisticas["match_partidas"] = int(Progresso.estatisticas.get("match_partidas", 0)) + 1
 	Progresso.ganhar_moedas(moedas)  # também salva
-	_fim = PanelContainer.new()
-	_fim.name = "Fim"
-	_fim.theme_type_variation = &"PainelRoxo"
-	_fim.set_anchors_preset(Control.PRESET_CENTER)
-	add_child(_fim)
-	var coluna := VBoxContainer.new()
-	coluna.alignment = BoxContainer.ALIGNMENT_CENTER
-	coluna.add_theme_constant_override("separation", 14)
-	_fim.add_child(coluna)
+	var painel := _painel_central()
+	_fim = painel.get_parent().get_parent()
+	var coluna: VBoxContainer = painel.get_child(0)
 	var titulo := Label.new()
 	titulo.theme_type_variation = &"TituloClaro"
 	titulo.add_theme_font_size_override("font_size", 64)
@@ -280,23 +289,85 @@ func _mostrar_fim() -> void:
 	botoes.add_child(sair)
 	var denovo := Button.new()
 	denovo.name = "JogarDeNovo"
-	denovo.text = "JOGAR DE NOVO"
+	denovo.text = "DE NOVO (%d AÇÚCAR)" % DoceMatch.CUSTO_ACUCAR
 	denovo.custom_minimum_size = Vector2(300, 70)
 	denovo.pressed.connect(recomecar)
 	botoes.add_child(denovo)
-	_fim.reset_size()
-	_fim.position = (size - _fim.size) / 2
-	_fim.pivot_offset = _fim.size / 2
-	_fim.scale = Vector2.ONE * 0.6
-	_fim.create_tween().tween_property(_fim, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_abrir_painel(painel)
 
 
 func recomecar() -> void:
-	if is_instance_valid(_fim):
-		_fim.queue_free()
-	jogo = DoceMatch.new()
-	_criar_pecas()
-	_atualizar_placar()
+	_comecar()
+
+
+## Sem açúcar para jogar: explica e leva ao quiz.
+func _mostrar_sem_acucar() -> void:
+	var painel := _painel_central()
+	_fim = painel.get_parent().get_parent()
+	var coluna: VBoxContainer = painel.get_child(0)
+	_rotulo_central(coluna, "SEM AÇÚCAR!", 60)
+	_rotulo_central(coluna, "Cada partida do Doce Match custa %d de açúcar.\nVocê tem %d. Cada acerto no quiz dá %d!" % [
+		DoceMatch.CUSTO_ACUCAR, Confeitaria.acucar(), Confeitaria.ACUCAR_POR_ACERTO], 26)
+	var botoes := HBoxContainer.new()
+	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
+	botoes.add_theme_constant_override("separation", 16)
+	coluna.add_child(botoes)
+	var sair := Button.new()
+	sair.name = "Sair"
+	sair.theme_type_variation = &"BotaoRoxo"
+	sair.text = "SAIR"
+	sair.custom_minimum_size = Vector2(200, 70)
+	sair.pressed.connect(Telas.voltar)
+	botoes.add_child(sair)
+	var quiz := Button.new()
+	quiz.name = "JogarQuiz"
+	quiz.text = "JOGAR O QUIZ"
+	quiz.custom_minimum_size = Vector2(300, 70)
+	quiz.pressed.connect(Telas.abrir.bind("niveis"))
+	botoes.add_child(quiz)
+	_abrir_painel(painel)
+
+
+## Painel no meio da tela, com o fundo escurecido (o nó "Fim" é a camada toda).
+func _painel_central() -> PanelContainer:
+	var camada := Control.new()
+	camada.name = "Fim"
+	camada.set_anchors_preset(PRESET_FULL_RECT)
+	add_child(camada)
+	var escuro := ColorRect.new()
+	escuro.color = Color(0.1, 0.05, 0.2, 0.55)
+	escuro.set_anchors_preset(PRESET_FULL_RECT)
+	camada.add_child(escuro)
+	var centro := CenterContainer.new()
+	centro.set_anchors_preset(PRESET_FULL_RECT)
+	camada.add_child(centro)
+	var painel := PanelContainer.new()
+	painel.theme_type_variation = &"PainelRoxo"
+	centro.add_child(painel)
+	var coluna := VBoxContainer.new()
+	coluna.alignment = BoxContainer.ALIGNMENT_CENTER
+	coluna.add_theme_constant_override("separation", 14)
+	painel.add_child(coluna)
+	return painel
+
+
+func _rotulo_central(pai: Control, texto: String, tamanho: int) -> Label:
+	var rotulo := Label.new()
+	rotulo.theme_type_variation = &"TituloClaro" if tamanho >= 40 else &"SubtituloClaro"
+	rotulo.add_theme_font_size_override("font_size", tamanho)
+	rotulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rotulo.text = texto
+	pai.add_child(rotulo)
+	return rotulo
+
+
+func _abrir_painel(painel: Control) -> void:
+	await get_tree().process_frame  # espera o CenterContainer posicionar
+	if not is_instance_valid(painel):
+		return
+	painel.pivot_offset = painel.size / 2
+	painel.scale = Vector2.ONE * 0.6
+	painel.create_tween().tween_property(painel, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 # --- Montagem ----------------------------------------------------------------------------
@@ -337,7 +408,7 @@ func _criar_pecas() -> void:
 func _atualizar_placar() -> void:
 	_rotulo_pontos.text = Jogo.formatar(jogo.pontos)
 	_rotulo_jogadas.text = "%d" % jogo.jogadas
-	_rotulo_recorde.text = "RECORDE: %s" % Jogo.formatar(maxi(Progresso.estatisticas.get("match_recorde", 0), jogo.pontos))
+	_rotulo_recorde.text = "RECORDE: %s   ·   AÇÚCAR: %d" % [Jogo.formatar(maxi(Progresso.estatisticas.get("match_recorde", 0), jogo.pontos)), Confeitaria.acucar()]
 	var meta: int = DoceMatch.METAS[mini(jogo.estrelas(), DoceMatch.METAS.size() - 1)]
 	_barra.max_value = DoceMatch.METAS[-1]
 	_barra.value = jogo.pontos
@@ -414,7 +485,7 @@ func _montar_tela() -> void:
 	ajuda.add_theme_font_size_override("font_size", 17)
 	ajuda.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ajuda.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	ajuda.text = "Arraste uma peça para a vizinha e forme filas de 3 ou mais iguais!"
+	ajuda.text = "Arraste uma peça para a vizinha e forme filas de 3 ou mais iguais! Cada partida: %d de açúcar." % DoceMatch.CUSTO_ACUCAR
 	placar.add_child(ajuda)
 	# lado direito: o tabuleiro
 	var moldura := PanelContainer.new()
