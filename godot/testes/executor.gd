@@ -666,6 +666,7 @@ func _testar_cozinha() -> void:
 	cozinha.set_physics_process(false)  # o teste move o doce (e os clientes)
 	cozinha._proximo_cliente = 999.0  # sem clientes chegando sozinhos
 	var jogador := cozinha.jogador
+	verificar(cozinha.find_child("JogarQuiz", true, false) is Button, "botão de ir para o quiz na cozinha")
 	jogador.global_position = cozinha._circulos["brigadeiro"]["no"].global_position
 	await get_tree().create_timer(Cozinha.TEMPO_CIRCULO + 0.4).timeout
 	verificar(Confeitaria.construida("brigadeiro"), "parar no círculo constrói a panela")

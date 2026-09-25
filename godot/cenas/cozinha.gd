@@ -85,6 +85,7 @@ var _proximo_cliente := 2.0
 var _tempo := 0.0
 var _saindo := false
 var _qualidade_antes := {}
+var _botao_quiz: Button
 var modo_camera := Camera.DE_CIMA
 ## Para onde a câmera olha nas câmeras de perto (radianos no eixo Y; 0 = fundo da cozinha).
 var _giro := 0.0
@@ -544,7 +545,11 @@ func _mostrar_dica() -> void:
 		if alvo == Vector3.INF and carregando.is_empty():
 			var tem_acucar := Confeitaria.MAQUINAS.any(func(m): return Confeitaria.construida(m["id"]) and Confeitaria.acucar() >= m["acucar"])
 			if not tem_acucar:
-				texto = "SEM AÇÚCAR! JOGUE O QUIZ NA ESCOLA: CADA ACERTO DÁ %d" % Confeitaria.ACUCAR_POR_ACERTO
+				texto = "SEM AÇÚCAR! TOQUE EM \"JOGAR O QUIZ\": CADA ACERTO DÁ %d" % Confeitaria.ACUCAR_POR_ACERTO
+	# sem açúcar: o botão do quiz pulsa, chamando para jogar
+	var falta_acucar := texto.begins_with("SEM AÇÚCAR")
+	_botao_quiz.pivot_offset = _botao_quiz.size / 2
+	_botao_quiz.scale = Vector2.ONE * (1.0 + (0.06 * absf(sin(_tempo * 4.0)) if falta_acucar else 0.0))
 	# a dica em texto some depois dos primeiros clientes (a do açúcar fica)
 	var aprendeu := int(Progresso.confeitaria["atendidos"]) >= 3 and not texto.begins_with("SEM AÇÚCAR")
 	_dica.get_parent().visible = not texto.is_empty() and not aprendeu
@@ -767,10 +772,28 @@ func _criar_interface() -> void:
 	meio.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	meio.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	coluna.add_child(meio)
+	var baixo := HBoxContainer.new()
+	baixo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coluna.add_child(baixo)
 	_joystick = Joystick.new()
 	_joystick.name = "Joystick"
-	coluna.add_child(_joystick)
-	_joystick.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	baixo.add_child(_joystick)
+	var espaco2 := Control.new()
+	espaco2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	espaco2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	baixo.add_child(espaco2)
+	# atalho para o quiz: é lá que se ganha açúcar (e moedas)
+	_botao_quiz = Button.new()
+	_botao_quiz.name = "JogarQuiz"
+	_botao_quiz.text = "JOGAR O QUIZ"
+	_botao_quiz.icon = ICONE_ACUCAR
+	_botao_quiz.expand_icon = true
+	_botao_quiz.add_theme_constant_override("icon_max_width", 34)
+	_botao_quiz.custom_minimum_size = Vector2(320, 90)
+	_botao_quiz.size_flags_vertical = Control.SIZE_SHRINK_END
+	_botao_quiz.focus_mode = Control.FOCUS_NONE
+	_botao_quiz.pressed.connect(Telas.abrir.bind("niveis"))
+	baixo.add_child(_botao_quiz)
 
 
 func _etiqueta(pai: Control, icone: Texture2D, cor: Color) -> Label:

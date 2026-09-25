@@ -122,6 +122,12 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 25/09 (depois da 0.8.0): andar com as duas pernas (bug: só uma mexia),
+  pé levantando e passos no ritmo do chão; jujubas/colunas sólidas, bonecos
+  na camada 2 e câmera com "bolinha" para não entrar em paredes; botão
+  JOGAR O QUIZ na cozinha (pulsa sem açúcar); câmera olha para cima/baixo;
+  "carregando" com o doce; foto até o 3D aparecer; partes lisas com madeira
+  pintada/metal reais; **Doce Match** no Fliperama. APK ainda não gerado.
 - **Atenção (tamanho):** o APK da 0.8.0 tem ~92 MB e o GitHub recusa
   arquivos acima de 100 MB no gh-pages. Se crescer mais: publicar o APK como
   "Release" do GitHub (limite 2 GB) ou gerar APKs separados por arquitetura.
@@ -189,7 +195,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (691 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (694 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
