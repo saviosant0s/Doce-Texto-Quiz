@@ -48,6 +48,11 @@ find . -mindepth 1 -maxdepth 1 ! -name .git ! -name apk ! -name windows ! -name 
 cp -r "$RAIZ/build/web/." . && touch .nojekyll
 if [ -n "$KEYSTORE" ]; then
 	mkdir -p apk && cp "$RAIZ/build/android/doce-texto-quiz.apk" apk/
+	# cópia com a versão no nome: o celular não reaproveita o arquivo antigo
+	# do cache (o git guarda o mesmo conteúdo uma vez só, não pesa)
+	VERSAO_APK=$(sed -n 's/^config\/version="\(.*\)"/\1/p' "$RAIZ/godot/project.godot")
+	rm -f apk/doce-texto-quiz-v*.apk
+	cp apk/doce-texto-quiz.apk "apk/doce-texto-quiz-v$VERSAO_APK.apk"
 fi
 # Pacote de entrega (ferramentas/gerar_entrega.sh), se tiver sido gerado
 if ls "$RAIZ"/build/entrega/Doce_Texto_Quiz_*.zip >/dev/null 2>&1; then
