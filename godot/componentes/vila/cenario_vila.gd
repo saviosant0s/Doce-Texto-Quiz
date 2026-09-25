@@ -755,16 +755,33 @@ static func restaurar_qualidade(viewport: Viewport, antes: Dictionary) -> void:
 	viewport.scaling_3d_scale = antes["escala"]
 
 
-## Acabamento de imagem do modo Mobile (APK e Windows): cores um pouco mais
-## vivas. (Brilho/"glow" e tonemap deixavam tudo esbranquiçado.) No modo leve
-## não faz nada.
+## Acabamento de imagem do modo Mobile (APK e Windows): tonemap ACES (contraste
+## de cinema), brilho (glow) SÓ no que emite luz (limite HDR acima de 1, sem
+## "bloom" no resto: antes o glow geral deixava tudo esbranquiçado) e cores
+## um pouco mais vivas. SSAO e outros efeitos pesados ficam desligados. No
+## modo leve (navegador) não faz nada.
+const EXPOSICAO_ACES := 0.95
+
+
 static func acabamento(ambiente: Environment) -> void:
 	if modo_leve():
 		return
+	ambiente.tonemap_mode = Environment.TONE_MAPPER_ACES
+	ambiente.tonemap_exposure = EXPOSICAO_ACES
+	ambiente.tonemap_white = 4.0
+	ambiente.glow_enabled = true
+	ambiente.glow_bloom = 0.0  # nada de brilho nas superfícies comuns
+	ambiente.glow_hdr_threshold = 1.0  # só o que passa de 1 (emissão) brilha
+	ambiente.glow_hdr_scale = 2.0
+	ambiente.glow_intensity = 0.8
+	ambiente.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
+	ambiente.ssao_enabled = false
+	ambiente.ssil_enabled = false
+	ambiente.sdfgi_enabled = false
 	# o céu reflete nos metais (ouro, inox); no modo leve deixava tudo desbotado
 	ambiente.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	ambiente.adjustment_enabled = true
-	ambiente.adjustment_saturation = 1.1
+	ambiente.adjustment_saturation = 1.25  # o ACES tira um pouco da cor dos doces
 	ambiente.adjustment_contrast = 1.04
 
 const CONTORNO := preload("res://tema/contorno.gdshader")
@@ -781,7 +798,10 @@ static func estilo_desenho(raiz: Node, espessura := 0.035) -> void:
 			continue
 		if not mat.has_meta("real"):  # texturas reais ficam com a luz normal (mais natural)
 			mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+			# brilho de desenho (um reflexo marcado) nas coisas lisas e nos
+			# metais; as ásperas (biscoito, algodão, grama) ficam foscas
+			mat.specular_mode = BaseMaterial3D.SPECULAR_TOON if mat.roughness < 0.6 or mat.metallic > 0.3 \
+				else BaseMaterial3D.SPECULAR_DISABLED
 		if mat.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or peca.mesh is PlaneMesh:
 			continue
 		var caixa := peca.get_aabb()

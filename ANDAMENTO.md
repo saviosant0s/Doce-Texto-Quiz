@@ -182,6 +182,14 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     - Câmera aérea sobe e olha de cima quando um prédio tapa o doce; lotes e
       presentes longe não são desenhados (leve no celular).
     - Estado salvo em `Progresso.vila`. Print: `--terrenos --vila_pos=0,-29`.
+  - **Acabamento de imagem (pedido do Sávio)**: renderizador Mobile (Vulkan) e
+    compressão ASTC/ETC2 já estavam ligados. Agora a vila e a cozinha usam
+    tonemap ACES, brilho (glow) só no que emite luz (limite HDR 1, sem bloom
+    geral) e SSAO/SSIL/SDFGI desligados; peças lisas e metais ganharam
+    reflexo de desenho (especular toon), as ásperas continuam foscas.
+    LightmapGI não foi usado: o cenário é montado por código quando a tela
+    abre (e os terrenos mudam), e o "bake" só funciona no editor, em cena
+    salva, parada, com UV2 — ver a resposta na conversa de 28/09.
   - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
     Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 
