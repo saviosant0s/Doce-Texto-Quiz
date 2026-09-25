@@ -36,6 +36,7 @@ static func rotulo(pai: Node3D, texto: String, posicao: Vector3, tamanho := 64, 
 	r.outline_size = 14
 	r.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	r.no_depth_test = true
+	r.visibility_range_begin = 2.2  # some quando a câmera está colada nele
 	r.position = posicao
 	pai.add_child(r)
 	return r
@@ -116,6 +117,37 @@ static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: f
 	placa.outline_size = 0
 	placa.position = Vector3(0, 3.55, -meio_fundo + 0.02)
 	pai.add_child(placa)
+
+
+## Paredes altas (frente e o alto dos lados), só para as câmeras de perto: na
+## câmera de cima elas tapariam a visão, então a cozinha aparece aberta.
+static func paredes_altas(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: float, saida_x: float) -> Node3D:
+	var no := Node3D.new()
+	no.name = "ParedesAltas"
+	pai.add_child(no)
+	var papel := Pecas3D.material_textura(Pecas3D.listras([Color("#9EDDBE"), Color("#E6F7EE")], 2), 0.8,
+		Vector3(meia_largura * 1.5, 1, 1))
+	var roxo := _m("#7E57B1", 0.5)
+	var altura := 4.0
+	# frente, com a porta de saída em cima do tapete SAIR
+	var z := meio_fundo + 0.3
+	var esquerda := saida_x - 1.1 + meia_largura
+	Pecas3D.caixa(no, Vector3(esquerda, altura, 0.3), Vector3(-meia_largura + esquerda / 2, altura / 2, z), papel)
+	var direita := meia_largura - (saida_x + 1.1)
+	Pecas3D.caixa(no, Vector3(direita, altura, 0.3), Vector3(meia_largura - direita / 2, altura / 2, z), papel)
+	Pecas3D.caixa(no, Vector3(2.2, altura - 2.6, 0.3), Vector3(saida_x, 2.6 + (altura - 2.6) / 2, z), papel)
+	Pecas3D.caixa(no, Vector3(2.4, 0.2, 0.4), Vector3(saida_x, 2.6, z), roxo)
+	var rua := _m("#9FD4F7", 0.9)
+	rua.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	Pecas3D.caixa(no, Vector3(2.2, 2.6, 0.05), Vector3(saida_x, 1.3, z + 0.3), rua)  # o céu lá fora
+	Pecas3D.caixa(no, Vector3(meia_largura * 2 + 0.6, 0.35, 0.36), Vector3(0, 0.17, z - 0.05), roxo)
+	# alto das paredes dos lados (acima da parte baixa de 1,3)
+	for lado in [-1, 1]:
+		var x: float = lado * (meia_largura + 0.15)
+		Pecas3D.caixa(no, Vector3(0.3, altura - 1.3, meio_fundo * 2), Vector3(x, 1.3 + (altura - 1.3) / 2, 0), papel)
+	# teto branquinho
+	Pecas3D.caixa(no, Vector3(meia_largura * 2 + 0.6, 0.1, meio_fundo * 2 + 0.6), Vector3(0, altura, 0), _m("#FFF6EC", 0.9))
+	return no
 
 
 ## Tapete na frente, onde o jogador sai de volta para a vila.

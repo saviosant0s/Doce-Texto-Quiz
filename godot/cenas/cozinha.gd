@@ -12,6 +12,9 @@ extends Node3D
 ## - Parando em cima de um círculo amarelo, constrói ou melhora a máquina (ou
 ##   aumenta quantos doces carrega), se tiver as moedas.
 ## - Uma seta mostra o próximo passo. O tapete "SAIR" volta para a vila.
+## - Três câmeras (botão no alto ou tecla C; a escolha fica salva): DE CIMA
+##   (a padrão, como nos jogos de loja), PERTO (atrás do doce; arrastar o dedo
+##   gira a visão, mesmo com o outro dedo no joystick) e 1ª PESSOA.
 ## Regras (preços, tempos, açúcar) em scripts/confeitaria.gd.
 
 const MEIA_LARGURA := 9.0
@@ -41,6 +44,15 @@ const INTERVALO_CLIENTES := Vector2(4.0, 7.0)
 const CLIENTES := ["bala_verde", "milho_doce", "fantasma"]
 const NOMES_NIVEIS := ["FÁCIL", "MÉDIO", "DIFÍCIL"]
 const ICONE_CASA := preload("res://assets/icones/voltar.svg")
+const ICONE_CAMERA := preload("res://assets/icones/camera.svg")
+
+enum Camera { DE_CIMA, PERTO, PRIMEIRA_PESSOA }
+const NOMES_CAMERA := ["DE CIMA", "PERTO", "1ª PESSOA"]
+const PERTO_DISTANCIA := 3.4
+const PERTO_ALTURA := 2.4
+const ALTURA_OLHOS := 1.3
+const GIRO_JOYSTICK := 2.4  # radianos por segundo (1ª pessoa)
+const GIRO_ARRASTO := 0.008  # radianos por pixel arrastado
 const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
 
@@ -69,6 +81,11 @@ var _proximo_cliente := 2.0
 var _tempo := 0.0
 var _saindo := false
 var _qualidade_antes := {}
+var modo_camera := Camera.DE_CIMA
+## Para onde a câmera olha nas câmeras de perto (radianos no eixo Y; 0 = fundo da cozinha).
+var _giro := 0.0
+var _girou_ha := 99.0
+var _paredes_altas: Node3D
 
 
 func _ready() -> void:
@@ -76,6 +93,7 @@ func _ready() -> void:
 	_criar_ambiente()
 	CenarioCozinha.sala(self, MEIA_LARGURA, MEIO_FUNDO, PORTA_Z)
 	CenarioCozinha.tapete_saida(self, SAIDA)
+	_paredes_altas = CenarioCozinha.paredes_altas(self, MEIA_LARGURA, MEIO_FUNDO, PORTA_Z, SAIDA.x)
 	for i in Confeitaria.MAQUINAS.size():
 		_criar_maquina(Confeitaria.MAQUINAS[i], MAQUINAS_X[i])
 	CenarioCozinha.balcao(self, BALCAO, LARGURA_BALCAO)
@@ -91,11 +109,13 @@ func _ready() -> void:
 	_seta = CenarioCozinha.seta(self)
 	# leve para o celular: o que não se mexe vira poucos blocos
 	JuntarMalhas.simplificar(self)
-	JuntarMalhas.juntar(self, ["Maquina_", "Bandeja_", "Moedas", "Circulo", "Seta"])
+	JuntarMalhas.juntar(self, ["Maquina_", "Bandeja_", "Moedas", "Circulo", "Seta", "ParedesAltas"])
+	JuntarMalhas.juntar(_paredes_altas, [])
 	jogador.otimizar()
 	_qualidade_antes = CenarioVila.qualidade_3d(get_viewport())
 	_criar_camera()
 	_criar_interface()
+	usar_camera(int(Progresso.config.get("camera_cozinha", Camera.DE_CIMA)))
 	_atualizar_tudo()
 
 
@@ -122,7 +142,21 @@ func _physics_process(delta: float) -> void:
 		float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
 	direcao = (direcao + teclas).limit_length(1.0) * (1.0 if Input.is_key_pressed(KEY_SHIFT) else 0.8)
 	direcao = (direcao + _joystick.vetor).limit_length(1.0)
-	jogador.andar(Vector3(direcao.x, 0, direcao.y), delta)
+	_girou_ha += delta
+	match modo_camera:
+		Camera.DE_CIMA:
+			jogador.andar(Vector3(direcao.x, 0, direcao.y), delta)
+		Camera.PRIMEIRA_PESSOA:
+			# para os lados vira; para cima/baixo anda para frente/trás
+			_giro -= direcao.x * GIRO_JOYSTICK * delta
+			jogador.andar(_frente() * -direcao.y, delta)
+			jogador.virar_para_angulo(_giro + PI)
+		Camera.PERTO:
+			var direita := Vector3(cos(_giro), 0, -sin(_giro))
+			jogador.andar(direita * direcao.x + _frente() * -direcao.y, delta)
+			if direcao.y < -0.3 and _girou_ha > 1.5:
+				var costas := atan2(-jogador.frente().x, -jogador.frente().z)
+				_giro = lerp_angle(_giro, costas, minf(1.0, 1.5 * delta))
 	for cliente in clientes.duplicate():  # quem sai é tirado da lista
 		_mover_cliente(cliente, delta)
 
@@ -581,9 +615,72 @@ func _alvo_da_camera() -> Vector3:
 
 
 func _seguir_com_camera(delta: float) -> void:
-	var alvo := _alvo_da_camera()
-	_camera.global_position = _camera.global_position.lerp(alvo + CAMERA_DISTANCIA, minf(1.0, 5.0 * delta))
-	_camera.look_at(_camera.global_position - CAMERA_DISTANCIA)
+	var cabeca := jogador.global_position + Vector3(0, ALTURA_OLHOS, 0)
+	match modo_camera:
+		Camera.DE_CIMA:
+			var alvo := _alvo_da_camera()
+			_camera.global_position = _camera.global_position.lerp(alvo + CAMERA_DISTANCIA, minf(1.0, 5.0 * delta))
+			_camera.look_at(_camera.global_position - CAMERA_DISTANCIA)
+		Camera.PERTO:
+			var alvo := cabeca - _frente() * PERTO_DISTANCIA + Vector3(0, PERTO_ALTURA - ALTURA_OLHOS, 0)
+			alvo = _sem_atravessar_paredes(cabeca, alvo)
+			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
+			_camera.look_at(cabeca + _frente() * 1.5 + Vector3(0, -0.4, 0))
+		Camera.PRIMEIRA_PESSOA:
+			_camera.global_position = cabeca - _frente() * 0.35
+			_camera.look_at(_camera.global_position + _frente() + Vector3(0, -0.5, 0))
+
+
+## Direção "para frente" das câmeras de perto, no chão.
+func _frente() -> Vector3:
+	return Vector3(-sin(_giro), 0, -cos(_giro))
+
+
+## Se uma parede ficar entre o doce e a câmera, a câmera chega mais perto.
+func _sem_atravessar_paredes(de: Vector3, ate: Vector3) -> Vector3:
+	var consulta := PhysicsRayQueryParameters3D.create(de, ate)
+	consulta.exclude = [jogador.get_rid()]
+	var batida := get_world_3d().direct_space_state.intersect_ray(consulta)
+	if batida.is_empty():
+		return ate
+	return batida["position"] + (de - ate).normalized() * 0.3
+
+
+## Troca a câmera (e salva a escolha).
+func usar_camera(modo: int) -> void:
+	modo_camera = modo as Camera
+	jogador.mostrar_modelo(modo_camera != Camera.PRIMEIRA_PESSOA)
+	_paredes_altas.visible = modo_camera != Camera.DE_CIMA
+	_camera.fov = 46.0 if modo_camera == Camera.DE_CIMA else 64.0
+	if modo_camera != Camera.DE_CIMA:
+		_giro = atan2(-jogador.frente().x, -jogador.frente().z)  # olhando para onde o doce olha
+		_camera.global_position = jogador.global_position + Vector3(0, PERTO_ALTURA, 0) - _frente() * PERTO_DISTANCIA
+	if Progresso.config.get("camera_cozinha", -1) != modo:
+		Progresso.config["camera_cozinha"] = modo
+		Progresso.salvar()
+
+
+func proxima_camera() -> void:
+	usar_camera((modo_camera + 1) % NOMES_CAMERA.size())
+	Telas.mostrar_aviso("CÂMERA: " + NOMES_CAMERA[modo_camera])
+
+
+func _unhandled_input(evento: InputEvent) -> void:
+	# arrastar um dedo (fora do joystick) gira a visão nas câmeras de perto
+	if evento is InputEventScreenDrag and evento.index != _joystick.dedo:
+		_girar_visao(evento.relative.x)
+	elif evento is InputEventMouseMotion and evento.device != InputEvent.DEVICE_ID_EMULATION \
+			and evento.button_mask & MOUSE_BUTTON_MASK_LEFT:
+		_girar_visao(evento.relative.x)
+	elif evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_C:
+		proxima_camera()
+
+
+func _girar_visao(pixels: float) -> void:
+	if modo_camera == Camera.DE_CIMA:
+		return
+	_giro -= pixels * GIRO_ARRASTO
+	_girou_ha = 0.0
 
 
 func _criar_interface() -> void:
@@ -627,6 +724,17 @@ func _criar_interface() -> void:
 	topo.add_child(espaco)
 	_rotulo_acucar = _etiqueta(topo, ICONE_ACUCAR, Color.WHITE)
 	_rotulo_moedas = _etiqueta(topo, ICONE_MOEDA, Cores.AMARELO)
+	var camera := Button.new()
+	camera.name = "Camera"
+	camera.theme_type_variation = &"BotaoIconeAmarelo"
+	camera.custom_minimum_size = Vector2(72, 72)
+	camera.icon = ICONE_CAMERA
+	camera.expand_icon = true
+	camera.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	camera.focus_mode = Control.FOCUS_NONE
+	camera.tooltip_text = "Trocar a câmera (C)"
+	camera.pressed.connect(proxima_camera)
+	topo.add_child(camera)
 	# dica do próximo passo
 	var faixa := PanelContainer.new()
 	faixa.name = "Dica"

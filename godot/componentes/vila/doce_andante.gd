@@ -163,8 +163,11 @@ func pilha() -> Node3D:
 
 
 ## Esconde o doce (câmera em primeira pessoa: a câmera fica "dentro" dele).
+## (O que ele carrega nas mãos, a "Pilha", continua aparecendo.)
 func mostrar_modelo(visivel: bool) -> void:
-	_modelo.visible = visivel
+	for parte in _modelo.get_children():
+		if parte.name != "Pilha" and parte is Node3D:
+			parte.visible = visivel
 	_sombra.visible = visivel and sombra_redonda
 
 

@@ -14,6 +14,7 @@ extends Node
 ##   --tocar_nivel=1  toca no cartão desse nível (tela de níveis)
 ##   --selecionar=pudim  escolhe esse doce na tela da coleção
 ##   --camera=1   na Vila dos Doces: 0 = aérea, 1 = perto, 2 = primeira pessoa
+##   --camera_cozinha=1  na cozinha: 0 = de cima, 1 = perto, 2 = primeira pessoa
 ##   --porta=escola  na Vila dos Doces, começa na porta desse prédio
 ##   --confeitaria  Minha Confeitaria já em andamento (máquinas, bandejas, açúcar)
 ##   --entrar=escola  na Vila, começa a animação de entrar nesse prédio (use --espera=0.9)
@@ -43,6 +44,8 @@ func _ready() -> void:
 	Progresso.moedas = int(args.get("moedas", str(Progresso.moedas)))
 	if args.has("camera"):
 		Progresso.config["camera_vila"] = int(args["camera"])
+	if args.has("camera_cozinha"):
+		Progresso.config["camera_cozinha"] = int(args["camera_cozinha"])
 	if args.has("porta"):
 		Vila.ultima_porta = args["porta"]
 	if args.has("companheiro"):
@@ -94,8 +97,9 @@ func _ready() -> void:
 			cliente["no"].global_position = Cozinha.FILA[i] + Vector3(0.5, 0, 0.3)
 		for i in 4:
 			cozinha._empilhar("brigadeiro" if i < 3 else "maca", cozinha.jogador.global_position)
-		cozinha.jogador.global_position = Vector3(-2.5, 0, -1.2)
+		cozinha.jogador.global_position = Vector3(-2.5, 0, -0.2)
 		cozinha.jogador.olhar_para(Vector3(-2.5, 0, 3))
+		cozinha.usar_camera(cozinha.modo_camera)  # olha para onde o doce olha
 		cozinha.caixa = 18
 		cozinha._atualizar_moedas_visiveis()
 	if args.has("entrar"):

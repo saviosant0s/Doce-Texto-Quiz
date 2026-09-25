@@ -505,7 +505,7 @@ func _testar_vila() -> void:
 	verificar(vila.modo_camera == Vila.Camera.PERTO, "botão da câmera: aérea -> perto")
 	vila.proxima_camera()
 	verificar(vila.modo_camera == Vila.Camera.PRIMEIRA_PESSOA, "perto -> 1ª pessoa")
-	verificar(not vila.jogador.get_node("Modelo").visible, "em 1ª pessoa o doce fica escondido")
+	verificar(not vila.jogador.get_node("Modelo/Corpo").visible, "em 1ª pessoa o doce fica escondido")
 	verificar(Progresso.config["camera_vila"] == Vila.Camera.PRIMEIRA_PESSOA, "a câmera escolhida fica salva")
 	var antes := vila.jogador.global_position
 	var frente := vila._frente()
@@ -514,7 +514,7 @@ func _testar_vila() -> void:
 		await get_tree().physics_frame
 	verificar((vila.jogador.global_position - antes).dot(frente) > 0.3, "em 1ª pessoa anda para onde olha")
 	vila.proxima_camera()
-	verificar(vila.modo_camera == Vila.Camera.AEREA and vila.jogador.get_node("Modelo").visible, "volta para a aérea e o doce reaparece")
+	verificar(vila.modo_camera == Vila.Camera.AEREA and vila.jogador.get_node("Modelo/Corpo").visible, "volta para a aérea e o doce reaparece")
 	# leva o doce até a porta da escola
 	vila.jogador.global_position = vila._portas["escola"]["porta"]
 	for i in 6:
@@ -665,6 +665,15 @@ func _testar_cozinha() -> void:
 	jogador.global_position = Cozinha.CAIXA + Vector3(1.0, 0, 0)
 	await get_tree().create_timer(0.3).timeout
 	verificar(cozinha.caixa == 0 and Progresso.moedas == moedas_antes + 6, "recolhe as moedas do caixa")
+	# câmeras: de cima -> perto -> 1ª pessoa, com paredes altas só nas de perto
+	cozinha.usar_camera(Cozinha.Camera.DE_CIMA)
+	verificar(not cozinha._paredes_altas.visible, "câmera de cima: cozinha aberta")
+	cozinha.proxima_camera()
+	verificar(cozinha.modo_camera == Cozinha.Camera.PERTO and cozinha._paredes_altas.visible, "câmera perto: com paredes altas")
+	cozinha.proxima_camera()
+	verificar(cozinha.modo_camera == Cozinha.Camera.PRIMEIRA_PESSOA and Progresso.config["camera_cozinha"] == Cozinha.Camera.PRIMEIRA_PESSOA, "1ª pessoa, e a escolha fica salva")
+	verificar(jogador.pilha().is_visible_in_tree(), "em 1ª pessoa a pilha de doces continua aparecendo")
+	cozinha.usar_camera(Cozinha.Camera.DE_CIMA)
 	jogador.global_position = Cozinha.SAIDA
 	verificar(await _esperar_tela("Inicio"), "o tapete SAIR volta (sem histórico: início)")
 	verificar(Confeitaria.bandeja("brigadeiro") == 1, "o doce que sobrou nas mãos volta para a bandeja")
