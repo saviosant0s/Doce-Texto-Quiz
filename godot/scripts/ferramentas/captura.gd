@@ -28,6 +28,10 @@ extends Node
 ##   --match_especiais  Doce Match: põe peças especiais no tabuleiro
 ##   --match_explodir  Doce Match: troca a bomba (use com --match_especiais)
 ##   --match_fim=venceu  Doce Match: mostra o fim do nível (venceu ou perdeu)
+##   --nivel_doce=pudim:5  ganha esse doce já no nível 5 (vários: pudim:5,bala:3)
+##   --titulos  ganha os 3 títulos (Noob, Pro, Mestre)
+##   --podio=mestre:pudim  põe esse doce no degrau do título
+##   --escolher_podio=pro  abre a escolha de doce desse degrau (Troféus)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -73,6 +77,18 @@ func _ready() -> void:
 		var fases := Laboratorio.fases()
 		for i in mini(int(args["lab"]), fases.size()):
 			Progresso.laboratorio["estrelas"][fases[i]["id"]] = [3, 2, 3, 1][i % 4]
+	if args.has("nivel_doce"):
+		for par in args["nivel_doce"].split(","):
+			var partes: PackedStringArray = par.split(":")
+			if not partes[0] in Progresso.colecao["doces"]:
+				Progresso.colecao["doces"].append(partes[0])
+			Companheiros._colecao()["niveis"][partes[0]] = int(partes[1])
+	if args.has("titulos"):
+		for t in ["noob", "pro", "mestre"]:
+			Progresso.titulos[t] = 2
+	if args.has("podio"):
+		for par in args["podio"].split(","):
+			Colecao.escolher_do_podio(par.split(":")[0], par.split(":")[1])
 	if args.has("match"):
 		for i in int(args["match"]):
 			Progresso.doce_match["estrelas"][str(i + 1)] = [3, 2, 3, 1][i % 4]
@@ -158,6 +174,9 @@ func _ready() -> void:
 				tela.jogo.jogadas = 0
 				tela.jogo.pontos = 1830
 			tela._terminar()
+	if args.has("escolher_podio"):
+		await get_tree().create_timer(0.5).timeout
+		get_tree().current_scene.escolher_doce(args["escolher_podio"])
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()

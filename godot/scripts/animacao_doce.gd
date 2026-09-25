@@ -29,6 +29,7 @@ var _olhos: Array[Node3D] = []
 var _aceno: Node3D
 var _bracos: Array[Node3D] = []
 var _pernas: Array[Node3D] = []
+var _orbita: Node3D  # brilhos dos doces de nível alto (Doces3D.enfeitar)
 var _base_pernas: Array[Vector3] = []
 var _tempo := 0.0
 var _passo := 0.0
@@ -45,6 +46,7 @@ func configurar(modelo: Node3D) -> void:
 	_bracos.assign(modelo.find_children("Braco", "Node3D", true, false))
 	_pernas.assign(modelo.find_children("Perna?", "Node3D", true, false))  # PernaE e PernaD
 	_base_pernas.assign(_pernas.map(func(p): return p.position))
+	_orbita = modelo.find_child("Orbita", true, false)
 
 
 ## Pulinho com aceno (ao tocar, ao comprar, ao chegar em algum lugar).
@@ -67,6 +69,8 @@ func _process(delta: float) -> void:
 		_parar_passos(delta)
 	if not Telas.animacoes_continuas:
 		return
+	if is_instance_valid(_orbita):
+		_orbita.rotation.y += delta * 1.3
 	if not andando:
 		# respira: estica e achata de leve
 		var respiro := sin(_tempo * 2.6) * 0.025

@@ -1,7 +1,9 @@
 extends Control
 ## Troféus, em três abas:
 ## - TÍTULOS: pódio com Mestre no centro, Pro e Noob dos lados. Cada título é
-##   ganho ao passar no nível correspondente (ver Jogo.TITULOS).
+##   ganho ao passar no nível correspondente (ver Jogo.TITULOS), como em 2023.
+##   Depois de ganho, o degrau pode mostrar qualquer doce da coleção
+##   (Colecao.doce_do_podio), com os enfeites do nível dele.
 ## - CONQUISTAS: metas especiais com recompensa em moedas (ver Conquistas).
 ## - ESTATÍSTICAS: números gerais, por nível, por assunto e as mais erradas.
 
@@ -14,6 +16,8 @@ const NOMES_ASSUNTOS := {"word": "WORD (TEXTOS)", "excel": "EXCEL (PLANILHAS)", 
 var _botoes_abas: Array[Button] = []
 var _paginas: Array[Control] = []
 var _fonte_texto: FontVariation
+var _dica_podio: Label
+var _escolha: Control  # janela para escolher o doce de um degrau
 
 ## Na ordem em que aparecem no pódio (da esquerda para a direita).
 const TITULOS := [
@@ -34,6 +38,12 @@ func _ready() -> void:
 	_fonte_texto.base_font = preload("res://assets/fontes/Nunito.ttf")
 	_fonte_texto.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): 700}
 	_criar_abas()
+	_dica_podio = _texto("Os doces de 2023 chegam com cada título: Maçã (Noob), Cupcake (Pro) e Chocolate (Mestre). Ganhou o título? Toque no degrau e ponha ali qualquer doce da sua coleção!",
+		17, Color(1, 1, 1, 0.85))
+	_dica_podio.name = "DicaPodio"
+	_dica_podio.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	%Podio.get_parent().add_child(_dica_podio)
+	%Podio.get_parent().move_child(_dica_podio, %Podio.get_index())
 	_paginas = [%Podio, _criar_pagina_conquistas(), _criar_pagina_estatisticas()]
 	for pagina in _paginas.slice(1):
 		%Podio.get_parent().add_child(pagina)
@@ -45,6 +55,7 @@ func _ready() -> void:
 
 ## Mostra a aba `indice` (0 = títulos, 1 = conquistas, 2 = estatísticas).
 func mostrar_aba(indice: int) -> void:
+	_dica_podio.visible = indice == 0
 	for i in _paginas.size():
 		_paginas[i].visible = i == indice
 		_botoes_abas[i].theme_type_variation = &"Button" if i == indice else &"BotaoRoxo"
@@ -359,9 +370,12 @@ func _criar_coluna(titulo: Dictionary) -> VBoxContainer:
 	coluna.alignment = BoxContainer.ALIGNMENT_END
 	coluna.add_theme_constant_override("separation", 0)
 
-	# Personagem (silhueta com cadeado se ainda não foi conquistado)
+	# Personagem (silhueta com cadeado se ainda não foi conquistado). Depois de
+	# conquistado, o degrau mostra o doce que o jogador escolheu (Colecao.doce_do_podio).
+	var id_doce: String = Colecao.doce_do_podio(titulo["id"]) if conquistado else titulo["personagem"]
 	var imagem := TextureRect.new()
-	imagem.texture = Personagens.textura(titulo["personagem"])
+	imagem.name = "Doce"
+	imagem.texture = Personagens.textura(id_doce)
 	imagem.custom_minimum_size = Vector2(0, titulo["tamanho"])
 	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -383,7 +397,8 @@ func _criar_coluna(titulo: Dictionary) -> VBoxContainer:
 		cadeado.offset_bottom = 32
 		imagem.add_child(cadeado)
 	# Doce 3D vivo no lugar da foto (gira com o dedo); silhueta clara se bloqueado
-	Personagens.animar(imagem, titulo["personagem"], not conquistado, Color("#A58AD0"))
+	Personagens.animar(imagem, id_doce, not conquistado, Color("#A58AD0"),
+		Companheiros.nivel(id_doce) if conquistado else 0)
 
 	# Degrau do pódio
 	var degrau := PanelContainer.new()
@@ -413,10 +428,98 @@ func _criar_coluna(titulo: Dictionary) -> VBoxContainer:
 	detalhe.add_theme_font_size_override("font_size", 26)
 	detalhe.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if conquistado:
-		detalhe.text = "CONQUISTADO %dX" % quantidade
+		detalhe.text = "%s · %dX" % [Colecao.dados(Colecao.doce_do_podio(titulo["id"])).get("nome", ""), quantidade]
 	else:
 		detalhe.text = titulo["meta"]
 		detalhe.modulate = Color(1, 1, 1, 0.75)
 	detalhe.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	textos.add_child(detalhe)
+	if conquistado:
+		# tocar no degrau (ou no doce) abre a escolha do doce
+		var toque := Button.new()
+		toque.name = "Trocar_" + titulo["id"]
+		toque.flat = true
+		toque.focus_mode = Control.FOCUS_NONE
+		toque.set_anchors_preset(Control.PRESET_FULL_RECT)
+		toque.pressed.connect(escolher_doce.bind(titulo["id"]))
+		degrau.add_child(toque)
+		var trocar := Label.new()
+		trocar.theme_type_variation = &"Subtitulo"
+		trocar.add_theme_font_size_override("font_size", 20)
+		trocar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		trocar.text = "TOQUE PARA TROCAR O DOCE"
+		trocar.modulate = Color(1, 1, 1, 0.7)
+		textos.add_child(trocar)
 	return coluna
+
+
+## Janela com os doces da coleção para pôr no degrau do título.
+func escolher_doce(titulo: String) -> void:
+	if is_instance_valid(_escolha):
+		_escolha.queue_free()
+	var camada := Control.new()
+	camada.name = "EscolhaDoce"
+	camada.set_anchors_preset(PRESET_FULL_RECT)
+	add_child(camada)
+	_escolha = camada
+	var escuro := ColorRect.new()
+	escuro.color = Color(0.1, 0.05, 0.2, 0.6)
+	escuro.set_anchors_preset(PRESET_FULL_RECT)
+	escuro.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: camada.queue_free())
+	camada.add_child(escuro)
+	var centro := CenterContainer.new()
+	centro.set_anchors_preset(PRESET_FULL_RECT)
+	centro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	camada.add_child(centro)
+	var painel := PanelContainer.new()
+	painel.theme_type_variation = &"PainelRoxo"
+	centro.add_child(painel)
+	var coluna := VBoxContainer.new()
+	coluna.add_theme_constant_override("separation", 12)
+	painel.add_child(coluna)
+	var nome := Label.new()
+	nome.theme_type_variation = &"TituloClaro"
+	nome.add_theme_font_size_override("font_size", 40)
+	nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nome.text = "QUEM SOBE NO DEGRAU %s?" % Colecao.NOMES_TITULOS[titulo]
+	coluna.add_child(nome)
+	var grade := GridContainer.new()
+	grade.columns = 5
+	grade.add_theme_constant_override("h_separation", 10)
+	grade.add_theme_constant_override("v_separation", 10)
+	coluna.add_child(grade)
+	var atual := Colecao.doce_do_podio(titulo)
+	for doce in Colecao.LISTA:
+		if not Colecao.tem(doce["id"]):
+			continue
+		var botao := Button.new()
+		botao.name = "Doce_" + doce["id"]
+		botao.custom_minimum_size = Vector2(150, 150)
+		botao.theme_type_variation = &"Button" if doce["id"] == atual else &"BotaoRoxo"
+		botao.focus_mode = Control.FOCUS_NONE
+		botao.pressed.connect(func():
+			Colecao.escolher_do_podio(titulo, doce["id"])
+			Audio.tocar("pulo")
+			camada.queue_free()
+			mostrar_aba(0))
+		var caixa := VBoxContainer.new()
+		caixa.set_anchors_preset(PRESET_FULL_RECT)
+		caixa.offset_top = 6
+		caixa.offset_bottom = -6
+		caixa.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		botao.add_child(caixa)
+		var foto := TextureRect.new()
+		foto.texture = Personagens.textura(doce["id"])
+		foto.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		foto.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		foto.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		foto.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		caixa.add_child(foto)
+		var rotulo := Label.new()
+		rotulo.theme_type_variation = &"Subtitulo" if doce["id"] == atual else &"SubtituloClaro"
+		rotulo.add_theme_font_size_override("font_size", 16)
+		rotulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		rotulo.text = "%s · NV %d" % [doce["nome"], Companheiros.nivel(doce["id"])]
+		rotulo.clip_text = true
+		caixa.add_child(rotulo)
+		grade.add_child(botao)

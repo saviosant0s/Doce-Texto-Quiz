@@ -9,6 +9,9 @@ extends Visor3D
 @export var silhueta := false
 ## Cor da silhueta (escura em fundo amarelo, clara em fundo roxo).
 @export var cor_silhueta := Color("#8C6BC0")
+## Nível do doce (Companheiros.nivel): a partir do 2 ganha enfeites (brilhos,
+## laço, coroa...). 0 = sem enfeites (personagens das telas do quiz).
+@export var nivel := 0
 
 const COR_SILHUETA := Color("#8C6BC0")
 
@@ -30,6 +33,8 @@ func mostrar(novo_id: String, como_silhueta := false) -> void:
 
 func _montar(pivo: Node3D) -> void:
 	Doces3D.montar(id, pivo)
+	if not silhueta:
+		Doces3D.enfeitar(pivo, id, nivel)
 	if silhueta:
 		var cor := StandardMaterial3D.new()
 		cor.albedo_color = cor_silhueta

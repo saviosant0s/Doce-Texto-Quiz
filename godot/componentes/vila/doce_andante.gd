@@ -16,6 +16,8 @@ const GIRO := 10.0
 
 ## Id do doce (ver Colecao.LISTA).
 var id := "brigadeiro"
+## Nível do doce (enfeites de Doces3D.enfeitar); 0 = sem enfeites (vizinhos).
+var nivel := 0
 ## Vizinho: anda sozinho, sem controle do jogador.
 var passeando := false
 ## Sombra redonda falsa embaixo (desligada quando a luz já faz sombra de verdade).
@@ -54,6 +56,7 @@ func _ready() -> void:
 	_modelo.position.y = 2.4 * ESCALA * 0.5 + 0.05  # o modelo é centrado; os pés ficam no chão
 	add_child(_modelo)
 	Doces3D.montar(id, _modelo)
+	Doces3D.enfeitar(_modelo, id, nivel)
 	add_child(_animacao)
 	_animacao.configurar(_modelo)
 	_animacao.pisou.connect(func():

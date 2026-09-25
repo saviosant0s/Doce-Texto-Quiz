@@ -367,3 +367,112 @@ static func _fantasma(c: Node3D) -> void:
 	Pecas3D.rosto(c, Vector3(0, 0.22, 0.61), 1.1, 0.62)
 	Pecas3D.braco(c, Vector3(-0.6, -0.02, 0.05), -1, chocolate_branco)
 	Pecas3D.braco(c, Vector3(0.6, 0.02, 0.05), 1, chocolate_branco, 1.0, true)
+
+
+# --- Enfeites por nível ----------------------------------------------------------
+## O doce muda de visual ao subir de nível (Companheiros.melhorar):
+##   nível 2: brilhos girando em volta (na cor da raridade)
+##   nível 3: + laço no alto da cabeça
+##   nível 4: o laço vira uma COROA de ouro
+##   nível 5 (máximo): coroa com joias, brilhos dourados e um círculo de luz no chão
+const NOMES_ENFEITES := ["", "", "BRILHOS", "LAÇO", "COROA", "COROA DE JOIAS E LUZ"]
+
+
+static func enfeitar(modelo: Node3D, id: String, nivel: int) -> void:
+	if nivel < 2:
+		return
+	var corpo := modelo.get_node_or_null("Corpo") as Node3D
+	if corpo == null:
+		return
+	var limites := _limites(corpo)
+	var topo := limites.end.y
+	var chao := limites.position.y
+	var cor := Companheiros.cor(id)
+	var ouro := Color("#FFC83D")
+	var maximo := nivel >= Companheiros.NIVEL_MAXIMO
+	# brilhos em volta (a AnimacaoDoce gira o nó "Orbita")
+	var orbita := Node3D.new()
+	orbita.name = "Orbita"
+	orbita.position.y = (topo + chao) * 0.5
+	modelo.add_child(orbita)
+	var quantos := 6 if maximo else 3
+	for i in quantos:
+		var angulo := TAU * i / quantos
+		var raio := maxf(limites.size.x, limites.size.z) * 0.5 + 0.35
+		var brilho := Pecas3D.esfera(orbita, 0.07 if not maximo else 0.08,
+			Vector3(cos(angulo) * raio, sin(angulo * 2.0) * 0.35, sin(angulo) * raio), _brilhante(ouro if maximo else cor))
+		brilho.name = "Brilho"
+	var cabeca := Vector3(0, topo - 0.06, 0)
+	if nivel == 3:
+		_laco(corpo, cabeca + Vector3(0.22, 0.02, 0.08), cor)
+	elif nivel >= 4:
+		_coroa(corpo, cabeca, maximo)
+	if maximo:
+		var luz := Pecas3D.rosquinha(modelo, 0.62, 0.78, Vector3(0, chao + 0.02, 0), _brilhante(ouro, 0.85), Vector3(1, 0.08, 1))
+		luz.name = "Luz"
+
+
+## Tamanho do doce (sem os braços, que se mexem), em coordenadas do Corpo.
+static func _limites(corpo: Node3D) -> AABB:
+	var total := AABB()
+	var primeiro := true
+	for malha in corpo.find_children("*", "MeshInstance3D", true, false):
+		var t := Transform3D.IDENTITY
+		var no: Node = malha
+		var de_braco := false
+		while no != corpo:
+			if no.name.begins_with("Braco") or no.name.begins_with("Aceno"):
+				de_braco = true
+			t = (no as Node3D).transform * t
+			no = no.get_parent()
+		if de_braco or malha.mesh == null:
+			continue
+		var caixa: AABB = t * malha.mesh.get_aabb()
+		total = caixa if primeiro else total.merge(caixa)
+		primeiro = false
+	return total if not primeiro else AABB(Vector3(-0.6, -0.8, -0.6), Vector3(1.2, 1.8, 1.2))
+
+
+static func _brilhante(cor: Color, forca := 1.4) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = cor
+	mat.emission_enabled = true
+	mat.emission = cor
+	mat.emission_energy_multiplier = forca
+	mat.roughness = 0.2
+	return mat
+
+
+## Laço de fita (duas voltas e o nó do meio), meio de lado na cabeça.
+static func _laco(pai: Node3D, posicao: Vector3, cor: Color) -> void:
+	var laco := Node3D.new()
+	laco.name = "Laco"
+	laco.position = posicao
+	laco.rotation_degrees = Vector3(0, 0, -18)
+	laco.scale = Vector3.ONE * 1.9
+	pai.add_child(laco)
+	var fita := Pecas3D.material(cor.lightened(0.1), 0.35)
+	for lado in [-1, 1]:
+		Pecas3D.esfera(laco, 0.17, Vector3(lado * 0.17, 0.04, 0), fita, Vector3(1.2, 0.75, 0.45), Vector3(0, 0, lado * 20))
+	Pecas3D.esfera(laco, 0.075, Vector3(0, 0.03, 0.02), Pecas3D.material(cor.darkened(0.2), 0.35))
+
+
+## Coroa de ouro; no nível máximo, com joias coloridas nas pontas.
+static func _coroa(pai: Node3D, posicao: Vector3, joias: bool) -> void:
+	var coroa := Node3D.new()
+	coroa.name = "Coroa"
+	coroa.position = posicao
+	coroa.rotation_degrees = Vector3(-8, 0, 10)
+	coroa.scale = Vector3.ONE * 1.5
+	pai.add_child(coroa)
+	var ouro := Pecas3D.material(Color("#FFC83D"), 0.25, 0.7)
+	Pecas3D.cilindro(coroa, 0.3, 0.27, 0.16, Vector3(0, 0.08, 0), ouro)
+	var cores_joias := [Color("#FF4F8B"), Color("#4DA3FF"), Color("#3DDC97"), Color("#B36BFF"), Color("#FF8A3D")]
+	for i in 5:
+		var angulo := TAU * i / 5.0 + PI / 2
+		var base := Vector3(cos(angulo) * 0.26, 0.16, sin(angulo) * 0.26)
+		Pecas3D.cilindro(coroa, 0.0, 0.08, 0.2, base + Vector3(0, 0.1, 0), ouro)
+		if joias:
+			Pecas3D.esfera(coroa, 0.045, base + Vector3(0, 0.22, 0), _brilhante(cores_joias[i], 0.8))
+	if joias:
+		Pecas3D.esfera(coroa, 0.06, Vector3(0, 0.09, 0.29), _brilhante(Color("#FF4F8B"), 0.8))

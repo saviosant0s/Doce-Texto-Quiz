@@ -84,6 +84,28 @@ static func companheiro() -> String:
 	return id if tem(id) else ""
 
 
+## Pódio dos títulos (tela de Troféus): cada degrau (noob, pro, mestre) mostra
+## um doce. Começa com os doces de 2023 (maçã, cupcake e chocolate, que vêm
+## com os títulos); depois de ganhar o título, o jogador pode pôr ali qualquer
+## doce da coleção. Fica em Progresso.colecao["podio"] = {título: id}.
+const DOCE_DO_TITULO := {"noob": "maca", "pro": "cupcake", "mestre": "chocolate"}
+
+
+static func doce_do_podio(titulo: String) -> String:
+	var id: String = Progresso.colecao.get("podio", {}).get(titulo, "")
+	return id if tem(id) else DOCE_DO_TITULO[titulo]
+
+
+static func escolher_do_podio(titulo: String, id: String) -> bool:
+	if not DOCE_DO_TITULO.has(titulo) or not tem(id) or Progresso.titulos.get(titulo, 0) == 0:
+		return false
+	if not Progresso.colecao.has("podio"):
+		Progresso.colecao["podio"] = {}
+	Progresso.colecao["podio"][titulo] = id
+	Progresso.salvar()
+	return true
+
+
 static func escolher_companheiro(id: String) -> bool:
 	if not tem(id):
 		return false

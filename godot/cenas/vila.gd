@@ -592,6 +592,7 @@ func _criar_jogador() -> void:
 	jogador.com_som = true
 	var id := Colecao.companheiro()
 	jogador.id = id if not id.is_empty() else "brigadeiro"
+	jogador.nivel = Companheiros.nivel(jogador.id)
 	add_child(jogador)
 	if _portas.has(ultima_porta):
 		var porta: Vector3 = _portas[ultima_porta]["porta"]

@@ -42,6 +42,7 @@ func _ready() -> void:
 func selecionar(id: String) -> void:
 	_selecionado = id
 	var doce := Colecao.dados(id)
+	_visor.nivel = Companheiros.nivel(id)
 	_visor.mostrar(id, not Colecao.tem(id))
 	_nome.text = doce["nome"]
 	_texto.text = doce["curiosidade"]
@@ -219,8 +220,13 @@ func _ao_melhorar() -> void:
 	if not Companheiros.melhorar(_selecionado):
 		return
 	Audio.tocar("construir")
+	var nivel := Companheiros.nivel(_selecionado)
+	_visor.nivel = nivel
+	_visor.remontar()  # o visual novo do nível (brilhos, laço, coroa...)
 	_visor.comemorar()
-	Telas.mostrar_aviso("%s AGORA É NÍVEL %d!" % [Colecao.dados(_selecionado)["nome"], Companheiros.nivel(_selecionado)])
+	var enfeite: String = Doces3D.NOMES_ENFEITES[nivel]
+	Telas.mostrar_aviso("%s AGORA É NÍVEL %d!%s" % [Colecao.dados(_selecionado)["nome"], nivel,
+		"  GANHOU: " + enfeite if enfeite != "" else ""])
 	_atualizar_topo()
 	_atualizar_companheiro()
 	_atualizar_cartao(_selecionado)

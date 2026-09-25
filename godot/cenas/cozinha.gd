@@ -632,6 +632,7 @@ func _criar_jogador() -> void:
 	jogador.name = "Jogador"
 	var id := Colecao.companheiro()
 	jogador.id = id if not id.is_empty() else "brigadeiro"
+	jogador.nivel = Companheiros.nivel(jogador.id)
 	jogador.sombra_redonda = false
 	jogador.com_som = true
 	add_child(jogador)

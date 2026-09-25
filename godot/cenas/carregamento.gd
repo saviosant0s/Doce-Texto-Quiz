@@ -88,6 +88,7 @@ func _mostrar_companheiro() -> void:
 	var doce := Doce3D.new()
 	doce.name = "Companheiro"
 	doce.id = id
+	doce.nivel = Companheiros.nivel(id)
 	doce.giravel = false
 	doce.distancia = 4.6  # do tamanho do fantasma
 	doce.custom_minimum_size = %Personagem.custom_minimum_size

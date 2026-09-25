@@ -142,8 +142,18 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     `ferramentas/gerar_niveis_match.py` e calibrados com um robô
     (`godot/testes/calibrar_doce_match.tscn`: joga cada nível 10 vezes e
     mostra vitórias e pontos). Estrelas em `ferramentas/doce_match_estrelas.json`.
-  - Próximos (escolhidos pelo Sávio): pódio novo + visual dos doces por
-    nível; mais doces no catálogo; vila maior com terrenos.
+  - **Visual dos doces por nível** (`Doces3D.enfeitar`): nível 2 ganha
+    brilhos girando (cor da raridade), 3 um laço, 4 uma coroa de ouro e 5
+    (máximo) coroa com joias, brilhos dourados e círculo de luz no chão.
+    Aparece na coleção, no carregamento, no pódio e no boneco da vila e da
+    cozinha. Ao melhorar, o aviso diz o que o doce ganhou.
+  - **Pódio** (Troféus > Títulos): continua o de 2023 (Doceiro Noob, Pro e
+    Mestre, ganhos passando nos níveis do quiz), com uma frase explicando por
+    que a Maçã, o Cupcake e o Chocolate estão ali (vêm com cada título).
+    Depois de ganhar o título, tocar no degrau abre a escolha de qualquer
+    doce da coleção para ficar nele (`Colecao.doce_do_podio`).
+  - Próximos: tela de carregamento mais caprichada e Missões/Baús abrindo na
+    hora (pedido novo); mais doces no catálogo; vila maior com terrenos.
 
 - 27/09: **telas conferidas em 20:9 (celular comprido), 16:10 e 4:3
   (tablets)**, além do 16:9 de sempre. Ajustes: mapa do laboratório usa a
@@ -334,7 +344,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.583 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.588 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

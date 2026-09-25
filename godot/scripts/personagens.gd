@@ -48,7 +48,7 @@ const FOLGA_3D := 0.22
 
 
 static func animar(imagem: TextureRect, nome: String, silhueta := false,
-		cor_silhueta := Color(0.29, 0.19, 0.47, 0.9)) -> Doce3D:
+		cor_silhueta := Color(0.29, 0.19, 0.47, 0.9), nivel := 0) -> Doce3D:
 	var id: String = FOTOS_3D.get(nome, nome)
 	if not Telas.placa_rapida or not ResourceLoader.exists("res://assets/doces_3d/fotos/%s.png" % id):
 		return null
@@ -56,6 +56,7 @@ static func animar(imagem: TextureRect, nome: String, silhueta := false,
 	doce.name = "Doce3D"
 	doce.id = id
 	doce.silhueta = silhueta
+	doce.nivel = nivel
 	doce.cor_silhueta = cor_silhueta
 	# Área de desenho maior que o espaço da imagem (folga em volta), para a mão
 	# que acena e o pulinho não serem cortados pela borda; a câmera se afasta

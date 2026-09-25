@@ -272,6 +272,34 @@ func _testar_colecao() -> void:
 		pivo.free()
 	for id in Colecao.LISTA.map(func(d): return d["id"]) + Doces3D.PERSONAGENS:
 		verificar(ResourceLoader.exists("res://assets/doces_3d/fotos/%s.png" % id), "foto 3D de %s" % id)
+	# enfeites por nível: 2 brilhos, 3 laço, 4 coroa, 5 coroa + luz
+	var enfeites_ok := true
+	for doce in Colecao.LISTA:
+		for n in [1, 2, 3, 4, 5]:
+			var pivo := Node3D.new()
+			Doces3D.montar(doce["id"], pivo)
+			Doces3D.enfeitar(pivo, doce["id"], n)
+			var tem := func(nome): return pivo.find_child(nome, true, false) != null
+			var esperado: bool = (tem.call("Orbita") == (n >= 2)) and (tem.call("Laco") == (n == 3)) \
+				and (tem.call("Coroa") == (n >= 4)) and (tem.call("Luz") == (n == 5))
+			if not esperado:
+				enfeites_ok = false
+				print("  enfeites errados: %s nível %d" % [doce["id"], n])
+			var corpo: Node3D = pivo.get_node("Corpo")
+			var coroa: Node3D = corpo.find_child("Coroa", false, false)
+			if coroa and coroa.position.y < 0.3:  # em cima da cabeça (o doce vai de ~-1,2 a ~1,2)
+				enfeites_ok = false
+				print("  coroa baixa demais: ", doce["id"])
+			pivo.free()
+	verificar(enfeites_ok, "cada nível do doce tem seu visual (brilhos, laço, coroa, luz), com a coroa no alto")
+	# pódio: doces de 2023 por padrão; troca só com o título e com doce que tem
+	verificar(Colecao.doce_do_podio("mestre") == "chocolate" and Colecao.doce_do_podio("noob") == "maca", "pódio começa com os doces de 2023")
+	verificar(not Colecao.escolher_do_podio("mestre", "brigadeiro"), "sem o título, não troca o doce do degrau")
+	Progresso.titulos["mestre"] = 1
+	verificar(not Colecao.escolher_do_podio("mestre", "pudim"), "não põe no pódio doce que não tem")
+	verificar(Colecao.escolher_do_podio("mestre", "brigadeiro") and Colecao.doce_do_podio("mestre") == "brigadeiro",
+		"com o título, põe qualquer doce da coleção no degrau")
+	Progresso.titulos["mestre"] = 0
 	for nome in Personagens.FOTOS_3D:
 		verificar(Personagens.textura(nome).resource_path.contains("doces_3d/fotos"), "%s usa a foto 3D" % nome)
 	verificar(Colecao.tem("brigadeiro"), "começa com o brigadeiro")
