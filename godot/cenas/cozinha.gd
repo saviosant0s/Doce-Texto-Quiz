@@ -52,7 +52,11 @@ const PERTO_DISTANCIA := 3.4
 const PERTO_ALTURA := 2.4
 const ALTURA_OLHOS := 1.3
 const GIRO_JOYSTICK := 2.4  # radianos por segundo (1ª pessoa)
-const GIRO_ARRASTO := 0.008  # radianos por pixel arrastado
+const GIRO_ARRASTO := 0.01  # radianos por pixel arrastado
+## Inclinação da visão (arrastar o dedo para cima/baixo), em radianos.
+const INCLINACAO_1P := Vector2(-1.2, 1.1)  # 1ª pessoa: olhar para baixo / para cima
+const INCLINACAO_PERTO := Vector2(-0.5, 0.7)
+const INCLINACAO_INICIAL_1P := -0.45
 const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
 
@@ -84,6 +88,8 @@ var _qualidade_antes := {}
 var modo_camera := Camera.DE_CIMA
 ## Para onde a câmera olha nas câmeras de perto (radianos no eixo Y; 0 = fundo da cozinha).
 var _giro := 0.0
+## Para cima (+) ou para baixo (-) nas câmeras de perto (ver INCLINACAO_*).
+var _inclinacao := 0.0
 var _girou_ha := 99.0
 var _paredes_altas: Node3D
 
@@ -622,13 +628,15 @@ func _seguir_com_camera(delta: float) -> void:
 			_camera.global_position = _camera.global_position.lerp(alvo + CAMERA_DISTANCIA, minf(1.0, 5.0 * delta))
 			_camera.look_at(_camera.global_position - CAMERA_DISTANCIA)
 		Camera.PERTO:
-			var alvo := cabeca - _frente() * PERTO_DISTANCIA + Vector3(0, PERTO_ALTURA - ALTURA_OLHOS, 0)
+			var raio := Vector2(PERTO_DISTANCIA, PERTO_ALTURA - ALTURA_OLHOS).length()
+			var elevacao := clampf(atan2(PERTO_ALTURA - ALTURA_OLHOS, PERTO_DISTANCIA) - _inclinacao, -0.05, 1.35)
+			var alvo := cabeca - _frente() * raio * cos(elevacao) + Vector3(0, raio * sin(elevacao), 0)
 			alvo = _sem_atravessar_paredes(cabeca, alvo)
 			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
-			_camera.look_at(cabeca + _frente() * 1.5 + Vector3(0, -0.4, 0))
+			_camera.look_at(cabeca + _frente() * 1.5 + Vector3(0, -0.4 + _inclinacao * 2.0, 0))
 		Camera.PRIMEIRA_PESSOA:
 			_camera.global_position = cabeca - _frente() * 0.35
-			_camera.look_at(_camera.global_position + _frente() + Vector3(0, -0.5, 0))
+			_camera.look_at(_camera.global_position + _frente() * cos(_inclinacao) + Vector3(0, sin(_inclinacao), 0))
 
 
 ## Direção "para frente" das câmeras de perto, no chão.
@@ -650,6 +658,7 @@ func _sem_atravessar_paredes(de: Vector3, ate: Vector3) -> Vector3:
 func usar_camera(modo: int) -> void:
 	modo_camera = modo as Camera
 	jogador.mostrar_modelo(modo_camera != Camera.PRIMEIRA_PESSOA)
+	_inclinacao = INCLINACAO_INICIAL_1P if modo_camera == Camera.PRIMEIRA_PESSOA else 0.0
 	_paredes_altas.visible = modo_camera != Camera.DE_CIMA
 	_camera.fov = 46.0 if modo_camera == Camera.DE_CIMA else 64.0
 	if modo_camera != Camera.DE_CIMA:
@@ -668,18 +677,20 @@ func proxima_camera() -> void:
 func _unhandled_input(evento: InputEvent) -> void:
 	# arrastar um dedo (fora do joystick) gira a visão nas câmeras de perto
 	if evento is InputEventScreenDrag and evento.index != _joystick.dedo:
-		_girar_visao(evento.relative.x)
+		_girar_visao(evento.relative)
 	elif evento is InputEventMouseMotion and evento.device != InputEvent.DEVICE_ID_EMULATION \
 			and evento.button_mask & MOUSE_BUTTON_MASK_LEFT:
-		_girar_visao(evento.relative.x)
+		_girar_visao(evento.relative)
 	elif evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_C:
 		proxima_camera()
 
 
-func _girar_visao(pixels: float) -> void:
+func _girar_visao(pixels: Vector2) -> void:
 	if modo_camera == Camera.DE_CIMA:
 		return
-	_giro -= pixels * GIRO_ARRASTO
+	_giro -= pixels.x * GIRO_ARRASTO
+	var limites := INCLINACAO_1P if modo_camera == Camera.PRIMEIRA_PESSOA else INCLINACAO_PERTO
+	_inclinacao = clampf(_inclinacao - pixels.y * GIRO_ARRASTO, limites.x, limites.y)
 	_girou_ha = 0.0
 
 

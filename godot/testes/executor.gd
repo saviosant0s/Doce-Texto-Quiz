@@ -673,6 +673,15 @@ func _testar_cozinha() -> void:
 	cozinha.proxima_camera()
 	verificar(cozinha.modo_camera == Cozinha.Camera.PRIMEIRA_PESSOA and Progresso.config["camera_cozinha"] == Cozinha.Camera.PRIMEIRA_PESSOA, "1ª pessoa, e a escolha fica salva")
 	verificar(jogador.pilha().is_visible_in_tree(), "em 1ª pessoa a pilha de doces continua aparecendo")
+	var antes: float = cozinha._inclinacao
+	var olhar := InputEventScreenDrag.new()
+	olhar.index = 1
+	olhar.relative = Vector2(0, -60)
+	cozinha._unhandled_input(olhar)
+	verificar(cozinha._inclinacao > antes + 0.3, "1ª pessoa: arrastar para cima olha para cima")
+	olhar.relative = Vector2(0, 5000)
+	cozinha._unhandled_input(olhar)
+	verificar(is_equal_approx(cozinha._inclinacao, Cozinha.INCLINACAO_1P.x), "...e para baixo, até um limite")
 	cozinha.usar_camera(Cozinha.Camera.DE_CIMA)
 	jogador.global_position = Cozinha.SAIDA
 	verificar(await _esperar_tela("Inicio"), "o tapete SAIR volta (sem histórico: início)")

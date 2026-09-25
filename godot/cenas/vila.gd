@@ -26,7 +26,11 @@ const PERTO_DISTANCIA := 4.3
 const PERTO_ALTURA := 2.3
 const ALTURA_OLHOS := 1.35
 const GIRO_JOYSTICK := 2.4  # radianos por segundo (1ª pessoa)
-const GIRO_ARRASTO := 0.008  # radianos por pixel arrastado
+const GIRO_ARRASTO := 0.01  # radianos por pixel arrastado
+## Inclinação da visão (arrastar o dedo para cima/baixo), em radianos.
+const INCLINACAO_1P := Vector2(-1.2, 1.1)  # 1ª pessoa: olhar para baixo / para cima
+const INCLINACAO_PERTO := Vector2(-0.5, 0.7)
+const INCLINACAO_INICIAL_1P := -0.12
 const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 
 ## Prédios da vila. "cena" = tela aberta ao entrar ("" = ainda não existe).
@@ -55,6 +59,8 @@ var _botao_entrar: Button
 var modo_camera := Camera.AEREA
 ## Para onde a câmera olha (radianos no eixo Y; 0 = norte, para dentro da vila).
 var _giro := 0.0
+## Para cima (+) ou para baixo (-) nas câmeras de perto (ver INCLINACAO_*).
+var _inclinacao := 0.0
 var _nuvens: Array = []
 ## Animação de entrar num prédio em andamento.
 var _entrando := false
@@ -139,13 +145,26 @@ func _process(delta: float) -> void:
 			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, CAMERA_SUAVIDADE * delta))
 			_camera.look_at(_camera.global_position - CAMERA_DISTANCIA + Vector3(0, 0.8, 0))
 		Camera.PERTO:
-			var alvo := cabeca - _frente() * PERTO_DISTANCIA + Vector3(0, PERTO_ALTURA - ALTURA_OLHOS + 0.6, 0)
+			var alvo := _posicao_perto(cabeca, PERTO_DISTANCIA, PERTO_ALTURA - ALTURA_OLHOS + 0.6)
 			alvo = _sem_atravessar_paredes(cabeca, alvo)
 			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
-			_camera.look_at(cabeca + _frente() * 1.5)
+			_camera.look_at(cabeca + _frente() * 1.5 + Vector3(0, _inclinacao * 2.0, 0))
 		Camera.PRIMEIRA_PESSOA:
 			_camera.global_position = cabeca + _frente() * 0.25
-			_camera.look_at(_camera.global_position + _frente() + Vector3(0, -0.12, 0))
+			_camera.look_at(_camera.global_position + _olhar_1p())
+
+
+## Câmera de perto: gira em volta da cabeça do doce; olhando para cima ela
+## desce, olhando para baixo ela sobe.
+func _posicao_perto(cabeca: Vector3, distancia: float, altura: float) -> Vector3:
+	var raio := Vector2(distancia, altura).length()
+	var elevacao := clampf(atan2(altura, distancia) - _inclinacao, -0.05, 1.35)
+	return cabeca - _frente() * raio * cos(elevacao) + Vector3(0, raio * sin(elevacao), 0)
+
+
+## Para onde se olha em 1ª pessoa (frente inclinada para cima/baixo).
+func _olhar_1p() -> Vector3:
+	return _frente() * cos(_inclinacao) + Vector3(0, sin(_inclinacao), 0)
 
 
 ## Se um prédio ficar entre o doce e a câmera, a câmera chega mais perto.
@@ -165,6 +184,7 @@ func _sem_atravessar_paredes(de: Vector3, ate: Vector3) -> Vector3:
 func usar_camera(modo: int) -> void:
 	modo_camera = modo as Camera
 	jogador.mostrar_modelo(modo_camera != Camera.PRIMEIRA_PESSOA)
+	_inclinacao = INCLINACAO_INICIAL_1P if modo_camera == Camera.PRIMEIRA_PESSOA else 0.0
 	if modo_camera == Camera.AEREA:
 		_giro = 0.0
 	else:
@@ -219,11 +239,11 @@ func _unhandled_input(evento: InputEvent) -> void:
 	# mesmo com o outro dedo andando no joystick
 	if evento is InputEventScreenDrag and evento.index != _joystick.dedo \
 			and not _dedos_em_botao.has(evento.index):
-		_girar_visao(evento.relative.x)
+		_girar_visao(evento.relative)
 		return
 	if evento is InputEventMouseMotion and evento.device != InputEvent.DEVICE_ID_EMULATION \
 			and evento.button_mask & MOUSE_BUTTON_MASK_LEFT:
-		_girar_visao(evento.relative.x)
+		_girar_visao(evento.relative)
 		return
 	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_C:
 		proxima_camera()
@@ -239,10 +259,12 @@ func _unhandled_input(evento: InputEvent) -> void:
 		entrar(_porta_atual)
 
 
-func _girar_visao(pixels: float) -> void:
+func _girar_visao(pixels: Vector2) -> void:
 	if modo_camera == Camera.AEREA:
 		return
-	_giro -= pixels * GIRO_ARRASTO
+	_giro -= pixels.x * GIRO_ARRASTO
+	var limites := INCLINACAO_1P if modo_camera == Camera.PRIMEIRA_PESSOA else INCLINACAO_PERTO
+	_inclinacao = clampf(_inclinacao - pixels.y * GIRO_ARRASTO, limites.x, limites.y)
 	_girou_ha = 0.0
 
 
