@@ -4,10 +4,10 @@ extends Control
 ## Na revisão, mostra quantas perguntas erradas o jogador corrigiu.
 
 const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
-const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
-const ICONE_BAU := preload("res://assets/baus/bau_doce.svg")
-const ICONE_XP := preload("res://assets/icones/pular.svg")
+const ICONE_MOEDA := Itens.MOEDA
+const ICONE_ACUCAR := Itens.ACUCAR
+const ICONE_BAU := Itens.BAU_DOCE
+const ICONE_XP := Itens.XP
 ## Personagem mostrado (nome como em Personagens.textura).
 var _personagem := "brigadeiro_triste"
 
@@ -22,13 +22,13 @@ func _ready() -> void:
 	else:
 		_mostrar_partida(r)
 	# prêmios numa linha só, todos iguais: ícone, número e legenda
-	_premio(ICONE_MOEDA, "+%d" % r["moedas"], "MOEDAS")
+	_premio(ICONE_MOEDA, "+%d" % r["moedas"], "MOEDAS", false)
 	if r.get("acucar", 0) > 0:  # vai para a Minha Confeitaria
-		_premio(ICONE_ACUCAR, "+%d" % r["acucar"], "AÇÚCAR")
+		_premio(ICONE_ACUCAR, "+%d" % r["acucar"], "AÇÚCAR", false)
 	if r.get("bau", false):  # baú surpresa (partida aprovada)
 		_premio(ICONE_BAU, "+1", "BAÚ", false)
 	if r.get("xp", 0) > 0:
-		_premio(ICONE_XP, "+%d" % r["xp"], "XP")
+		_premio(ICONE_XP, "+%d" % r["xp"], "XP", false)
 	%Destaques.visible = %Destaques.get_child_count() > 0
 	%Personagem.texture = Personagens.textura(_personagem)
 	Personagens.animar(%Personagem, _personagem)  # doce 3D vivo, se o aparelho aguentar
@@ -176,7 +176,7 @@ func _premio(icone: Texture2D, numero: String, legenda: String, pintar := true) 
 	imagem.texture = icone
 	if pintar:
 		imagem.modulate = Cores.ROXO
-	imagem.custom_minimum_size = Vector2(0, 34)
+	imagem.custom_minimum_size = Vector2(0, 46)
 	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	coluna.add_child(imagem)

@@ -7,7 +7,7 @@ extends Control
 
 const ICONE_CADEADO := preload("res://assets/icones/cadeado.svg")
 const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
+const ICONE_MOEDA := Itens.MOEDA
 const ABAS := ["TÍTULOS", "CONQUISTAS", "ESTATÍSTICAS"]
 const NOMES_ASSUNTOS := {"word": "WORD (TEXTOS)", "excel": "EXCEL (PLANILHAS)", "geral": "OFFICE EM GERAL"}
 
@@ -338,7 +338,7 @@ func _icone(textura: Texture2D, cor: Color, tamanho: int) -> TextureRect:
 func _valor_em_moedas(texto: String, cor: Color) -> HBoxContainer:
 	var linha := HBoxContainer.new()
 	linha.add_theme_constant_override("separation", 4)
-	var icone := _icone(ICONE_MOEDA, cor, 26)
+	var icone := _icone(ICONE_MOEDA, Color.WHITE, 26)
 	icone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	linha.add_child(icone)
 	var rotulo := Label.new()

@@ -31,7 +31,7 @@ const GIRO_ARRASTO := 0.01  # radianos por pixel arrastado
 const INCLINACAO_1P := Vector2(-1.2, 1.1)  # 1ª pessoa: olhar para baixo / para cima
 const INCLINACAO_PERTO := Vector2(-0.5, 0.7)
 const INCLINACAO_INICIAL_1P := -0.12
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
+const ICONE_MOEDA := Itens.MOEDA
 
 ## Prédios da vila. "cena" = tela aberta ao entrar ("" = ainda não existe).
 const PREDIOS := [
@@ -673,7 +673,6 @@ func _criar_interface() -> void:
 	moedas.add_child(linha)
 	var icone := TextureRect.new()
 	icone.texture = ICONE_MOEDA
-	icone.modulate = Cores.AMARELO
 	icone.custom_minimum_size = Vector2(24, 24)
 	icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

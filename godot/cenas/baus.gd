@@ -4,15 +4,15 @@ extends Control
 ## como cartas virando, na cor da raridade. Regras em scripts/baus.gd.
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
-const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
+const ICONE_MOEDA := Itens.MOEDA
+const ICONE_ACUCAR := Itens.ACUCAR
 const ICONE_DOCE := preload("res://assets/icones/doce.svg")
 const TEXTURAS := {
-	"doce": preload("res://assets/baus/bau_doce.svg"),
-	"prata": preload("res://assets/baus/bau_prata.svg"),
-	"ouro": preload("res://assets/baus/bau_ouro.svg"),
+	"doce": Itens.BAU_DOCE,
+	"prata": Itens.BAU_PRATA,
+	"ouro": Itens.BAU_OURO,
 }
-const BAU_ABERTO := preload("res://assets/laboratorio/bau_aberto.svg")
+const BAU_ABERTO := Itens.BAU_ABERTO
 const DE_ONDE := {
 	"doce": "Passe numa partida do quiz (até 5 por dia)",
 	"prata": "Complete as missões do dia ou suba de nível",
@@ -99,7 +99,6 @@ func _montar() -> void:
 	moedas.add_child(linha)
 	var icone := TextureRect.new()
 	icone.texture = ICONE_MOEDA
-	icone.modulate = Cores.AMARELO
 	icone.custom_minimum_size = Vector2(30, 30)
 	icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -241,7 +240,7 @@ func abrir_bau(tipo: String, sorteio: RandomNumberGenerator = null) -> void:
 		tween.tween_property(imagem, "rotation", 0.0, 0.05)
 		tween.tween_interval(0.15)
 	tween.tween_callback(func():
-		imagem.texture = BAU_ABERTO
+		imagem.texture = Itens.bau_aberto(tipo)
 		titulo.text = Baus.NOMES[tipo]
 		Audio.tocar("construir"))
 	tween.tween_property(imagem, "custom_minimum_size", Vector2(160, 130), 0.2)
@@ -316,7 +315,6 @@ func _carta(item: Dictionary) -> PanelContainer:
 		"moedas":
 			estilo.bg_color = Cores.ROXO_ESCURO
 			imagem.texture = ICONE_MOEDA
-			imagem.modulate = Cores.AMARELO
 			linha1.text = "+%d" % item["quantidade"]
 			linha2.text = "MOEDAS"
 		_:

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dchyjqgepxt4o"
-path="res://.godot/imported/acucar.svg-f1f8a431a6e721a19794379ba6f83e8b.ctex"
+uid="uid://dwnydugy64gs6"
+path="res://.godot/imported/bau_doce.png-15d5863c9d9886442a5ed3f528c2b5c1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icones/acucar.svg"
-dest_files=["res://.godot/imported/acucar.svg-f1f8a431a6e721a19794379ba6f83e8b.ctex"]
+source_file="res://assets/itens/bau_doce.png"
+dest_files=["res://.godot/imported/bau_doce.png-15d5863c9d9886442a5ed3f528c2b5c1.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

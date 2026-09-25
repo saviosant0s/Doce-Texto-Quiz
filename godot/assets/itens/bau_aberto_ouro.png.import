@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://g8i0pa8r7yx6"
-path="res://.godot/imported/bau_doce.svg-e9fc582f82e5e5f65c5af02c8bb6a4d3.ctex"
+uid="uid://rg12foklm52r"
+path="res://.godot/imported/bau_aberto_ouro.png-63d0bb9d096339ffeb321348d87b0104.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/baus/bau_doce.svg"
-dest_files=["res://.godot/imported/bau_doce.svg-e9fc582f82e5e5f65c5af02c8bb6a4d3.ctex"]
+source_file="res://assets/itens/bau_aberto_ouro.png"
+dest_files=["res://.godot/imported/bau_aberto_ouro.png-63d0bb9d096339ffeb321348d87b0104.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

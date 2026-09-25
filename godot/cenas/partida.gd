@@ -10,7 +10,7 @@ const ICONE_CERTO := preload("res://assets/icones/certo.svg")
 const ICONE_ERRADO := preload("res://assets/icones/errado.svg")
 const ICONE_METADE := preload("res://assets/icones/metade.svg")
 const ICONE_RELOGIO_MAIS := preload("res://assets/icones/relogio_mais.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
+const ICONE_MOEDA := Itens.MOEDA
 
 var _perguntas: Array
 var _indice := 0
@@ -174,7 +174,6 @@ func _valor_em_moedas(texto: String, tamanho_icone: int, tamanho_texto: int) -> 
 	linha.add_theme_constant_override("separation", 3)
 	var icone := TextureRect.new()
 	icone.texture = ICONE_MOEDA
-	icone.modulate = Cores.AMARELO
 	icone.custom_minimum_size = Vector2(tamanho_icone, tamanho_icone)
 	icone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5wo01i0mqx1o"
-path="res://.godot/imported/bau.svg-cce28b2e2cdbf850636f80018e5d4685.ctex"
+uid="uid://bdwgp8jhvrl78"
+path="res://.godot/imported/bau_prata.png-c6d19f3a744d84c8d04311385bdc5d13.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/laboratorio/bau.svg"
-dest_files=["res://.godot/imported/bau.svg-cce28b2e2cdbf850636f80018e5d4685.ctex"]
+source_file="res://assets/itens/bau_prata.png"
+dest_files=["res://.godot/imported/bau_prata.png-c6d19f3a744d84c8d04311385bdc5d13.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

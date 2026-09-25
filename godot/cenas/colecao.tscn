@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://cenas/colecao.gd" id="1"]
 [ext_resource type="Script" path="res://componentes/fundo.gd" id="2"]
 [ext_resource type="Texture2D" path="res://assets/icones/voltar.svg" id="3"]
-[ext_resource type="Texture2D" path="res://assets/icones/moeda.svg" id="4"]
+[ext_resource type="Texture2D" path="res://assets/itens/moeda.png" id="4"]
 
 [node name="Colecao" type="Control"]
 layout_mode = 3
@@ -80,7 +80,6 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="Icone" type="TextureRect" parent="Margem/Coluna/Topo/Moedas/Linha"]
-modulate = Color(0.956863, 0.878431, 0.219608, 1)
 custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 size_flags_vertical = 4

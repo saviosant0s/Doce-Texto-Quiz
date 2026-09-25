@@ -4,13 +4,13 @@ extends Control
 ## scripts/experiencia.gd.
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
-const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
+const ICONE_MOEDA := Itens.MOEDA
+const ICONE_ACUCAR := Itens.ACUCAR
 const ICONE_CERTO := preload("res://assets/icones/certo.svg")
 const TEXTURAS_BAU := {
-	"doce": preload("res://assets/baus/bau_doce.svg"),
-	"prata": preload("res://assets/baus/bau_prata.svg"),
-	"ouro": preload("res://assets/baus/bau_ouro.svg"),
+	"doce": Itens.BAU_DOCE,
+	"prata": Itens.BAU_PRATA,
+	"ouro": Itens.BAU_OURO,
 }
 
 var _nivel: Label
@@ -100,7 +100,7 @@ func _montar() -> void:
 	_botao_baus.theme_type_variation = &"Alternativa"
 	_botao_baus.icon = TEXTURAS_BAU["doce"]
 	_botao_baus.add_theme_constant_override("icon_max_width", 44)
-	_botao_baus.add_theme_color_override("icon_normal_color", Color.WHITE)
+	Itens.sem_tinta(_botao_baus)
 	_botao_baus.custom_minimum_size = Vector2(0, 72)
 	_botao_baus.pressed.connect(Telas.abrir.bind("baus"))
 	topo.add_child(_botao_baus)
@@ -165,12 +165,15 @@ func _montar_entrada() -> void:
 		if premio.has("moedas"):
 			texto += "%d MOEDAS" % premio["moedas"]
 			cartao.icon = ICONE_MOEDA
+			Itens.sem_tinta(cartao)
 		elif premio.has("acucar"):
 			texto += "%d AÇÚCAR" % premio["acucar"]
 			cartao.icon = ICONE_ACUCAR
+			Itens.sem_tinta(cartao)
 		else:
 			texto += Baus.NOMES[premio["bau"]].replace("BAÚ DE ", "BAÚ ")
 			cartao.icon = TEXTURAS_BAU[premio["bau"]]
+			Itens.sem_tinta(cartao)
 		if feito:
 			texto = "DIA %d\nPEGO!" % numero
 			cartao.icon = ICONE_CERTO

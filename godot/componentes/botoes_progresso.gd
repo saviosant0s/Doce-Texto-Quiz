@@ -5,7 +5,7 @@ extends HBoxContainer
 ## baús fechados). Fica na tela inicial e na vila.
 
 const ICONE_MISSOES := preload("res://assets/icones/missoes.svg")
-const BAU := preload("res://assets/baus/bau_doce.svg")
+const BAU := Itens.BAU_DOCE
 
 var _nivel: Label
 var _barra: ProgressBar

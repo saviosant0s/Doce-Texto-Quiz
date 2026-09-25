@@ -20,6 +20,9 @@ static func montar(id: String, pai: Node3D) -> bool:
 	var corpo := Node3D.new()
 	corpo.name = "Corpo"
 	pai.add_child(corpo)
+	if Itens3D.existe(id):  # moeda, açúcar, XP e baús, no mesmo estilo
+		Itens3D.montar(id, corpo)
+		return true
 	if ResourceLoader.exists(PASTA_GLB % id):
 		Pecas3D.carregar_glb(corpo, PASTA_GLB % id)
 		return true

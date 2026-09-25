@@ -8,11 +8,11 @@ const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
 const ICONE_CADEADO := preload("res://assets/icones/cadeado.svg")
 const ICONE_COROA := preload("res://assets/icones/coroa.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
-const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
-const BAU := preload("res://assets/laboratorio/bau.svg")
-const BAU_CHEFE := preload("res://assets/laboratorio/bau_chefe.svg")
-const BAU_ABERTO := preload("res://assets/laboratorio/bau_aberto.svg")
+const ICONE_MOEDA := Itens.MOEDA
+const ICONE_ACUCAR := Itens.ACUCAR
+const BAU := Itens.BAU_MADEIRA
+const BAU_CHEFE := Itens.BAU_CHEFE
+const BAU_ABERTO := Itens.BAU_ABERTO
 const PASSO_X := 150.0
 const INICIO_X := 150.0
 const ESPACO_CAPITULO := 110.0
@@ -109,7 +109,7 @@ func _montar_topo() -> void:
 	topo.add_child(espaco)
 	_rotulo_estrelas = _contador(topo, ICONE_ESTRELA, Cores.OURO)
 	_rotulo_acucar = _contador(topo, ICONE_ACUCAR, Color.WHITE)
-	_rotulo_moedas = _contador(topo, ICONE_MOEDA, Cores.AMARELO)
+	_rotulo_moedas = _contador(topo, ICONE_MOEDA, Color.WHITE)
 
 
 func _contador(pai: Control, icone_textura: Texture2D, cor: Color) -> Label:
@@ -480,7 +480,7 @@ func abrir_bau(id: String, sorteio: RandomNumberGenerator = null) -> void:
 	if conteudo["sorte"]:
 		var sorte := _rotulo(premio, "SORTE GRANDE! PRÊMIO EM DOBRO!", 30)
 		sorte.add_theme_color_override("font_color", Cores.AMARELO)
-	_linha_premio(premio, ICONE_MOEDA, Cores.AMARELO, conteudo["moedas"], "MOEDAS")
+	_linha_premio(premio, ICONE_MOEDA, Color.WHITE, conteudo["moedas"], "MOEDAS")
 	_linha_premio(premio, ICONE_ACUCAR, Color.WHITE, conteudo["acucar"], "DE AÇÚCAR")
 	var ok := Button.new()
 	ok.name = "Pegar"

@@ -5,8 +5,8 @@ extends Control
 ## Regras em scripts/confeitaria.gd.
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
-const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
+const ICONE_MOEDA := Itens.MOEDA
+const ICONE_ACUCAR := Itens.ACUCAR
 const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
 const ICONE_COLECAO := preload("res://assets/icones/doce.svg")
 const ICONE_AJUDA := preload("res://assets/icones/interrogacao.svg")
@@ -102,7 +102,7 @@ func _criar_topo() -> HBoxContainer:
 	espaco.size_flags_horizontal = SIZE_EXPAND_FILL
 	topo.add_child(espaco)
 	_rotulo_acucar = _etiqueta(topo, "Acucar", ICONE_ACUCAR, Color.WHITE)
-	_rotulo_moedas = _etiqueta(topo, "Moedas", ICONE_MOEDA, Cores.AMARELO)
+	_rotulo_moedas = _etiqueta(topo, "Moedas", ICONE_MOEDA, Color.WHITE)
 	var ajuda := _botao_icone("Ajuda", ICONE_AJUDA)
 	ajuda.pressed.connect(_explicar)
 	topo.add_child(ajuda)

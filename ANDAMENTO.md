@@ -122,6 +122,14 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 26/09: **itens com identidade própria**. Moeda (de ouro com uma bala em
+  relevo), açúcar (cubinhos com cristais), XP (estrela de bala roxa) e os
+  baús (doce, prata, ouro, madeira, chefe e abertos) agora são 3D no mesmo
+  estilo dos doces personagens (`scripts/itens_3d.gd`; fotos em
+  `assets/itens/`, geradas por `ferramentas/gerar_itens_3d.sh`). As telas
+  usam só `Itens.MOEDA`, `Itens.ACUCAR`, `Itens.XP`, `Itens.bau(tipo)`, sem
+  pintar por cima (`Itens.sem_tinta` nos botões). Os ícones antigos (SVG de
+  linha) foram apagados. APK ainda não gerado com isso.
 - 26/09 (pedido do Sávio vendo os prints): **telas mais limpas**. Resultado do
   quiz: uma frase com acertos e pontos e uma linha só de prêmios (moedas,
   açúcar, baú, XP), sem as etiquetas coloridas (o "nível liberado" já é o

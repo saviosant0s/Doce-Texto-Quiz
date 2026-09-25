@@ -4,7 +4,7 @@ extends Control
 ## como companheiro; à direita, a grade com todos os doces.
 ## Regras e catálogo em scripts/colecao.gd.
 
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
+const ICONE_MOEDA := Itens.MOEDA
 const ICONE_CADEADO := preload("res://assets/icones/cadeado.svg")
 const ICONE_CORACAO := preload("res://assets/icones/coracao.svg")
 const COLUNAS := 4
@@ -59,6 +59,9 @@ func _atualizar_acao() -> void:
 	var doce := Colecao.dados(id)
 	_acao.disabled = false
 	_acao.icon = null
+	for estado in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_focus_color",
+			"icon_hover_pressed_color", "icon_disabled_color"]:
+		_acao.remove_theme_color_override(estado)  # a moeda (abaixo) tira a tinta
 	if Colecao.tem(id):
 		if Colecao.companheiro() == id:
 			_acao.text = "SEU COMPANHEIRO"
@@ -73,6 +76,7 @@ func _atualizar_acao() -> void:
 	else:
 		var preco: int = doce["preco"]
 		_acao.icon = ICONE_MOEDA
+		Itens.sem_tinta(_acao)
 		if Progresso.moedas >= preco:
 			_acao.text = "COMPRAR POR %s" % Jogo.formatar(preco)
 		else:
@@ -312,6 +316,7 @@ func _atualizar_cartao(id: String) -> void:
 	var tem := Colecao.tem(id)
 	imagem.material = null if tem else Personagens.material_silhueta()
 	icone.visible = true
+	icone.modulate = Cores.ROXO
 	if Colecao.companheiro() == id:
 		icone.texture = ICONE_CORACAO
 		texto.text = "COMPANHEIRO"
@@ -326,6 +331,7 @@ func _atualizar_cartao(id: String) -> void:
 		texto.text = "NÍVEL " + Colecao.NIVEL_DO_TITULO[doce["titulo"]]
 	else:
 		icone.texture = ICONE_MOEDA
+		icone.modulate = Color.WHITE  # a moeda tem as cores dela
 		texto.text = Jogo.formatar(doce["preco"])
 
 

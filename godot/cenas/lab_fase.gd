@@ -12,8 +12,8 @@ const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const ICONE_DICA := preload("res://assets/icones/lampada.svg")
 const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
 const ICONE_CORACAO := preload("res://assets/icones/coracao.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
-const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
+const ICONE_MOEDA := Itens.MOEDA
+const ICONE_ACUCAR := Itens.ACUCAR
 const ICONES_ACAO := {
 	"esquerda": preload("res://assets/icones/alinhar_esquerda.svg"),
 	"centro": preload("res://assets/icones/alinhar_centro.svg"),
@@ -260,7 +260,7 @@ func _terminar() -> void:
 		if r["acucar"] > 0:
 			_item_premio(premio, ICONE_ACUCAR, Color.WHITE, "+%d" % r["acucar"])
 		if r["moedas"] > 0:
-			_item_premio(premio, ICONE_MOEDA, Cores.AMARELO, "+%d" % r["moedas"])
+			_item_premio(premio, ICONE_MOEDA, Color.WHITE, "+%d" % r["moedas"])
 	elif n < 3:
 		var dica := Label.new()
 		dica.theme_type_variation = &"TextoClaro"

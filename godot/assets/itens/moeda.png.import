@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://i4cygvavffef"
-path="res://.godot/imported/bau_chefe.svg-e2872e828d0af3986f107c5d49c1e378.ctex"
+uid="uid://clva0ba3iuyx7"
+path="res://.godot/imported/moeda.png-342dfef2aa935a484841105cbd2e974d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/laboratorio/bau_chefe.svg"
-dest_files=["res://.godot/imported/bau_chefe.svg-e2872e828d0af3986f107c5d49c1e378.ctex"]
+source_file="res://assets/itens/moeda.png"
+dest_files=["res://.godot/imported/moeda.png-342dfef2aa935a484841105cbd2e974d.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

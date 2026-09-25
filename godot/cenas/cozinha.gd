@@ -57,8 +57,8 @@ const GIRO_ARRASTO := 0.01  # radianos por pixel arrastado
 const INCLINACAO_1P := Vector2(-1.2, 1.1)  # 1ª pessoa: olhar para baixo / para cima
 const INCLINACAO_PERTO := Vector2(-0.5, 0.7)
 const INCLINACAO_INICIAL_1P := -0.45
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
-const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
+const ICONE_MOEDA := Itens.MOEDA
+const ICONE_ACUCAR := Itens.ACUCAR
 
 var jogador: DoceAndante
 ## Doces que o jogador está carregando (ids, de baixo para cima).
@@ -741,7 +741,7 @@ func _criar_interface() -> void:
 	espaco.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	topo.add_child(espaco)
 	_rotulo_acucar = _etiqueta(topo, ICONE_ACUCAR, Color.WHITE)
-	_rotulo_moedas = _etiqueta(topo, ICONE_MOEDA, Cores.AMARELO)
+	_rotulo_moedas = _etiqueta(topo, ICONE_MOEDA, Color.WHITE)
 	var camera := Button.new()
 	camera.name = "Camera"
 	camera.theme_type_variation = &"BotaoIconeAmarelo"
@@ -783,6 +783,7 @@ func _criar_interface() -> void:
 	_botao_quiz.name = "JogarQuiz"
 	_botao_quiz.text = "JOGAR O QUIZ"
 	_botao_quiz.icon = ICONE_ACUCAR
+	Itens.sem_tinta(_botao_quiz)
 	_botao_quiz.expand_icon = true
 	_botao_quiz.add_theme_constant_override("icon_max_width", 26)
 	_botao_quiz.add_theme_font_size_override("font_size", 26)
