@@ -159,7 +159,12 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   - **Missões, Baús (e a Coleção aberta por eles) abrem POR CIMA da vila**,
     na hora (`Telas.abrir_rapido` / `abrir_por_cima`): a vila fica parada
     atrás e, ao voltar, continua de onde estava, sem tela de carregamento.
-  - Próximos: mais doces no catálogo; vila maior com terrenos.
+  - **12 doces novos** (catálogo com 25): jujuba, beijinho, marshmallow,
+    paçoca (comuns), cocada, pé de moleque, sorvete, pão de mel (raros),
+    quindim, churros, brownie (épicos) e bolo de aniversário (lendário), em
+    3D no mesmo estilo, com curiosidade, preço (120 a 800) e bônus. Também
+    caem nos baús surpresa.
+  - Próximo: vila maior com terrenos.
 
 - 27/09: **telas conferidas em 20:9 (celular comprido), 16:10 e 4:3
   (tablets)**, além do 16:9 de sempre. Ajustes: mapa do laboratório usa a
@@ -350,7 +355,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.591 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.663 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

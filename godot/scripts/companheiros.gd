@@ -37,6 +37,18 @@ const DOCES := {
 	"pudim": {"raridade": Raridade.EPICO, "bonus": "cozinha"},
 	"chocolate": {"raridade": Raridade.LENDARIO, "bonus": "moedas_quiz"},
 	"algodao_doce": {"raridade": Raridade.LENDARIO, "bonus": "dica_gratis"},
+	"jujuba": {"raridade": Raridade.COMUM, "bonus": "xp"},
+	"beijinho": {"raridade": Raridade.COMUM, "bonus": "acucar"},
+	"marshmallow": {"raridade": Raridade.COMUM, "bonus": "match"},
+	"pacoca": {"raridade": Raridade.COMUM, "bonus": "moedas_quiz"},
+	"cocada": {"raridade": Raridade.RARO, "bonus": "cozinha"},
+	"pe_de_moleque": {"raridade": Raridade.RARO, "bonus": "match"},
+	"sorvete": {"raridade": Raridade.RARO, "bonus": "xp"},
+	"pao_de_mel": {"raridade": Raridade.RARO, "bonus": "dica_gratis"},
+	"quindim": {"raridade": Raridade.EPICO, "bonus": "acucar"},
+	"churros": {"raridade": Raridade.EPICO, "bonus": "tempo"},
+	"brownie": {"raridade": Raridade.EPICO, "bonus": "match"},
+	"bolo": {"raridade": Raridade.LENDARIO, "bonus": "xp"},
 }
 
 

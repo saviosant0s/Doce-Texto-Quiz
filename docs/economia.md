@@ -71,7 +71,7 @@ Bônus do companheiro (só o escolhido vale; raridade multiplica: 1 / 1,25 /
 
 | No quê | Preço |
 |---|---|
-| Doces da coleção (9 à venda) | 100 a 600 (3.450 no total) |
+| Doces da coleção (21 à venda) | 100 a 800 (7.100 no total) |
 | Ajudas no quiz | 20 (+10 s) e 30 (tirar 2 alternativas) |
 | Máquinas da cozinha | brigadeiro grátis, maçã 150, cupcake 300 |
 | Melhorias das máquinas | 100+250, 200+400, 300+600 (1.850 no total) |

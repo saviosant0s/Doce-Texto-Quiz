@@ -66,8 +66,8 @@ personagens, fontes) é a mesma da versão original.
   gelatina) e peças especiais (listrada, embrulhada, bomba)
   (`scripts/doce_match.gd`, `cenas/doce_match.*`, níveis em
   `godot/dados/doce_match.json`).
-- Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
-  brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
+- Minha Coleção: 25 doces em 3D (giram com o dedo, piscam, acenam). O
+  brigadeiro vem de graça, 3 vêm com os títulos e 21 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.
 - Personagens: todos são 3D, montados por código (`scripts/doces_3d.gd`). As
   telas que mostram personagens parados usam fotos deles em
@@ -94,7 +94,7 @@ godot/
 │   ├── progresso.gd     # salvamento (com versão/migração), recordes, histórico
 │   ├── conquistas.gd    # lista de conquistas e quando cada uma é desbloqueada
 │   ├── colecao.gd       # catálogo da coleção: preços, compras, companheiro
-│   ├── doces_3d.gd      # os 13 doces 3D, montados por código
+│   ├── doces_3d.gd      # os 25 doces 3D, montados por código
 │   ├── pecas_3d.gd      # peças 3D: formas, materiais, rosto, braços e pernas
 │   ├── telas.gd         # navegação, avisos, caixa de confirmação
 │   ├── audio.gd         # música e efeitos em canais separados
