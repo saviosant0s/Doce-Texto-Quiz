@@ -514,9 +514,11 @@ func _criar_ambiente() -> void:
 	var ambiente := Environment.new()
 	ambiente.background_mode = Environment.BG_SKY
 	ambiente.sky = sky
-	ambiente.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	ambiente.ambient_light_color = Color.WHITE
-	ambiente.ambient_light_energy = 0.45  # luz em degraus: lado claro ~0,9, sombra ~0,45
+	# luz ambiente vinda do céu (azulada em cima, rosada no horizonte): as
+	# sombras ganham cor em vez de ficarem cinzas
+	ambiente.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	ambiente.ambient_light_sky_contribution = 0.6
+	ambiente.ambient_light_energy = 0.32
 	# sem reflexo do céu nas superfícies (deixava tudo desbotado)
 	ambiente.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
 	var mundo := WorldEnvironment.new()
@@ -530,10 +532,14 @@ func _criar_ambiente() -> void:
 	CenarioVila.acabamento(ambiente)
 	var sol := DirectionalLight3D.new()
 	sol.rotation_degrees = Vector3(-55, -35, 0)
-	sol.light_energy = 0.45
+	sol.light_color = Color("#FFF0D6")  # sol de fim de tarde, quentinho
+	sol.light_energy = 0.75 if CenarioVila.modo_leve() else 1.1
+	sol.light_specular = 0.8
 	sol.shadow_enabled = Qualidade.sombras()
-	sol.shadow_opacity = 0.55  # sombra suave, de desenho
-	sol.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sol.shadow_opacity = 0.8
+	sol.shadow_blur = 1.5  # borda da sombra macia
+	sol.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if Qualidade.nivel() == Qualidade.ALTA \
+		else DirectionalLight3D.SHADOW_ORTHOGONAL
 	sol.directional_shadow_max_distance = 45.0
 	add_child(sol)
 	# antisserrilhado e 3D um pouco menor (volta ao normal ao sair da vila)

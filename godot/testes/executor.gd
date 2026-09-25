@@ -582,14 +582,21 @@ func _testar_vila() -> void:
 	verificar(vila._joystick.dedo == -1 and vila._joystick.vetor == Vector2.ZERO, "soltar o dedo solta o joystick")
 	vila.usar_camera(Vila.Camera.AEREA)
 	vila.set_physics_process(true)
-	# cada prédio tem o seu jeito, e tudo tem contorno de desenho
+	# cada prédio tem o seu jeito; o cenário é realista (sem contorno)
 	var pecas := {}
 	for id in ["escola", "confeitaria", "trofeus", "fliperama"]:
 		var predio: Node3D = vila.find_child("Predio_" + id, true, false)
 		pecas[predio.get_meta("pecas")] = true
 	verificar(pecas.size() == 4, "os quatro prédios são diferentes")
 	var blocos := vila.find_children("Bloco*", "MeshInstance3D", false, false)
-	verificar(blocos.any(func(b): return b.name.begins_with("BlocoContorno")), "cenário com contorno de desenho")
+	verificar(not blocos.any(func(b): return b.name.begins_with("BlocoContorno")), "cenário realista, sem contorno de desenho")
+	var jogador_vila: Node = vila.find_child("Jogador", true, false)
+	verificar(jogador_vila.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.material_overlay != null or m.name.begins_with("BlocoContorno")),
+		"os bonecos continuam com contorno")
+	var com_relevo := vila.find_children("*", "MeshInstance3D", true, false).filter(func(b):
+		var mat := b.material_override as StandardMaterial3D
+		return mat != null and mat.normal_enabled and mat.diffuse_mode == BaseMaterial3D.DIFFUSE_BURLEY)
+	verificar(com_relevo.size() >= 5, "materiais do cenário com relevo e luz realista")
 	# a vila cresceu (terrenos, lago, mirante): os lotes e presentes ficam em
 	# blocos próprios e só são desenhados de perto
 	verificar(vila.find_children("*", "MeshInstance3D", true, false).size() < 330, "cenário juntado em poucos blocos (leve)")

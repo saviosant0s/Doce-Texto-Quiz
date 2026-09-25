@@ -197,6 +197,15 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   - **Carregamento da vila/cozinha**: a linha de cima tem a mesma largura da
     caixa de baixo ("VILA DOS / DOCES", "COZINHA DA / CONFEITARIA") e a
     barra enche aos poucos, quadro a quadro (antes aparecia já no fim).
+  - **Visual realista (vila e cozinha)**: sai a luz "em degraus" de desenho
+    (toon) e o contorno escuro do cenário (os bonecos mantêm o contorno).
+    Luz física (Burley + GGX), sol quente mais forte, luz ambiente vinda do
+    céu, sombras mais marcadas e macias (2 cascatas na qualidade ALTA).
+    Todo material de cor lisa ganha relevo gerado por ruído conforme o tipo
+    (`scripts/realismo.gd`): LISO (calda, bala: micro-imperfeições + verniz),
+    ACETINADO (chocolate, massa) e POROSO (açúcar, biscoito, algodão: poros
+    + brilho aveludado de borda). Reflexo do céu desligado: com a luz
+    realista ele deixava as cores lavadas.
   - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
     Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 
@@ -389,7 +398,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.689 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.691 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

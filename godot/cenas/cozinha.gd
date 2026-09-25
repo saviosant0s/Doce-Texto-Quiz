@@ -592,17 +592,19 @@ func _criar_ambiente() -> void:
 	ambiente.background_mode = Environment.BG_SKY
 	ambiente.sky = sky
 	ambiente.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	ambiente.ambient_light_color = Color.WHITE
-	ambiente.ambient_light_energy = 0.35 if CenarioVila.modo_leve() else 0.5
+	ambiente.ambient_light_color = Color("#FFF4E8")  # luz de dentro, amarelada
+	ambiente.ambient_light_energy = 0.45 if CenarioVila.modo_leve() else 0.6
 	CenarioVila.acabamento(ambiente)
 	var mundo := WorldEnvironment.new()
 	mundo.environment = ambiente
 	add_child(mundo)
 	var luz := DirectionalLight3D.new()
 	luz.rotation_degrees = Vector3(-60, -25, 0)
-	luz.light_energy = 0.3 if CenarioVila.modo_leve() else 0.55
+	luz.light_color = Color("#FFF2DE")
+	luz.light_energy = 0.7 if CenarioVila.modo_leve() else 1.05
 	luz.shadow_enabled = Qualidade.sombras()
-	luz.shadow_opacity = 0.5
+	luz.shadow_opacity = 0.7
+	luz.shadow_blur = 1.5
 	luz.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	luz.directional_shadow_max_distance = 30.0
 	add_child(luz)

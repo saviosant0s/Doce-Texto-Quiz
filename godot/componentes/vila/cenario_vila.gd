@@ -771,24 +771,39 @@ static func acabamento(ambiente: Environment) -> void:
 	ambiente.tonemap_white = 4.0
 	ambiente.glow_enabled = true
 	ambiente.glow_bloom = 0.0  # nada de brilho nas superfícies comuns
-	ambiente.glow_hdr_threshold = 1.0  # só o que passa de 1 (emissão) brilha
+	ambiente.glow_hdr_threshold = 1.8  # só o que emite luz passa disso e brilha
 	ambiente.glow_hdr_scale = 2.0
 	ambiente.glow_intensity = 0.8
 	ambiente.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
 	ambiente.ssao_enabled = false
 	ambiente.ssil_enabled = false
 	ambiente.sdfgi_enabled = false
-	# o céu reflete nos metais (ouro, inox); no modo leve deixava tudo desbotado
-	ambiente.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	# sem reflexo do céu clarinho: com a luz realista ele "lavava" as cores
+	# (chocolate ficava cinza); o brilho vem do sol (especular)
+	ambiente.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
 	ambiente.adjustment_enabled = true
 	ambiente.adjustment_saturation = 1.25  # o ACES tira um pouco da cor dos doces
 	ambiente.adjustment_contrast = 1.04
 
 const CONTORNO := preload("res://tema/contorno.gdshader")
+
+
+static func _de_boneco(peca: Node, raiz: Node) -> bool:
+	var no := peca.get_parent()
+	while no != null:
+		if no is DoceAndante:
+			return true
+		if no == raiz:
+			break
+		no = no.get_parent()
+	return raiz is DoceAndante
+
 const COR_CONTORNO := Color("#3A2060")
 
-## Deixa tudo em `raiz` com cara de desenho: luz em degraus (toon) e contorno
-## escuro nas peças maiores (as pequenas, como olhos e confeitos, ficam sem).
+## Acabamento de tudo em `raiz`: materiais realistas (Realismo.acabar: luz e
+## reflexo físicos, relevo nas superfícies lisas) e, só nos BONECOS (doces que
+## andam), o contorno escuro de desenho — o cenário fica sem contorno, mais
+## real. (O nome ficou da época em que tudo era "desenho", com luz em degraus.)
 static func estilo_desenho(raiz: Node, espessura := 0.035) -> void:
 	var contornos := {}
 	for no in raiz.find_children("*", "MeshInstance3D", true, false):
@@ -796,12 +811,9 @@ static func estilo_desenho(raiz: Node, espessura := 0.035) -> void:
 		var mat := peca.material_override as StandardMaterial3D
 		if mat == null or mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
 			continue
-		if not mat.has_meta("real"):  # texturas reais ficam com a luz normal (mais natural)
-			mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-			# brilho de desenho (um reflexo marcado) nas coisas lisas e nos
-			# metais; as ásperas (biscoito, algodão, grama) ficam foscas
-			mat.specular_mode = BaseMaterial3D.SPECULAR_TOON if mat.roughness < 0.6 or mat.metallic > 0.3 \
-				else BaseMaterial3D.SPECULAR_DISABLED
+		Realismo.acabar(mat)
+		if not _de_boneco(peca, raiz):
+			continue
 		if mat.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or peca.mesh is PlaneMesh:
 			continue
 		var caixa := peca.get_aabb()
