@@ -17,6 +17,7 @@ func _ready() -> void:
 	_testar_estatisticas()
 	_testar_colecao()
 	_testar_confeitaria()
+	_testar_doce_match()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -347,6 +348,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_vila()
 	await _testar_tela_colecao()
 	await _testar_tela_confeitaria()
+	await _testar_tela_doce_match()
 	await _testar_configuracoes()
 
 	# Botão "voltar" fora da partida
@@ -521,9 +523,7 @@ func _testar_vila() -> void:
 		await get_tree().physics_frame
 	verificar(vila._porta_atual == "escola", "chegou na porta da escola")
 	verificar(vila._botao_entrar.visible and vila._botao_entrar.text == "JOGAR O QUIZ", "aparece o botão de entrar")
-	vila.entrar("fliperama")
-	await get_tree().create_timer(0.3).timeout
-	verificar(get_tree().current_scene == vila, "fliperama ainda não abre nada (em breve)")
+	verificar(Vila.PREDIOS.filter(func(p): return p["id"] == "fliperama")[0]["cena"] == "doce_match", "o Fliperama abre o Doce Match")
 	vila._botao_entrar.pressed.emit()
 	verificar(vila._entrando and not vila._botao_entrar.visible, "entrar começa a animação")
 	await get_tree().create_timer(0.6).timeout
@@ -717,6 +717,68 @@ func _testar_tela_confeitaria() -> void:
 	await _esperar_tela("Niveis")
 	verificar(get_tree().current_scene.find_child("Confeitaria", true, false) is Button, "botão da confeitaria no menu dos níveis")
 
+
+# --- Doce Match ----------------------------------------------------------------------
+
+func _testar_doce_match() -> void:
+	_secao("doce match")
+	var jogo := DoceMatch.new(7)
+	verificar(jogo.filas().is_empty(), "o tabuleiro começa sem filas prontas")
+	verificar(not jogo.jogada_possivel().is_empty(), "e com pelo menos uma jogada")
+	verificar(not jogo.trocar(Vector2i(0, 0), Vector2i(2, 0)), "só troca peças vizinhas")
+	# tabuleiro montado à mão: trocar (2,1) com (2,0) forma uma fila de 3 na linha 0
+	for y in DoceMatch.ALTURA:
+		for x in DoceMatch.LARGURA:
+			jogo.grade[y][x] = (x + y * 2) % 3 + 3  # tipos 3,4,5 sem filas
+	jogo.grade[0][0] = 0
+	jogo.grade[0][1] = 0
+	jogo.grade[0][2] = 1
+	jogo.grade[1][2] = 0
+	verificar(jogo.filas().is_empty(), "(montado sem filas)")
+	var antes := jogo.jogadas
+	jogo.grade[7][7] = jogo.grade[7][6]  # duas iguais lado a lado: trocar não muda nada
+	var copia := jogo.grade.duplicate(true)
+	verificar(not jogo.trocar(Vector2i(6, 7), Vector2i(7, 7)) and jogo.grade == copia and jogo.jogadas == antes,
+		"troca que não forma fila é desfeita e não gasta jogada")
+	verificar(jogo.trocar(Vector2i(2, 1), Vector2i(2, 0)) and jogo.jogadas <= antes - 1, "troca que forma fila vale e gasta uma jogada")
+	var passos := jogo.resolver()
+	verificar(passos.size() >= 1 and jogo.pontos >= 3 * DoceMatch.PONTOS_POR_PECA, "a fila some e dá pontos")
+	var vazias := 0
+	for linha in jogo.grade:
+		vazias += linha.count(-1)
+	verificar(vazias == 0 and jogo.filas().is_empty(), "as peças caem e o tabuleiro fica cheio, sem filas")
+	verificar(passos.size() < 2 or passos[1]["combo"] == 2, "cascata conta como combo")
+	var outro := DoceMatch.new(3)
+	outro.jogadas = 0
+	var jogada := outro.jogada_possivel()
+	verificar(outro.acabou() and not outro.trocar(jogada[0], jogada[1]), "sem jogadas, a partida acaba")
+	outro.pontos = DoceMatch.METAS[1]
+	verificar(outro.estrelas() == 2 and outro.moedas() > 0, "estrelas pela pontuação e moedas no fim")
+
+
+func _testar_tela_doce_match() -> void:
+	Telas.ir_para("doce_match")
+	verificar(await _esperar_tela("DoceMatch"), "abre o Doce Match")
+	var tela := get_tree().current_scene
+	await get_tree().create_timer(0.4).timeout
+	verificar(tela._tabuleiro.get_child_count() == DoceMatch.LARGURA * DoceMatch.ALTURA, "64 peças no tabuleiro")
+	var jogada: Array = tela.jogo.jogada_possivel()
+	await tela.jogar(jogada[0], jogada[1])
+	verificar(tela.jogo.jogadas == DoceMatch.JOGADAS - 1 and tela.jogo.pontos > 0, "jogada pela tela conta pontos")
+	var cheias := 0
+	for linha in tela._pecas:
+		for peca in linha:
+			if peca != null:
+				cheias += 1
+	verificar(cheias == 64, "depois da cascata, todas as casas têm peça")
+	var moedas := Progresso.moedas
+	tela.jogo.jogadas = 1
+	jogada = tela.jogo.jogada_possivel()
+	await tela.jogar(jogada[0], jogada[1])
+	verificar(tela.find_child("Fim", true, false) != null, "acabaram as jogadas: aparece o fim da partida")
+	verificar(Progresso.moedas == moedas + tela.jogo.moedas(), "o fim dá as moedas")
+	tela.find_child("JogarDeNovo", true, false).pressed.emit()
+	verificar(tela.jogo.jogadas == DoceMatch.JOGADAS, "jogar de novo recomeça")
 
 func _testar_configuracoes() -> void:
 	_secao("configurações")

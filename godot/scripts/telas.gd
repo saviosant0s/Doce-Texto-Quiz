@@ -14,6 +14,7 @@ const CENAS := {
 	"colecao": "res://cenas/colecao.tscn",
 	"confeitaria": "res://cenas/confeitaria.tscn",
 	"cozinha": "res://cenas/cozinha.tscn",
+	"doce_match": "res://cenas/doce_match.tscn",
 	"vila": "res://cenas/vila.tscn",
 	"carregamento": "res://cenas/carregamento.tscn",
 	"partida": "res://cenas/partida.tscn",

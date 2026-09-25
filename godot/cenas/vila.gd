@@ -42,7 +42,7 @@ const PREDIOS := [
 	{"id": "trofeus", "nome": "TROFÉUS", "posicao": Vector3(13, 0, -2), "parede": "#C9B3EC",
 		"telhado": "#F2C230", "cena": "titulos", "acao": "VER TROFÉUS"},
 	{"id": "fliperama", "nome": "FLIPERAMA", "posicao": Vector3(-10, 0, -13), "parede": "#8FD3F4",
-		"telhado": "#5E3D8E", "cena": "", "acao": "FLIPERAMA"},
+		"telhado": "#5E3D8E", "cena": "doce_match", "acao": "JOGAR DOCE MATCH"},
 ]
 ## Moradores que sempre passeiam (os mascotes dos níveis).
 const MORADORES := ["bala_verde", "milho_doce"]
@@ -273,7 +273,7 @@ func entrar(id: String) -> void:
 	var dados: Dictionary = PREDIOS.filter(func(p): return p["id"] == id)[0]
 	if String(dados["cena"]).is_empty():
 		jogador.comemorar()
-		Telas.mostrar_aviso("EM BREVE: DOCE MATCH, O JOGO DAS PEÇAS DO OFFICE!")
+		Telas.mostrar_aviso("EM BREVE!")
 		return
 	if _entrando:
 		return

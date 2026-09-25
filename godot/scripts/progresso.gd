@@ -53,7 +53,7 @@ func _zerar() -> void:
 	perguntas = {}
 	estatisticas = {
 		"partidas": 0, "revisoes": 0, "respostas": 0, "acertos": 0, "tempo_total": 0.0,
-		"melhor_sequencia": 0, "moedas_ganhas": 0,
+		"melhor_sequencia": 0, "moedas_ganhas": 0, "match_recorde": 0, "match_partidas": 0,
 	}
 	conquistas = {}
 	colecao = {"doces": [], "companheiro": ""}

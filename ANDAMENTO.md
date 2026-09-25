@@ -102,7 +102,18 @@ coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
 - **Mostrar quando o doce está correndo** no joystick (ainda sem escolha).
 - Só gerar APK/executável quando o Sávio pedir (juntar vários pedidos).
 
-### Futuro: Doce Match (NÃO fazer agora)
+### ✅ Doce Match (feito em 25/09)
+`scripts/doce_match.gd` (regras, testável sem tela) e `cenas/doce_match.*`
+(tela). Abre pelo FLIPERAMA da vila. Tabuleiro 8x8, 6 peças desenhadas por
+nós (`assets/doce_match/*.svg`: folha com W, planilha com X, gráfico, célula,
+tecla com Ctrl+Z, disquete — sem logos oficiais), arrastar ou tocar para
+trocar, filas de 3+ somem, cascata com combo, 20 jogadas, estrelas em
+1.200/2.400/3.600 pontos, moedas no fim, recorde em
+`estatisticas.match_recorde`. Ideias: peças especiais (fila de 4/5), fases,
+dar açúcar também. Sem placa de vídeo não há vila, então não há Doce Match
+(o menu dos níveis está cheio; ver se cabe um botão).
+
+### (antigo) Doce Match — plano original
 Minijogo no estilo Candy Crush dentro do FLIPERAMA da vila: trocar peças
 vizinhas para alinhar 3 iguais. No lugar dos doces, **símbolos de informática
 feitos por nós** (folha com "W" azul, planilha com "X" verde, gráfico, célula,
@@ -178,7 +189,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (671 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (691 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

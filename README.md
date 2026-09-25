@@ -53,6 +53,8 @@ personagens, fontes) é a mesma da versão original.
   2 horas. Sem placa de vídeo, abre um painel 2D simples.
 - Texturas reais do cenário (grama, pedra, reboco, telhado, madeira): fotos
   CC0 do Poly Haven e ambientCG (`godot/assets/texturas/reais/LEIA-ME.md`).
+- Doce Match (Fliperama da vila): jogo de combinar 3 com peças de informática
+  desenhadas por nós (`scripts/doce_match.gd`, `cenas/doce_match.*`).
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
   brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.
