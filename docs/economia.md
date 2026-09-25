@@ -4,7 +4,7 @@ Regra de ouro: **tudo começa no quiz**. O quiz dá moedas e açúcar; a
 confeitaria e o Doce Match transformam açúcar em moedas, mais ou menos na
 mesma taxa (0,4 a 1,4 moeda por açúcar), então nenhum minijogo vira atalho
 para ganhar sem estudar. Valores no código: `scripts/jogo.gd`,
-`scripts/confeitaria.gd`, `scripts/doce_match.gd`, `scripts/colecao.gd`,
+`scripts/confeitaria.gd`, `scripts/doce_match.gd`, `scripts/laboratorio.gd`, `scripts/colecao.gd`,
 `scripts/conquistas.gd`.
 
 ## Entradas
@@ -18,6 +18,15 @@ para ganhar sem estudar. Valores no código: `scripts/jogo.gd`,
 | Revisão dos erros (por acerto) | 3 | 10 |
 | Conquistas (16) | 10 a 150 cada (~600 no total) | — |
 | Primeira máquina da cozinha | — | 50 (presente) |
+| Laboratório: fase feita (1ª vez) | 10 + 5 por estrela | 20 |
+| Laboratório: chefe (1ª vez) | 30 + 5 por estrela | 50 |
+| Laboratório: estrela nova ao repetir | 5 por estrela | — |
+| Laboratório: baú do meio do capítulo (3) | 30 a 60 × (1 / 1,25 / 1,5) | 20 a 40 × idem |
+| Laboratório: baú do chefe (3) | 80 a 150 × idem | 50 a 80 × idem |
+
+Baús: 15% de chance de "SORTE GRANDE" (tudo em dobro). O Laboratório inteiro
+(24 fases, 72 estrelas, 6 baús) dá cerca de 1.300 moedas e 1.000 de açúcar, só
+uma vez: ele também é estudo (fórmulas e formatação na prática).
 
 Partidas típicas: fácil 7/10 com 1 estrela = 45 moedas + 70 de açúcar; médio
 8/10 com 2 estrelas = 84 + 80; difícil 9/10 com 2 estrelas = 128 + 90.

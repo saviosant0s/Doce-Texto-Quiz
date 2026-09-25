@@ -2,7 +2,7 @@ class_name Vila
 extends Node3D
 ## Vila dos Doces: o jogador anda com o seu doce (o companheiro da coleção)
 ## pela vila e entra nos prédios: Escola (quiz), Confeitaria (fábrica de doces),
-## Troféus e Fliperama (em breve: Doce Match). Moradores passeiam pela praça.
+## Troféus, Fliperama (Doce Match) e Laboratório do Office. Moradores passeiam pela praça.
 ## Anda com o joystick na tela ou com as setas/WASD (Shift corre); Espaço ou o
 ## botão PULAR pula; Enter/E entra no prédio.
 ##
@@ -43,6 +43,8 @@ const PREDIOS := [
 		"telhado": "#F2C230", "cena": "titulos", "acao": "VER TROFÉUS"},
 	{"id": "fliperama", "nome": "FLIPERAMA", "posicao": Vector3(-10, 0, -13), "parede": "#8FD3F4",
 		"telhado": "#5E3D8E", "cena": "doce_match", "acao": "JOGAR DOCE MATCH"},
+	{"id": "laboratorio", "nome": "LABORATÓRIO", "posicao": Vector3(10, 0, -13), "parede": "#F3EEF9",
+		"telhado": "#7E57B1", "cena": "laboratorio", "acao": "ENTRAR NO LABORATÓRIO"},
 ]
 ## Moradores que sempre passeiam (os mascotes dos níveis).
 const MORADORES := ["bala_verde", "milho_doce"]
@@ -167,10 +169,13 @@ func _process(delta: float) -> void:
 ## Câmera de perto: gira em volta da cabeça do doce; olhando para cima ela
 ## desce, olhando para baixo ela sobe.
 ## Qual prédio o tutorial aponta agora ("" = já fez tudo): primeiro o quiz
-## (que dá moedas e açúcar), depois a confeitaria e por fim o Doce Match.
+## (que dá moedas e açúcar), depois o laboratório, a confeitaria e por fim o
+## Doce Match.
 static func proximo_passo() -> String:
 	if int(Progresso.estatisticas.get("partidas", 0)) == 0:
 		return "escola"
+	if Laboratorio.total_estrelas() == 0:
+		return "laboratorio"
 	if not Confeitaria.alguma_construida():
 		return "confeitaria"
 	if int(Progresso.estatisticas.get("match_partidas", 0)) == 0:
@@ -180,6 +185,7 @@ static func proximo_passo() -> String:
 
 const DICAS := {
 	"escola": "COMECE PELA ESCOLA: JOGUE O QUIZ PARA GANHAR MOEDAS E AÇÚCAR!",
+	"laboratorio": "NO LABORATÓRIO VOCÊ USA O WORD E O EXCEL DE VERDADE. VAMOS?",
 	"confeitaria": "AGORA VÁ À CONFEITARIA E MONTE SUA PANELA DE BRIGADEIRO!",
 	"fliperama": "NO FLIPERAMA TEM O DOCE MATCH: TROQUE AÇÚCAR POR PONTOS!",
 }

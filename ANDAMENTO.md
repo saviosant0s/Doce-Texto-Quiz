@@ -122,6 +122,32 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 26/09: **Laboratório do Office** (pedido do Sávio, primeira parte do plano
+  "estilo Vikings Rise": aventura + recompensas). Prédio novo na vila (um
+  computador gigante com teclado de degrau e frasco no telhado) e botão no
+  menu dos níveis. Tutorial da vila: Escola → Laboratório → Confeitaria →
+  Fliperama.
+  - Mapa de aventura (`cenas/laboratorio.*`): 3 capítulos × 8 fases (a 8ª é
+    o CHEFE, com várias tarefas e corações), 3 estrelas por fase, baú no
+    meio e no fim de cada capítulo (abre tremendo; 15% de SORTE GRANDE).
+  - Fases práticas (`cenas/lab_fase.*`): **Excel** com planilha e barra de
+    fórmulas (tocar nas células escreve o endereço; tocar em duas seguidas
+    vira intervalo; botões para = ; : $ etc.) e **Word** com página e fita
+    (N/I/S, alinhamentos, A-/A+, cores, TUDO, desfazer; atalhos do Word em
+    português no computador).
+  - `scripts/formulas.gd`: calcula fórmulas como o Excel em português
+    (; entre argumentos, vírgula decimal, SOMA, MÉDIA, MÁXIMO, MÍNIMO, SE,
+    CONT.SE, SOMASE, MÉDIASE, E, OU, ARRED, CONCATENAR, &, $...) e os erros
+    #DIV/0!, #NOME?, #VALOR!, explicados para o aluno.
+  - `scripts/documento_word.gd`: o documento (seleção, formatação, conferir
+    tarefa; formatar a mais não vale). Fases em `dados/laboratorio.json`
+    (a resposta certa é uma fórmula; o jogo calcula o valor esperado).
+  - Um teste resolve as 24 fases sozinho (nenhuma fica impossível).
+  - Obs.: o teste das telas do laboratório deixa um aviso "1 RID ... leaked
+    at exit" no fim (inofensivo; investigar se incomodar).
+  - **Próximos passos combinados:** (2) baú surpresa com raridades e
+    companheiros com bônus (fragmentos, garantia de épico); (3) missões do
+    dia/semana, nível do jogador e avisos na vila. APK ainda não gerado.
 - 25/09 (pedido "pode fazer tudo, só não vamos colocar na Play Store ainda"),
   tudo gravado no GitHub; **APK e executável da 0.9.0 publicados** (APK ~94 MB, perto do limite de 100 MB do GitHub):
   - **Doce Match custa 40 de açúcar** por partida (sem açúcar, manda para o
@@ -219,7 +245,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.158 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.379 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

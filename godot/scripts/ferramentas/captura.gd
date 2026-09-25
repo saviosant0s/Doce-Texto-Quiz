@@ -63,6 +63,13 @@ func _ready() -> void:
 		Progresso.confeitaria["maquinas"]["maca"]["bandeja"] = 4
 		Progresso.confeitaria["atendidos"] = 5
 		Progresso.moedas = 180
+	if args.has("lab"):
+		# --lab=N: as N primeiras fases do laboratório feitas (3, 2, 3, 1... estrelas)
+		var fases := Laboratorio.fases()
+		for i in mini(int(args["lab"]), fases.size()):
+			Progresso.laboratorio["estrelas"][fases[i]["id"]] = [3, 2, 3, 1][i % 4]
+	if args.has("lab_fase"):
+		Laboratorio.fase_atual = args["lab_fase"]
 	if args.has("acertos"):
 		_simular_partida(int(args.get("nivel", "0")), int(args["acertos"]))
 	if args.has("revisao"):
@@ -82,6 +89,22 @@ func _ready() -> void:
 		var cartoes := get_tree().current_scene.find_children("*", "Button", true, false) \
 			.filter(func(b): return b.has_method("configurar"))
 		cartoes[int(args["tocar_nivel"])].pressed.emit()
+	if args.has("digitar"):
+		await get_tree().create_timer(0.5).timeout
+		var campo: LineEdit = get_tree().current_scene.find_child("Formula", true, false)
+		campo.text = args["digitar"]
+		campo.text_changed.emit(campo.text)
+	if args.has("fazer"):
+		# --fazer=0,0,negrito,centro: números tocam palavras; o resto são ações da fita
+		await get_tree().create_timer(0.5).timeout
+		for t in args["fazer"].split(","):
+			if t.is_valid_int():
+				get_tree().current_scene._tocar_palavra(int(t))
+			else:
+				get_tree().current_scene.fazer(t)
+	if args.has("conferir"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene.conferir()
 	if args.has("selecionar"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.selecionar(args["selecionar"])

@@ -34,7 +34,7 @@ personagens, fontes) é a mesma da versão original.
   (`scripts/conquistas.gd`) e estatísticas (acerto por assunto, mais erradas).
 - Vila dos Doces: o "JOGAR" leva a uma vila 3D onde o jogador anda com o seu
   doce (joystick na tela ou setas/WASD) e entra na Escola (quiz), Confeitaria
-  (Minha Confeitaria), Troféus e Fliperama (em breve). Em aparelhos sem placa
+  (Minha Confeitaria), Troféus, Fliperama (Doce Match) e Laboratório do Office. Em aparelhos sem placa
   de vídeo, vai direto para os níveis.
   Três câmeras (botão no topo ou tecla C): aérea, perto e primeira pessoa.
   O doce acelera e freia aos poucos, corre (joystick até o fim ou Shift) e
@@ -53,6 +53,10 @@ personagens, fontes) é a mesma da versão original.
   2 horas. Sem placa de vídeo, abre um painel 2D simples.
 - Texturas reais do cenário (grama, pedra, reboco, telhado, madeira): fotos
   CC0 do Poly Haven e ambientCG (`godot/assets/texturas/reais/LEIA-ME.md`).
+- Laboratório do Office (prédio da vila e menu dos níveis): mapa de aventura
+  com 24 fases práticas de Excel (planilha com fórmulas de verdade, calculadas
+  por `scripts/formulas.gd`) e de Word (formatar uma página), chefes, estrelas
+  e baús. Fases em `godot/dados/laboratorio.json`.
 - Doce Match (Fliperama da vila): jogo de combinar 3 com peças de informática
   desenhadas por nós (`scripts/doce_match.gd`, `cenas/doce_match.*`).
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O

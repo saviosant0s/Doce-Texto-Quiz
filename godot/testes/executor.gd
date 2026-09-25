@@ -358,6 +358,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_tela_colecao()
 	await _testar_tela_confeitaria()
 	await _testar_tela_doce_match()
+	await _testar_tela_laboratorio()
 	await _testar_configuracoes()
 
 	# Botão "voltar" fora da partida
@@ -443,6 +444,10 @@ func _testar_vila() -> void:
 	Progresso.estatisticas["partidas"] = 0
 	verificar(Vila.proximo_passo() == "escola", "tutorial: sem quiz jogado -> escola")
 	Progresso.estatisticas["partidas"] = 1
+	var lab_antes: Dictionary = Progresso.laboratorio.duplicate(true)
+	Progresso.laboratorio = {"estrelas": {}, "baus": {}}
+	verificar(Vila.proximo_passo() == "laboratorio", "tutorial: sem fase do laboratório -> laboratório")
+	Progresso.laboratorio["estrelas"]["c1f1"] = 3
 	Progresso.confeitaria["maquinas"] = {}
 	verificar(Vila.proximo_passo() == "confeitaria", "tutorial: sem máquina -> confeitaria")
 	Progresso.confeitaria["maquinas"] = {"brigadeiro": {"nivel": 1, "progresso": 0.0, "bandeja": 0}}
@@ -453,6 +458,7 @@ func _testar_vila() -> void:
 	Progresso.estatisticas["partidas"] = partidas_antes
 	Progresso.estatisticas["match_partidas"] = match_antes
 	Progresso.confeitaria["maquinas"] = maquinas_antes
+	Progresso.laboratorio = lab_antes
 	vila.set_physics_process(false)  # só o teste controla o doce
 	var inicio := vila.jogador.global_position
 	for i in 20:
@@ -1086,3 +1092,82 @@ func _testar_laboratorio() -> void:
 	Progresso.laboratorio = antes
 	Progresso.moedas = moedas_antes
 	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_tela_laboratorio() -> void:
+	_secao("telas do laboratório")
+	var antes: Dictionary = Progresso.laboratorio.duplicate(true)
+	Progresso.laboratorio = {"estrelas": {}, "baus": {}}
+	Telas.ir_para("laboratorio")
+	verificar(await _esperar_tela("Laboratorio"), "abre o mapa do laboratório")
+	var mapa := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	verificar(mapa.find_child("Fase_c1f1", true, false) is Button and mapa.find_child("Fase_c3f8", true, false) is Button, "mapa com as 24 fases")
+	verificar(mapa.find_child("Bau_c1_meio", true, false) != null, "baús no mapa")
+	verificar(mapa.find_child("Jogador", true, false) != null, "o doce do jogador fica na fase atual")
+	mapa.find_child("Fase_c1f1", true, false).pressed.emit()
+	await get_tree().process_frame
+	var jogar: Button = mapa.find_child("Jogar", true, false)
+	verificar(jogar != null, "tocar na fase abre o resumo com JOGAR")
+	jogar.pressed.emit()
+	verificar(await _esperar_tela("LabFase"), "abre a fase")
+	var fase := get_tree().current_scene
+	await get_tree().process_frame
+	verificar(fase.find_child("Celula_B4", true, false).text == "?", "célula da tarefa marcada com ?")
+	fase.find_child("Formula", true, false).text = "=12+8"
+	fase.conferir()
+	verificar(fase.erros == 1 and fase.find_child("Feedback", true, false).text.contains("endereços"), "número digitado conta erro e explica")
+	fase.find_child("Formula", true, false).text = ""
+	fase.tocar_celula("B2")
+	fase._inserir("+")
+	fase.tocar_celula("B3")
+	verificar(fase.find_child("Formula", true, false).text == "=B2+B3", "tocar nas células escreve a fórmula")
+	fase.conferir()
+	verificar(fase.find_child("Celula_B4", true, false).text == "20", "fórmula certa mostra o resultado na célula")
+	var moedas := Progresso.moedas
+	fase.conferir()  # TERMINAR
+	await get_tree().process_frame
+	verificar(fase.find_child("Fim", true, false) != null and Laboratorio.estrelas("c1f1") == 2, "fim da fase: 1 erro = 2 estrelas")
+	verificar(Progresso.moedas == moedas + Laboratorio.MOEDAS_FASE + 2 * Laboratorio.MOEDAS_POR_ESTRELA, "fim da fase dá as moedas")
+	fase.find_child("DeNovo", true, false).pressed.emit()
+	await get_tree().process_frame
+	fase.find_child("Formula", true, false).text = ""
+	fase.tocar_celula("B2")
+	fase.tocar_celula("B3")
+	verificar(fase.find_child("Formula", true, false).text == "=B2:B3", "tocar duas células seguidas vira intervalo")
+	# fase de Word pelos botões da fita
+	Laboratorio.fase_atual = "c1f2"
+	Telas.ir_para("lab_fase")
+	await get_tree().create_timer(0.5).timeout
+	fase = get_tree().current_scene
+	verificar(fase.doc != null and fase.find_child("Paragrafo0", true, false) is RichTextLabel, "fase de Word mostra a página")
+	fase._tocar_palavra(0)
+	fase._tocar_palavra(0)
+	fase.find_child("Acao_negrito", true, false).pressed.emit()
+	verificar(fase.find_child("Acao_negrito", true, false).theme_type_variation == &"BotaoRoxo", "botão N fica ligado")
+	fase.conferir()
+	verificar(fase.erros == 0 and fase.find_child("Conferir", true, false).text == "TERMINAR", "título em negrito confere")
+	# chefe com várias tarefas
+	Laboratorio.fase_atual = "c1f8"
+	Telas.ir_para("lab_fase")
+	await get_tree().create_timer(0.5).timeout
+	fase = get_tree().current_scene
+	verificar(fase.find_child("VidaChefe", true, false).get_child_count() == 3, "chefe com 3 corações")
+	for p in fase.fase["passos"]:
+		fase.find_child("Formula", true, false).text = p["resposta"]
+		fase.conferir()
+		fase.conferir()
+	verificar(fase.terminou and Laboratorio.estrelas("c1f8") == 3, "chefe derrotado sem erros = 3 estrelas")
+	# baú
+	for id in ["c1f2", "c1f3", "c1f4"]:
+		Laboratorio.concluir(id, 3)
+	Telas.ir_para("laboratorio")
+	await _esperar_tela("Laboratorio")
+	mapa = get_tree().current_scene
+	await get_tree().create_timer(0.2).timeout
+	var moedas_bau := Progresso.moedas
+	mapa.abrir_bau("c1_meio")
+	verificar(Laboratorio.bau_aberto("c1_meio") and Progresso.moedas > moedas_bau, "abrir o baú pelo mapa dá o prêmio")
+	await get_tree().create_timer(1.8).timeout
+	verificar(not mapa.find_child("Pegar", true, false).disabled, "depois da animação dá para pegar o prêmio")
+	Progresso.laboratorio = antes

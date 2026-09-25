@@ -153,6 +153,8 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 			forma = _torre_trofeus(no)
 		"fliperama":
 			forma = _fliperama(no)
+		"laboratorio":
+			forma = _laboratorio(no)
 		_:
 			forma = _casa_simples(no, dados)
 	no.set_meta("pecas", no.find_children("*", "MeshInstance3D", true, false).size())
@@ -456,6 +458,69 @@ static func _fliperama(no: Node3D) -> Dictionary:
 		Pecas3D.cilindro(painel, 0.16, 0.16, 0.12, Vector3(0.3 + i * 0.42, 0.2, (i % 2) * 0.2 - 0.1), _m(cores[i], 0.2))
 	_parede(no, Vector3(largura + 0.5, altura + 0.3, fundo + 0.3), Vector3(0, (altura + 0.3) / 2.0, 0))
 	return {"frente": frente, "placa": altura - 0.5, "placa_propria": true}
+
+
+## LABORATÓRIO DO OFFICE: um computador gigante (gabinete de glacê com a tela
+## mostrando uma planilha), um teclado enorme de degrau na frente e um frasco de
+## laboratório com xarope verde borbulhando no telhado.
+static func _laboratorio(no: Node3D) -> Dictionary:
+	var largura := 4.8
+	var altura := 4.6
+	var fundo := 3.8
+	var frente := fundo / 2.0
+	var gabinete := Texturas.real("reboco", "#F3EEF9", 0.5)
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), gabinete)
+	# moldura roxa da tela e a tela com a planilha
+	var roxo := Texturas.real("madeira_pintada", "#7E57B1", 1.2)
+	Pecas3D.caixa(no, Vector3(largura - 0.4, 2.0, 0.14), Vector3(0, 3.35, frente + 0.03), roxo)
+	var tela := Pecas3D.material_textura(_textura_planilha(), 0.3)
+	tela.emission_enabled = true
+	tela.emission_texture = tela.albedo_texture
+	tela.emission = Color.WHITE
+	tela.emission_energy_multiplier = 0.15
+	tela.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	Pecas3D.caixa(no, Vector3(largura - 0.8, 1.6, 0.1), Vector3(0, 3.35, frente + 0.07), tela)
+	# teclado gigante na frente (teclas coloridas dos dois lados da porta)
+	var base_teclado := _m("#5E3D8E", 0.4)
+	Pecas3D.caixa(no, Vector3(largura + 0.6, 0.22, 1.3), Vector3(0, 0.11, frente + 0.9), base_teclado)
+	var cores := ["#F4E038", "#FFFFFF", "#8FD3F4", "#FFFFFF", "#FF9AC8"]
+	for lado in [-1, 1]:
+		for linha in 2:
+			for coluna in 3:
+				var x: float = lado * (1.05 + coluna * 0.52)
+				var cor: String = cores[(linha * 3 + coluna + (lado + 1)) % cores.size()]
+				Pecas3D.caixa(no, Vector3(0.42, 0.14, 0.42), Vector3(x, 0.29, frente + 0.55 + linha * 0.52), _m(cor, 0.35))
+	# frasco no telhado com xarope verde e bolhas
+	var vidro := _m("#DFF6FF", 0.05)
+	vidro.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	vidro.albedo_color.a = 0.45
+	Pecas3D.cilindro(no, 0.3, 0.3, 0.9, Vector3(0, altura + 0.45, -0.3), vidro)
+	Pecas3D.esfera(no, 0.9, Vector3(0, altura + 1.45, -0.3), vidro)
+	Pecas3D.esfera(no, 0.78, Vector3(0, altura + 1.3, -0.3), _m("#5DDB6A", 0.2), Vector3(1, 0.75, 1))
+	for i in 3:
+		Pecas3D.esfera(no, 0.12 - i * 0.02, Vector3(-0.15 + i * 0.15, altura + 1.95 + i * 0.25, -0.3), _m("#9BF0A5", 0.2))
+	Pecas3D.cilindro(no, 0.22, 0.22, 0.2, Vector3(0, altura + 2.45, -0.3), _m("#E8364F", 0.3))
+	# placa com o nome em cima da tela
+	_placa(no, "LABORATÓRIO", Vector3(0, altura + 0.15, frente + 0.12), 3.6)
+	_parede(no, Vector3(largura + 0.2, altura, fundo + 0.2), Vector3(0, altura / 2.0, 0))
+	return {"frente": frente, "placa": altura - 0.1, "placa_propria": true}
+
+
+## Tela do laboratório: uma planilha (cabeçalho verde, linhas e uma célula
+## amarela selecionada).
+static func _textura_planilha() -> ImageTexture:
+	var imagem := Image.create(32, 18, false, Image.FORMAT_RGBA8)
+	imagem.fill(Color.WHITE)
+	imagem.fill_rect(Rect2i(0, 0, 32, 3), Color("#1B9E4B"))
+	for x in range(0, 32, 6):
+		imagem.fill_rect(Rect2i(x, 3, 1, 15), Color("#C9C4D3"))
+	for y in range(3, 18, 3):
+		imagem.fill_rect(Rect2i(0, y, 32, 1), Color("#C9C4D3"))
+	imagem.fill_rect(Rect2i(13, 10, 5, 2), Color("#FFE27A"))
+	for y in [4, 7, 13]:
+		imagem.fill_rect(Rect2i(2, y + 1, 3, 1), Color("#555555"))
+		imagem.fill_rect(Rect2i(21, y + 1, 4, 1), Color("#1E6FD9"))
+	return ImageTexture.create_from_image(imagem)
 
 
 ## Tela do fliperama: fundo azul-escuro, fileiras de blocos, raquete e bolinha.

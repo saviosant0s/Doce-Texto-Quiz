@@ -31,6 +31,8 @@ const SORTE_GRANDE := 0.15
 
 ## Fase aberta na tela da fase (cenas/lab_fase.*).
 static var fase_atual := ""
+## Fase que acabou de ser feita, para o mapa animar a próxima liberada.
+static var recem_concluida := ""
 static var _dados: Dictionary = {}
 
 

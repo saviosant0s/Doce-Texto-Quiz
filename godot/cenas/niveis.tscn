@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" path="res://assets/icones/doce.svg" id="doce"]
 [ext_resource type="Texture2D" path="res://assets/icones/confeitaria.svg" id="confeitaria"]
 [ext_resource type="Texture2D" path="res://assets/icones/controle.svg" id="controle"]
+[ext_resource type="Texture2D" path="res://assets/icones/laboratorio.svg" id="laboratorio"]
 
 
 [node name="Niveis" type="Control"]
@@ -104,6 +105,16 @@ layout_mode = 2
 tooltip_text = "Doce Match"
 theme_type_variation = &"BotaoIcone"
 icon = ExtResource("controle")
+icon_alignment = 1
+expand_icon = true
+
+[node name="Laboratorio" type="Button" parent="Margem/Linha/Menu/Botoes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+tooltip_text = "Laboratório do Office"
+theme_type_variation = &"BotaoIcone"
+icon = ExtResource("laboratorio")
 icon_alignment = 1
 expand_icon = true
 
