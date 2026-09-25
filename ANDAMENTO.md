@@ -164,6 +164,10 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     quindim, churros, brownie (épicos) e bolo de aniversário (lendário), em
     3D no mesmo estilo, com curiosidade, preço (120 a 800) e bônus. Também
     caem nos baús surpresa.
+  - **Travada ao abrir o jogo**: o mascote 3D era montado durante a animação
+    de entrada (a primeira imagem 3D trava o celular um instante e, com a
+    tela ainda transparente, o boneco parecia apagado). Agora a entrada usa
+    a imagem e o 3D entra depois, com um esmaecer suave.
   - Próximo: vila maior com terrenos.
 
 - 27/09: **telas conferidas em 20:9 (celular comprido), 16:10 e 4:3
