@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Doce Texto Quiz"
 config/description="Quiz sobre Word e Excel."
-config/version="0.10.2"
+config/version="0.11.0"
 run/main_scene="res://cenas/inicio.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
