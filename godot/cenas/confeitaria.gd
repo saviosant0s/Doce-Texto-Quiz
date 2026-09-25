@@ -7,7 +7,7 @@ extends Control
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const ICONE_MOEDA := Itens.MOEDA
 const ICONE_ACUCAR := Itens.ACUCAR
-const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
+const ICONE_ESTRELA := Itens.ESTRELA
 const ICONE_COLECAO := preload("res://assets/icones/doce.svg")
 const ICONE_AJUDA := preload("res://assets/icones/interrogacao.svg")
 const NOMES_NIVEIS := ["FÁCIL", "MÉDIO", "DIFÍCIL"]
@@ -253,7 +253,7 @@ func _atualizar_cartao(m: Dictionary) -> void:
 	var c: Dictionary = _cartoes[id]
 	var nivel := Confeitaria.nivel(id)
 	for i in c["estrelas"].get_child_count():
-		c["estrelas"].get_child(i).modulate = Cores.OURO if i < nivel else Color(Cores.ROXO, 0.18)
+		c["estrelas"].get_child(i).modulate = Color.WHITE if i < nivel else Itens.ESTRELA_APAGADA
 	var imagem: TextureRect = c["imagem"]
 	var vender: Button = c["vender"]
 	var principal: Button = c["principal"]

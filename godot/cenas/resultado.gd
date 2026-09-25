@@ -3,7 +3,7 @@ extends Control
 ## para passar, moedas ganhas, recorde, nível liberado e conquistas novas.
 ## Na revisão, mostra quantas perguntas erradas o jogador corrigiu.
 
-const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
+const ICONE_ESTRELA := Itens.ESTRELA
 const ICONE_MOEDA := Itens.MOEDA
 const ICONE_ACUCAR := Itens.ACUCAR
 const ICONE_BAU := Itens.BAU_DOCE
@@ -158,13 +158,13 @@ func _mostrar_estrelas(quantidade: int) -> void:
 		estrela.pivot_offset = Vector2(27, 27)
 		%Estrelas.add_child(estrela)
 		if i < quantidade:
-			estrela.modulate = Cores.OURO
+			estrela.modulate = Color.WHITE
 			estrela.scale = Vector2.ZERO
 			var tween := create_tween()
 			tween.tween_interval(0.6 + i * 0.3)
 			tween.tween_property(estrela, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		else:
-			estrela.modulate = Color(Cores.ROXO, 0.18)
+			estrela.modulate = Itens.ESTRELA_APAGADA
 
 
 ## Um prêmio da partida: ícone, "+60" e a legenda embaixo ("MOEDAS").

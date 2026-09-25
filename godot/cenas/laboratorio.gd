@@ -5,7 +5,7 @@ extends Control
 ## Regras em scripts/laboratorio.gd.
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
-const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
+const ICONE_ESTRELA := Itens.ESTRELA
 const ICONE_CADEADO := preload("res://assets/icones/cadeado.svg")
 const ICONE_COROA := preload("res://assets/icones/coroa.svg")
 const ICONE_MOEDA := Itens.MOEDA
@@ -37,6 +37,8 @@ func _ready() -> void:
 	_montar_mapa()
 	_atualizar_placar()
 	_centralizar.call_deferred()
+	Telas.dica_primeira_vez("laboratorio", "LABORATÓRIO DO OFFICE",
+		"Aqui você usa o Excel e o Word de verdade! Cada fase é uma tarefa: faça sem errar e sem dica para ganhar 3 estrelas. No fim de cada capítulo tem um CHEFE, e no caminho tem baús.")
 
 
 ## Botão "voltar" do celular.
@@ -107,7 +109,7 @@ func _montar_topo() -> void:
 	var espaco := Control.new()
 	espaco.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	topo.add_child(espaco)
-	_rotulo_estrelas = _contador(topo, ICONE_ESTRELA, Cores.OURO)
+	_rotulo_estrelas = _contador(topo, ICONE_ESTRELA, Color.WHITE)
 	_rotulo_acucar = _contador(topo, ICONE_ACUCAR, Color.WHITE)
 	_rotulo_moedas = _contador(topo, ICONE_MOEDA, Color.WHITE)
 
@@ -302,11 +304,13 @@ func _criar_fase(f: Dictionary) -> void:
 		e.texture = ICONE_ESTRELA
 		e.custom_minimum_size = Vector2(28, 28)
 		e.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		e.modulate = Cores.OURO if i < Laboratorio.estrelas(id) else Color(1, 1, 1, 0.3)
+		e.modulate = Color.WHITE if i < Laboratorio.estrelas(id) else Itens.ESTRELA_APAGADA
 		estrelas.add_child(e)
 	estrelas.position = Vector2(lado / 2 - 42, lado + 2)
 	if liberada:
 		botao.add_child(estrelas)
+	else:
+		estrelas.free()  # fase trancada não mostra estrelas (e não pode sobrar solta)
 	if chefe:
 		var nome := Label.new()
 		nome.theme_type_variation = &"TituloClaro"
@@ -409,7 +413,7 @@ func _tocar_fase(id: String) -> void:
 		e.texture = ICONE_ESTRELA
 		e.custom_minimum_size = Vector2(56, 56)
 		e.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		e.modulate = Cores.OURO if i < Laboratorio.estrelas(id) else Color(1, 1, 1, 0.25)
+		e.modulate = Color.WHITE if i < Laboratorio.estrelas(id) else Itens.ESTRELA_APAGADA
 		estrelas.add_child(e)
 	coluna.add_child(estrelas)
 	var tarefas: int = f["passos"].size()
@@ -482,6 +486,7 @@ func abrir_bau(id: String, sorteio: RandomNumberGenerator = null) -> void:
 		sorte.add_theme_color_override("font_color", Cores.AMARELO)
 	_linha_premio(premio, ICONE_MOEDA, Color.WHITE, conteudo["moedas"], "MOEDAS")
 	_linha_premio(premio, ICONE_ACUCAR, Color.WHITE, conteudo["acucar"], "DE AÇÚCAR")
+	_linha_premio(premio, Itens.bau(conteudo["surpresa"]), Color.WHITE, 1, Baus.NOMES[conteudo["surpresa"]])
 	var ok := Button.new()
 	ok.name = "Pegar"
 	ok.text = "PEGAR!"

@@ -2,7 +2,7 @@ extends Control
 ## Configurações: volume da música e dos efeitos, animações e apagar progresso.
 
 const ICONE_SOM := preload("res://assets/icones/som.svg")
-const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
+const ICONE_ESTRELA := Itens.ESTRELA
 
 
 func _ready() -> void:

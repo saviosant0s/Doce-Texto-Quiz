@@ -24,8 +24,8 @@ const MOEDAS_POR_ESTRELA := 5
 ## Baús: [moedas mín, máx], [açúcar mín, máx]; o capítulo multiplica
 ## (1 + 0,25 × capítulo). SORTE_GRANDE = chance de vir em dobro.
 const BAUS := {
-	"meio": {"nome": "BAÚ DE MADEIRA", "moedas": [30, 60], "acucar": [20, 40]},
-	"chefe": {"nome": "BAÚ DO CHEFE", "moedas": [80, 150], "acucar": [50, 80]},
+	"meio": {"nome": "BAÚ DE MADEIRA", "moedas": [20, 40], "acucar": [20, 40], "surpresa": "prata"},
+	"chefe": {"nome": "BAÚ DO CHEFE", "moedas": [50, 90], "acucar": [50, 80], "surpresa": "ouro"},
 }
 const SORTE_GRANDE := 0.15
 
@@ -186,7 +186,10 @@ static func abrir_bau(id: String, sorteio: RandomNumberGenerator = null) -> Dict
 	_estado()["baus"][id] = true
 	Confeitaria.ganhar_acucar(acucar)
 	Progresso.ganhar_moedas(moedas)
-	return {"nome": tabela["nome"], "moedas": moedas, "acucar": acucar, "sorte": sorte}
+	# dentro vem também um baú surpresa (pedaços de doces): prata no meio do
+	# capítulo, ouro no chefe
+	Baus.ganhar(tabela["surpresa"])
+	return {"nome": tabela["nome"], "moedas": moedas, "acucar": acucar, "sorte": sorte, "surpresa": tabela["surpresa"]}
 
 
 # --- Conferir um passo de Excel --------------------------------------------------

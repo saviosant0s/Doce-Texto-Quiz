@@ -5,7 +5,7 @@ class_name Itens3D
 ## de novo com ferramentas/gerar_itens_3d.sh depois de mudar algo aqui.
 ## Uso nas telas: as constantes da classe Itens (scripts/itens.gd).
 
-const IDS := ["moeda", "acucar", "xp", "bau_doce", "bau_prata", "bau_ouro",
+const IDS := ["moeda", "acucar", "xp", "estrela", "bau_doce", "bau_prata", "bau_ouro",
 	"bau_madeira", "bau_chefe", "bau_aberto", "bau_aberto_doce", "bau_aberto_prata", "bau_aberto_ouro"]
 
 ## Cores dos baús: [corpo, tampa, faixas, metal (0 a 1)].
@@ -34,6 +34,8 @@ static func montar(id: String, c: Node3D) -> void:
 			_acucar(c)
 		"xp":
 			_xp(c)
+		"estrela":
+			_estrela(c)
 		_:
 			_bau(c, BAUS[id], id.begins_with("bau_aberto"))
 
@@ -93,6 +95,16 @@ static func _xp(c: Node3D) -> void:
 	texto.position = Vector3(0, -0.02, 0.44)
 	instancia.add_child(texto)
 	Pecas3D.esfera(instancia, 0.07, Vector3(-0.28, 0.42, 0.3), _m("#FFFFFF", 0.1), Vector3(1, 1, 0.4))
+
+
+## Estrela de ouro (a nota das fases e partidas), gordinha como bala.
+static func _estrela(c: Node3D) -> void:
+	var instancia := MeshInstance3D.new()
+	instancia.mesh = _malha_estrela(0.95, 0.45, 0.22, 0.24)
+	instancia.material_override = _m("#FFC21A", 0.18, 0.2)
+	instancia.rotation_degrees = Vector3(0, 22, -4)
+	c.add_child(instancia)
+	Pecas3D.esfera(instancia, 0.08, Vector3(-0.25, 0.4, 0.32), _m("#FFFFFF", 0.1), Vector3(1, 1, 0.4))
 
 
 ## Estrela de 5 pontas com volume: a frente e as costas sobem para o centro

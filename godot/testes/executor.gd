@@ -1065,6 +1065,7 @@ func _testar_laboratorio() -> void:
 	verificar(Laboratorio.conferir_excel(passo_soma, "=soma(b2:b6)", cel)["certo"], "minúsculas valem")
 	# progresso, estrelas e baús
 	var antes: Dictionary = Progresso.laboratorio.duplicate(true)
+	var baus_lab_antes: Dictionary = Progresso.baus.duplicate(true)
 	var moedas_antes := Progresso.moedas
 	var acucar_antes := Confeitaria.acucar()
 	Progresso.laboratorio = {"estrelas": {}, "baus": {}}
@@ -1088,12 +1089,13 @@ func _testar_laboratorio() -> void:
 	sorteio.seed = 7
 	var moedas_bau := Progresso.moedas
 	var conteudo := Laboratorio.abrir_bau("c1_meio", sorteio)
-	verificar(conteudo["moedas"] >= 30 and conteudo["acucar"] >= 20 and Progresso.moedas == moedas_bau + conteudo["moedas"], "baú dá moedas e açúcar")
+	verificar(conteudo["moedas"] >= 20 and conteudo["acucar"] >= 20 and Baus.quantos("prata") > 0 and Progresso.moedas == moedas_bau + conteudo["moedas"], "baú dá moedas e açúcar")
 	verificar(Laboratorio.bau_aberto("c1_meio") and Laboratorio.abrir_bau("c1_meio").is_empty(), "baú só abre uma vez")
 	verificar(Laboratorio.total_estrelas() == 12, "soma as estrelas")
 	var chefe := Laboratorio.concluir("c1f8", 1)
 	verificar(chefe["acucar"] == Laboratorio.ACUCAR_CHEFE, "chefe dá mais açúcar")
 	Progresso.laboratorio = antes
+	Progresso.baus = baus_lab_antes
 	Progresso.moedas = moedas_antes
 	Progresso.confeitaria["acucar"] = acucar_antes
 
@@ -1371,6 +1373,19 @@ func _testar_telas_baus_e_missoes() -> void:
 	verificar(melhorar.visible and not melhorar.disabled, "com pedaços e moedas, dá para melhorar")
 	melhorar.pressed.emit()
 	verificar(Companheiros.nivel("brigadeiro") == 2 and Companheiros.bonus("acucar") == 15.0, "melhorar pela tela sobe o nível e o bônus")
+	# explicação de primeira vez: aparece uma vez só
+	var vistas: Array = Progresso.config.get("dicas_vistas", []).duplicate()
+	Progresso.config["dicas_vistas"] = []
+	Telas.dica_primeira_vez("teste", "TESTE", "Texto.", true)
+	await get_tree().process_frame
+	var caixa := get_tree().root.find_child("DicaPrimeiraVez", true, false)
+	verificar(caixa != null and not caixa.get_node("%Nao").visible, "explicação de primeira vez aparece (só com ENTENDI)")
+	caixa.get_node("%Sim").pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	Telas.dica_primeira_vez("teste", "TESTE", "Texto.", true)
+	await get_tree().process_frame
+	verificar(get_tree().root.find_child("DicaPrimeiraVez", true, false) == null, "e não aparece de novo")
+	Progresso.config["dicas_vistas"] = vistas
 	Progresso.baus = baus_antes
 	Progresso.missoes = missoes_antes
 	Progresso.colecao = colecao_antes

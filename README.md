@@ -120,8 +120,10 @@ godot/
 KEYSTORE=/caminho/doce_texto_quiz.keystore KEYSTORE_SENHA=... ferramentas/gerar_apk.sh
 ```
 
-Gera `build/android/doce-texto-quiz.apk` (Android 7 ou mais novo, celulares
-32 e 64 bits, sempre deitado, sem nenhuma permissão). O script explica o que
+Gera `build/android/doce-texto-quiz.apk` (celulares de hoje, 64 bits) e
+`doce-texto-quiz-32bits.apk` (celulares antigos/baratos) — Android 7 ou mais
+novo, sempre deitado, sem nenhuma permissão. Separados, cada um tem cerca de
+metade do tamanho. Página para baixar: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/ O script explica o que
 precisa estar instalado. A keystore e a senha **não ficam no repositório**:
 guarde-as em lugar seguro, porque toda atualização do app precisa ser assinada
 com a mesma chave. Os ícones do app ficam em `godot/assets/android/`.

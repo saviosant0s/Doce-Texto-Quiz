@@ -30,6 +30,8 @@ var _abrindo := false
 func _ready() -> void:
 	_montar()
 	_atualizar()
+	Telas.dica_primeira_vez("baus", "BAÚS SURPRESA",
+		"Você ganha baús jogando o quiz, fazendo missões e subindo de nível. Dentro vêm PEDAÇOS de doces: junte 10 e o doce é seu! Com mais pedaços, ele fica mais forte.")
 
 
 func ao_voltar() -> void:

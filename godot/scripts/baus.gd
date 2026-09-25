@@ -106,7 +106,7 @@ static func abrir(tipo: String, sorteio: RandomNumberGenerator = null) -> Array:
 	for i in ITENS[tipo]:
 		# o primeiro item é sempre fragmento; os outros podem ser moedas/açúcar
 		var sorte := sorteio.randf()
-		if i == 0 or sorte < 0.6 or (garantia and not veio_epico and i == ITENS[tipo] - 1):
+		if i == 0 or sorte < 0.7 or (garantia and not veio_epico and i == ITENS[tipo] - 1):
 			var r := _raridade(tipo, sorteio)
 			if garantia and not veio_epico and i == ITENS[tipo] - 1:
 				r = Companheiros.Raridade.LENDARIO if sorteio.randf() < 0.2 else Companheiros.Raridade.EPICO
@@ -117,7 +117,7 @@ static func abrir(tipo: String, sorteio: RandomNumberGenerator = null) -> Array:
 			var n := roundi(sorteio.randi_range(faixa[0], faixa[1]) * FATOR[tipo])
 			var ganhou := Companheiros.receber_fragmentos(doce, n)
 			itens.append({"tipo": "fragmentos", "doce": doce, "quantidade": n, "raridade": r, "ganhou_doce": ganhou})
-		elif sorte < 0.85:
+		elif sorte < 0.88:
 			var m := sorteio.randi_range(MOEDAS[tipo][0], MOEDAS[tipo][1])
 			Progresso.moedas += m
 			Progresso.estatisticas["moedas_ganhas"] = int(Progresso.estatisticas.get("moedas_ganhas", 0)) + m

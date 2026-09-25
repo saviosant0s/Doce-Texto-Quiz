@@ -6,6 +6,9 @@ class_name Itens
 const MOEDA := preload("res://assets/itens/moeda.png")
 const ACUCAR := preload("res://assets/itens/acucar.png")
 const XP := preload("res://assets/itens/xp.png")
+const ESTRELA := preload("res://assets/itens/estrela.png")
+## Estrela ainda não ganha: a mesma estrela, apagada.
+const ESTRELA_APAGADA := Color(0.28, 0.18, 0.45, 0.4)
 const BAU_DOCE := preload("res://assets/itens/bau_doce.png")
 const BAU_PRATA := preload("res://assets/itens/bau_prata.png")
 const BAU_OURO := preload("res://assets/itens/bau_ouro.png")

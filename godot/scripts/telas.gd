@@ -200,6 +200,26 @@ func confirmar(titulo: String, texto: String, sim := "SIM", nao := "NÃO") -> bo
 	return resposta
 
 
+## Explicação curta que aparece só na primeira vez que o jogador abre uma
+## tela nova (baús, coleção, missões, laboratório). Fica marcada em
+## Progresso.config["dicas_vistas"]. Nos prints e testes (somente_memoria) não
+## aparece, a não ser com `forcar`.
+func dica_primeira_vez(id: String, titulo: String, texto: String, forcar := false) -> void:
+	var vistas: Array = Progresso.config.get("dicas_vistas", [])
+	if id in vistas or (Progresso.somente_memoria and not forcar):
+		return
+	vistas.append(id)
+	Progresso.config["dicas_vistas"] = vistas
+	Progresso.salvar()
+	var caixa := preload("res://componentes/confirmacao.tscn").instantiate()
+	caixa.name = "DicaPrimeiraVez"
+	_camada_avisos.add_child(caixa)
+	caixa.configurar(titulo, texto, "ENTENDI!", "")
+	caixa.get_node("%Nao").visible = false
+	await caixa.respondido
+	caixa.fechar()
+
+
 # --- Exibição ----------------------------------------------------------------
 
 ## Em tela de toque, as dicas de botão (tooltips) aparecem ao segurar o dedo,

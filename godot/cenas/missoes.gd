@@ -24,6 +24,8 @@ var _colunas := {}  # "dia"/"semana" -> VBoxContainer
 func _ready() -> void:
 	_montar()
 	_atualizar()
+	Telas.dica_primeira_vez("missoes", "MISSÕES",
+		"Todo dia tem 3 missões novas e toda semana mais 3. Cumpriu? Toque em RESGATAR. Completando as 3, você ganha um baú! E volte todo dia: o prêmio por entrar vai crescendo.")
 
 
 func ao_voltar() -> void:

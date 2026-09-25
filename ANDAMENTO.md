@@ -122,6 +122,23 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 27/09 (pedido "pode fazer tudo" antes da 0.10.1):
+  - **Dois APKs**: 64 bits (principal) e 32 bits (celulares antigos), cada
+    um com cerca de metade do tamanho; página de download em `apk/index.html`
+    (gerada pelo `publicar_web.sh`).
+  - **Fases de Excel sem o teclado do celular**: o teclado do aparelho só
+    abre pelo botão TECLADO; botões para as funções, os textos da tarefa
+    ("Aprovado", ">6"...), os símbolos e os números (botão 123). Tocar numa
+    célula fecha o teclado.
+  - **Estrela 3D** de ouro (`Itens.ESTRELA`; apagada = `Itens.ESTRELA_APAGADA`)
+    em todas as telas.
+  - **Economia revista** (`docs/economia.md`): baús do laboratório com menos
+    moedas e um baú surpresa dentro; baús surpresa com mais pedaços (70%) e
+    menos moedas (18%).
+  - **Explicação de primeira vez** (`Telas.dica_primeira_vez`) nos baús,
+    companheiros, missões e laboratório.
+  - Aviso "leaked at exit" resolvido (estrelas das fases trancadas do mapa
+    ficavam soltas na memória).
 - 26/09: **itens com identidade própria**. Moeda (de ouro com uma bala em
   relevo), açúcar (cubinhos com cristais), XP (estrela de bala roxa) e os
   baús (doce, prata, ouro, madeira, chefe e abertos) agora são 3D no mesmo

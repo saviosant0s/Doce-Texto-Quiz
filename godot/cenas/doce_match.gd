@@ -13,7 +13,7 @@ const TEXTURAS := {
 	"disquete": preload("res://assets/doce_match/disquete.svg"),
 }
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
-const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
+const ICONE_ESTRELA := Itens.ESTRELA
 const TAMANHO := 76.0  # lado de cada casa do tabuleiro, em pixels
 const ARRASTO_MINIMO := 24.0
 const ESPERA_DICA := 6.0
@@ -271,7 +271,7 @@ func _mostrar_fim() -> void:
 		estrela.texture = ICONE_ESTRELA
 		estrela.custom_minimum_size = Vector2(70, 70)
 		estrela.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		estrela.modulate = Cores.OURO if i < estrelas else Color(1, 1, 1, 0.25)
+		estrela.modulate = Color.WHITE if i < estrelas else Itens.ESTRELA_APAGADA
 		linha.add_child(estrela)
 	coluna.add_child(linha)
 	var resumo := Label.new()
@@ -416,7 +416,7 @@ func _atualizar_placar() -> void:
 	_barra.max_value = DoceMatch.METAS[-1]
 	_barra.value = jogo.pontos
 	for i in _estrelas.size():
-		_estrelas[i].modulate = Cores.OURO if jogo.pontos >= DoceMatch.METAS[i] else Color(1, 1, 1, 0.3)
+		_estrelas[i].modulate = Color.WHITE if jogo.pontos >= DoceMatch.METAS[i] else Itens.ESTRELA_APAGADA
 	_barra.tooltip_text = "Próxima estrela: %d pontos" % meta
 
 

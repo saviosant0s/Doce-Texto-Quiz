@@ -6,7 +6,7 @@ extends Control
 ## - ESTATÍSTICAS: números gerais, por nível, por assunto e as mais erradas.
 
 const ICONE_CADEADO := preload("res://assets/icones/cadeado.svg")
-const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
+const ICONE_ESTRELA := Itens.ESTRELA
 const ICONE_MOEDA := Itens.MOEDA
 const ABAS := ["TÍTULOS", "CONQUISTAS", "ESTATÍSTICAS"]
 const NOMES_ASSUNTOS := {"word": "WORD (TEXTOS)", "excel": "EXCEL (PLANILHAS)", "geral": "OFFICE EM GERAL"}
@@ -248,7 +248,7 @@ func _linha_nivel(indice: int) -> HBoxContainer:
 	nome.custom_minimum_size = Vector2(96, 0)
 	linha.add_child(nome)
 	for i in 3:
-		var estrela := _icone(ICONE_ESTRELA, Cores.OURO if i < dados["estrelas"] else Color(Cores.ROXO, 0.2), 24)
+		var estrela := _icone(ICONE_ESTRELA, Color.WHITE if i < dados["estrelas"] else Itens.ESTRELA_APAGADA, 24)
 		estrela.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		linha.add_child(estrela)
 	var detalhe := "ainda não jogou"

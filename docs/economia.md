@@ -21,12 +21,14 @@ para ganhar sem estudar. Valores no código: `scripts/jogo.gd`,
 | Laboratório: fase feita (1ª vez) | 10 + 5 por estrela | 20 |
 | Laboratório: chefe (1ª vez) | 30 + 5 por estrela | 50 |
 | Laboratório: estrela nova ao repetir | 5 por estrela | — |
-| Laboratório: baú do meio do capítulo (3) | 30 a 60 × (1 / 1,25 / 1,5) | 20 a 40 × idem |
-| Laboratório: baú do chefe (3) | 80 a 150 × idem | 50 a 80 × idem |
+| Laboratório: baú do meio do capítulo (3) | 20 a 40 × (1 / 1,25 / 1,5) + 1 baú de PRATA | 20 a 40 × idem |
+| Laboratório: baú do chefe (3) | 50 a 90 × idem + 1 baú de OURO | 50 a 80 × idem |
 
 Baús: 15% de chance de "SORTE GRANDE" (tudo em dobro). O Laboratório inteiro
 (24 fases, 72 estrelas, 6 baús) dá cerca de 1.300 moedas e 1.000 de açúcar, só
-uma vez: ele também é estudo (fórmulas e formatação na prática).
+uma vez: ele também é estudo (fórmulas e formatação na prática). Revisão de
+27/09: os baús do laboratório dão menos moedas (cerca de 1.050 no total) e
+trazem um baú surpresa (pedaços de doces).
 
 Partidas típicas: fácil 7/10 com 1 estrela = 45 moedas + 70 de açúcar; médio
 8/10 com 2 estrelas = 84 + 80; difícil 9/10 com 2 estrelas = 128 + 90.
@@ -42,8 +44,8 @@ Partidas típicas: fácil 7/10 com 1 estrela = 45 moedas + 70 de açúcar; médi
 | Subir de nível | baú de PRATA (a cada 5 níveis, OURO) |
 
 Baús: doce 2 itens, prata 3, ouro 4. O 1º item é sempre pedaço de doce; os
-outros podem ser pedaços (60%), moedas (25%: 10–25 / 25–50 / 50–100) ou açúcar
-(15%). Chance de raridade (comum/raro/épico/lendário): doce 70/25/4,5/0,5;
+outros podem ser pedaços (70%), moedas (18%: 10–25 / 25–50 / 50–100) ou açúcar
+(12%). Chance de raridade (comum/raro/épico/lendário): doce 70/25/4,5/0,5;
 prata 50/35/13/2; ouro 30/40/24/6. Garantia: épico ou lendário em até 10 baús.
 10 pedaços = ganha o doce; melhorar: 10+50, 20+100, 30+200, 50+400 (pedaços +
 moedas), até o nível 5.
@@ -78,3 +80,13 @@ Bônus do companheiro (só o escolhido vale; raridade multiplica: 1 / 1,25 /
 Para ter tudo: ~6.200 moedas, cerca de 45 partidas do quiz (contando o açúcar
 virando moedas). Se ficar rápido ou lento demais, ajuste primeiro as moedas por
 acerto do quiz (`Jogo.MOEDAS_POR_ACERTO`) — o resto acompanha.
+
+## Ritmo (revisado em 27/09, com baús, missões e laboratório)
+
+Jogador que entra todo dia e faz ~5 partidas: ~300 moedas do quiz + 60 das
+missões do dia + ~25 das da semana + ~15 do prêmio por entrar + ~30 dos baús
+≈ 430 moedas/dia. Gastos grandes: coleção 3.450, máquinas e melhorias ~2.300,
+e melhorar os companheiros até o nível 5 (750 moedas + 110 pedaços cada, 13
+doces ≈ 9.750 moedas). Coleção comprada em ~8 dias; tudo no máximo em ~5
+semanas — bom para um bimestre de aulas. Se ficar rápido demais, baixe
+`Missoes.PREMIO_DIA` e as moedas dos baús antes de mexer no quiz.

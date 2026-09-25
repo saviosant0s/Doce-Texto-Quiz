@@ -10,7 +10,7 @@ extends Control
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const ICONE_DICA := preload("res://assets/icones/lampada.svg")
-const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
+const ICONE_ESTRELA := Itens.ESTRELA
 const ICONE_CORACAO := preload("res://assets/icones/coracao.svg")
 const ICONE_MOEDA := Itens.MOEDA
 const ICONE_ACUCAR := Itens.ACUCAR
@@ -24,7 +24,7 @@ const ICONES_ACAO := {
 const FONTE_TEXTO := preload("res://assets/fontes/Nunito.ttf")
 const NOMES_FUNCOES := {"MEDIA": "MÉDIA", "MAXIMO": "MÁXIMO", "MINIMO": "MÍNIMO"}
 const LARGURA_CABECALHO := 46.0
-const ALTURA_LINHA := 42.0
+const ALTURA_LINHA := 38.0
 
 var fase: Dictionary
 var passo := 0
@@ -51,6 +51,7 @@ var _grade: GridContainer
 var _rotulos_celulas := {}  # "B4" -> Label
 var _ultima_ref := ""
 var _caret_depois_ref := -1
+var _numeros := false  # botões de atalho mostrando os números
 # Word
 var _paragrafos: Array[RichTextLabel] = []
 var _botoes_acao := {}
@@ -119,6 +120,8 @@ func _mostrar_passo() -> void:
 func conferir() -> void:
 	if terminou:
 		return
+	if fase["tipo"] == "excel":
+		_fechar_teclado()
 	if _acertou_passo:
 		proximo()
 		return
@@ -239,7 +242,7 @@ func _terminar() -> void:
 		e.texture = ICONE_ESTRELA
 		e.custom_minimum_size = Vector2(84, 84)
 		e.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		e.modulate = Color(1, 1, 1, 0.25)
+		e.modulate = Itens.ESTRELA_APAGADA
 		linha.add_child(e)
 		estrelas.append(e)
 	var resumo := Label.new()
@@ -296,7 +299,7 @@ func _terminar() -> void:
 	for i in n:
 		var e := estrelas[i]
 		tween.tween_callback(func():
-			e.modulate = Cores.OURO
+			e.modulate = Color.WHITE
 			e.pivot_offset = e.size / 2
 			e.scale = Vector2.ONE * 1.6
 			Audio.tocar("moeda", 1.0 + i * 0.15))
@@ -451,14 +454,27 @@ func _montar_excel() -> void:
 	barra.add_child(fx)
 	_formula = LineEdit.new()
 	_formula.name = "Formula"
-	_formula.placeholder_text = "Digite a fórmula, começando com ="
+	_formula.placeholder_text = "Toque nas células e nos botões (ou digite)"
 	_formula.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_formula.custom_minimum_size = Vector2(0, 60)
 	_formula.add_theme_font_size_override("font_size", 28)
 	_formula.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_DEFAULT
-	_formula.text_submitted.connect(func(_t): conferir())
+	_formula.text_submitted.connect(func(_t):
+		_fechar_teclado()
+		conferir())
 	_formula.text_changed.connect(_formula_mudou)
 	barra.add_child(_formula)
+	if DisplayServer.is_touchscreen_available():
+		_formula.virtual_keyboard_enabled = false  # ver abrir_teclado()
+		var teclado := Button.new()
+		teclado.name = "Teclado"
+		teclado.text = "TECLADO"
+		teclado.theme_type_variation = &"Alternativa"
+		teclado.custom_minimum_size = Vector2(0, 56)
+		teclado.add_theme_font_size_override("font_size", 18)
+		teclado.focus_mode = Control.FOCUS_NONE
+		teclado.pressed.connect(abrir_teclado)
+		barra.add_child(teclado)
 	var atalhos := HFlowContainer.new()
 	atalhos.name = "Atalhos"
 	atalhos.add_theme_constant_override("h_separation", 6)
@@ -567,6 +583,7 @@ func _toque_celula(evento: InputEvent, ref: String) -> void:
 func tocar_celula(ref: String) -> void:
 	if _acertou_passo or terminou:
 		return
+	_fechar_teclado()  # para a planilha aparecer inteira
 	var texto := _formula.text
 	var caret := _formula.caret_column
 	if texto == "":
@@ -589,31 +606,58 @@ func tocar_celula(ref: String) -> void:
 	Audio.tocar("estouro", 1.6, -8.0)
 
 
+## Botões para montar a fórmula só tocando (no celular, o teclado do
+## aparelho cobriria a planilha): as funções e os textos da tarefa, os
+## símbolos e, trocando para "123", os números.
 func _atualizar_atalhos_excel() -> void:
 	var atalhos: HFlowContainer = _area.get_node("Atalhos")
 	for filho in atalhos.get_children():
 		atalhos.remove_child(filho)
 		filho.queue_free()
-	var itens := ["=", "(", ")", ";", ":", "\"", "$", "+", "-", "*", "/", ">", "<", "&"]
+	var resposta: String = _passo_atual()["resposta"]
 	var funcoes := []
-	for f in Formulas.funcoes_usadas(_passo_atual()["resposta"]):
+	for f in Formulas.funcoes_usadas(resposta):
 		var nome: String = NOMES_FUNCOES.get(f, f)
 		if not nome + "(" in funcoes:
 			funcoes.append(nome + "(")
-	for texto in funcoes + itens:
+	# textos entre aspas da resposta ("Aprovado", ">6"...), já com as aspas
+	var textos := []
+	var achados := RegEx.create_from_string("\"[^\"]*\"").search_all(resposta)
+	for achado in achados:
+		var t := achado.get_string()
+		if not t in textos:
+			textos.append(t)
+	var itens: Array
+	if _numeros:
+		itens = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", "%"]
+	else:
+		itens = ["=", "(", ")", ";", ":", "$", "+", "-", "*", "/", ">", "<", "&", "\""]
+	for texto in funcoes + textos + itens:
 		var b := Button.new()
 		b.text = texto
-		b.theme_type_variation = &"Alternativa" if texto.length() > 2 else &"BotaoIconeAmarelo"
-		b.custom_minimum_size = Vector2(46 if texto.length() <= 2 else 0, 44)
-		b.add_theme_font_size_override("font_size", 20)
+		var curto: bool = texto.length() <= 2
+		b.theme_type_variation = &"BotaoIconeAmarelo" if curto else &"Alternativa"
+		b.custom_minimum_size = Vector2(44 if curto else 0, 42)
+		b.add_theme_font_size_override("font_size", 19)
 		b.focus_mode = Control.FOCUS_NONE
 		b.pressed.connect(_inserir.bind(texto))
 		atalhos.add_child(b)
+	var modo := Button.new()
+	modo.name = "Numeros"
+	modo.text = "=+" if _numeros else "123"
+	modo.theme_type_variation = &"BotaoRoxo"
+	modo.custom_minimum_size = Vector2(60, 42)
+	modo.add_theme_font_size_override("font_size", 19)
+	modo.focus_mode = Control.FOCUS_NONE
+	modo.pressed.connect(func():
+		_numeros = not _numeros
+		_atualizar_atalhos_excel())
+	atalhos.add_child(modo)
 	var apagar := Button.new()
 	apagar.name = "Apagar"
 	apagar.text = "⌫"
 	apagar.theme_type_variation = &"Alternativa"
-	apagar.custom_minimum_size = Vector2(56, 44)
+	apagar.custom_minimum_size = Vector2(56, 42)
 	apagar.focus_mode = Control.FOCUS_NONE
 	apagar.pressed.connect(func():
 		var c := _formula.caret_column
@@ -622,6 +666,20 @@ func _atualizar_atalhos_excel() -> void:
 			_formula.caret_column = c - 1
 			_formula_mudou(_formula.text))
 	atalhos.add_child(apagar)
+
+
+## No celular, o teclado do aparelho só abre por este botão (senão ele cobre
+## a planilha quando o aluno toca na barra de fórmulas).
+func abrir_teclado() -> void:
+	_formula.virtual_keyboard_enabled = true
+	_formula.grab_focus()
+	DisplayServer.virtual_keyboard_show(_formula.text, Rect2(), DisplayServer.KEYBOARD_TYPE_DEFAULT, -1, _formula.caret_column, _formula.caret_column)
+
+
+func _fechar_teclado() -> void:
+	if DisplayServer.is_touchscreen_available():
+		_formula.virtual_keyboard_enabled = false
+		DisplayServer.virtual_keyboard_hide()
 
 
 func _inserir(texto: String) -> void:

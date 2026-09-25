@@ -34,6 +34,8 @@ func _ready() -> void:
 	var inicial := Colecao.companheiro()
 	selecionar(inicial if not inicial.is_empty() else Colecao.LISTA[0]["id"])
 	Animacoes.entrar(%Corpo, Vector2(0, 40))
+	Telas.dica_primeira_vez("companheiros", "COMPANHEIROS",
+		"Cada doce tem uma raridade (a cor da borda) e um BÔNUS, como mais açúcar ou mais tempo no quiz. Escolha um como companheiro: só o bônus dele vale. Com pedaços dos baús, você melhora o nível dele.")
 
 
 ## Mostra o doce `id` no visor 3D e ajusta o botão de ação.
