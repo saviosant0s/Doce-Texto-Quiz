@@ -32,6 +32,7 @@ extends Node
 ##   --titulos  ganha os 3 títulos (Noob, Pro, Mestre)
 ##   --podio=mestre:pudim  põe esse doce no degrau do título
 ##   --escolher_podio=pro  abre a escolha de doce desse degrau (Troféus)
+##   --cortina=vila  mostra o carregamento de ir para a vila (ou cozinha)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -177,6 +178,11 @@ func _ready() -> void:
 	if args.has("escolher_podio"):
 		await get_tree().create_timer(0.5).timeout
 		get_tree().current_scene.escolher_doce(args["escolher_podio"])
+	if args.has("cortina"):
+		await get_tree().create_timer(0.3).timeout
+		Telas._cortina.color.a = 1.0
+		Telas._mostrar_carregando(args["cortina"])
+		Telas._carregando.barra(45.0)
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()

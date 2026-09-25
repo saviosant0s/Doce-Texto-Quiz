@@ -60,7 +60,7 @@ func _botao(nome: String, texto: String, icone: Texture2D, tela: String) -> Butt
 	for estado in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_focus_color", "icon_hover_pressed_color"]:
 		b.add_theme_color_override(estado, Color.WHITE)  # ícones coloridos, sem a tinta roxa do tema
 	b.focus_mode = Control.FOCUS_NONE
-	b.pressed.connect(Telas.abrir.bind(tela))
+	b.pressed.connect(Telas.abrir_rapido.bind(tela))  # na vila, abre por cima, na hora
 	var bolinha := Label.new()
 	bolinha.name = "Bolinha"
 	bolinha.add_theme_font_size_override("font_size", 15)

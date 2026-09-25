@@ -98,6 +98,7 @@ func _ready() -> void:
 		predio["area"].body_entered.connect(_chegou_na_porta.bind(dados["id"]))
 		predio["area"].body_exited.connect(_saiu_da_porta.bind(dados["id"]))
 	_enfeitar()
+	Telas.por_cima_fechou.connect(_atualizar_topo)  # voltou das missões/baús abertos por cima
 	_criar_jogador()
 	_criar_moradores()
 	CenarioVila.estilo_desenho(self)
@@ -782,3 +783,16 @@ func _olhar_suave(alvo: Vector3, delta: float) -> Vector3:
 	else:
 		_olhar = _olhar.lerp(alvo, minf(1.0, 14.0 * delta))
 	return _olhar
+
+
+## Nível, missões, baús, açúcar e moedas do topo (depois de missões/baús).
+func _atualizar_topo() -> void:
+	var progresso := find_child("Progresso", true, false) as BotoesProgresso
+	if progresso:
+		progresso.atualizar()
+	var acucar := find_child("Acucar", true, false) as Label
+	if acucar:
+		acucar.text = str(Confeitaria.acucar())
+	var moedas := find_child("Moedas", true, false) as Label
+	if moedas:
+		moedas.text = Jogo.formatar(Progresso.moedas)

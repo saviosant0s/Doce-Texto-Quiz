@@ -1594,10 +1594,14 @@ func _testar_telas_baus_e_missoes() -> void:
 	await _esperar_tela("Vila")
 	var bolinha: Label = get_tree().current_scene.find_child("BausSurpresa", true, false).get_node("Bolinha")
 	verificar(bolinha.visible and bolinha.text == "2", "a vila mostra os baús fechados")
-	get_tree().current_scene.find_child("BausSurpresa", true, false).pressed.emit()
-	verificar(await _esperar_tela("Baus"), "abre a tela de baús")
-	var tela := get_tree().current_scene
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout  # a troca de tela termina
+	vila.find_child("BausSurpresa", true, false).pressed.emit()
 	await get_tree().process_frame
+	var tela: Node = Telas.tela_por_cima()
+	verificar(tela != null and tela.name == "Baus" and get_tree().current_scene == vila,
+		"na vila, os baús abrem por cima, na hora (sem recarregar a vila)")
+	verificar(vila.process_mode == Node.PROCESS_MODE_DISABLED, "(a vila para enquanto isso)")
 	verificar(tela.find_child("Abrir_doce", true, false).disabled and not tela.find_child("Abrir_prata", true, false).disabled, "só abre o baú que tem")
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = 3
@@ -1606,6 +1610,12 @@ func _testar_telas_baus_e_missoes() -> void:
 	verificar(tela.find_child("Cartas", true, false).get_child_count() == 3 and Baus.quantos("prata") == 1, "baú de prata abre com 3 cartas")
 	verificar(not tela.find_child("Pronto", true, false).disabled, "depois das cartas dá para fechar")
 	tela.find_child("Pronto", true, false).pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	tela.find_child("Voltar", true, false).pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	verificar(Telas.tela_por_cima() == null and get_tree().current_scene == vila and vila.process_mode == Node.PROCESS_MODE_INHERIT,
+		"voltar fecha os baús e a vila continua de onde estava")
+	verificar(vila.find_child("BausSurpresa", true, false).get_node("Bolinha").text == "1", "a bolinha dos baús já atualizou")
 	# missões
 	Progresso.missoes = Missoes.padrao()
 	Missoes.dia_fixo = 20500

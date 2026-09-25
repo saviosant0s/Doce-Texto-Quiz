@@ -1,5 +1,7 @@
 extends Control
 ## Tela de carregamento antes da partida: um personagem sorteado e uma dica.
+## Também é usada (em "modo cortina") pelo Telas enquanto monta as telas 3D
+## (vila e cozinha), com o nome do lugar no lugar de "QUIZ".
 
 const DURACAO := 3.2
 
@@ -56,16 +58,51 @@ const DICAS := [
 ## Guarda o último sorteio para não repetir em seguida.
 static var _ultima_dica := ""
 
+## Nome grande de cada lugar no modo cortina: [linha de cima, palavra na caixa, tamanho].
+const LUGARES := {
+	"vila": ["VILA DOS", "DOCES", 200],
+	"cozinha": ["MINHA", "COZINHA", 150],
+}
 
-func _ready() -> void:
-	%Personagem.texture = Personagens.textura(PERSONAGEM)
-	_mostrar_companheiro()
+## No modo cortina a tela não vai sozinha para a partida (o Telas cuida).
+var modo_cortina := false
+
+
+## Uma curiosidade ou dica do Office, sem repetir a última: [tipo, texto].
+static func sortear_dica() -> Array:
 	var e_curiosidade := randf() < 0.5
 	var lista: Array = CURIOSIDADES if e_curiosidade else DICAS
 	var dica: String = lista.filter(func(d): return d != _ultima_dica).pick_random()
 	_ultima_dica = dica
-	%Tipo.text = "VOCÊ SABIA?" if e_curiosidade else "DICA"
-	%Texto.text = dica.to_upper()
+	return ["VOCÊ SABIA?" if e_curiosidade else "DICA", dica.to_upper()]
+
+
+## Modo cortina: nome do lugar, doce companheiro (foto) e dica nova.
+func preparar(lugar: String) -> void:
+	var nomes: Array = LUGARES.get(lugar, ["DOCE TEXTO", "QUIZ", 240])
+	%DoceTexto.text = nomes[0]
+	%Quiz.text = nomes[1]
+	%Quiz.add_theme_font_size_override("font_size", nomes[2])
+	var id := Colecao.companheiro()
+	%Personagem.texture = Personagens.textura(id if not id.is_empty() else PERSONAGEM)
+	var dica := sortear_dica()
+	%Tipo.text = dica[0]
+	%Texto.text = dica[1]
+	%Barra.value = 0.0
+
+
+func barra(valor: float) -> void:
+	%Barra.value = valor
+
+
+func _ready() -> void:
+	if modo_cortina:
+		return
+	%Personagem.texture = Personagens.textura(PERSONAGEM)
+	_mostrar_companheiro()
+	var dica := sortear_dica()
+	%Tipo.text = dica[0]
+	%Texto.text = dica[1]
 
 	if %Personagem.visible:
 		Animacoes.flutuar(%Personagem)

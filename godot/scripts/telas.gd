@@ -38,11 +38,17 @@ var placa_rapida := true
 
 var _historico: Array[String] = []
 var _cortina: ColorRect
-var _carregando: VBoxContainer
+var _carregando: Control  # cenas/carregamento.tscn em "modo cortina"
 var _destino := ""
 var _pendente := ""
 var _camada_avisos: CanvasLayer
 var _trocando := false
+## Telas leves abertas POR CIMA da atual (ex.: missões na vila), sem trocar a
+## cena: abrem e fecham na hora, sem recarregar a vila em 3D.
+const LEVES := ["missoes", "baus", "colecao"]
+var _por_cima: Array[CanvasLayer] = []
+## Avisa quando fecha uma tela aberta por cima (a vila atualiza o topo).
+signal por_cima_fechou
 
 
 func _ready() -> void:
@@ -66,14 +72,78 @@ func _ajustar_fisica() -> void:
 
 ## Troca para a tela `nome` (ver CENAS) com um fade.
 func ir_para(nome: String) -> void:
+	_fechar_todas_por_cima()
 	_historico.clear()
 	_trocar_cena(CENAS[nome])
 
 
-## Abre uma tela lembrando a atual, para `voltar()` retornar a ela.
+## Abre uma tela lembrando a atual, para `voltar()` retornar a ela. Se já há
+## uma tela leve aberta por cima, a próxima leve também abre por cima.
 func abrir(nome: String) -> void:
+	if not _por_cima.is_empty():
+		if nome in LEVES:
+			abrir_por_cima(nome)
+			return
+		_fechar_todas_por_cima()
 	_historico.push_back(get_tree().current_scene.scene_file_path)
 	_trocar_cena(CENAS[nome])
+
+
+## Missões, baús e coleção a partir da vila (ou cozinha): por cima, na hora.
+## Nas outras telas, abre normalmente.
+func abrir_rapido(nome: String) -> void:
+	var cena := get_tree().current_scene
+	if nome in LEVES and cena != null and cena.scene_file_path in [CENAS["vila"], CENAS["cozinha"]] and not _trocando:
+		abrir_por_cima(nome)
+	else:
+		abrir(nome)
+
+
+func abrir_por_cima(nome: String) -> void:
+	var camada := CanvasLayer.new()
+	camada.name = "PorCima_" + nome
+	camada.layer = 50 + _por_cima.size()
+	var tela: Control = load(CENAS[nome]).instantiate()
+	camada.add_child(tela)
+	get_tree().root.add_child(camada)
+	_por_cima.append(camada)
+	var cena := get_tree().current_scene
+	if cena:
+		cena.process_mode = Node.PROCESS_MODE_DISABLED  # a vila para enquanto isso
+	tela.modulate.a = 0.0
+	tela.pivot_offset = get_viewport().get_visible_rect().size / 2
+	tela.scale = Vector2.ONE * 0.96
+	var tween := tela.create_tween().set_parallel()
+	tween.tween_property(tela, "modulate:a", 1.0, 0.12)
+	tween.tween_property(tela, "scale", Vector2.ONE, 0.12)
+
+
+## A tela de cima (ou null), para os testes e o botão voltar.
+func tela_por_cima() -> Control:
+	return _por_cima[-1].get_child(0) if not _por_cima.is_empty() else null
+
+
+func _fechar_por_cima() -> void:
+	var camada: CanvasLayer = _por_cima.pop_back()
+	var tela: Control = camada.get_child(0)
+	tela.mouse_filter = Control.MOUSE_FILTER_STOP
+	var tween := tela.create_tween()
+	tween.tween_property(tela, "modulate:a", 0.0, 0.1)
+	tween.tween_callback(camada.queue_free)
+	if _por_cima.is_empty():
+		var cena := get_tree().current_scene
+		if cena:
+			cena.process_mode = Node.PROCESS_MODE_INHERIT
+	por_cima_fechou.emit()
+
+
+func _fechar_todas_por_cima() -> void:
+	for camada in _por_cima:
+		camada.queue_free()
+	_por_cima.clear()
+	var cena := get_tree().current_scene
+	if cena:
+		cena.process_mode = Node.PROCESS_MODE_INHERIT
 
 
 ## "Casa" do jogador: a Vila dos Doces (ou os níveis, em aparelhos sem placa
@@ -88,6 +158,9 @@ func abrir_confeitaria() -> void:
 
 
 func voltar() -> void:
+	if not _por_cima.is_empty():
+		_fechar_por_cima()
+		return
 	if _historico.is_empty():
 		ir_para("inicio")
 	else:
@@ -110,9 +183,11 @@ func _trocar_cena(caminho: String) -> void:
 	# companheiro (já desenhado antes de a montagem começar)
 	var pesada := caminho in [CENAS["vila"], CENAS["cozinha"]]
 	if pesada:
-		_mostrar_carregando()
+		_mostrar_carregando("vila" if caminho == CENAS["vila"] else "cozinha")
 		await quadro_desenhado()
-	get_tree().change_scene_to_file(caminho)
+		await _carregar_com_barra(caminho)
+	else:
+		get_tree().change_scene_to_file(caminho)
 	await get_tree().process_frame
 	# só abre a cortina depois de a tela nova ter sido desenhada (a primeira
 	# imagem de uma cena 3D é a mais demorada)
@@ -138,10 +213,30 @@ func quadro_desenhado() -> void:
 		await RenderingServer.frame_post_draw
 
 
-func _mostrar_carregando() -> void:
-	var id := Colecao.companheiro()
-	(_carregando.get_node("Doce") as TextureRect).texture = Personagens.textura(id if not id.is_empty() else "brigadeiro")
+func _mostrar_carregando(lugar: String) -> void:
+	_carregando.preparar(lugar)
 	_carregando.visible = true
+
+
+## Carrega a cena em segundo plano, enchendo a barra; depois monta a tela (a
+## montagem da vila trava um instante, com a barra quase cheia).
+func _carregar_com_barra(caminho: String) -> void:
+	if OS.has_feature("web") or ResourceLoader.load_threaded_request(caminho) != OK:
+		_carregando.barra(80.0)
+		await quadro_desenhado()
+		get_tree().change_scene_to_file(caminho)
+		return
+	var progresso := []
+	while ResourceLoader.load_threaded_get_status(caminho, progresso) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		_carregando.barra(10.0 + 60.0 * float(progresso[0]))
+		await get_tree().process_frame
+	var pacote := ResourceLoader.load_threaded_get(caminho) as PackedScene
+	_carregando.barra(85.0)
+	await quadro_desenhado()
+	if pacote:
+		get_tree().change_scene_to_packed(pacote)
+	else:
+		get_tree().change_scene_to_file(caminho)
 
 
 ## Botão "voltar" do Android (e Esc no computador). A caixa de confirmação
@@ -152,7 +247,7 @@ func voltar_pelo_botao() -> void:
 	if not caixas.is_empty():
 		caixas[0].cancelar()
 		return
-	var cena := get_tree().current_scene
+	var cena: Node = tela_por_cima() if not _por_cima.is_empty() else get_tree().current_scene
 	if _trocando or cena == null:
 		return
 	if cena.has_method("ao_voltar"):
@@ -271,25 +366,14 @@ func _criar_cortina() -> void:
 	_cortina.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cortina.set_anchors_preset(Control.PRESET_FULL_RECT)
 	camada.add_child(_cortina)
-	# "CARREGANDO..." com o doce companheiro, no meio da cortina
-	_carregando = VBoxContainer.new()
+	# a mesma tela de carregamento da partida (dica, doce e barra), com o nome
+	# do lugar que está sendo montado
+	_carregando = load("res://cenas/carregamento.tscn").instantiate()
+	_carregando.modo_cortina = true
 	_carregando.name = "Carregando"
 	_carregando.visible = false
-	_carregando.alignment = BoxContainer.ALIGNMENT_CENTER
-	_carregando.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_carregando.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cortina.add_child(_carregando)
-	var doce := TextureRect.new()
-	doce.name = "Doce"
-	doce.custom_minimum_size = Vector2(0, 180)
-	doce.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	doce.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_carregando.add_child(doce)
-	var texto := Label.new()
-	texto.theme_type_variation = &"TituloClaro"
-	texto.text = "CARREGANDO..."
-	texto.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_carregando.add_child(texto)
 	_camada_avisos = CanvasLayer.new()
 	_camada_avisos.layer = 90
 	add_child(_camada_avisos)
