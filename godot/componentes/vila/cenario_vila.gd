@@ -81,7 +81,7 @@ static func caminho(pai: Node3D, de: Vector3, ate: Vector3, largura := 2.4) -> v
 	var caixa := BoxMesh.new()
 	caixa.size = Vector3(largura, 0.04, de.distance_to(ate))
 	no.mesh = caixa
-	no.material_override = Texturas.real("areia", "#F7D9A6", 0.6)
+	no.material_override = Texturas.real("areia", "#F4C888", 0.6)
 	no.position = (de + ate) / 2.0 + Vector3(0, 0.02, 0)
 	no.rotation.y = atan2(ate.x - de.x, ate.z - de.z)
 	pai.add_child(no)

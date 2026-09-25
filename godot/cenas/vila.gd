@@ -105,6 +105,9 @@ var _pas: Array[Node3D] = []  # pás dos moinhos (giram)
 var _painel_lote: Control
 var _tempo_rotulos := 0.0
 var _alto := 0.0  # 0 = câmera aérea normal, 1 = de cima (prédio no meio)
+var _borboletas: Array = []  # [{"no": Sprite3D, "centro", "raio", "velocidade", "fase"}]
+var _tempo_vida := 0.0
+var _brilhos_presente := {}  # lugar -> CPUParticles3D
 
 
 func _ready() -> void:
@@ -137,6 +140,7 @@ func _ready() -> void:
 		_so_de_perto(no)
 	for boneco in find_children("*", "DoceAndante", true, false):
 		boneco.otimizar()
+	_criar_vida()
 	_criar_camera()
 	_criar_interface()
 	_criar_tutorial()
@@ -188,6 +192,7 @@ func _process(delta: float) -> void:
 	for pas in _pas:
 		if is_instance_valid(pas):
 			pas.rotation.z += delta * 0.8
+	_animar_borboletas(delta)
 	_tempo_rotulos += delta
 	if _tempo_rotulos > 1.0:
 		_tempo_rotulos = 0.0
@@ -977,6 +982,8 @@ func agir(id: String) -> void:
 		Audio.tocar("caixa")
 		jogador.comemorar()
 		BairroVila.presente(_presentes[lugar], true)
+		if _brilhos_presente.has(lugar) and is_instance_valid(_brilhos_presente[lugar]):
+			_brilhos_presente[lugar].emitting = false
 		CenarioVila.estilo_desenho(_presentes[lugar])
 		Telas.mostrar_aviso("PRESENTE: +%d AÇÚCAR  +%d MOEDAS" % [premio["acucar"], premio["moedas"]])
 		_depois_de_agir()
@@ -1164,3 +1171,112 @@ func _so_de_perto(no: Node3D) -> void:
 	for malha: GeometryInstance3D in no.find_children("*", "GeometryInstance3D", true, false):
 		malha.visibility_range_end = 45.0
 		malha.visibility_range_end_margin = 5.0
+
+
+# --- Vida na vila: borboletas, respingos da fonte, brilho dos presentes -------------
+
+const BORBOLETA := preload("res://assets/icones/borboleta.svg")
+const BRILHO := preload("res://assets/doce_match/brilho.svg")
+const CORES_BORBOLETA := ["#FF7EB6", "#FFD23F", "#7FD6FF", "#B98CFF", "#FF9F5A", "#8BE38B"]
+
+
+func _criar_vida() -> void:
+	if not Telas.animacoes_continuas or Qualidade.nivel() == Qualidade.BAIXA:
+		return
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = 42
+	var quantas := 10 if Qualidade.nivel() == Qualidade.MEDIA else 18
+	for i in quantas:
+		var borboleta := Sprite3D.new()
+		borboleta.name = "Borboleta"
+		borboleta.texture = BORBOLETA
+		borboleta.pixel_size = 0.006
+		borboleta.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		borboleta.shaded = false
+		borboleta.modulate = Color(CORES_BORBOLETA[i % CORES_BORBOLETA.size()])
+		add_child(borboleta)
+		var angulo := sorteio.randf() * TAU
+		var distancia := sorteio.randf_range(6.0, 26.0)
+		_borboletas.append({"no": borboleta, "centro": Vector3(cos(angulo) * distancia, 0, sin(angulo) * distancia),
+			"raio": sorteio.randf_range(1.5, 4.0), "velocidade": sorteio.randf_range(0.25, 0.6),
+			"fase": sorteio.randf() * TAU})
+	_respingos_da_fonte()
+	for lugar in _presentes:
+		var brilho := _faiscas(_presentes[lugar], Vector3(0, 0.9, 0), Color("#FFE27A"))
+		brilho.emitting = Terrenos.presente_disponivel(lugar)
+		_brilhos_presente[lugar] = brilho
+
+
+func _animar_borboletas(delta: float) -> void:
+	_tempo_vida += delta
+	for b in _borboletas:
+		var t: float = _tempo_vida * b["velocidade"] + b["fase"]
+		var no: Sprite3D = b["no"]
+		# voo em "oito", subindo e descendo, batendo as asas
+		no.position = b["centro"] + Vector3(sin(t) * b["raio"], 0.9 + sin(t * 2.3) * 0.35 + 0.3, sin(t * 2.0) * b["raio"] * 0.6)
+		no.scale = Vector3(0.35 + absf(sin(_tempo_vida * 14.0 + b["fase"])) * 0.65, 1.0, 1.0)
+
+
+## Pingos de chocolate caindo do pratinho de cima da fonte da praça.
+func _respingos_da_fonte() -> void:
+	var gotas := CPUParticles3D.new()
+	gotas.name = "RespingosFonte"
+	gotas.position = Vector3(0, 2.35, 0)
+	gotas.amount = 36
+	gotas.lifetime = 0.55
+	gotas.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
+	gotas.emission_ring_axis = Vector3.UP
+	gotas.emission_ring_radius = 0.95
+	gotas.emission_ring_inner_radius = 0.85
+	gotas.emission_ring_height = 0.02
+	gotas.direction = Vector3.DOWN
+	gotas.spread = 8.0
+	gotas.initial_velocity_min = 0.2
+	gotas.initial_velocity_max = 0.6
+	gotas.gravity = Vector3(0, -6.0, 0)
+	var gota := SphereMesh.new()
+	gota.radius = 0.04
+	gota.height = 0.1
+	gota.radial_segments = 6
+	gota.rings = 3
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color("#5A2E17")
+	mat.roughness = 0.15
+	gota.material = mat
+	gotas.mesh = gota
+	add_child(gotas)
+
+
+## Faíscas douradas subindo (presente do dia esperando ser aberto).
+func _faiscas(pai: Node3D, posicao: Vector3, cor: Color) -> CPUParticles3D:
+	var faiscas := CPUParticles3D.new()
+	faiscas.name = "Faiscas"
+	faiscas.position = posicao
+	faiscas.amount = 14
+	faiscas.lifetime = 1.4
+	faiscas.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	faiscas.emission_sphere_radius = 0.6
+	faiscas.direction = Vector3.UP
+	faiscas.spread = 25.0
+	faiscas.initial_velocity_min = 0.4
+	faiscas.initial_velocity_max = 0.9
+	faiscas.gravity = Vector3.ZERO
+	faiscas.scale_amount_min = 0.6
+	faiscas.scale_amount_max = 1.2
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.22, 0.22)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = BRILHO
+	mat.albedo_color = cor
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mat.vertex_color_use_as_albedo = true
+	quad.material = mat
+	faiscas.mesh = quad
+	var sumir := Gradient.new()
+	sumir.set_color(0, Color(1, 1, 1, 1))
+	sumir.set_color(1, Color(1, 1, 1, 0))
+	faiscas.color_ramp = sumir
+	pai.add_child(faiscas)
+	return faiscas

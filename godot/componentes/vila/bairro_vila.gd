@@ -278,7 +278,7 @@ static func mirante(pai: Node3D, centro: Vector3) -> void:
 ## Presente do dia (caixa com laço); aberto, fica só a caixa sem tampa.
 static func presente(no: Node3D, aberto: bool) -> void:
 	for filho in no.get_children():
-		if not filho is Area3D:
+		if not filho is Area3D and not filho is CPUParticles3D:
 			no.remove_child(filho)
 			filho.queue_free()
 	var caixa := _m("#B07CFF", 0.4)

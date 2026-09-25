@@ -206,6 +206,10 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     ACETINADO (chocolate, massa) e POROSO (açúcar, biscoito, algodão: poros
     + brilho aveludado de borda). Reflexo do céu desligado: com a luz
     realista ele deixava as cores lavadas.
+  - **Vida na vila**: borboletas coloridas voando pelo gramado (10 na
+    qualidade MÉDIA, 18 na ALTA), pingos de chocolate caindo da fonte e
+    faíscas douradas nos presentes do dia ainda não abertos. Só com as
+    animações ligadas e placa de vídeo (print: `--animacoes`).
   - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
     Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 

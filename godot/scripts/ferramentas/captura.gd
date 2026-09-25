@@ -36,6 +36,7 @@ extends Node
 ##   --terrenos  compra lotes e constrói (moinho nv 2, cofre, casa, jardim, fonte; um vazio)
 ##   --vila_pos=0,20  na Vila, põe o doce nesse ponto (x,z)
 ##   --confeitaria_estagio  máquinas suficientes para a Confeitaria crescer (estágio 3)
+##   --animacoes  liga as animações contínuas mesmo sem placa de vídeo (borboletas etc.)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -87,6 +88,8 @@ func _ready() -> void:
 			if not partes[0] in Progresso.colecao["doces"]:
 				Progresso.colecao["doces"].append(partes[0])
 			Companheiros._colecao()["niveis"][partes[0]] = int(partes[1])
+	if args.has("animacoes"):
+		Telas.placa_rapida = true
 	if args.has("titulos"):
 		for t in ["noob", "pro", "mestre"]:
 			Progresso.titulos[t] = 2
