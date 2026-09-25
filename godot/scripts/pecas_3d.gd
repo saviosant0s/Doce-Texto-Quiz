@@ -240,9 +240,9 @@ static func braco(pai: Node3D, ombro: Vector3, lado: int, mat: Material, tamanho
 static func pernas(pai: Node3D, quadril: Vector3, abertura: float, comprimento: float, mat: Material,
 		mat_sapato: Material, tamanho := 1.0) -> void:
 	for lado in [-1, 1]:
-		# cada perna gira no quadril (nó "Perna"), para a animação de andar
+		# cada perna gira no quadril (nós "PernaE"/"PernaD"), para a animação de andar
 		var perna := Node3D.new()
-		perna.name = "Perna"
+		perna.name = "PernaE" if lado < 0 else "PernaD"  # nomes diferentes: o Godot renomearia a 2ª
 		perna.position = quadril + Vector3(lado * abertura, 0, 0)
 		pai.add_child(perna)
 		var pe := Vector3(lado * 0.03, -comprimento, 0.02)

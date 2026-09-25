@@ -463,6 +463,22 @@ func _testar_vila() -> void:
 		balancos.append(aceno.rotation.x)
 	verificar(absf(aceno.rotation.z - AnimacaoDoce.BRACO_ABAIXADO) < 0.2, "andando, o braço do aceno fica abaixado")
 	verificar(balancos.max() - balancos.min() > 0.8, "os braços balançam ao andar")
+	# passos: sempre um pé no chão e o outro no ar, alternando
+	var anim: AnimacaoDoce = vila.jogador._animacao
+	var alternou := {}
+	var fisica_antes := vila.is_physics_processing()
+	vila.set_physics_process(false)  # só o teste move o doce
+	for i in 30:
+		vila.jogador.andar(Vector3(1, 0, 0), 1.0 / 60.0)
+		await get_tree().physics_frame
+		await get_tree().process_frame
+		var alturas := []
+		for k in anim._pernas.size():
+			alturas.append(anim._pernas[k].position.y - anim._base_pernas[k].y + anim._corpo.position.y)
+		if alturas.min() < 0.005 and alturas.max() > 0.03:
+			alternou[alturas.find(alturas.max())] = true
+	vila.set_physics_process(fisica_antes)
+	verificar(alternou.size() == 2, "os pés levantam alternados, um de cada vez (%s)" % str(alternou.keys()))
 	# dois dedos: um no joystick e outro girando a visão / apertando PULAR
 	vila.usar_camera(Vila.Camera.PERTO)
 	var toque := InputEventScreenTouch.new()

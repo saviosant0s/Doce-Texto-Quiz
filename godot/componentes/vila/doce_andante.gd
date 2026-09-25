@@ -87,6 +87,7 @@ func andar(direcao: Vector3, delta: float) -> void:
 	var andando := velocidade > 0.3 and no_chao
 	_animacao.andando = andando
 	_animacao.ritmo = velocidade / VELOCIDADE
+	_animacao.velocidade_chao = velocidade
 	var giro := 0.0
 	if intensidade > 0.05:
 		var angulo := atan2(direcao.x, direcao.z)
