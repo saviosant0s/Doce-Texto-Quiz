@@ -40,6 +40,7 @@ var missoes := {}
 var jogador := {}
 ## Doce Match: {"estrelas": {"1": 3, ...}} por nível (ver DoceMatch).
 var doce_match := {}
+var vila := {}  # terrenos e presentes da Vila dos Doces (ver Terrenos)
 
 ## Quando verdadeiro, nada é gravado em disco (usado ao gerar prints e em testes).
 var somente_memoria := false
@@ -73,6 +74,7 @@ func _zerar() -> void:
 	missoes = Missoes.padrao()
 	jogador = {"xp": 0, "nivel": 1}
 	doce_match = {"estrelas": {}}
+	vila = Terrenos.padrao()
 
 
 # --- Consultas ---------------------------------------------------------------
@@ -194,6 +196,7 @@ func salvar() -> void:
 		"missoes": missoes,
 		"jogador": jogador,
 		"doce_match": doce_match,
+		"vila": vila,
 	}
 	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
 	if arquivo:
@@ -241,6 +244,7 @@ func carregar() -> void:
 	missoes.merge(dados.get("missoes", {}), true)
 	jogador.merge(dados.get("jogador", {}), true)
 	doce_match.merge(dados.get("doce_match", {}), true)
+	vila.merge(dados.get("vila", {}), true)
 	jogador["xp"] = int(jogador["xp"])
 	jogador["nivel"] = int(jogador["nivel"])
 	for chave in ["fragmentos", "niveis"]:

@@ -33,6 +33,9 @@ extends Node
 ##   --podio=mestre:pudim  põe esse doce no degrau do título
 ##   --escolher_podio=pro  abre a escolha de doce desse degrau (Troféus)
 ##   --cortina=vila  mostra o carregamento de ir para a vila (ou cozinha)
+##   --terrenos  compra lotes e constrói (moinho nv 2, cofre, casa, jardim, fonte; um vazio)
+##   --vila_pos=0,20  na Vila, põe o doce nesse ponto (x,z)
+##   --confeitaria_estagio  máquinas suficientes para a Confeitaria crescer (estágio 3)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -90,6 +93,26 @@ func _ready() -> void:
 	if args.has("podio"):
 		for par in args["podio"].split(","):
 			Colecao.escolher_do_podio(par.split(":")[0], par.split(":")[1])
+	if args.has("terrenos"):
+		Progresso.moedas = 99999
+		var obras := ["moinho", "cofre", "casa", "jardim", "fonte", ""]
+		for i in Terrenos.LOTES.size():
+			var id: String = Terrenos.LOTES[i]["id"]
+			Terrenos.comprar(id)
+			if obras[i] != "":
+				Terrenos.construir(id, obras[i])
+		Terrenos.melhorar("lote_1")
+		Progresso.vila["lotes"]["lote_1"]["desde"] = Terrenos.agora() - 3 * 3600
+		Progresso.vila["lotes"]["lote_2"]["desde"] = Terrenos.agora() - 2 * 3600
+		Progresso.moedas = 850
+	if args.has("confeitaria_estagio"):
+		Progresso.moedas = 99999
+		for m in Confeitaria.MAQUINAS:
+			Progresso.niveis[0]["aprovado"] = true
+			Progresso.niveis[1]["aprovado"] = true
+			for k in 3:
+				Confeitaria.construir_ou_melhorar(m["id"])
+		Progresso.moedas = 300
 	if args.has("match"):
 		for i in int(args["match"]):
 			Progresso.doce_match["estrelas"][str(i + 1)] = [3, 2, 3, 1][i % 4]
@@ -183,6 +206,14 @@ func _ready() -> void:
 		Telas._cortina.color.a = 1.0
 		Telas._mostrar_carregando(args["cortina"])
 		Telas._carregando.barra(45.0)
+	if args.has("vila_pos"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var xz: PackedStringArray = args["vila_pos"].split(",")
+		var vila: Node = get_tree().current_scene
+		vila.jogador.global_position = Vector3(float(xz[0]), 0, float(xz[1]))
+		if xz.size() > 2:
+			vila._giro = deg_to_rad(float(xz[2]))
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()

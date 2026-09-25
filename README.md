@@ -61,6 +61,9 @@ personagens, fontes) é a mesma da versão original.
   com 40 fases práticas (5 capítulos) de Excel (planilha com fórmulas de verdade, calculadas
   por `scripts/formulas.gd`) e de Word (formatar uma página), chefes, estrelas
   e baús. Fases em `godot/dados/laboratorio.json`.
+- Bairro dos Terrenos, Lago de Chocolate e Mirante do Sorvete na vila:
+  lotes para comprar e construir (moinho de açúcar, cofre de moedas, casa,
+  jardim, fonte) e presentes diários (`scripts/terrenos.gd`).
 - Doce Match (Fliperama da vila): jogo de combinar 3 com peças de informática
   desenhadas por nós, 30 níveis com objetivos (pontos, juntar peças, limpar
   gelatina) e peças especiais (listrada, embrulhada, bomba)

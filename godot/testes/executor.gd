@@ -23,6 +23,7 @@ func _ready() -> void:
 	_testar_laboratorio()
 	_testar_companheiros_e_baus()
 	_testar_missoes_e_nivel()
+	_testar_terrenos()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -385,6 +386,7 @@ func _testar_fluxo_completo() -> void:
 
 	await _testar_telas_novas()
 	await _testar_vila()
+	await _testar_vila_terrenos()
 	await _testar_tela_colecao()
 	await _testar_tela_confeitaria()
 	await _testar_tela_doce_match()
@@ -583,7 +585,12 @@ func _testar_vila() -> void:
 	verificar(pecas.size() == 4, "os quatro prédios são diferentes")
 	var blocos := vila.find_children("Bloco*", "MeshInstance3D", false, false)
 	verificar(blocos.any(func(b): return b.name.begins_with("BlocoContorno")), "cenário com contorno de desenho")
-	verificar(vila.find_children("*", "MeshInstance3D", true, false).size() < 300, "cenário juntado em poucos blocos (leve)")
+	# a vila cresceu (terrenos, lago, mirante): os lotes e presentes ficam em
+	# blocos próprios e só são desenhados de perto
+	verificar(vila.find_children("*", "MeshInstance3D", true, false).size() < 330, "cenário juntado em poucos blocos (leve)")
+	var lote: Node3D = vila.find_child("Lote_lote_1", true, false)
+	verificar(lote.find_children("*", "MeshInstance3D", true, false).all(func(m): return m.visibility_range_end > 0.0),
+		"lotes longe da câmera não são desenhados")
 	# câmeras: troca em ciclo, 1ª pessoa esconde o doce, a escolha fica salva
 	vila.usar_camera(Vila.Camera.AEREA)
 	vila.proxima_camera()
@@ -1668,4 +1675,98 @@ func _testar_telas_baus_e_missoes() -> void:
 	Progresso.baus = baus_antes
 	Progresso.missoes = missoes_antes
 	Progresso.colecao = colecao_antes
+	Progresso.moedas = moedas_antes
+
+
+# --- Terrenos da vila -----------------------------------------------------------------
+
+func _testar_terrenos() -> void:
+	_secao("terrenos da vila")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.vila = Terrenos.padrao()
+	Terrenos.agora_fixo = 1000000.0
+	Terrenos.dia_fixo = "2026-10-01"
+	Progresso.moedas = 50
+	verificar(not Terrenos.comprar("lote_1") and not Terrenos.comprado("lote_1"), "sem moedas, não compra o terreno")
+	Progresso.moedas = 1000
+	verificar(Terrenos.comprar("lote_1") and Progresso.moedas == 900 and not Terrenos.comprar("lote_1"), "compra o terreno uma vez só")
+	verificar(not Terrenos.construir("lote_2", "moinho"), "só constrói em terreno comprado")
+	verificar(Terrenos.construir("lote_1", "moinho") and Terrenos.nivel("lote_1") == 1 and Progresso.moedas == 820,
+		"constrói o moinho (e paga)")
+	verificar(not Terrenos.construir("lote_1", "casa"), "um terreno, uma construção")
+	verificar(Terrenos.pronto("lote_1") == 0, "moinho novo começa vazio")
+	Terrenos.agora_fixo += 2 * 3600
+	verificar(Terrenos.pronto("lote_1") == 12, "2 horas depois: 12 de açúcar prontos")
+	Terrenos.agora_fixo += 100 * 3600
+	verificar(Terrenos.pronto("lote_1") == Terrenos.maximo("lote_1"), "enche e para no máximo")
+	var acucar := Confeitaria.acucar()
+	verificar(Terrenos.coletar("lote_1") == 30 and Confeitaria.acucar() == acucar + 30 and Terrenos.pronto("lote_1") == 0,
+		"coletar dá o açúcar e esvazia")
+	verificar(Terrenos.preco_melhoria("lote_1") == 150 and Terrenos.melhorar("lote_1") and Terrenos.por_hora("lote_1") == 10,
+		"melhorar o moinho: produz mais")
+	Terrenos.melhorar("lote_1")
+	verificar(Terrenos.nivel("lote_1") == 3 and Terrenos.preco_melhoria("lote_1") == -1 and not Terrenos.melhorar("lote_1"),
+		"nível 3 é o máximo")
+	Terrenos.comprar("lote_2")
+	Terrenos.construir("lote_2", "cofre")
+	Terrenos.agora_fixo += 3600
+	var moedas := Progresso.moedas
+	verificar(Terrenos.coletar("lote_2") == 4 and Progresso.moedas == moedas + 4, "o cofre junta moedas")
+	verificar(Terrenos.produz("lote_2") == "moedas" and Terrenos.produz("lote_1") == "acucar", "cada um produz o seu")
+	# presentes do dia
+	verificar(Terrenos.presente_disponivel("lago") and not Terrenos.abrir_presente("lago").is_empty(), "abre o presente do lago")
+	verificar(not Terrenos.presente_disponivel("lago") and Terrenos.abrir_presente("lago").is_empty(), "uma vez por dia")
+	Terrenos.dia_fixo = "2026-10-02"
+	verificar(Terrenos.presente_disponivel("lago"), "no outro dia, tem presente de novo")
+	# lotes não se sobrepõem nem ficam fora do mapa
+	var ok := true
+	for i in Terrenos.LOTES.size():
+		var a: Vector3 = Terrenos.LOTES[i]["posicao"]
+		if absf(a.x) + Terrenos.TAMANHO_LOTE / 2 > 36 or absf(a.z) + Terrenos.TAMANHO_LOTE / 2 > 36:
+			ok = false
+		for j in range(i + 1, Terrenos.LOTES.size()):
+			var b: Vector3 = Terrenos.LOTES[j]["posicao"]
+			if absf(a.x - b.x) < Terrenos.TAMANHO_LOTE and absf(a.z - b.z) < Terrenos.TAMANHO_LOTE:
+				ok = false
+	verificar(ok, "lotes separados e dentro da vila")
+	Terrenos.agora_fixo = -1.0
+	Terrenos.dia_fixo = ""
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_vila_terrenos() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.vila = Terrenos.padrao()
+	Progresso.moedas = 2000
+	Terrenos.comprar("lote_1")
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	verificar(vila.find_child("Lote_lote_6", true, false) != null and vila.find_child("Presente_lago", true, false) != null,
+		"a vila tem os 6 terrenos e os presentes do lago e do mirante")
+	verificar(vila._texto_ponto("lote_2") == "COMPRAR TERRENO (200)" and vila._texto_ponto("lote_1") == "CONSTRUIR",
+		"botão do terreno: comprar ou construir")
+	vila.agir("lote_1")
+	await get_tree().process_frame
+	var botao: Button = vila.find_child("Construir_casa", true, false)
+	verificar(botao != null, "construir abre a lista de construções")
+	botao.pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	verificar(Terrenos.construcao("lote_1") == "casa" and vila.find_child("Vizinho_lote_1", true, false) != null,
+		"construiu a casa e chegou um vizinho")
+	verificar(vila._lotes["lote_1"].find_child("Obra", true, false) != null, "a casa aparece no terreno")
+	var moedas := Progresso.moedas
+	var tinha := Terrenos.presente_disponivel("mirante")
+	vila.agir("presente_mirante")
+	verificar(not tinha or Progresso.moedas == moedas + Terrenos.PRESENTE["moedas"], "o presente do mirante dá moedas")
+	verificar(vila._texto_ponto("presente_mirante") == "PRESENTE: VOLTE AMANHÃ", "depois, só amanhã")
+	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes

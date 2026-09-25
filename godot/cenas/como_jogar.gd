@@ -14,6 +14,10 @@ const ABAS := [
 			"texto": "O botão da câmera muda entre de cima, de perto e 1ª pessoa. Arraste o dedo para olhar em volta."},
 		{"icone": "lampada", "titulo": "SIGA OS AVISOS",
 			"texto": "A seta amarela mostra o próximo passo. O \"!\" aparece nos prédios com algo esperando você."},
+		{"icone": "confeitaria", "titulo": "COMPRE TERRENOS",
+			"texto": "Atrás da Escola ficam os terrenos: construa um Moinho (açúcar), um Cofre (moedas), casas e jardins."},
+		{"item": "BAU_DOCE", "titulo": "EXPLORE LONGE",
+			"texto": "O Lago de Chocolate e o Mirante do Sorvete têm um presente por dia para quem anda até lá."},
 	]},
 	{"nome": "QUIZ", "passos": [
 		{"icone": "camadas", "titulo": "ESCOLHA O NÍVEL",

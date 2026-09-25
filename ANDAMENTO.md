@@ -168,7 +168,22 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     de entrada (a primeira imagem 3D trava o celular um instante e, com a
     tela ainda transparente, o boneco parecia apagado). Agora a entrada usa
     a imagem e o 3D entra depois, com um esmaecer suave.
-  - Próximo: vila maior com terrenos.
+  - **Vila maior** (mapa cerca de 3x maior, `scripts/terrenos.gd`,
+    `componentes/vila/bairro_vila.gd`):
+    - **Bairro dos Terrenos** atrás da Escola: 6 lotes à venda (100 a 900
+      moedas). No lote comprado se constrói MOINHO DE AÇÚCAR ou COFRE DE
+      MOEDAS (produzem sozinhos até encher; passar lá e coletar; sobem até o
+      nível 3), CASA DE DOCE (chega um vizinho passeando), JARDIM ou FONTE.
+    - **Lago de Chocolate** (oeste) e **Mirante do Sorvete** (leste), com um
+      presente por dia (20 de açúcar + 15 moedas) para quem anda até lá.
+      Placa de direções no cruzamento ao sul da praça.
+    - **Confeitaria cresce por fora** com as máquinas da cozinha: terraço com
+      mesinhas e guarda-sóis e depois uma segunda torre-cupcake.
+    - Câmera aérea sobe e olha de cima quando um prédio tapa o doce; lotes e
+      presentes longe não são desenhados (leve no celular).
+    - Estado salvo em `Progresso.vila`. Print: `--terrenos --vila_pos=0,-29`.
+  - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
+    Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 
 - 27/09: **telas conferidas em 20:9 (celular comprido), 16:10 e 4:3
   (tablets)**, além do 16:9 de sempre. Ajustes: mapa do laboratório usa a
@@ -359,7 +374,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.663 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.688 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
