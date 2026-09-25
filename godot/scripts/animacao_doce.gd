@@ -10,6 +10,9 @@ extends Node
 ## fica abaixado assim (giro no eixo z), e só sobe para acenar.
 const BRACO_ABAIXADO := -1.3
 
+## Um pé encostou no chão (a cada passo): para o som de passos.
+signal pisou
+
 ## Liga a animação de andar (e a velocidade, 0 a 1, para o ritmo dos passos).
 var andando := false
 var ritmo := 1.0
@@ -98,7 +101,10 @@ func _animar_passos(delta: float) -> void:
 		# meio ciclo (PI) = um passo, de PASSADA * amplitude metros; mais rápido =
 		# passos mais largos e mais rápidos
 		amplitude = clampf(0.35 + velocidade_chao * 0.07, 0.4, 0.85)
+		var antes := floori(_passo / PI)
 		_passo += delta * PI * velocidade_chao / (PASSADA * amplitude)
+		if floori(_passo / PI) != antes:
+			pisou.emit()
 	else:
 		_passo += delta * 9.0 * clampf(ritmo, 0.4, 1.3)
 	var balanco := sin(_passo)

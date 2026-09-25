@@ -20,6 +20,8 @@ var id := "brigadeiro"
 var passeando := false
 ## Sombra redonda falsa embaixo (desligada quando a luz já faz sombra de verdade).
 var sombra_redonda := true
+## Faz barulho de passos, pulo e queda (só o doce do jogador).
+var com_som := false
 ## Sem colisão e sem gravidade (clientes da confeitaria: passam uns pelos
 ## outros e pelo jogador, sempre no chão).
 var sem_colisao := false
@@ -54,6 +56,9 @@ func _ready() -> void:
 	Doces3D.montar(id, _modelo)
 	add_child(_animacao)
 	_animacao.configurar(_modelo)
+	_animacao.pisou.connect(func():
+		if com_som:
+			Audio.tocar("passo", randf_range(0.9, 1.15), -14.0))
 	_criar_sombra()
 	_criar_poeira()
 	if passeando:
@@ -112,12 +117,16 @@ func pular() -> void:
 		return
 	velocity.y = FORCA_PULO
 	_no_chao = false
+	if com_som:
+		Audio.tocar("pulo", randf_range(0.95, 1.05), -4.0)
 	var tween := create_tween()
 	tween.tween_property(_modelo, "scale", Vector3(0.85, 1.2, 0.85) * ESCALA, 0.1)
 	tween.tween_property(_modelo, "scale", Vector3.ONE * ESCALA, 0.2)
 
 
 func _amassar() -> void:
+	if com_som:
+		Audio.tocar("passo", 0.8, -6.0)
 	var tween := create_tween()
 	tween.tween_property(_modelo, "scale", Vector3(1.25, 0.72, 1.25) * ESCALA, 0.07)
 	tween.tween_property(_modelo, "scale", Vector3.ONE * ESCALA, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

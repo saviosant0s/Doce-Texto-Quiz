@@ -57,7 +57,7 @@ func _process(delta: float) -> void:
 	var prontos := Confeitaria.atualizar()
 	if prontos > 0:
 		Progresso.salvar()
-		Audio.tocar("acerto")
+		Audio.tocar("estouro", 1.1, -6.0)
 		_atualizar_tudo()
 		return
 	for m in Confeitaria.MAQUINAS:  # só as barrinhas andando
@@ -304,7 +304,7 @@ func _acao_principal(m: Dictionary) -> void:
 	var id: String = m["id"]
 	var nova := not Confeitaria.construida(id)
 	if Confeitaria.construir_ou_melhorar(id):
-		Audio.tocar("acerto")
+		Audio.tocar("construir")
 		Telas.mostrar_aviso(("%s CONSTRUÍDA!" % m["nome"]) if nova else ("%s: NÍVEL %d!" % [m["nome"], Confeitaria.nivel(id)]))
 		Animacoes.pular(_cartoes[id]["imagem"], 18.0, 0.0)
 	_atualizar_tudo()
@@ -313,6 +313,6 @@ func _acao_principal(m: Dictionary) -> void:
 func _vender(m: Dictionary) -> void:
 	var ganho := Confeitaria.vender_bandeja(m["id"])
 	if ganho > 0:
-		Audio.tocar("acerto")
+		Audio.tocar("caixa")
 		Telas.mostrar_aviso("+%d MOEDAS" % ganho)
 	_atualizar_tudo()

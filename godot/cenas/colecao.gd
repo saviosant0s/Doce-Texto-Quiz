@@ -91,7 +91,7 @@ func _ao_tocar_acao() -> void:
 		"COMPRAR", "AGORA NÃO")
 	if not sim or not Colecao.comprar(id):
 		return
-	Audio.tocar("acerto")
+	Audio.tocar("moeda")
 	_visor.mostrar(id)  # sai da silhueta: agora é seu
 	_visor.comemorar()
 	if Colecao.companheiro().is_empty():

@@ -8,7 +8,17 @@ extends Node
 const EFEITOS := {
 	"acerto": preload("res://assets/sons/acerto.ogg"),
 	"erro": preload("res://assets/sons/erro.ogg"),
+	# gerados por ferramentas/gerar_sons.py (originais)
+	"moeda": preload("res://assets/sons/moeda.wav"),
+	"estouro": preload("res://assets/sons/estouro.wav"),
+	"porta": preload("res://assets/sons/porta.wav"),
+	"passo": preload("res://assets/sons/passo.wav"),
+	"pulo": preload("res://assets/sons/pulo.wav"),
+	"construir": preload("res://assets/sons/construir.wav"),
+	"caixa": preload("res://assets/sons/caixa.wav"),
 }
+## Quantos efeitos podem tocar ao mesmo tempo (passos + moedas + estouros...).
+const CANAIS_EFEITOS := 8
 const MUSICAS := [
 	"res://assets/sons/musica_1.ogg",
 	"res://assets/sons/musica_2.ogg",
@@ -19,7 +29,8 @@ const BUS_EFEITOS := "Efeitos"
 const VOLUME_PADRAO_MUSICA := 0.8
 
 var _musica := AudioStreamPlayer.new()
-var _efeitos := AudioStreamPlayer.new()
+var _efeitos: Array[AudioStreamPlayer] = []
+var _proximo_canal := 0
 ## Ordem das músicas da rodada atual (índices de MUSICAS) e posição nela.
 var _fila: Array[int] = []
 var musica_atual := -1
@@ -33,9 +44,12 @@ func _ready() -> void:
 			AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
 	_musica.bus = BUS_MUSICA
 	_musica.finished.connect(proxima_musica)
-	_efeitos.bus = BUS_EFEITOS
 	add_child(_musica)
-	add_child(_efeitos)
+	for i in CANAIS_EFEITOS:
+		var canal := AudioStreamPlayer.new()
+		canal.bus = BUS_EFEITOS
+		add_child(canal)
+		_efeitos.append(canal)
 	aplicar_volumes()
 	Progresso.alterado.connect(aplicar_volumes)
 	proxima_musica()
@@ -55,9 +69,15 @@ func proxima_musica() -> void:
 	_musica.play()
 
 
-func tocar(efeito: String) -> void:
-	_efeitos.stream = EFEITOS[efeito]
-	_efeitos.play()
+## Toca um efeito. `tom` muda a altura (1 = normal; >1 mais agudo), `volume_db`
+## deixa mais baixo (negativo). Vários efeitos podem tocar juntos.
+func tocar(efeito: String, tom := 1.0, volume_db := 0.0) -> void:
+	var canal := _efeitos[_proximo_canal]
+	_proximo_canal = (_proximo_canal + 1) % _efeitos.size()
+	canal.stream = EFEITOS[efeito]
+	canal.pitch_scale = tom
+	canal.volume_db = volume_db
+	canal.play()
 
 
 ## Aplica os volumes salvos em Progresso.config (0 a 1) aos canais.

@@ -215,6 +215,7 @@ func _pegar_das_bandejas(delta: float) -> void:
 		var doces: Node3D = _maquinas[id]["doces"]
 		var origem: Vector3 = doces.get_child(doces.get_child_count() - 1).global_position if doces.get_child_count() > 0 else mesa
 		Confeitaria.pegar(id)
+		Audio.tocar("estouro", 0.9 + carregando.size() * 0.06, -6.0)  # mais agudo quanto mais alta a pilha
 		_atualizar_bandeja(id)
 		_empilhar(m["doce"], origem)
 		_relogio_pegar = RITMO_PEGAR
@@ -339,6 +340,7 @@ func _entregar_no_balcao(delta: float) -> void:
 	var saida := _desempilhar(primeiro["doce"])
 	_voar_ate(CenarioCozinha.mini_doce(self, primeiro["doce"]), saida, primeiro["no"].global_position + Vector3(0, 1.2, 0))
 	primeiro["falta"] -= 1
+	Audio.tocar("estouro", 1.2, -6.0)
 	_atualizar_balao(primeiro)
 	_relogio_entregar = RITMO_ENTREGAR
 	if primeiro["falta"] == 0:
@@ -359,7 +361,7 @@ func _pagar(cliente: Dictionary) -> void:
 	cliente["balao"].text = "+%d" % valor
 	cliente["foto"].visible = false
 	cliente["no"].comemorar()
-	Audio.tocar("acerto")
+	Audio.tocar("moeda")
 
 
 func _recolher_moedas() -> void:
@@ -370,7 +372,7 @@ func _recolher_moedas() -> void:
 		_voar_ate(moeda, moeda.global_position, jogador.global_position + Vector3(0, 1.0, 0), 0.25)
 	Confeitaria.receber(ganho)
 	caixa = 0
-	Audio.tocar("acerto")
+	Audio.tocar("caixa")
 	Telas.mostrar_aviso("+%d MOEDAS" % ganho)
 	_atualizar_tudo()
 
@@ -432,7 +434,7 @@ func _comprar(chave: String) -> void:
 			var no: Node3D = _maquinas[chave]["no"]
 			no.scale = Vector3.ONE * 0.6
 			no.create_tween().tween_property(no, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	Audio.tocar("acerto")
+	Audio.tocar("construir")
 	jogador.comemorar()
 	_atualizar_tudo()
 
@@ -615,6 +617,7 @@ func _criar_jogador() -> void:
 	var id := Colecao.companheiro()
 	jogador.id = id if not id.is_empty() else "brigadeiro"
 	jogador.sombra_redonda = false
+	jogador.com_som = true
 	add_child(jogador)
 	jogador.global_position = INICIO
 	jogador.olhar_para(Vector3(0, 0, 0))

@@ -53,6 +53,12 @@ func _testar_regras() -> void:
 	verificar(Jogo.multiplicador(2) == 1.0 and Jogo.multiplicador(3) == 1.5 and Jogo.multiplicador(5) == 2.0, "combos x1,5 e x2")
 	verificar(Jogo.pontos_da_resposta(true, 15.0, 5) == 300, "meio tempo com combo x2 = 300")
 	verificar(Jogo.formatar(2198) == "2.198" and Jogo.formatar(1234567) == "1.234.567" and Jogo.formatar(12) == "12", "formata milhar")
+	# Efeitos sonoros: todos carregam e vários tocam ao mesmo tempo
+	verificar(Audio.EFEITOS.values().all(func(e): return e != null) and Audio.EFEITOS.size() >= 9, "efeitos sonoros carregados")
+	Audio.tocar("moeda")
+	Audio.tocar("estouro", 1.3, -6.0)
+	var tocando := Audio._efeitos.filter(func(c): return c.stream != null).size()
+	verificar(tocando >= 2, "dois efeitos tocam juntos (um não corta o outro)")
 	# Músicas: uma rodada toca todas, sem repetir a última em seguida
 	Audio._fila.clear()  # começa uma rodada nova
 	for rodada in 5:

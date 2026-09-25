@@ -163,7 +163,7 @@ func _animar_troca(pa: Control, pb: Control, a: Vector2i, b: Vector2i) -> void:
 
 
 func _animar_passo(passo: Dictionary) -> void:
-	Audio.tocar("acerto")
+	Audio.tocar("estouro", 0.9 + 0.15 * (passo["combo"] - 1))  # combo: cada vez mais agudo
 	# somem
 	var centro := Vector2.ZERO
 	for p: Vector2i in passo["somem"]:
@@ -252,6 +252,7 @@ func _mostrar_fim() -> void:
 	Progresso.estatisticas["match_recorde"] = maxi(recorde, jogo.pontos)
 	Progresso.estatisticas["match_partidas"] = int(Progresso.estatisticas.get("match_partidas", 0)) + 1
 	Progresso.ganhar_moedas(moedas)  # também salva
+	Audio.tocar("construir" if estrelas > 0 else "moeda")
 	var painel := _painel_central()
 	_fim = painel.get_parent().get_parent()
 	var coluna: VBoxContainer = painel.get_child(0)

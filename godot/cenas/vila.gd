@@ -296,6 +296,7 @@ func _entrar_animado(id: String, cena: String) -> void:
 	_passos_entrada = [predio["porta"], predio["entrada"]]
 	if modo_camera == Camera.PRIMEIRA_PESSOA:
 		usar_camera(Camera.PERTO)
+	Audio.tocar("porta", randf_range(0.95, 1.05), -2.0)
 	var tween := create_tween()
 	tween.tween_interval(0.1)
 	tween.tween_property(folha, "rotation:y", deg_to_rad(-105), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -480,6 +481,7 @@ func _criar_jogador() -> void:
 	jogador = DoceAndante.new()
 	jogador.name = "Jogador"
 	jogador.sombra_redonda = false  # o sol já faz sombra de verdade
+	jogador.com_som = true
 	var id := Colecao.companheiro()
 	jogador.id = id if not id.is_empty() else "brigadeiro"
 	add_child(jogador)
