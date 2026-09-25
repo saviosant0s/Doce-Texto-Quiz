@@ -440,7 +440,7 @@ func _montar_tela() -> void:
 	var voltar := Button.new()
 	voltar.name = "Voltar"
 	voltar.theme_type_variation = &"BotaoIconeAmarelo"
-	voltar.custom_minimum_size = Vector2(72, 72)
+	voltar.custom_minimum_size = Vector2(60, 60)
 	voltar.icon = ICONE_VOLTAR
 	voltar.expand_icon = true
 	voltar.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -451,6 +451,7 @@ func _montar_tela() -> void:
 	etiqueta.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var titulo := Label.new()
 	titulo.theme_type_variation = &"Titulo"
+	titulo.add_theme_font_size_override("font_size", 40)
 	titulo.text = "DOCE MATCH"
 	etiqueta.add_child(titulo)
 	topo.add_child(etiqueta)

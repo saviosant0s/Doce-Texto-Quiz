@@ -122,6 +122,13 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 26/09 (pedido do Sávio vendo os prints): **telas mais limpas**. Resultado do
+  quiz: uma frase com acertos e pontos e uma linha só de prêmios (moedas,
+  açúcar, baú, XP), sem as etiquetas coloridas (o "nível liberado" já é o
+  botão). Vila e cozinha: sem a faixa com o nome, topo numa linha só (casa,
+  nível/missões/baús, moedas, câmera) com botões menores; ENTRAR, PULAR e
+  JOGAR O QUIZ menores. Laboratório, fases, baús, missões e Doce Match com
+  voltar e título menores. **APK ainda não gerado com isso** (está na 0.10.0).
 - 26/09 (noite, pedido "pode fazer tudo"; partes 2 e 3 do plano "estilo
   Vikings Rise"), **v0.10.0 publicada (APK ~94 MB e Windows)**:
   - **Baús surpresa** (`scripts/baus.gd`, tela `cenas/baus.*`): DOCE (partida

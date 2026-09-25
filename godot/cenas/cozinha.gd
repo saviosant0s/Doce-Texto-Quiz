@@ -715,7 +715,7 @@ func _criar_interface() -> void:
 	margem.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margem.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for lado in ["left", "right", "top", "bottom"]:
-		margem.add_theme_constant_override("margin_" + lado, 28)
+		margem.add_theme_constant_override("margin_" + lado, 18)
 	camada.add_child(margem)
 	var coluna := VBoxContainer.new()
 	coluna.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -728,21 +728,14 @@ func _criar_interface() -> void:
 	var voltar := Button.new()
 	voltar.name = "Voltar"
 	voltar.theme_type_variation = &"BotaoIconeAmarelo"
-	voltar.custom_minimum_size = Vector2(72, 72)
+	voltar.custom_minimum_size = Vector2(54, 54)
+	voltar.tooltip_text = "Minha Confeitaria: voltar para a vila"
 	voltar.icon = ICONE_CASA
 	voltar.expand_icon = true
 	voltar.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	voltar.focus_mode = Control.FOCUS_NONE
 	voltar.pressed.connect(Telas.voltar)
 	topo.add_child(voltar)
-	var titulo := PanelContainer.new()
-	titulo.theme_type_variation = &"EtiquetaAmarela"
-	titulo.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var texto := Label.new()
-	texto.theme_type_variation = &"Titulo"
-	texto.text = "MINHA CONFEITARIA"
-	titulo.add_child(texto)
-	topo.add_child(titulo)
 	var espaco := Control.new()
 	espaco.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	espaco.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -752,7 +745,7 @@ func _criar_interface() -> void:
 	var camera := Button.new()
 	camera.name = "Camera"
 	camera.theme_type_variation = &"BotaoIconeAmarelo"
-	camera.custom_minimum_size = Vector2(72, 72)
+	camera.custom_minimum_size = Vector2(54, 54)
 	camera.icon = ICONE_CAMERA
 	camera.expand_icon = true
 	camera.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -768,7 +761,7 @@ func _criar_interface() -> void:
 	faixa.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dica = Label.new()
 	_dica.theme_type_variation = &"SubtituloClaro"
-	_dica.add_theme_font_size_override("font_size", 26)
+	_dica.add_theme_font_size_override("font_size", 21)
 	faixa.add_child(_dica)
 	coluna.add_child(faixa)
 	var meio := Control.new()
@@ -791,8 +784,9 @@ func _criar_interface() -> void:
 	_botao_quiz.text = "JOGAR O QUIZ"
 	_botao_quiz.icon = ICONE_ACUCAR
 	_botao_quiz.expand_icon = true
-	_botao_quiz.add_theme_constant_override("icon_max_width", 34)
-	_botao_quiz.custom_minimum_size = Vector2(320, 90)
+	_botao_quiz.add_theme_constant_override("icon_max_width", 26)
+	_botao_quiz.add_theme_font_size_override("font_size", 26)
+	_botao_quiz.custom_minimum_size = Vector2(240, 66)
 	_botao_quiz.size_flags_vertical = Control.SIZE_SHRINK_END
 	_botao_quiz.focus_mode = Control.FOCUS_NONE
 	_botao_quiz.pressed.connect(Telas.abrir.bind("niveis"))
@@ -809,13 +803,14 @@ func _etiqueta(pai: Control, icone: Texture2D, cor: Color) -> Label:
 	var imagem := TextureRect.new()
 	imagem.texture = icone
 	imagem.modulate = cor
-	imagem.custom_minimum_size = Vector2(32, 32)
+	imagem.custom_minimum_size = Vector2(24, 24)
 	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	imagem.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	linha.add_child(imagem)
 	var rotulo := Label.new()
 	rotulo.theme_type_variation = &"TituloClaro"
+	rotulo.add_theme_font_size_override("font_size", 26)
 	linha.add_child(rotulo)
 	pai.add_child(etiqueta)
 	return rotulo

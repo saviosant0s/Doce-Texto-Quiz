@@ -4,12 +4,10 @@ extends Control
 ## Na revisão, mostra quantas perguntas erradas o jogador corrigiu.
 
 const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
-const ICONE_CERTO := preload("res://assets/icones/certo.svg")
 const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
-const ICONE_PONTOS := preload("res://assets/icones/grafico.svg")
-const ICONE_LAMPADA := preload("res://assets/icones/lampada.svg")
 const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
 const ICONE_BAU := preload("res://assets/baus/bau_doce.svg")
+const ICONE_XP := preload("res://assets/icones/pular.svg")
 ## Personagem mostrado (nome como em Personagens.textura).
 var _personagem := "brigadeiro_triste"
 
@@ -18,18 +16,19 @@ const PERSONAGENS_TITULO := {"noob": "maca_noob", "pro": "cupcake_pro", "mestre"
 
 func _ready() -> void:
 	var r := Jogo.resumo
-	%Detalhe.visible = false  # os números aparecem em etiquetas, sem texto corrido
 	%Inicio.pressed.connect(Telas.ir_para_casa)
 	if r["revisao"]:
 		_mostrar_revisao(r)
 	else:
 		_mostrar_partida(r)
+	# prêmios numa linha só, todos iguais: ícone, número e legenda
+	_premio(ICONE_MOEDA, "+%d" % r["moedas"], "MOEDAS")
 	if r.get("acucar", 0) > 0:  # vai para a Minha Confeitaria
-		_destaque("+%d" % r["acucar"], ICONE_ACUCAR)
+		_premio(ICONE_ACUCAR, "+%d" % r["acucar"], "AÇÚCAR")
 	if r.get("bau", false):  # baú surpresa (partida aprovada)
-		_destaque("+1 BAÚ", ICONE_BAU, true)
+		_premio(ICONE_BAU, "+1", "BAÚ", false)
 	if r.get("xp", 0) > 0:
-		_destaque("+%d XP" % r["xp"])
+		_premio(ICONE_XP, "+%d" % r["xp"], "XP")
 	%Destaques.visible = %Destaques.get_child_count() > 0
 	%Personagem.texture = Personagens.textura(_personagem)
 	Personagens.animar(%Personagem, _personagem)  # doce 3D vivo, se o aparelho aguentar
@@ -55,14 +54,13 @@ func _mostrar_partida(r: Dictionary) -> void:
 		%JogarDeNovo.text = "TENTE NOVAMENTE"
 		%Fundo.decoracao = Fundo.Decoracao.NENHUMA
 	_mostrar_estrelas(r["estrelas"])
-	_destaque("%d/%d" % [r["acertos"], r["total"]], ICONE_CERTO)
-	_destaque("+%d" % r["moedas"], ICONE_MOEDA)
-	_destaque(Jogo.formatar(r["pontos"]), ICONE_PONTOS)
+	# acertos e pontos numa frase curta (o recorde entra junto)
+	var resumo := "%d de %d acertos  ·  %s pontos" % [r["acertos"], r["total"], Jogo.formatar(r["pontos"])]
 	if r["novo_recorde_pontos"]:
-		_destaque("NOVO RECORDE!", null, true)
+		resumo += "  ·  novo recorde!"
+	%Detalhe.text = resumo
 	if r["liberou_nivel"]:
 		var proximo: String = Jogo.niveis[r["nivel"] + 1]["nome"].to_upper()
-		_destaque("%s LIBERADO!" % proximo, null, true)
 		%ProximoNivel.visible = true
 		%ProximoNivel.text = "IR PARA O NÍVEL %s" % proximo
 		%ProximoNivel.pressed.connect(Jogo.iniciar_nivel.bind(r["nivel"] + 1))
@@ -83,11 +81,10 @@ func _mostrar_revisao(r: Dictionary) -> void:
 		%Titulo.text = "LEIA AS EXPLICAÇÕES E TENTE DE NOVO!"
 		%Fundo.decoracao = Fundo.Decoracao.NENHUMA
 	_personagem = "cupcake_pro" if r["acertos"] > 0 else "brigadeiro_triste"
-	_destaque("%d/%d" % [r["acertos"], r["total"]], ICONE_CERTO)
-	_destaque("+%d" % r["moedas"], ICONE_MOEDA)
-	_destaque(Jogo.formatar(r["pontos"]), ICONE_PONTOS)
+	var resumo := "%s pontos" % Jogo.formatar(r["pontos"])
 	if restantes > 0:
-		_destaque("FALTA%s %d" % ["" if restantes == 1 else "M", restantes], ICONE_LAMPADA)
+		resumo += "  ·  falta%s %d para revisar" % ["" if restantes == 1 else "m", restantes]
+	%Detalhe.text = resumo
 	if restantes > 0:
 		%JogarDeNovo.text = "REVISAR DE NOVO"
 		%JogarDeNovo.pressed.connect(Jogo.iniciar_revisao)
@@ -170,32 +167,29 @@ func _mostrar_estrelas(quantidade: int) -> void:
 			estrela.modulate = Color(Cores.ROXO, 0.18)
 
 
-## Etiqueta com ícone opcional (ex.: moeda "+45"). As de `destaque` (recorde,
-## nível liberado) são verdes.
-func _destaque(texto: String, icone: Texture2D = null, destaque := false) -> void:
-	var etiqueta := PanelContainer.new()
-	etiqueta.theme_type_variation = &"Etiqueta"
-	var cor := Color.WHITE if destaque else Cores.AMARELO
-	if destaque:
-		var estilo: StyleBoxFlat = etiqueta.get_theme_stylebox("panel", &"Etiqueta").duplicate()
-		estilo.bg_color = Cores.VERDE
-		etiqueta.add_theme_stylebox_override("panel", estilo)
-	var linha := HBoxContainer.new()
-	linha.add_theme_constant_override("separation", 6)
-	etiqueta.add_child(linha)
-	if icone:
-		var imagem := TextureRect.new()
-		imagem.texture = icone
-		imagem.modulate = cor
-		imagem.custom_minimum_size = Vector2(26, 26)
-		imagem.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		linha.add_child(imagem)
+## Um prêmio da partida: ícone, "+60" e a legenda embaixo ("MOEDAS").
+## `pintar` = ícone de uma cor só (roxo); o baú fica com as cores dele.
+func _premio(icone: Texture2D, numero: String, legenda: String, pintar := true) -> void:
+	var coluna := VBoxContainer.new()
+	coluna.add_theme_constant_override("separation", 0)
+	var imagem := TextureRect.new()
+	imagem.texture = icone
+	if pintar:
+		imagem.modulate = Cores.ROXO
+	imagem.custom_minimum_size = Vector2(0, 34)
+	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	coluna.add_child(imagem)
+	var valor := Label.new()
+	valor.theme_type_variation = &"Titulo"
+	valor.add_theme_font_size_override("font_size", 32)
+	valor.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	valor.text = numero
+	coluna.add_child(valor)
 	var rotulo := Label.new()
-	rotulo.theme_type_variation = &"SubtituloClaro"
-	rotulo.add_theme_font_size_override("font_size", 30)
-	rotulo.add_theme_color_override("font_color", cor)
-	rotulo.text = texto
-	linha.add_child(rotulo)
-	%Destaques.add_child(etiqueta)
+	rotulo.theme_type_variation = &"Subtitulo"
+	rotulo.add_theme_font_size_override("font_size", 16)
+	rotulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rotulo.text = legenda
+	coluna.add_child(rotulo)
+	%Destaques.add_child(coluna)

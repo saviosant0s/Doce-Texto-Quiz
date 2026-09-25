@@ -209,14 +209,14 @@ func _criar_tutorial() -> void:
 	_dica.theme_type_variation = &"EtiquetaAmarela"
 	_dica.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dica.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	_dica.position.y = 190
+	_dica.position.y = 84
 	var texto := Label.new()
 	texto.theme_type_variation = &"Titulo"
 	texto.text = DICAS[passo_tutorial]
 	texto.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	texto.custom_minimum_size = Vector2(620, 0)
-	texto.add_theme_font_size_override("font_size", 26)
+	texto.custom_minimum_size = Vector2(540, 0)
+	texto.add_theme_font_size_override("font_size", 21)
 	_dica.add_child(texto)
 	_interface.add_child(_dica)
 	_dica.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -634,34 +634,33 @@ func _criar_interface() -> void:
 	margem.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margem.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for lado in ["left", "right", "top", "bottom"]:
-		margem.add_theme_constant_override("margin_" + lado, 28)
+		margem.add_theme_constant_override("margin_" + lado, 18)
 	raiz.add_child(margem)
 	var coluna := VBoxContainer.new()
 	coluna.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margem.add_child(coluna)
 
+	# topo compacto: casa, nível/missões/baús, moedas e câmera numa linha só
+	# (a vila fica à mostra; nada de faixa com o nome)
 	var topo := HBoxContainer.new()
-	topo.add_theme_constant_override("separation", 14)
+	topo.add_theme_constant_override("separation", 10)
 	topo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	coluna.add_child(topo)
 	var casa := Button.new()
 	casa.name = "Casa"
 	casa.theme_type_variation = &"BotaoIconeAmarelo"
-	casa.custom_minimum_size = Vector2(72, 72)
+	casa.custom_minimum_size = Vector2(54, 54)
 	casa.icon = ICONE_CASA
 	casa.expand_icon = true
 	casa.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	casa.focus_mode = Control.FOCUS_NONE
+	casa.tooltip_text = "Vila dos Doces: voltar ao início"
 	casa.pressed.connect(Telas.ir_para.bind("inicio"))
 	topo.add_child(casa)
-	var titulo := PanelContainer.new()
-	titulo.theme_type_variation = &"EtiquetaAmarela"
-	titulo.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var texto := Label.new()
-	texto.theme_type_variation = &"Titulo"
-	texto.text = "VILA DOS DOCES"
-	titulo.add_child(texto)
-	topo.add_child(titulo)
+	var progresso := BotoesProgresso.new()
+	progresso.name = "Progresso"
+	progresso.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	topo.add_child(progresso)
 	var espaco := Control.new()
 	espaco.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	espaco.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -670,25 +669,26 @@ func _criar_interface() -> void:
 	moedas.theme_type_variation = &"Etiqueta"
 	moedas.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var linha := HBoxContainer.new()
-	linha.add_theme_constant_override("separation", 8)
+	linha.add_theme_constant_override("separation", 6)
 	moedas.add_child(linha)
 	var icone := TextureRect.new()
 	icone.texture = ICONE_MOEDA
 	icone.modulate = Cores.AMARELO
-	icone.custom_minimum_size = Vector2(32, 32)
+	icone.custom_minimum_size = Vector2(24, 24)
 	icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	linha.add_child(icone)
 	var valor := Label.new()
 	valor.theme_type_variation = &"TituloClaro"
+	valor.add_theme_font_size_override("font_size", 26)
 	valor.text = Jogo.formatar(Progresso.moedas)
 	linha.add_child(valor)
 	topo.add_child(moedas)
 	var camera := Button.new()
 	camera.name = "Camera"
 	camera.theme_type_variation = &"BotaoIconeAmarelo"
-	camera.custom_minimum_size = Vector2(72, 72)
+	camera.custom_minimum_size = Vector2(54, 54)
 	camera.icon = ICONE_CAMERA
 	camera.expand_icon = true
 	camera.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -697,14 +697,6 @@ func _criar_interface() -> void:
 	camera.pressed.connect(proxima_camera)
 	_botao_camera = camera
 	topo.add_child(camera)
-
-	var linha_progresso := HBoxContainer.new()
-	linha_progresso.alignment = BoxContainer.ALIGNMENT_END
-	linha_progresso.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	coluna.add_child(linha_progresso)
-	var progresso := BotoesProgresso.new()
-	progresso.name = "Progresso"
-	linha_progresso.add_child(progresso)
 
 	var meio := Control.new()
 	meio.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -723,7 +715,8 @@ func _criar_interface() -> void:
 	baixo.add_child(espaco2)
 	_botao_entrar = Button.new()
 	_botao_entrar.name = "Entrar"
-	_botao_entrar.custom_minimum_size = Vector2(330, 96)
+	_botao_entrar.custom_minimum_size = Vector2(250, 68)
+	_botao_entrar.add_theme_font_size_override("font_size", 26)
 	_botao_entrar.size_flags_vertical = Control.SIZE_SHRINK_END
 	_botao_entrar.visible = false
 	_botao_entrar.focus_mode = Control.FOCUS_NONE
@@ -732,7 +725,7 @@ func _criar_interface() -> void:
 	var pular := Button.new()
 	pular.name = "Pular"
 	pular.theme_type_variation = &"BotaoIconeAmarelo"
-	pular.custom_minimum_size = Vector2(112, 112)
+	pular.custom_minimum_size = Vector2(88, 88)
 	pular.size_flags_vertical = Control.SIZE_SHRINK_END
 	pular.icon = ICONE_PULAR
 	pular.expand_icon = true

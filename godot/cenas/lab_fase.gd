@@ -339,7 +339,7 @@ func _montar() -> void:
 	var voltar := Button.new()
 	voltar.name = "Voltar"
 	voltar.theme_type_variation = &"BotaoIconeAmarelo"
-	voltar.custom_minimum_size = Vector2(72, 72)
+	voltar.custom_minimum_size = Vector2(56, 56)
 	voltar.icon = ICONE_VOLTAR
 	voltar.expand_icon = true
 	voltar.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -351,6 +351,7 @@ func _montar() -> void:
 	etiqueta.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var titulo := Label.new()
 	titulo.theme_type_variation = &"Titulo"
+	titulo.add_theme_font_size_override("font_size", 34)
 	var programa := "EXCEL" if fase["tipo"] == "excel" else "WORD"
 	titulo.text = "%s · %s" % [programa, str(fase["titulo"]).to_upper()]
 	etiqueta.add_child(titulo)
@@ -379,7 +380,7 @@ func _montar() -> void:
 	var dica := Button.new()
 	dica.name = "Dica"
 	dica.theme_type_variation = &"BotaoIconeAmarelo"
-	dica.custom_minimum_size = Vector2(72, 72)
+	dica.custom_minimum_size = Vector2(56, 56)
 	dica.icon = ICONE_DICA
 	dica.expand_icon = true
 	dica.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -603,8 +604,8 @@ func _atualizar_atalhos_excel() -> void:
 		var b := Button.new()
 		b.text = texto
 		b.theme_type_variation = &"Alternativa" if texto.length() > 2 else &"BotaoIconeAmarelo"
-		b.custom_minimum_size = Vector2(56 if texto.length() <= 2 else 0, 52)
-		b.add_theme_font_size_override("font_size", 24)
+		b.custom_minimum_size = Vector2(46 if texto.length() <= 2 else 0, 44)
+		b.add_theme_font_size_override("font_size", 20)
 		b.focus_mode = Control.FOCUS_NONE
 		b.pressed.connect(_inserir.bind(texto))
 		atalhos.add_child(b)
@@ -612,7 +613,7 @@ func _atualizar_atalhos_excel() -> void:
 	apagar.name = "Apagar"
 	apagar.text = "⌫"
 	apagar.theme_type_variation = &"Alternativa"
-	apagar.custom_minimum_size = Vector2(64, 52)
+	apagar.custom_minimum_size = Vector2(56, 44)
 	apagar.focus_mode = Control.FOCUS_NONE
 	apagar.pressed.connect(func():
 		var c := _formula.caret_column
