@@ -30,6 +30,8 @@ var conquistas := {}
 var colecao := {}
 ## Minha Confeitaria: açúcar, máquinas, estoque e encomendas (ver Confeitaria).
 var confeitaria := {}
+## Laboratório do Office: {"estrelas": {id_fase: 1..3}, "baus": {id_bau: true}} (ver Laboratorio).
+var laboratorio := {}
 
 ## Quando verdadeiro, nada é gravado em disco (usado ao gerar prints e em testes).
 var somente_memoria := false
@@ -58,6 +60,7 @@ func _zerar() -> void:
 	conquistas = {}
 	colecao = {"doces": [], "companheiro": ""}
 	confeitaria = Confeitaria.padrao()
+	laboratorio = {"estrelas": {}, "baus": {}}
 
 
 # --- Consultas ---------------------------------------------------------------
@@ -174,6 +177,7 @@ func salvar() -> void:
 		"conquistas": conquistas,
 		"colecao": colecao,
 		"confeitaria": confeitaria,
+		"laboratorio": laboratorio,
 	}
 	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
 	if arquivo:
@@ -212,6 +216,9 @@ func carregar() -> void:
 	conquistas = dados.get("conquistas", {})
 	colecao.merge(dados.get("colecao", {}), true)
 	confeitaria.merge(dados.get("confeitaria", {}), true)
+	laboratorio.merge(dados.get("laboratorio", {}), true)
+	for id in laboratorio["estrelas"]:
+		laboratorio["estrelas"][id] = int(laboratorio["estrelas"][id])
 	alterado.emit()
 
 

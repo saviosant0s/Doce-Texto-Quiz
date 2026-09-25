@@ -18,6 +18,9 @@ func _ready() -> void:
 	_testar_colecao()
 	_testar_confeitaria()
 	_testar_doce_match()
+	_testar_formulas()
+	_testar_documento_word()
+	_testar_laboratorio()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -901,3 +904,185 @@ func _esperar_confirmacao() -> Node:
 		if not caixas.is_empty():
 			return caixas[0]
 	return null
+
+
+# --- Laboratório do Office ------------------------------------------------------
+
+func _testar_formulas() -> void:
+	_secao("fórmulas do laboratório")
+	var c := {"A1": "Doce", "A2": "Brigadeiro", "A3": "Cupcake", "A4": "Brigadeiro",
+		"B1": "Vendas", "B2": 12.0, "B3": 8.0, "B4": 10.0, "C2": 2.5, "C3": 0.0, "D2": "7"}
+	var casos := [
+		["=B2+B3", 20.0], ["=2+3*4", 14.0], ["=(2+3)*4", 20.0], ["=-2^2", 4.0], ["=10/4", 2.5],
+		["=50%", 0.5], ["=2,5*2", 5.0], ["=SOMA(B2:B4)", 30.0], ["=soma(b2:b4)", 30.0],
+		["=SOMA(B1:B4)", 30.0], ["=MÉDIA(B2:B4)", 10.0], ["=MEDIA(B2:B4)", 10.0],
+		["=MÁXIMO(B2:B4)", 12.0], ["=MÍNIMO(B2:B4;5)", 5.0], ["=SOMA(B2;B3;1)", 21.0],
+		["=CONT.NÚM(A1:B4)", 3.0], ["=CONT.VALORES(A1:A5)", 4.0], ["=CONTAR.VAZIO(A1:A5)", 1.0],
+		["=CONT.SE(A2:A4;\"Brigadeiro\")", 2.0], ["=CONT.SE(B2:B4;\">=10\")", 2.0],
+		["=CONT.SE(A2:A4;\"B*\")", 2.0], ["=SOMASE(A2:A4;\"Brigadeiro\";B2:B4)", 22.0],
+		["=MÉDIASE(A2:A4;\"Brigadeiro\";B2:B4)", 11.0],
+		["=SE(B2>10;\"Muito\";\"Pouco\")", "Muito"], ["=SE(B3>10;\"Muito\";\"Pouco\")", "Pouco"],
+		["=SE(B3>10;1)", false], ["=E(B2>5;B3>5)", true], ["=OU(B2>50;B3>5)", true], ["=NÃO(B2>5)", false],
+		["=ARRED(2,345;2)", 2.35], ["=ARRED(-2,5;0)", -3.0], ["=A2&\" \"&B2", "Brigadeiro 12"],
+		["=CONCATENAR(A2;\"!\")", "Brigadeiro!"], ["=MAIÚSCULA(A3)", "CUPCAKE"],
+		["=ESQUERDA(A2;4)", "Brig"], ["=NÚM.CARACT(A1)", 4.0], ["=D2+1", 8.0], ["=$B$2*C2", 30.0],
+		["=B$2+$B3", 20.0], ["=B2>=12", true], ["=A2=\"brigadeiro\"", true], ["=Z9+1", 1.0],
+		["=\"a\"\"b\"", "a\"b"], ["=VERDADEIRO", true],
+	]
+	for caso in casos:
+		var r: Variant = Formulas.calcular(caso[0], c)
+		verificar(not Formulas.eh_erro(r) and Formulas.iguais(r, caso[1]),
+			"%s = %s (deu %s)" % [caso[0], Formulas.texto(caso[1]), Formulas.texto(r)])
+	var erros := [
+		["=B2/C3", Formulas.DIV0], ["=B2/Z1", Formulas.DIV0], ["=SOMAR(B2:B4)", Formulas.NOME],
+		["=A2+1", Formulas.VALOR], ["=MÉDIA(Z1:Z3)", Formulas.DIV0], ["=SOMA(B2:B4", Formulas.INCOMPLETA],
+		["=SOMA(B2,B3)", Formulas.VIRGULA], ["=SE(B2)", Formulas.ARGUMENTOS], ["=", Formulas.INCOMPLETA],
+		["=B2+", Formulas.INCOMPLETA], ["=\"abc", Formulas.INCOMPLETA], ["=B2:B4", Formulas.VALOR],
+		["=B2 B3", Formulas.INCOMPLETA], ["=SOMA", Formulas.NOME], ["=SE(A2;1;2)", Formulas.VALOR],
+	]
+	for caso in erros:
+		var r: Variant = Formulas.calcular(caso[0], c)
+		verificar(Formulas.eh_erro(r) and r.codigo == caso[1], "%s dá %s (deu %s)" % [caso[0], caso[1], Formulas.texto(r)])
+	verificar(Formulas.calcular("=SOMAR(B2:B4)", c).explicacao() != "", "erro tem explicação")
+	verificar(Formulas.texto(2.5) == "2,5" and Formulas.texto(12.0) == "12" and Formulas.texto(1.0 / 3.0) == "0,33", "números aparecem no jeito brasileiro")
+	verificar(Formulas.texto(true) == "VERDADEIRO", "VERDADEIRO por extenso")
+	verificar(Formulas.funcoes_usadas("=SE(MÉDIA(B2:B4)>5;SOMA(B2);0)") == ["SE", "MEDIA", "SOMA"], "lista as funções usadas")
+	verificar(Formulas.usa_celulas("=SOMA(B2:B4)") and not Formulas.usa_celulas("=12+8"), "sabe se a fórmula usa células")
+	verificar(Formulas.posicao("B12") == Vector2i(1, 11) and Formulas.nome_celula(Vector2i(27, 0)) == "AB1", "endereço <-> posição")
+
+
+func _testar_documento_word() -> void:
+	_secao("documento do word")
+	var doc := DocumentoWord.new([{"texto": "Festa do Doce"}, {"texto": "Venha comer brigadeiro, beijinho e bolo."}])
+	verificar(doc.total_palavras() == 9 and doc.onde(4) == Vector2i(1, 1), "conta e acha as palavras")
+	doc.tocar(0)
+	verificar(doc.sel_inicio == 0 and doc.sel_fim == 0, "um toque seleciona a palavra")
+	doc.tocar(0)
+	verificar(doc.sel_inicio == 0 and doc.sel_fim == 2, "outro toque seleciona o parágrafo")
+	doc.fazer("negrito")
+	verificar(doc.ligado("negrito") and not doc.palavra(3)["negrito"], "negrito só na seleção")
+	verificar(doc.faltando([{"paragrafo": 0, "negrito": true}]).is_empty(), "meta de negrito cumprida")
+	doc.fazer("negrito")
+	verificar(not doc.palavra(0)["negrito"], "negrito de novo tira (como no Word)")
+	doc.fazer("desfazer")
+	verificar(doc.palavra(0)["negrito"], "Ctrl+Z desfaz")
+	doc.fazer("tudo")
+	doc.fazer("negrito")
+	verificar(doc.faltando([{"paragrafo": 0, "negrito": true}]).size() == 1, "negrito no texto todo não vale para o título")
+	doc.fazer("desfazer")
+	doc.tocar(5)
+	doc.fazer("centro")
+	verificar(doc.paragrafos[1]["alinhamento"] == "centro" and doc.paragrafos[0]["alinhamento"] == "esquerda", "alinha só o parágrafo da seleção")
+	doc.limpar_selecao()
+	doc.tocar(5)
+	doc.tocar(7, true)
+	verificar(doc.sel_inicio == 5 and doc.sel_fim == 7, "Shift estende a seleção")
+	doc.fazer("maior")
+	verificar(doc.tamanho_atual() == 14, "A+ sobe um degrau da fonte")
+	doc.fazer("cor_vermelho")
+	verificar(doc.palavra(6)["cor"] == "vermelho" and doc.palavra(4)["cor"] == "preto", "pinta só a seleção")
+	verificar(doc.faltando([{"paragrafo": 1, "palavras": ["beijinho"], "cor": "vermelho"}]).size() == 1, "pintar a mais não vale")
+	verificar(DocumentoWord.acao_do_atalho(KEY_N, true, false) == "negrito" and DocumentoWord.acao_do_atalho(KEY_E, true, false) == "centro"
+		and DocumentoWord.acao_do_atalho(KEY_T, true, false) == "tudo" and DocumentoWord.acao_do_atalho(KEY_N, false, false) == "", "atalhos do Word em português")
+	verificar(doc.bbcode(0).begins_with("[p align=left]") and doc.bbcode(0).contains("[url=0]"), "desenha o parágrafo com toque nas palavras")
+
+
+## Resolve os passos de Word pelas próprias ações da tela.
+func _resolver_word(doc: DocumentoWord, metas: Array) -> void:
+	for meta in metas:
+		var alvos := []
+		for i in doc.paragrafos.size():
+			if int(meta.get("paragrafo", -1)) >= 0 and i != int(meta["paragrafo"]):
+				continue
+			for j in doc.paragrafos[i]["palavras"].size():
+				var t: String = doc.paragrafos[i]["palavras"][j]["texto"]
+				if not meta.has("palavras") or DocumentoWord._limpa(t) in meta["palavras"].map(func(x): return DocumentoWord._limpa(x)):
+					alvos.append(doc.indice(i, j))
+		for alvo in alvos:
+			doc.limpar_selecao()
+			doc.tocar(alvo)
+			for prop in meta:
+				match prop:
+					"negrito", "italico", "sublinhado":
+						if doc.ligado(prop) != meta[prop]:
+							doc.fazer(prop)
+					"cor":
+						doc.fazer("cor_" + meta[prop])
+					"alinhamento":
+						doc.fazer(meta[prop])
+					"tamanho_min":
+						while doc.tamanho_atual() < int(meta[prop]):
+							doc.fazer("maior")
+
+
+func _testar_laboratorio() -> void:
+	_secao("laboratório do office")
+	var fases := Laboratorio.fases()
+	verificar(Laboratorio.capitulos().size() == 3 and fases.size() == 24, "3 capítulos com 8 fases")
+	var ids := {}
+	for f in fases:
+		ids[f["id"]] = true
+	verificar(ids.size() == fases.size(), "ids das fases não se repetem")
+	for c in Laboratorio.capitulos():
+		verificar(c["fases"][-1].get("chefe", false), "capítulo termina num chefe")
+	# todas as fases têm solução, e começar sem fazer nada não passa
+	for f in fases:
+		if f["tipo"] == "excel":
+			var celulas: Dictionary = f["planilha"]["celulas"].duplicate()
+			for passo in f["passos"]:
+				verificar(not celulas.has(passo["celula"]), "%s: a célula %s começa vazia" % [f["id"], passo["celula"]])
+				var r := Laboratorio.conferir_excel(passo, passo["resposta"], celulas)
+				verificar(r["certo"], "%s: a resposta de %s confere (%s)" % [f["id"], passo["celula"], r["mensagem"]])
+				var posicao := Formulas.posicao(passo["celula"])
+				verificar(posicao.x < int(f["planilha"]["colunas"]) and posicao.y < int(f["planilha"]["linhas"]), "%s: %s cabe na planilha" % [f["id"], passo["celula"]])
+				celulas[passo["celula"]] = r["valor"]
+		else:
+			var doc := DocumentoWord.new(f["documento"])
+			for i in f["passos"].size():
+				var metas := Laboratorio.metas_ate(f, i)
+				verificar(not doc.faltando(metas).is_empty(), "%s: passo %d não começa pronto" % [f["id"], i + 1])
+				_resolver_word(doc, f["passos"][i]["metas"])
+				verificar(doc.faltando(metas).is_empty(), "%s: passo %d tem solução (%s)" % [f["id"], i + 1, doc.faltando(metas)])
+	# conferência das fórmulas
+	var soma: Dictionary = Laboratorio.fase("c1f3")
+	var cel: Dictionary = soma["planilha"]["celulas"]
+	var passo_soma: Dictionary = soma["passos"][0]
+	verificar(not Laboratorio.conferir_excel(passo_soma, "SOMA(B2:B6)", cel)["certo"], "sem = não vale")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=65", cel)["mensagem"].contains("endereços"), "número digitado não vale")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=B2+B3+B4+B5+B6", cel)["mensagem"].contains("SOMA"), "fase pede a função certa")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=SOMA(B2:B5)", cel)["mensagem"].contains("deu 45"), "resultado errado mostra o que deu")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=SOMAR(B2:B6)", cel)["mensagem"].contains("#NOME?"), "erro do Excel é explicado")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=soma(b2:b6)", cel)["certo"], "minúsculas valem")
+	# progresso, estrelas e baús
+	var antes: Dictionary = Progresso.laboratorio.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.laboratorio = {"estrelas": {}, "baus": {}}
+	verificar(Laboratorio.estrelas_por(0, 0) == 3 and Laboratorio.estrelas_por(2, 0) == 2 and Laboratorio.estrelas_por(0, 1) == 2
+		and Laboratorio.estrelas_por(3, 0) == 1 and Laboratorio.estrelas_por(0, 2) == 1, "estrelas por erros e dicas")
+	verificar(Laboratorio.liberada("c1f1") and not Laboratorio.liberada("c1f2"), "só a primeira fase começa liberada")
+	verificar(Laboratorio.proxima_fase() == "c1f1", "próxima fase é a primeira")
+	var r1 := Laboratorio.concluir("c1f1", 2)
+	verificar(r1["primeira"] and r1["acucar"] == Laboratorio.ACUCAR_FASE and r1["moedas"] == Laboratorio.MOEDAS_FASE + 2 * Laboratorio.MOEDAS_POR_ESTRELA, "recompensa da primeira vez")
+	verificar(Laboratorio.liberada("c1f2") and Laboratorio.proxima_fase() == "c1f2", "passar libera a próxima")
+	var r2 := Laboratorio.concluir("c1f1", 1)
+	verificar(r2["moedas"] == 0 and r2["acucar"] == 0 and Laboratorio.estrelas("c1f1") == 2, "jogar de novo sem melhorar não dá nada")
+	var r3 := Laboratorio.concluir("c1f1", 3)
+	verificar(r3["moedas"] == Laboratorio.MOEDAS_POR_ESTRELA and r3["acucar"] == 0 and Laboratorio.estrelas("c1f1") == 3, "estrela nova dá moedas")
+	verificar(Laboratorio.baus().size() == 6 and Laboratorio.baus_prontos() == 0, "6 baús, nenhum pronto")
+	verificar(Laboratorio.abrir_bau("c1_meio").is_empty(), "baú fechado antes da 4ª fase")
+	for id in ["c1f2", "c1f3", "c1f4"]:
+		Laboratorio.concluir(id, 3)
+	verificar(Laboratorio.bau_pronto("c1_meio") and Laboratorio.baus_prontos() == 1, "baú fica pronto depois da 4ª fase")
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = 7
+	var moedas_bau := Progresso.moedas
+	var conteudo := Laboratorio.abrir_bau("c1_meio", sorteio)
+	verificar(conteudo["moedas"] >= 30 and conteudo["acucar"] >= 20 and Progresso.moedas == moedas_bau + conteudo["moedas"], "baú dá moedas e açúcar")
+	verificar(Laboratorio.bau_aberto("c1_meio") and Laboratorio.abrir_bau("c1_meio").is_empty(), "baú só abre uma vez")
+	verificar(Laboratorio.total_estrelas() == 12, "soma as estrelas")
+	var chefe := Laboratorio.concluir("c1f8", 1)
+	verificar(chefe["acucar"] == Laboratorio.ACUCAR_CHEFE, "chefe dá mais açúcar")
+	Progresso.laboratorio = antes
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
