@@ -193,6 +193,9 @@ func _trocar_cena(caminho: String) -> void:
 	# imagem de uma cena 3D é a mais demorada)
 	for i in 2:
 		await quadro_desenhado()
+	if _carregando.visible:
+		_carregando.barra(100.0)
+		await quadro_desenhado()
 	_carregando.visible = false
 	_tirar_dicas()
 	_trocando = false
@@ -218,25 +221,36 @@ func _mostrar_carregando(lugar: String) -> void:
 	_carregando.visible = true
 
 
-## Carrega a cena em segundo plano, enchendo a barra; depois monta a tela (a
-## montagem da vila trava um instante, com a barra quase cheia).
+## Carrega a cena em segundo plano, enchendo a barra aos poucos (a barra anda
+## a cada quadro, mesmo que o carregamento seja rápido); depois monta a tela
+## (a montagem da vila trava um instante, com a barra quase cheia).
 func _carregar_com_barra(caminho: String) -> void:
-	if OS.has_feature("web") or ResourceLoader.load_threaded_request(caminho) != OK:
-		_carregando.barra(80.0)
-		await quadro_desenhado()
-		get_tree().change_scene_to_file(caminho)
-		return
-	var progresso := []
-	while ResourceLoader.load_threaded_get_status(caminho, progresso) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-		_carregando.barra(10.0 + 60.0 * float(progresso[0]))
-		await get_tree().process_frame
-	var pacote := ResourceLoader.load_threaded_get(caminho) as PackedScene
-	_carregando.barra(85.0)
+	await _encher_barra(30.0, 0.35)
+	var em_fundo := not OS.has_feature("web") and ResourceLoader.load_threaded_request(caminho) == OK
+	var pacote: PackedScene = null
+	if em_fundo:
+		var progresso := []
+		while ResourceLoader.load_threaded_get_status(caminho, progresso) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			var alvo := 30.0 + 45.0 * float(progresso[0])
+			_carregando.barra(lerpf(_carregando.valor_barra(), alvo, 0.3))
+			await get_tree().process_frame
+		pacote = ResourceLoader.load_threaded_get(caminho) as PackedScene
+	await _encher_barra(85.0, 0.25)
 	await quadro_desenhado()
 	if pacote:
 		get_tree().change_scene_to_packed(pacote)
 	else:
 		get_tree().change_scene_to_file(caminho)
+
+
+## Leva a barra até `valor` em `tempo` segundos, quadro a quadro.
+func _encher_barra(valor: float, tempo: float) -> void:
+	var inicio: float = _carregando.valor_barra()
+	var passado := 0.0
+	while passado < tempo:
+		await get_tree().process_frame
+		passado += get_process_delta_time()
+		_carregando.barra(lerpf(inicio, valor, clampf(passado / tempo, 0.0, 1.0)))
 
 
 ## Botão "voltar" do Android (e Esc no computador). A caixa de confirmação

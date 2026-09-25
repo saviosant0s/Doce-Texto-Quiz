@@ -22,6 +22,13 @@ func _ready() -> void:
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))
+	if Telas.placa_rapida:
+		# com a vila, o menu do lado fica só com a volta e os OUTROS JOGOS
+		# (acabou o quiz, já vai para outro sem passar pela vila). Troféus e
+		# coleção ficam na vila; como jogar, créditos e ajustes, no início.
+		for botao in [%Titulos, %Colecao, %ComoJogar, %Creditos, %Configuracoes]:
+			botao.visible = false
+		%Inicio.tooltip_text = "Voltar para a vila"
 	for i in Jogo.niveis.size():
 		var cartao := CARTAO.instantiate()
 		%Cartoes.add_child(cartao)

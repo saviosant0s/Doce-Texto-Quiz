@@ -398,6 +398,11 @@ func _testar_fluxo_completo() -> void:
 	Telas.ir_para("niveis")
 	await _esperar_tela("Niveis")
 	await get_tree().create_timer(0.4).timeout
+	var menu := get_tree().current_scene
+	if Telas.placa_rapida:
+		verificar(not menu.find_child("Titulos", true, false).visible and not menu.find_child("Configuracoes", true, false).visible
+			and menu.find_child("DoceMatch", true, false).visible and menu.find_child("Laboratorio", true, false).visible,
+			"com a vila, o menu dos níveis só leva aos outros jogos")
 	Telas.abrir("creditos")
 	verificar(await _esperar_tela("Creditos"), "abre créditos")
 	await get_tree().create_timer(0.4).timeout

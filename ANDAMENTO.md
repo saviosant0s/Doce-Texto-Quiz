@@ -190,6 +190,13 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     LightmapGI não foi usado: o cenário é montado por código quando a tela
     abre (e os terrenos mudam), e o "bake" só funciona no editor, em cena
     salva, parada, com UV2 — ver a resposta na conversa de 28/09.
+  - **Menu dos níveis mais limpo**: com a vila, o menu da esquerda fica só
+    com voltar e os outros jogos (Confeitaria, Doce Match, Laboratório).
+    Troféus e coleção ficam na vila; como jogar, créditos e ajustes, no
+    início. Sem placa de vídeo (sem vila) o menu continua completo.
+  - **Carregamento da vila/cozinha**: a linha de cima tem a mesma largura da
+    caixa de baixo ("VILA DOS / DOCES", "COZINHA DA / CONFEITARIA") e a
+    barra enche aos poucos, quadro a quadro (antes aparecia já no fim).
   - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
     Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 
@@ -382,7 +389,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.688 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.689 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

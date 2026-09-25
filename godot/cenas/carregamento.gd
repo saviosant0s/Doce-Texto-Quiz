@@ -60,8 +60,8 @@ static var _ultima_dica := ""
 
 ## Nome grande de cada lugar no modo cortina: [linha de cima, palavra na caixa, tamanho].
 const LUGARES := {
-	"vila": ["VILA DOS", "DOCES", 200],
-	"cozinha": ["MINHA", "COZINHA", 150],
+	"vila": ["VILA DOS", "DOCES", 210],
+	"cozinha": ["COZINHA DA", "CONFEITARIA", 125],
 }
 
 ## No modo cortina a tela não vai sozinha para a partida (o Telas cuida).
@@ -83,6 +83,7 @@ func preparar(lugar: String) -> void:
 	%DoceTexto.text = nomes[0]
 	%Quiz.text = nomes[1]
 	%Quiz.add_theme_font_size_override("font_size", nomes[2])
+	_alinhar_titulo()
 	var id := Colecao.companheiro()
 	%Personagem.texture = Personagens.textura(id if not id.is_empty() else PERSONAGEM)
 	var dica := sortear_dica()
@@ -93,6 +94,22 @@ func preparar(lugar: String) -> void:
 
 func barra(valor: float) -> void:
 	%Barra.value = valor
+
+
+func valor_barra() -> float:
+	return %Barra.value
+
+
+## A linha de cima fica da mesma largura da caixa de baixo (como "DOCE TEXTO"
+## em cima de "QUIZ"): o tamanho da letra é calculado para caber certinho.
+func _alinhar_titulo() -> void:
+	var fonte: Font = %DoceTexto.get_theme_font("font")
+	var largura_caixa: float = %Quiz.get_minimum_size().x
+	var largura_texto := fonte.get_string_size(%DoceTexto.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 100).x
+	if largura_texto <= 0.0:
+		return
+	var tamanho := clampi(int(100.0 * largura_caixa / largura_texto), 60, 190)
+	%DoceTexto.add_theme_font_size_override("font_size", tamanho)
 
 
 func _ready() -> void:
