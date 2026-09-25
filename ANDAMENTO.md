@@ -85,6 +85,17 @@ coleção) e entra nos lugares do jogo, no lugar dos menus. Plano por etapas:
 3. Outros doces da coleção passeando pela vila; placas e detalhes.
 4. Pequenas tarefas na vila (ex.: moedas espalhadas, missões curtas).
 
+### Ideias do Sávio (25/09) — NÃO fazer ainda, só anotadas
+- **Animação ao entrar num prédio** (porta abre, o doce entra, tela escurece)
+  ao tocar no botão ou chegar na porta.
+- **Jogo de confeitaria** (estilo "tycoon"/idle): construir a confeitaria,
+  comprar e melhorar máquinas que fazem os doces da coleção, aumentar o
+  estoque, ampliar e abrir outras confeitarias.
+- **Gráfico mais caprichado sem perder o jeito de desenho** (grama com
+  volume, texturas pintadas, luz mais suave). Ver a conversa de 25/09.
+- **Mostrar quando o doce está correndo** no joystick (ainda sem escolha).
+- Só gerar APK/executável quando o Sávio pedir (juntar vários pedidos).
+
 ### Futuro: Doce Match (NÃO fazer agora)
 Minijogo no estilo Candy Crush dentro do FLIPERAMA da vila: trocar peças
 vizinhas para alinhar 3 iguais. No lugar dos doces, **símbolos de informática
@@ -94,7 +105,10 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-- Última coisa feita: **melhorias da Vila dos Doces** (andar com pulo e
+- 25/09: placa da Confeitaria não atravessa mais o cupcake; no celular dá
+  para andar no joystick e, com outro dedo, girar a visão ou apertar PULAR/
+  ENTRAR/câmera ao mesmo tempo. (Gravado no GitHub; APK ainda não gerado.)
+- Antes: **melhorias da Vila dos Doces** (andar com pulo e
   corrida, visual de desenho, casas diferentes) — item 2 da vila acima.
   Antes disso: câmeras aérea/perto/1ª pessoa (tecla C, escolha salva).
 - Próximo passo da vila (quando o Sávio pedir): item 3 (outros doces
@@ -107,7 +121,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (620 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (624 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

@@ -367,7 +367,7 @@ func _criar_coluna(titulo: Dictionary) -> VBoxContainer:
 	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	coluna.add_child(imagem)
 	if conquistado:
-		imagem.ready.connect(func(): Animacoes.flutuar(imagem, 8.0), CONNECT_DEFERRED)  # depois de entrar na tela
+		imagem.ready.connect(func(): if is_instance_valid(imagem): Animacoes.flutuar(imagem, 8.0), CONNECT_DEFERRED)  # depois de entrar na tela
 	else:
 		imagem.material = Personagens.material_silhueta(Color(1, 1, 1, 0.28))
 		var cadeado := TextureRect.new()

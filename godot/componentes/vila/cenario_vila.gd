@@ -159,9 +159,16 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 		_:
 			forma = _casa_simples(no, dados)
 	var frente: float = forma["frente"]
-	_porta(no, frente)
+	# porta e placa num plano na frente do prédio; "inclinacao" deita esse
+	# plano para trás junto com paredes inclinadas (a forminha do cupcake)
+	var fachada := Node3D.new()
+	fachada.name = "Fachada"
+	fachada.position.z = frente
+	fachada.rotation.x = forma.get("inclinacao", 0.0)
+	no.add_child(fachada)
+	_porta(fachada, 0.0)
 	if not forma.get("placa_propria", false):
-		_placa(no, dados["nome"], Vector3(0, forma["placa"], frente + 0.1))
+		_placa(fachada, dados["nome"], Vector3(0, forma["placa"], 0.1))
 	# área na frente da porta: quando o doce entra, aparece o botão "ENTRAR"
 	var area := Area3D.new()
 	area.name = "Porta"
@@ -291,7 +298,7 @@ static func _escola(no: Node3D) -> Dictionary:
 static func _confeitaria(no: Node3D) -> Dictionary:
 	var raio_base := 2.6
 	var raio_topo := 3.0
-	var altura := 3.0
+	var altura := 3.5
 	var forminha := Pecas3D.material_textura(Pecas3D.listras([Color("#FF8FB8"), Color("#FFFFFF")], 28), 0.5)
 	Pecas3D.cilindro(no, raio_topo, raio_base, altura, Vector3(0, altura / 2.0, 0), forminha)
 	# cobertura: rosquinhas empilhadas, cada vez menores
@@ -329,7 +336,8 @@ static func _confeitaria(no: Node3D) -> Dictionary:
 		Pecas3D.rosquinha(janela, 0.35, 0.5, Vector3.ZERO, _m("#FFFFFF", 0.35), Vector3.ONE, Vector3(90, 0, 0))
 		Pecas3D.cilindro(janela, 0.37, 0.37, 0.05, Vector3(0, 0, -0.02), _m("#BFE9FF", 0.1), Vector3.ONE, Vector3(90, 0, 0))
 	_poste(no, raio_topo, altura + 2.5, Vector3.ZERO)
-	return {"frente": raio_base + (raio_topo - raio_base) * 0.3, "placa": altura - 0.45}
+	# a porta e a placa acompanham a parede inclinada da forminha
+	return {"frente": raio_base + 0.03, "placa": 2.75, "inclinacao": atan((raio_topo - raio_base) / altura)}
 
 
 ## TROFÉUS: torre lilás de dois andares com colunas de bengala doce, faixas

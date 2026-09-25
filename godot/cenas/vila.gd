@@ -56,6 +56,13 @@ var modo_camera := Camera.AEREA
 ## Para onde a câmera olha (radianos no eixo Y; 0 = norte, para dentro da vila).
 var _giro := 0.0
 var _nuvens: Array = []
+var _botao_pular: Button
+var _botao_camera: Button
+## Segundos desde a última vez que o jogador girou a visão com o dedo (a
+## câmera de perto só volta para as costas do doce depois de um tempinho).
+var _girou_ha := 99.0
+## Dedos que começaram num botão (não giram a visão).
+var _dedos_em_botao := {}
 var _msaa_antes := Viewport.MSAA_DISABLED
 
 
@@ -97,7 +104,8 @@ func _physics_process(delta: float) -> void:
 		return
 	var direita := Vector3(cos(_giro), 0, -sin(_giro))
 	jogador.andar(direita * direcao.x + _frente() * -direcao.y, delta)
-	if modo_camera == Camera.PERTO and direcao.y < -0.3:
+	_girou_ha += delta
+	if modo_camera == Camera.PERTO and direcao.y < -0.3 and _girou_ha > 1.5:
 		# andando para frente: a câmera vai para as costas do doce, devagar
 		var costas := atan2(-jogador.frente().x, -jogador.frente().z)
 		_giro = lerp_angle(_giro, costas, minf(1.0, 1.5 * delta))
@@ -164,11 +172,38 @@ func proxima_camera() -> void:
 	Telas.mostrar_aviso("CÂMERA: " + NOMES_CAMERA[modo_camera])
 
 
+## Toques de outros dedos (o celular só transforma o 1º dedo em "mouse"):
+## com um dedo no joystick, outro dedo ainda aperta PULAR, ENTRAR e a câmera.
+func _input(evento: InputEvent) -> void:
+	if not evento is InputEventScreenTouch:
+		return
+	if not evento.pressed:
+		_dedos_em_botao.erase(evento.index)
+		return
+	for botao: Button in [_botao_pular, _botao_entrar, _botao_camera]:
+		if botao.is_visible_in_tree() and botao.get_global_rect().has_point(evento.position):
+			_dedos_em_botao[evento.index] = true
+			if evento.index != 0:  # o 1º dedo o próprio botão já recebe
+				get_viewport().set_input_as_handled()
+				if botao == _botao_pular:
+					jogador.pular()
+				elif botao == _botao_entrar:
+					entrar(_porta_atual)
+				else:
+					proxima_camera()
+			return
+
+
 func _unhandled_input(evento: InputEvent) -> void:
-	# arrastar o dedo (fora do joystick) gira a visão nas câmeras de perto
-	if evento is InputEventMouseMotion and evento.button_mask & MOUSE_BUTTON_MASK_LEFT \
-			and modo_camera != Camera.AEREA:
-		_giro -= evento.relative.x * GIRO_ARRASTO
+	# arrastar um dedo (fora do joystick) gira a visão nas câmeras de perto,
+	# mesmo com o outro dedo andando no joystick
+	if evento is InputEventScreenDrag and evento.index != _joystick.dedo \
+			and not _dedos_em_botao.has(evento.index):
+		_girar_visao(evento.relative.x)
+		return
+	if evento is InputEventMouseMotion and evento.device != InputEvent.DEVICE_ID_EMULATION \
+			and evento.button_mask & MOUSE_BUTTON_MASK_LEFT:
+		_girar_visao(evento.relative.x)
 		return
 	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_C:
 		proxima_camera()
@@ -182,6 +217,13 @@ func _unhandled_input(evento: InputEvent) -> void:
 	if (entrar_tecla or evento.is_action_pressed("ui_accept")) and not _porta_atual.is_empty():
 		get_viewport().set_input_as_handled()
 		entrar(_porta_atual)
+
+
+func _girar_visao(pixels: float) -> void:
+	if modo_camera == Camera.AEREA:
+		return
+	_giro -= pixels * GIRO_ARRASTO
+	_girou_ha = 0.0
 
 
 ## Entra no prédio (abre a tela dele; o "voltar" de lá traz de volta à vila).
@@ -443,6 +485,7 @@ func _criar_interface() -> void:
 	camera.tooltip_text = "Trocar a câmera (C)"
 	camera.focus_mode = Control.FOCUS_NONE
 	camera.pressed.connect(proxima_camera)
+	_botao_camera = camera
 	topo.add_child(camera)
 
 	var meio := Control.new()
@@ -478,5 +521,6 @@ func _criar_interface() -> void:
 	pular.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pular.focus_mode = Control.FOCUS_NONE
 	pular.button_down.connect(func(): jogador.pular())
+	_botao_pular = pular
 	baixo.add_child(pular)
 	baixo.add_theme_constant_override("separation", 18)

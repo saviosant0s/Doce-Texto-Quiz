@@ -15,6 +15,7 @@ extends Node
 ##   --selecionar=pudim  escolhe esse doce na tela da coleção
 ##   --camera=1   na Vila dos Doces: 0 = aérea, 1 = perto, 2 = primeira pessoa
 ##   --porta=escola  na Vila dos Doces, começa na porta desse prédio
+##   --ver_predio=confeitaria  na Vila, câmera de perto olhando a fachada desse prédio
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
 ##   --companheiro=pudim  compra esse doce e o escolhe como companheiro
 ##   --espera=1.2  segundos até tirar o print
@@ -68,6 +69,15 @@ func _ready() -> void:
 	if args.has("aba"):
 		await get_tree().process_frame
 		get_tree().current_scene.mostrar_aba(int(args["aba"]))
+	if args.has("ver_predio"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var vila: Vila = get_tree().current_scene
+		var porta: Vector3 = vila._portas[args["ver_predio"]]["porta"]
+		var predio: Vector3 = vila._portas[args["ver_predio"]]["no"].global_position
+		vila.jogador.global_position = porta + (porta - predio).normalized() * 3.0
+		vila.jogador.olhar_para(predio)
+		vila.usar_camera(Vila.Camera.PERTO)
 	await get_tree().create_timer(float(args.get("espera", "1.2"))).timeout
 	get_viewport().get_texture().get_image().save_png(args.get("saida", "user://captura.png"))
 	get_tree().quit()

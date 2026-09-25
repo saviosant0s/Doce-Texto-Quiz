@@ -450,6 +450,34 @@ func _testar_vila() -> void:
 	verificar(mais_alto > 0.8, "o doce pula")
 	verificar(vila.jogador.is_on_floor() and vila.jogador.global_position.y < 0.1, "e cai de volta no chão")
 	verificar(vila.find_child("Pular", true, false) is Button, "botão de pular na tela")
+	# dois dedos: um no joystick e outro girando a visão / apertando PULAR
+	vila.usar_camera(Vila.Camera.PERTO)
+	var toque := InputEventScreenTouch.new()
+	toque.index = 0
+	toque.pressed = true
+	toque.position = vila._joystick.get_global_rect().get_center() + Vector2(60, 0)
+	vila._joystick._input(toque)
+	verificar(vila._joystick.dedo == 0 and vila._joystick.vetor.x > 0.3, "1º dedo no joystick")
+	var giro_antes: float = vila._giro
+	var arrasto := InputEventScreenDrag.new()
+	arrasto.index = 1
+	arrasto.position = Vector2(900, 300)
+	arrasto.relative = Vector2(80, 0)
+	vila._unhandled_input(arrasto)
+	verificar(absf(vila._giro - giro_antes) > 0.3 and vila._joystick.dedo == 0, "2º dedo gira a visão sem soltar o joystick")
+	for i in 5:
+		vila.jogador.andar(Vector3.ZERO, 1.0 / 60.0)
+		await get_tree().physics_frame
+	var pulo := InputEventScreenTouch.new()
+	pulo.index = 1
+	pulo.pressed = true
+	pulo.position = vila._botao_pular.get_global_rect().get_center()
+	vila._input(pulo)
+	verificar(vila.jogador.velocity.y > 1.0, "2º dedo aperta PULAR")
+	toque.pressed = false
+	vila._joystick._input(toque)
+	verificar(vila._joystick.dedo == -1 and vila._joystick.vetor == Vector2.ZERO, "soltar o dedo solta o joystick")
+	vila.usar_camera(Vila.Camera.AEREA)
 	vila.set_physics_process(true)
 	# cada prédio tem o seu jeito, e tudo tem contorno de desenho
 	var pecas := {}
