@@ -128,6 +128,8 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   JOGAR O QUIZ na cozinha (pulsa sem açúcar); câmera olha para cima/baixo;
   "carregando" com o doce; foto até o 3D aparecer; partes lisas com madeira
   pintada/metal reais; **Doce Match** no Fliperama. APK ainda não gerado.
+- **Economia**: tabela de ganhos e preços em `docs/economia.md` (tudo começa
+  no quiz; cozinha e Doce Match trocam açúcar por moedas na mesma faixa).
 - **Atenção (tamanho):** o APK da 0.8.0 tem ~92 MB e o GitHub recusa
   arquivos acima de 100 MB no gh-pages. Se crescer mais: publicar o APK como
   "Release" do GitHub (limite 2 GB) ou gerar APKs separados por arquitetura.
