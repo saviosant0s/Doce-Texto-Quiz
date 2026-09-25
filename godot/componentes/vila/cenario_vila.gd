@@ -185,7 +185,7 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 ## A folha da porta gira numa dobradiça (nó "Folha", do lado esquerdo) e
 ## atrás dela fica o escuro do lado de dentro. Retorna a dobradiça.
 static func _porta(no: Node3D, frente: float) -> Node3D:
-	var chocolate := _m("#5A2E17", 0.4)
+	var chocolate := Texturas.real("madeira_pintada", "#7A4322", 1.2)
 	Pecas3D.caixa(no, Vector3(1.2, 1.9, 0.02), Vector3(0, 0.95, frente + 0.005), _m("#2A1D45", 0.9))  # lado de dentro
 	Pecas3D.esfera(no, 0.6, Vector3(0, 1.9, frente + 0.02), chocolate, Vector3(1, 0.55, 0.2))
 	var dobradica := Node3D.new()
@@ -203,7 +203,7 @@ static func _porta(no: Node3D, frente: float) -> Node3D:
 
 ## Placa roxa com o nome em amarelo.
 static func _placa(no: Node3D, nome: String, posicao: Vector3, largura := 3.0) -> void:
-	Pecas3D.caixa(no, Vector3(largura, 0.62, 0.14), posicao, _m("#7E57B1", 0.5))
+	Pecas3D.caixa(no, Vector3(largura, 0.62, 0.14), posicao, Texturas.real("madeira_pintada", "#8A62C0", 1.2))
 	var texto := Label3D.new()
 	texto.text = nome
 	texto.font = FONTE
@@ -220,7 +220,7 @@ static func _janela(no: Node3D, posicao: Vector3, moldura := "#FFFFFF") -> void:
 	var janela := Node3D.new()
 	janela.position = posicao
 	no.add_child(janela)
-	Pecas3D.caixa(janela, Vector3(0.95, 0.95, 0.08), Vector3.ZERO, _m(moldura, 0.35))
+	Pecas3D.caixa(janela, Vector3(0.95, 0.95, 0.08), Vector3.ZERO, Texturas.real("madeira_pintada", moldura, 1.2))
 	Pecas3D.caixa(janela, Vector3(0.75, 0.75, 0.1), Vector3(0, 0, 0.02), _m("#BFE9FF", 0.1))
 	var glace := _m("#FFFFFF", 0.35)
 	Pecas3D.caixa(janela, Vector3(0.75, 0.08, 0.12), Vector3(0, 0, 0.04), glace)
@@ -285,7 +285,7 @@ static func _escola(no: Node3D) -> Dictionary:
 	for lado in [-1, 1]:
 		_janela(no, Vector3(lado * 1.75, 1.5, fundo / 2.0 + 0.03), "#F4E038")
 	# torre do sino (amarela, com telhado roxo em cone), no fundo do telhado
-	var amarelo := _m("#F4E038", 0.5)
+	var amarelo := Texturas.real("reboco", "#F7E36A", 0.8)
 	var base_torre := Vector3(0, topo - 0.4, -fundo / 2.0 + 0.9)
 	Pecas3D.caixa(no, Vector3(1.3, 0.6, 1.3), base_torre + Vector3(0, 0.3, 0), amarelo)
 	for x in [-1, 1]:
@@ -293,7 +293,7 @@ static func _escola(no: Node3D) -> Dictionary:
 			Pecas3D.cano(no, base_torre + Vector3(x * 0.5, 0.6, z * 0.5), base_torre + Vector3(x * 0.5, 1.6, z * 0.5), 0.09, amarelo)
 	Pecas3D.cilindro(no, 0.0, 1.05, 1.1, base_torre + Vector3(0, 2.15, 0), roxo)
 	Pecas3D.esfera(no, 0.14, base_torre + Vector3(0, 2.75, 0), _m("#F4E038", 0.2, 0.5))
-	var ouro := _m("#F2C230", 0.2, 0.5)
+	var ouro := Texturas.real("metal", "#FFD04A", 1.0, 0.6)
 	Pecas3D.cilindro(no, 0.16, 0.38, 0.5, base_torre + Vector3(0, 1.2, 0), ouro)
 	Pecas3D.esfera(no, 0.1, base_torre + Vector3(0, 0.92, 0), ouro)
 	_parede(no, Vector3(largura, altura + 2.3, fundo), Vector3(0, (altura + 2.3) / 2.0, 0))
@@ -353,7 +353,7 @@ static func _torre_trofeus(no: Node3D) -> Dictionary:
 	var largura := 4.8
 	var altura := 3.5
 	var fundo := 4.2
-	var ouro := _m("#F2C230", 0.15, 0.6)
+	var ouro := Texturas.real("metal", "#FFD04A", 1.0, 0.6)
 	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), Texturas.real("tijolos", "#E4D4FF", 0.6))
 	Pecas3D.caixa(no, Vector3(largura + 0.3, 0.25, fundo + 0.3), Vector3(0, altura + 0.12, 0), ouro)
 	# segundo andar e cúpula
@@ -439,7 +439,7 @@ static func _fliperama(no: Node3D) -> Dictionary:
 	tela.emission = Color.WHITE
 	tela.emission_energy_multiplier = 0.12
 	tela.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	Pecas3D.caixa(no, Vector3(3.3, 1.9, 0.12), Vector3(0, 3.6, frente + 0.02), _m("#2A1D45", 0.5))
+	Pecas3D.caixa(no, Vector3(3.3, 1.9, 0.12), Vector3(0, 3.6, frente + 0.02), Texturas.real("metal", "#3A2A5E", 1.0, 0.4))
 	Pecas3D.caixa(no, Vector3(3.0, 1.6, 0.1), Vector3(0, 3.6, frente + 0.06), tela)
 	# painel inclinado com alavanca e botões, acima da porta
 	var painel := Node3D.new()
@@ -618,9 +618,9 @@ static func morros(pai: Node3D, raio: float) -> void:
 		var tamanho := sorteio.randf_range(5.0, 8.5)
 		var centro := Vector3(cos(angulo) * distancia, -tamanho * 0.35, sin(angulo) * distancia)
 		var par: Array = sorvetes[i % sorvetes.size()]
-		Pecas3D.esfera(pai, tamanho, centro, _m(par[0], 0.7), Vector3(1, 0.75, 1))
+		Pecas3D.esfera(pai, tamanho, centro, _texturizado(par[0], "glace", 0.35, 0.7), Vector3(1, 0.75, 1))
 		# cobertura: calota achatada em cima
-		Pecas3D.esfera(pai, tamanho * 0.62, centro + Vector3(0, tamanho * 0.52, 0), _m(par[1], 0.4), Vector3(1, 0.45, 1))
+		Pecas3D.esfera(pai, tamanho * 0.62, centro + Vector3(0, tamanho * 0.52, 0), _texturizado(par[1], "glace", 0.35, 0.4), Vector3(1, 0.45, 1))
 		if i % 3 == 0:
 			Pecas3D.esfera(pai, tamanho * 0.14, centro + Vector3(0, tamanho * 0.8, 0), _m("#E8263F", 0.15))
 
@@ -675,6 +675,8 @@ static func restaurar_qualidade(viewport: Viewport, antes: Dictionary) -> void:
 static func acabamento(ambiente: Environment) -> void:
 	if modo_leve():
 		return
+	# o céu reflete nos metais (ouro, inox); no modo leve deixava tudo desbotado
+	ambiente.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	ambiente.adjustment_enabled = true
 	ambiente.adjustment_saturation = 1.1
 	ambiente.adjustment_contrast = 1.04

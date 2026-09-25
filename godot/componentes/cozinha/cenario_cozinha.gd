@@ -61,7 +61,7 @@ static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: f
 	# papel de parede listrado, rodapé e faixa no alto
 	var altura := 4.0
 	var papel := Texturas.real("reboco", "#CFF0E0", 0.5)
-	var rodape := _m("#7E57B1", 0.5)
+	var rodape := Texturas.real("madeira_pintada", "#7E57B1", 1.2)
 	Pecas3D.caixa(pai, Vector3(meia_largura * 2 + 0.6, altura, 0.3), Vector3(0, altura / 2, -meio_fundo - 0.15), papel)
 	Pecas3D.caixa(pai, Vector3(meia_largura * 2 + 0.6, 0.35, 0.36), Vector3(0, 0.17, -meio_fundo - 0.1), rodape)
 	_parede(pai, Vector3(meia_largura * 2 + 1, altura, 0.4), Vector3(0, altura / 2, -meio_fundo - 0.2))
@@ -118,7 +118,7 @@ static func paredes_altas(pai: Node3D, meia_largura: float, meio_fundo: float, p
 	no.name = "ParedesAltas"
 	pai.add_child(no)
 	var papel := Texturas.real("reboco", "#CFF0E0", 0.5)
-	var roxo := _m("#7E57B1", 0.5)
+	var roxo := Texturas.real("madeira_pintada", "#7E57B1", 1.2)
 	var altura := 4.0
 	# frente, com a porta de saída em cima do tapete SAIR
 	var z := meio_fundo + 0.3
@@ -161,7 +161,7 @@ static func maquina(pai: Node3D, id: String, posicao: Vector3) -> Dictionary:
 	match id:
 		"brigadeiro":
 			_fogao(no, "#FFF1F5")
-			Pecas3D.cilindro(no, 0.6, 0.55, 0.6, Vector3(0, 1.3, 0), _m("#B8B8C8", 0.25, 0.6))
+			Pecas3D.cilindro(no, 0.6, 0.55, 0.6, Vector3(0, 1.3, 0), Texturas.real("metal", "#D6D6E0", 1.5, 1.0))
 			Pecas3D.cilindro(no, 0.56, 0.56, 0.04, Vector3(0, 1.56, 0), _m("#5A2E17", 0.2))
 			for lado in [-1, 1]:
 				Pecas3D.rosquinha(no, 0.05, 0.1, Vector3(lado * 0.66, 1.45, 0), _m("#5E3D8E", 0.4), Vector3.ONE, Vector3(0, 0, 90))
@@ -170,7 +170,7 @@ static func maquina(pai: Node3D, id: String, posicao: Vector3) -> Dictionary:
 			topo = 1.6
 		"maca":
 			_fogao(no, "#FFE08A")
-			Pecas3D.cilindro(no, 0.8, 0.62, 0.35, Vector3(0, 1.17, 0), _m("#D9822B", 0.25, 0.6))
+			Pecas3D.cilindro(no, 0.8, 0.62, 0.35, Vector3(0, 1.17, 0), Texturas.real("metal", "#E8913F", 1.5, 1.0))
 			Pecas3D.cilindro(no, 0.76, 0.76, 0.04, Vector3(0, 1.32, 0), _m("#C0182B", 0.15))
 			gira.position = Vector3(0, 1.34, 0)
 			for i in 3:
@@ -180,7 +180,7 @@ static func maquina(pai: Node3D, id: String, posicao: Vector3) -> Dictionary:
 				Pecas3D.cano(gira, ponto, ponto + Vector3(0, 0.45, 0), 0.025, _m("#F2D6A2", 0.6))
 			topo = 1.4
 		"cupcake":
-			var corpo := _m("#FF8FB8", 0.45)
+			var corpo := Texturas.real("metal", "#FF9CC2", 1.2, 0.15)
 			Pecas3D.caixa(no, Vector3(2.2, 1.9, 1.4), Vector3(0, 0.95, 0), corpo)
 			Pecas3D.caixa(no, Vector3(2.3, 0.14, 1.5), Vector3(0, 1.95, 0), _m("#FFFFFF", 0.4))
 			var vidro := _m("#FFB347", 0.2)
@@ -230,8 +230,8 @@ static func maquina(pai: Node3D, id: String, posicao: Vector3) -> Dictionary:
 
 
 static func _fogao(no: Node3D, cor: String) -> void:
-	Pecas3D.caixa(no, Vector3(2.2, 0.95, 1.4), Vector3(0, 0.475, 0), _m(cor, 0.5))
-	Pecas3D.caixa(no, Vector3(2.3, 0.08, 1.5), Vector3(0, 0.99, 0), _m("#3A2A5E", 0.4))
+	Pecas3D.caixa(no, Vector3(2.2, 0.95, 1.4), Vector3(0, 0.475, 0), Texturas.real("metal", cor, 1.2, 0.15))
+	Pecas3D.caixa(no, Vector3(2.3, 0.08, 1.5), Vector3(0, 0.99, 0), Texturas.real("metal", "#3A2A5E", 1.5, 0.6))
 	Pecas3D.caixa(no, Vector3(1.6, 0.5, 0.06), Vector3(0, 0.45, 0.71), _m("#FFFFFF", 0.3))
 	for i in 3:
 		Pecas3D.cilindro(no, 0.08, 0.08, 0.08, Vector3(-0.6 + i * 0.6, 0.82, 0.72), _m("#E8364F", 0.3), Vector3.ONE, Vector3(90, 0, 0))
@@ -259,23 +259,23 @@ static func lugar_na_bandeja(i: int) -> Vector3:
 # --- Balcão, caixa e círculos ----------------------------------------------------------
 
 static func balcao(pai: Node3D, posicao: Vector3, largura: float) -> void:
-	var roxo := _m("#7E57B1", 0.5)
+	var roxo := Texturas.real("madeira_pintada", "#8A62C0", 1.2)
 	Pecas3D.caixa(pai, Vector3(largura, 1.0, 1.0), posicao + Vector3(0, 0.5, 0), roxo)
 	Pecas3D.caixa(pai, Vector3(largura + 0.2, 0.12, 1.2), posicao + Vector3(0, 1.06, 0), Texturas.real("madeira", "#FFFFFF", 0.8))
 	for i in int(largura / 0.8):
 		var x := -largura / 2 + 0.4 + i * 0.8
-		Pecas3D.caixa(pai, Vector3(0.35, 0.8, 0.04), posicao + Vector3(x, 0.5, 0.51), _m("#F4E038", 0.4))
+		Pecas3D.caixa(pai, Vector3(0.35, 0.8, 0.04), posicao + Vector3(x, 0.5, 0.51), Texturas.real("madeira_pintada", "#F4E038", 1.2))
 	# caixa registradora na ponta esquerda
 	var registradora := posicao + Vector3(-largura / 2 + 0.5, 1.12, -0.1)
-	Pecas3D.caixa(pai, Vector3(0.7, 0.35, 0.55), registradora + Vector3(0, 0.17, 0), _m("#5E3D8E", 0.4))
+	Pecas3D.caixa(pai, Vector3(0.7, 0.35, 0.55), registradora + Vector3(0, 0.17, 0), Texturas.real("metal", "#6E4AA8", 1.5, 0.3))
 	Pecas3D.caixa(pai, Vector3(0.5, 0.25, 0.08), registradora + Vector3(0, 0.5, -0.1), _m("#8FD3F4", 0.2))
 	_parede(pai, Vector3(largura + 0.2, 1.2, 1.2), posicao + Vector3(0, 0.6, 0))
 
 
 ## Mesinha redonda onde ficam as moedas pagas pelos clientes (topo em y = 0.9).
 static func mesa_caixa(pai: Node3D, posicao: Vector3) -> void:
-	Pecas3D.cilindro(pai, 0.1, 0.12, 0.85, posicao + Vector3(0, 0.42, 0), _m("#5E3D8E", 0.5))
-	Pecas3D.cilindro(pai, 0.65, 0.65, 0.08, posicao + Vector3(0, 0.88, 0), _m("#F4E038", 0.4))
+	Pecas3D.cilindro(pai, 0.1, 0.12, 0.85, posicao + Vector3(0, 0.42, 0), Texturas.real("metal", "#6E4AA8", 1.5, 0.5))
+	Pecas3D.cilindro(pai, 0.65, 0.65, 0.08, posicao + Vector3(0, 0.88, 0), Texturas.real("madeira_pintada", "#F4E038", 1.2))
 	Pecas3D.cilindro(pai, 0.4, 0.45, 0.05, posicao + Vector3(0, 0.02, 0), _m("#5E3D8E", 0.5))
 	_poste(pai, 0.6, 0.95, posicao)
 

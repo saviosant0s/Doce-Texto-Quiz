@@ -558,8 +558,16 @@ func _mostrar_dica() -> void:
 
 func _criar_ambiente() -> void:
 	var ambiente := Environment.new()
-	ambiente.background_mode = Environment.BG_COLOR
-	ambiente.background_color = Color("#5E3D8E")
+	# céu lilás (aparece fora da cozinha aberta e reflete no inox das panelas)
+	var ceu := ProceduralSkyMaterial.new()
+	ceu.sky_top_color = Color("#4A2F75")
+	ceu.sky_horizon_color = Color("#B79BE3")
+	ceu.ground_horizon_color = Color("#B79BE3")
+	ceu.ground_bottom_color = Color("#5E3D8E")
+	var sky := Sky.new()
+	sky.sky_material = ceu
+	ambiente.background_mode = Environment.BG_SKY
+	ambiente.sky = sky
 	ambiente.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	ambiente.ambient_light_color = Color.WHITE
 	ambiente.ambient_light_energy = 0.35 if CenarioVila.modo_leve() else 0.5

@@ -9,7 +9,8 @@ class_name Texturas
 const PASTA := "res://assets/texturas/reais/"
 
 
-static func real(nome: String, tinta := "#FFFFFF", escala := 0.5) -> StandardMaterial3D:
+## `metalico` (0 a 1): 1 = metal de verdade (ouro, inox, cobre); 0 = pintado.
+static func real(nome: String, tinta := "#FFFFFF", escala := 0.5, metalico := 0.0) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(tinta)
 	mat.albedo_texture = load(PASTA + nome + "_cor.jpg")
@@ -17,6 +18,8 @@ static func real(nome: String, tinta := "#FFFFFF", escala := 0.5) -> StandardMat
 	mat.normal_texture = load(PASTA + nome + "_relevo.jpg")
 	var arm: Texture2D = load(PASTA + nome + "_arm.jpg")
 	mat.roughness = 1.0
+	mat.metallic = metalico
+	mat.metallic_specular = 0.5
 	mat.roughness_texture = arm
 	mat.roughness_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_GREEN
 	mat.ao_enabled = true

@@ -13,12 +13,14 @@ AJUSTES = {
     "grama": ("cor", 0.50, 0.14),
     "areia": ("cinza", 0.86, 0.08),
     "calcamento": ("cinza", 0.80, 0.12),
-    "reboco_barro": ("cinza", 0.82, 0.09),
-    "reboco": ("cinza", 0.90, 0.06),
+    "reboco_barro": ("cinza", 0.80, 0.12),
+    "reboco": ("cinza", 0.88, 0.10),
     "tijolos": ("cinza", 0.80, 0.12),
     "ardosia": ("cinza", 0.78, 0.13),
     "madeira": ("cor", 0.62, 0.10),
     "piso_cozinha": ("cinza", 0.90, 0.06),
+    "metal": ("cinza", 0.85, 0.10),
+    "madeira_pintada": ("cinza", 0.84, 0.14),
 }
 
 origem = sys.argv[1]
