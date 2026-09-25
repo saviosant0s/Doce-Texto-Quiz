@@ -1,7 +1,9 @@
 extends Control
 ## Baús surpresa: os baús fechados do jogador (doce, prata e ouro) e a
-## abertura com animação: o baú treme, abre, e os itens aparecem um por um
-## como cartas virando, na cor da raridade. Regras em scripts/baus.gd.
+## abertura com suspense: toque no baú e ele treme mais forte a cada toque,
+## com raios de luz na cor do melhor prêmio crescendo atrás; clarão, o baú
+## abre em faíscas e os itens aparecem como cartas virando, na cor da
+## raridade. Regras em scripts/baus.gd.
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const ICONE_MOEDA := Itens.MOEDA
@@ -13,6 +15,10 @@ const TEXTURAS := {
 	"ouro": Itens.BAU_OURO,
 }
 const BAU_ABERTO := Itens.BAU_ABERTO
+const RAIOS := preload("res://assets/itens/raios.svg")
+const BRILHO := preload("res://assets/doce_match/brilho.svg")
+const TOQUES := 3  # toques para abrir (sem tocar, abre sozinho)
+const ESPERA_TOQUE := 0.8
 const DE_ONDE := {
 	"doce": "Passe numa partida do quiz (até 5 por dia)",
 	"prata": "Complete as missões do dia ou suba de nível",
@@ -25,6 +31,7 @@ var _rotulo_garantia: Label
 var _rotulo_moedas: Label
 var _painel: Control
 var _abrindo := false
+var _tocou_bau := false
 
 
 func _ready() -> void:
@@ -233,21 +240,10 @@ func abrir_bau(tipo: String, sorteio: RandomNumberGenerator = null) -> void:
 	pronto.pressed.connect(_fechar)
 	coluna.add_child(pronto)
 	await get_tree().process_frame
-	# treme cada vez mais forte
-	imagem.pivot_offset = imagem.size / 2
+	await _suspense(tipo, itens, titulo, imagem, camada)
 	var tween := create_tween()
-	for forca in [0.07, 0.13, 0.2]:
-		tween.tween_callback(Audio.tocar.bind("caixa", 0.8 + forca * 2))
-		for lado in [1, -1, 1, -1]:
-			tween.tween_property(imagem, "rotation", forca * lado, 0.05)
-		tween.tween_property(imagem, "rotation", 0.0, 0.05)
-		tween.tween_interval(0.15)
-	tween.tween_callback(func():
-		imagem.texture = Itens.bau_aberto(tipo)
-		titulo.text = Baus.NOMES[tipo]
-		Audio.tocar("construir"))
-	tween.tween_property(imagem, "custom_minimum_size", Vector2(160, 130), 0.2)
-	# as cartas aparecem uma por uma
+	tween.tween_property(imagem, "custom_minimum_size", Vector2(170, 140), 0.2)
+	# as cartas aparecem uma por uma, virando
 	for i in itens.size():
 		var carta := _carta(itens[i])
 		carta.modulate.a = 0.0
@@ -257,9 +253,9 @@ func abrir_bau(tipo: String, sorteio: RandomNumberGenerator = null) -> void:
 			carta.scale = Vector2(0.05, 1.0)
 			carta.modulate.a = 1.0
 			var raro: bool = itens[i].get("raridade", 0) >= Companheiros.Raridade.EPICO
-			Audio.tocar("moeda" if not raro else "construir", 1.0 + i * 0.12))
-		tween.tween_property(carta, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tween.tween_interval(0.25)
+			Audio.tocar("moeda" if not raro else "especial", 1.0 + i * 0.12))
+		tween.tween_property(carta, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_interval(0.18)
 	tween.tween_callback(func():
 		pronto.disabled = false
 		_abrindo = false
@@ -335,3 +331,113 @@ func _fechar() -> void:
 	_painel = null
 	_abrindo = false
 	_atualizar()
+
+
+
+# --- Suspense da abertura --------------------------------------------------------
+
+## O baú fica pulando; a cada toque (ou sozinho, se ninguém tocar) ele treme
+## mais forte, e atrás dele crescem raios de luz NA COR DO MELHOR PRÊMIO (a
+## dica: dourado = lendário!). No último, um clarão e o baú abre explodindo
+## em faíscas.
+func _suspense(tipo: String, itens: Array, titulo: Label, imagem: TextureRect, camada: Control) -> void:
+	var melhor := -1
+	for item in itens:
+		melhor = maxi(melhor, int(item.get("raridade", -1)))
+	var cor: Color = Companheiros.CORES_RARIDADE[melhor] if melhor >= 0 else Color("#FFD23F")
+	titulo.text = "TOQUE NO BAÚ!"
+	imagem.pivot_offset = imagem.size / 2
+	imagem.mouse_filter = Control.MOUSE_FILTER_STOP
+	imagem.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed:
+			_tocou_bau = true)
+	# raios atrás do baú (girando)
+	var raios := TextureRect.new()
+	raios.name = "Raios"
+	raios.texture = RAIOS
+	raios.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	raios.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	raios.modulate = Color(cor, 0.0)
+	raios.show_behind_parent = true  # atrás do baú, e sempre no meio dele
+	imagem.add_child(raios)
+	raios.set_anchors_preset(PRESET_CENTER)
+	raios.offset_left = -260
+	raios.offset_top = -260
+	raios.offset_right = 260
+	raios.offset_bottom = 260
+	raios.pivot_offset = Vector2(260, 260)
+	raios.scale = Vector2.ONE * 0.4
+	var giro := raios.create_tween().set_loops()
+	giro.tween_property(raios, "rotation", TAU, 6.0).from(0.0)
+	# o baú pulando de leve enquanto espera
+	var pulo := imagem.create_tween().set_loops()
+	pulo.tween_property(imagem, "scale", Vector2(1.06, 0.94), 0.25)
+	pulo.tween_property(imagem, "scale", Vector2(0.96, 1.05), 0.25)
+	for toque in TOQUES:
+		_tocou_bau = false
+		var esperou := 0.0
+		while not _tocou_bau and esperou < ESPERA_TOQUE:
+			await get_tree().process_frame
+			esperou += get_process_delta_time()
+		if not is_instance_valid(imagem):
+			return
+		var forca := 0.08 + toque * 0.08
+		Audio.tocar("caixa", 0.8 + toque * 0.25)
+		var tremer := create_tween()
+		for lado in [1, -1, 1, -1, 1]:
+			tremer.tween_property(imagem, "rotation", forca * lado, 0.04)
+		tremer.tween_property(imagem, "rotation", 0.0, 0.04)
+		var crescer := create_tween().set_parallel()
+		crescer.tween_property(raios, "scale", Vector2.ONE * (0.6 + toque * 0.3), 0.25).set_trans(Tween.TRANS_BACK)
+		crescer.tween_property(raios, "modulate:a", 0.35 + toque * 0.25, 0.25)
+		_faiscas(camada, imagem.global_position + imagem.size / 2, cor, 6 + toque * 6)
+		titulo.text = ["TOQUE NO BAÚ!", "MAIS UM POUCO...", "QUASE!"][mini(toque + 1, 2)] if toque < TOQUES - 1 else "..."
+		await tremer.finished
+	pulo.kill()
+	imagem.scale = Vector2.ONE
+	# clarão, baú aberto e explosão de faíscas
+	var clarao := ColorRect.new()
+	clarao.color = Color(1, 1, 1, 0.95)
+	clarao.set_anchors_preset(PRESET_FULL_RECT)
+	clarao.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	camada.add_child(clarao)
+	clarao.create_tween().tween_property(clarao, "modulate:a", 0.0, 0.45)
+	imagem.texture = Itens.bau_aberto(tipo)
+	Audio.tocar("vitoria" if melhor >= Companheiros.Raridade.EPICO else "construir")
+	_faiscas(camada, imagem.global_position + imagem.size / 2, cor, 40)
+	var abrir := create_tween()
+	abrir.tween_property(imagem, "scale", Vector2.ONE * 1.25, 0.12)
+	abrir.tween_property(imagem, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK)
+	raios.create_tween().tween_property(raios, "scale", Vector2.ONE * 1.5, 0.3)
+	titulo.text = Baus.NOMES[tipo]
+	if melhor == Companheiros.Raridade.LENDARIO:
+		titulo.text = "UAU! LENDÁRIO!"
+		titulo.add_theme_color_override("font_color", cor)
+	elif melhor == Companheiros.Raridade.EPICO:
+		titulo.text = "ÉPICO!"
+		titulo.add_theme_color_override("font_color", cor)
+	await get_tree().create_timer(0.35).timeout
+
+
+func _faiscas(pai: Control, ponto: Vector2, cor: Color, quantas: int) -> void:
+	var faiscas := CPUParticles2D.new()
+	faiscas.texture = BRILHO
+	faiscas.amount = quantas
+	faiscas.lifetime = 0.8
+	faiscas.one_shot = true
+	faiscas.explosiveness = 1.0
+	faiscas.spread = 180.0
+	faiscas.initial_velocity_min = 180.0
+	faiscas.initial_velocity_max = 420.0
+	faiscas.gravity = Vector2(0, 300)
+	faiscas.scale_amount_min = 0.6
+	faiscas.scale_amount_max = 1.4
+	faiscas.color = cor.lightened(0.3)
+	var sumir := Gradient.new()
+	sumir.set_color(0, Color.WHITE)
+	sumir.set_color(1, Color(1, 1, 1, 0))
+	faiscas.color_ramp = sumir
+	faiscas.position = ponto - pai.global_position
+	faiscas.emitting = true
+	pai.add_child(faiscas)
+	faiscas.finished.connect(faiscas.queue_free)

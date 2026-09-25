@@ -1625,7 +1625,9 @@ func _testar_telas_baus_e_missoes() -> void:
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = 3
 	tela.abrir_bau("prata", sorteio)
-	await get_tree().create_timer(3.0).timeout
+	await get_tree().create_timer(1.0).timeout
+	verificar(tela.find_child("Raios", true, false) != null, "suspense: raios de luz atrás do baú")
+	await get_tree().create_timer(5.0).timeout  # sem tocar, ele abre sozinho
 	verificar(tela.find_child("Cartas", true, false).get_child_count() == 3 and Baus.quantos("prata") == 1, "baú de prata abre com 3 cartas")
 	verificar(not tela.find_child("Pronto", true, false).disabled, "depois das cartas dá para fechar")
 	tela.find_child("Pronto", true, false).pressed.emit()

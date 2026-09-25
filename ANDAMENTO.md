@@ -210,6 +210,14 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     qualidade MÉDIA, 18 na ALTA), pingos de chocolate caindo da fonte e
     faíscas douradas nos presentes do dia ainda não abertos. Só com as
     animações ligadas e placa de vídeo (print: `--animacoes`).
+  - **Baús novos** (`Itens3D._bau`, fotos refeitas): tábuas, cantoneiras e
+    faixas de metal com rebites, alças, fechadura em coração, joia na frente
+    (safira na prata, rubi no ouro, ametista no chefe), coroinha no ouro e no
+    chefe, laço e listras no de doce, e luz dourada escapando pela fresta.
+    Aberto: luz forte, moedas e joias. **Abertura com suspense**
+    (`cenas/baus.gd`): toque no baú (ou espere, ele abre sozinho), ele treme
+    mais forte a cada toque, raios de luz NA COR DO MELHOR PRÊMIO crescem
+    atrás, clarão, faíscas e "ÉPICO!"/"UAU! LENDÁRIO!".
   - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
     Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 
@@ -402,7 +410,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.691 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.692 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

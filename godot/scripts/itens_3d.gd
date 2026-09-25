@@ -37,7 +37,8 @@ static func montar(id: String, c: Node3D) -> void:
 		"estrela":
 			_estrela(c)
 		_:
-			_bau(c, BAUS[id], id.begins_with("bau_aberto"))
+			var tipo: String = id.trim_prefix("bau_aberto_").trim_prefix("bau_")
+			_bau(c, BAUS[id], id.begins_with("bau_aberto"), "madeira" if id == "bau_aberto" else tipo)
 
 
 static func _m(cor: String, aspereza := 0.3, metal := 0.0) -> StandardMaterial3D:
@@ -149,25 +150,49 @@ static func _malha_estrela(fora: float, dentro: float, espessura: float, estufad
 	return st.commit()
 
 
-## Baú arredondado: corpo, tampa curva, faixas, fechadura. Aberto: a tampa
-## levantada e um brilho dourado saindo de dentro.
-static func _bau(c: Node3D, cores: Array, aberto: bool) -> void:
+## Baú de tesouro caprichado: corpo de tábuas, tampa curva, cantoneiras e
+## faixas de metal com rebites, alças, fechadura grande em coração e joias.
+## Fechado, uma luz escapa pela fresta da tampa ("tem coisa boa aí dentro").
+## Aberto: tampa levantada, luz forte saindo e o tesouro aparecendo.
+## Cada tipo tem um enfeite: doce (listras e laço), prata (safira), ouro
+## (rubi e coroa), chefe (coroa e ametista), madeira (simples).
+static func _bau(c: Node3D, cores: Array, aberto: bool, tipo := "") -> void:
 	var metal: float = cores[3]
-	var corpo := _m(cores[0], 0.35, metal)
+	var corpo := _m(cores[0], 0.4, metal)
 	var tampa_mat := _m(cores[1], 0.3, metal)
-	var faixa := _m(cores[2], 0.25, 0.5)
+	var faixa := _m(cores[2], 0.25, 0.3)
+	var escuro := _m("#2A1540", 0.5)
+	if tipo == "doce":
+		corpo = Pecas3D.material_textura(Pecas3D.listras([Color(cores[0]), Color("#FFF1F6")], 10), 0.35)
 	var no := Node3D.new()
-	no.rotation_degrees = Vector3(14, 48, 0)
-	no.position = Vector3(0, -0.2, 0)
+	no.rotation_degrees = Vector3(14, 38, 0)
+	no.position = Vector3(0, -0.25, 0)
 	c.add_child(no)
 	var largura := 1.6
 	var fundo := 1.0
-	Pecas3D.caixa(no, Vector3(largura, 0.85, fundo), Vector3(0, -0.1, 0), corpo)
-	# tampa: meio cilindro deitado (o de baixo fica escondido no corpo)
+	var altura := 0.85
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, -0.1, 0), corpo)
+	# tábuas (frisos) no corpo
+	if tipo != "doce":
+		for y in [-0.33, -0.1, 0.13]:
+			Pecas3D.caixa(no, Vector3(largura + 0.01, 0.025, fundo + 0.01), Vector3(0, y, 0), _escurecido(cores[0]))
+	# cantoneiras de metal nos 4 cantos de baixo e rebites
+	for x in [-1, 1]:
+		for z in [-1, 1]:
+			var canto := Vector3(x * (largura / 2 - 0.08), -0.1, z * (fundo / 2 - 0.08))
+			Pecas3D.caixa(no, Vector3(0.2, altura + 0.04, 0.2), canto, faixa)
+	for x in [-0.5, 0.5]:
+		Pecas3D.caixa(no, Vector3(0.16, altura + 0.02, fundo + 0.06), Vector3(x, -0.1, 0), faixa)
+		for y in [-0.4, -0.1, 0.2]:
+			Pecas3D.esfera(no, 0.035, Vector3(x, y, fundo / 2 + 0.05), escuro)
+	# alças nas laterais
+	for x in [-1, 1]:
+		Pecas3D.rosquinha(no, 0.07, 0.16, Vector3(x * (largura / 2 + 0.05), -0.05, 0), faixa, Vector3.ONE, Vector3(0, 0, 90))
+	# tampa: meio cilindro deitado, com faixas e joia em cima
 	var dobradica := Node3D.new()
 	dobradica.position = Vector3(0, 0.32, -fundo / 2)
 	if aberto:
-		dobradica.rotation_degrees = Vector3(-70, 0, 0)
+		dobradica.rotation_degrees = Vector3(-75, 0, 0)
 	no.add_child(dobradica)
 	var tampa := Node3D.new()
 	tampa.position = Vector3(0, 0, fundo / 2)
@@ -176,16 +201,62 @@ static func _bau(c: Node3D, cores: Array, aberto: bool) -> void:
 	Pecas3D.caixa(tampa, Vector3(largura, 0.08, fundo), Vector3(0, -0.04, 0), tampa_mat)
 	for x in [-0.5, 0.5]:
 		Pecas3D.cilindro(tampa, fundo / 2 + 0.03, fundo / 2 + 0.03, 0.16, Vector3(x, 0, 0), faixa, Vector3(1, 0.8, 1), Vector3(0, 0, 90))
-		Pecas3D.caixa(no, Vector3(0.16, 0.87, fundo + 0.06), Vector3(x, -0.1, 0), faixa)
+	for x in [-1, 1]:
+		Pecas3D.cilindro(tampa, fundo / 2 + 0.04, fundo / 2 + 0.04, 0.12, Vector3(x * (largura / 2 - 0.06), 0, 0), faixa,
+			Vector3(1, 0.8, 1), Vector3(0, 0, 90))
+	var joia_cor: String = {"prata": "#3E8EF0", "ouro": "#E8263F", "chefe": "#A45CE6", "doce": "#FFFFFF"}.get(tipo, "")
+	if joia_cor != "":
+		var joia := _brilho(joia_cor, 0.5)
+		joia.roughness = 0.05
+		# joia na frente da tampa, bem à vista, com moldura
+		Pecas3D.esfera(tampa, 0.15, Vector3(0, 0.2, 0.4), joia, Vector3(1, 1, 0.6))
+		Pecas3D.rosquinha(tampa, 0.12, 0.2, Vector3(0, 0.2, 0.37), faixa, Vector3.ONE, Vector3(90, 0, 0))
+	if tipo == "ouro" or tipo == "chefe":
+		_coroinha(tampa, Vector3(0, 0.52, 0.05), faixa)
+	if tipo == "doce":
+		for lado in [-1, 1]:
+			Pecas3D.esfera(tampa, 0.18, Vector3(lado * 0.2, 0.46, 0.05), _m("#FF4F8B", 0.3), Vector3(1.3, 0.7, 0.5), Vector3(0, 0, lado * 25))
+		Pecas3D.esfera(tampa, 0.09, Vector3(0, 0.45, 0.07), _m("#FF7AA8", 0.3))
 	Pecas3D.caixa(no, Vector3(largura + 0.06, 0.12, fundo + 0.06), Vector3(0, 0.3, 0), faixa)
 	if aberto:
-		var brilho := _m("#FFE27A", 0.2, 0.3)
-		brilho.emission_enabled = true
-		brilho.emission = Color("#FFD23F")
-		brilho.emission_energy_multiplier = 0.6
-		for i in 5:
-			Pecas3D.esfera(no, 0.2, Vector3(-0.5 + i * 0.25, 0.32 + (i % 2) * 0.08, 0.05 * (i % 3)), brilho)
+		# luz forte saindo e o tesouro aparecendo
+		var luz := _brilho("#FFD23F", 2.2)
+		Pecas3D.caixa(no, Vector3(largura - 0.1, 0.05, fundo - 0.1), Vector3(0, 0.3, 0), luz)
+		var moeda := _m("#FFC83D", 0.25, 0.8)
+		for i in 9:
+			Pecas3D.cilindro(no, 0.12, 0.12, 0.04, Vector3(-0.55 + (i % 5) * 0.27, 0.36 + (i / 5) * 0.05, -0.2 + (i % 3) * 0.15),
+				moeda, Vector3.ONE, Vector3(20 * (i % 3), 0, 15 * (i % 2)))
+		var cores_joias := ["#E8263F", "#3E8EF0", "#3DDC97", "#A45CE6"]
+		for i in 4:
+			Pecas3D.esfera(no, 0.09, Vector3(-0.45 + i * 0.3, 0.45, 0.1 - (i % 2) * 0.2), _brilho(cores_joias[i], 0.6))
 	else:
-		# fechadura
-		Pecas3D.caixa(no, Vector3(0.34, 0.4, 0.1), Vector3(0, 0.22, fundo / 2 + 0.05), faixa)
-		Pecas3D.cilindro(no, 0.06, 0.06, 0.12, Vector3(0, 0.26, fundo / 2 + 0.1), _m("#3B1F66", 0.4), Vector3.ONE, Vector3(90, 0, 0))
+		# luz escapando pela fresta da tampa
+		Pecas3D.caixa(no, Vector3(largura - 0.3, 0.05, 0.02), Vector3(0, 0.33, fundo / 2 + 0.035), _brilho("#FFB800", 3.0))
+		# fechadura grande em coração, com buraco de fechadura
+		var placa := Node3D.new()
+		placa.position = Vector3(0, 0.2, fundo / 2 + 0.07)
+		no.add_child(placa)
+		for lado in [-1, 1]:
+			Pecas3D.esfera(placa, 0.13, Vector3(lado * 0.1, 0.08, 0), faixa, Vector3(1, 1, 0.45))
+		Pecas3D.cilindro(placa, 0.0, 0.2, 0.28, Vector3(0, -0.1, 0), faixa, Vector3(1, 1, 0.45), Vector3(180, 0, 0))
+		Pecas3D.esfera(placa, 0.045, Vector3(0, 0.02, 0.06), escuro)
+		Pecas3D.caixa(placa, Vector3(0.035, 0.1, 0.02), Vector3(0, -0.05, 0.06), escuro)
+
+
+static func _escurecido(cor: String) -> StandardMaterial3D:
+	return _m(Color(cor).darkened(0.25).to_html(), 0.6)
+
+
+static func _brilho(cor: String, forca: float) -> StandardMaterial3D:
+	var mat := _m(cor, 0.2)
+	mat.emission_enabled = true
+	mat.emission = Color(cor)
+	mat.emission_energy_multiplier = forca
+	return mat
+
+
+static func _coroinha(pai: Node3D, posicao: Vector3, mat: Material) -> void:
+	Pecas3D.cilindro(pai, 0.2, 0.18, 0.1, posicao, mat)
+	for i in 5:
+		var angulo := TAU * i / 5.0
+		Pecas3D.cilindro(pai, 0.0, 0.05, 0.14, posicao + Vector3(cos(angulo) * 0.17, 0.11, sin(angulo) * 0.17), mat)
