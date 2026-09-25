@@ -93,6 +93,9 @@ var _giro := 0.0
 var _inclinacao := 0.0
 var _girou_ha := 99.0
 var _paredes_altas: Node3D
+var _pos_antes := Vector3.ZERO
+var _pos_agora := Vector3.ZERO
+var _olhar := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -143,6 +146,11 @@ func _exit_tree() -> void:
 # --- Laço principal -----------------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
+	_passo_fisica(delta)
+	_guardar_posicao()
+
+
+func _passo_fisica(delta: float) -> void:
 	var direcao := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	var teclas := Vector2(
 		float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
@@ -174,8 +182,16 @@ func _process(delta: float) -> void:
 	_relogio_maquinas += delta
 	if _relogio_maquinas >= 0.25:
 		_relogio_maquinas = 0.0
+		var antes := {}
+		for m in Confeitaria.MAQUINAS:
+			antes[m["id"]] = Confeitaria.bandeja(m["id"])
 		if Confeitaria.atualizar() > 0:
 			_atualizar_bandejas()
+			# mostra o açúcar virando doce em cima de cada máquina
+			for m in Confeitaria.MAQUINAS:
+				var feitos: int = Confeitaria.bandeja(m["id"]) - int(antes[m["id"]])
+				if feitos > 0 and _maquinas.has(m["id"]):
+					_acucar_gasto(_maquinas[m["id"]]["no"].global_position, feitos * int(m["acucar"]))
 		_atualizar_maquinas()
 	_pegar_das_bandejas(delta)
 	_entregar_no_balcao(delta)
@@ -632,12 +648,12 @@ func _criar_camera() -> void:
 
 
 func _alvo_da_camera() -> Vector3:
-	var p := jogador.global_position
+	var p := _pos_visual()
 	return Vector3(clampf(p.x, -3.0, 3.0), 0.0, clampf(p.z, -2.0, 2.0) - 1.2)
 
 
 func _seguir_com_camera(delta: float) -> void:
-	var cabeca := jogador.global_position + Vector3(0, ALTURA_OLHOS, 0)
+	var cabeca := _pos_visual() + Vector3(0, ALTURA_OLHOS, 0)
 	match modo_camera:
 		Camera.DE_CIMA:
 			var alvo := _alvo_da_camera()
@@ -652,7 +668,7 @@ func _seguir_com_camera(delta: float) -> void:
 				_camera.global_position = alvo  # parede no meio: pula na hora
 			else:
 				_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
-			_camera.look_at(cabeca + _frente() * 1.5 + Vector3(0, -0.4 + _inclinacao * 2.0, 0))
+			_camera.look_at(_olhar_suave(cabeca + _frente() * 1.5 + Vector3(0, -0.4 + _inclinacao * 2.0, 0), delta))
 		Camera.PRIMEIRA_PESSOA:
 			_camera.global_position = cabeca - _frente() * 0.35
 			_camera.look_at(_camera.global_position + _frente() * cos(_inclinacao) + Vector3(0, sin(_inclinacao), 0))
@@ -815,3 +831,52 @@ func _etiqueta(pai: Control, icone: Texture2D, cor: Color) -> Label:
 	linha.add_child(rotulo)
 	pai.add_child(etiqueta)
 	return rotulo
+
+
+# --- Câmera suave --------------------------------------------------------------
+# O doce anda no ritmo da física; a câmera, a cada quadro da tela. Seguir a
+# posição "crua" fazia a tela tremer na câmera de terceira pessoa (o ponto
+# para onde ela olha pulava a cada passo da física). A câmera segue uma
+# posição interpolada entre os dois últimos passos e olha para um ponto suave.
+
+func _guardar_posicao() -> void:
+	_pos_antes = _pos_agora
+	_pos_agora = jogador.global_position
+
+
+## Posição do doce para a câmera, sem os "degraus" da física.
+func _pos_visual() -> Vector3:
+	var real := jogador.global_position
+	if not is_physics_processing() or _pos_agora.distance_to(real) > 1.0:
+		_pos_antes = real  # teleporte (porta, começo) ou teste: sem interpolar
+		_pos_agora = real
+		return real
+	return _pos_antes.lerp(_pos_agora, Engine.get_physics_interpolation_fraction())
+
+
+func _olhar_suave(alvo: Vector3, delta: float) -> Vector3:
+	if _olhar.distance_to(alvo) > 3.0:
+		_olhar = alvo
+	else:
+		_olhar = _olhar.lerp(alvo, minf(1.0, 14.0 * delta))
+	return _olhar
+
+
+## "-5" com o cubinho de açúcar subindo da máquina: o açúcar do quiz e do
+## laboratório vira doce aqui.
+func _acucar_gasto(onde: Vector3, quantidade: int) -> void:
+	var texto := Label3D.new()
+	texto.text = "-%d AÇÚCAR" % quantidade
+	texto.font_size = 64
+	texto.pixel_size = 0.006
+	texto.outline_size = 16
+	texto.modulate = Color.WHITE
+	texto.outline_modulate = Color("#5E3D8E")
+	texto.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	texto.no_depth_test = true
+	texto.position = onde + Vector3(0, 2.2, 0)
+	add_child(texto)
+	var tween := texto.create_tween()
+	tween.tween_property(texto, "position:y", texto.position.y + 0.8, 1.1)
+	tween.parallel().tween_property(texto, "modulate:a", 0.0, 1.1).set_delay(0.4)
+	tween.tween_callback(texto.queue_free)

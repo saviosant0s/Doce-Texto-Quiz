@@ -265,6 +265,13 @@ func _terminar() -> void:
 			_item_premio(premio, ICONE_ACUCAR, Color.WHITE, "+%d" % r["acucar"])
 		if r["moedas"] > 0:
 			_item_premio(premio, ICONE_MOEDA, Color.WHITE, "+%d" % r["moedas"])
+		if r["acucar"] > 0:
+			var destino := Label.new()
+			destino.theme_type_variation = &"TextoClaro"
+			destino.add_theme_font_size_override("font_size", 18)
+			destino.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			destino.text = "O açúcar vai para as máquinas da Confeitaria, que o transformam em doces."
+			coluna.add_child(destino)
 	elif n < 3:
 		var dica := Label.new()
 		dica.theme_type_variation = &"TextoClaro"

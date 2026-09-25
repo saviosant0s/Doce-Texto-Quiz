@@ -1114,7 +1114,12 @@ func _testar_laboratorio() -> void:
 		and Laboratorio.estrelas_por(3, 0) == 1 and Laboratorio.estrelas_por(0, 2) == 1, "estrelas por erros e dicas")
 	verificar(Laboratorio.liberada("c1f1") and not Laboratorio.liberada("c1f2"), "só a primeira fase começa liberada")
 	verificar(Laboratorio.proxima_fase() == "c1f1", "próxima fase é a primeira")
+	Progresso.confeitaria["acucar"] = 0
+	var maquinas_lab: Dictionary = Progresso.confeitaria["maquinas"].duplicate(true)
+	Progresso.confeitaria["maquinas"] = {}
 	var r1 := Laboratorio.concluir("c1f1", 2)
+	verificar(Confeitaria.acucar() == Laboratorio.ACUCAR_FASE, "o açúcar da fase entra no saldo (deu %d)" % Confeitaria.acucar())
+	Progresso.confeitaria["maquinas"] = maquinas_lab
 	verificar(r1["primeira"] and r1["acucar"] == Laboratorio.ACUCAR_FASE and r1["moedas"] == Laboratorio.MOEDAS_FASE + 2 * Laboratorio.MOEDAS_POR_ESTRELA, "recompensa da primeira vez")
 	verificar(Laboratorio.liberada("c1f2") and Laboratorio.proxima_fase() == "c1f2", "passar libera a próxima")
 	var r2 := Laboratorio.concluir("c1f1", 1)
@@ -1364,8 +1369,11 @@ func _testar_telas_baus_e_missoes() -> void:
 	Baus.ganhar("prata", 2)
 	Telas.ir_para("inicio")
 	await _esperar_tela("Inicio")
+	verificar(get_tree().current_scene.find_child("BausSurpresa", true, false) == null, "tela inicial só com o JOGAR (sem missões e baús)")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
 	var bolinha: Label = get_tree().current_scene.find_child("BausSurpresa", true, false).get_node("Bolinha")
-	verificar(bolinha.visible and bolinha.text == "2", "tela inicial mostra os baús fechados")
+	verificar(bolinha.visible and bolinha.text == "2", "a vila mostra os baús fechados")
 	get_tree().current_scene.find_child("BausSurpresa", true, false).pressed.emit()
 	verificar(await _esperar_tela("Baus"), "abre a tela de baús")
 	var tela := get_tree().current_scene

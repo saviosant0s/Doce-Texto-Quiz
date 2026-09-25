@@ -6,6 +6,13 @@ const CARTAO := preload("res://componentes/cartao_nivel.tscn")
 
 
 func _ready() -> void:
+	if not Telas.placa_rapida:
+		# sem a vila (aparelho sem placa de vídeo): nível, missões e baús aqui
+		var progresso := BotoesProgresso.new()
+		progresso.name = "Progresso"
+		progresso.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 24)
+		progresso.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		add_child(progresso)
 	%Inicio.pressed.connect(Telas.voltar)  # volta para a vila (ou o início)
 	%Titulos.pressed.connect(Telas.abrir.bind("titulos"))
 	%Colecao.pressed.connect(Telas.abrir.bind("colecao"))

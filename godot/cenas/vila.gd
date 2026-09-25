@@ -76,6 +76,9 @@ var _girou_ha := 99.0
 ## Dedos que começaram num botão (não giram a visão).
 var _dedos_em_botao := {}
 var _qualidade_antes := {}
+var _pos_antes := Vector3.ZERO
+var _pos_agora := Vector3.ZERO
+var _olhar := Vector3.ZERO
 ## Primeiros passos: seta em cima da porta do próximo prédio e uma dica.
 var _seta: Node3D
 var _dica: PanelContainer
@@ -114,6 +117,11 @@ func _ready() -> void:
 # --- Controles -----------------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
+	_mover(delta)
+	_guardar_posicao()
+
+
+func _mover(delta: float) -> void:
 	if _entrando:
 		_andar_na_entrada(delta)
 		return
@@ -147,10 +155,11 @@ func _frente() -> Vector3:
 func _process(delta: float) -> void:
 	for nuvem: Node3D in _nuvens:  # nuvens passeando devagar
 		nuvem.position.x = wrapf(nuvem.position.x + delta * 0.4, -34.0, 34.0)
-	var cabeca := jogador.global_position + Vector3(0, ALTURA_OLHOS, 0)
+	var pos := _pos_visual()
+	var cabeca := pos + Vector3(0, ALTURA_OLHOS, 0)
 	match modo_camera:
 		Camera.AEREA:
-			var alvo := jogador.global_position + CAMERA_DISTANCIA
+			var alvo := pos + CAMERA_DISTANCIA
 			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, CAMERA_SUAVIDADE * delta))
 			_camera.look_at(_camera.global_position - CAMERA_DISTANCIA + Vector3(0, 0.8, 0))
 		Camera.PERTO:
@@ -161,7 +170,7 @@ func _process(delta: float) -> void:
 				_camera.global_position = alvo
 			else:
 				_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
-			_camera.look_at(cabeca + _frente() * 1.5 + Vector3(0, _inclinacao * 2.0, 0))
+			_camera.look_at(_olhar_suave(cabeca + _frente() * 1.5 + Vector3(0, _inclinacao * 2.0, 0), delta))
 		Camera.PRIMEIRA_PESSOA:
 			_camera.global_position = cabeca + _frente() * 0.25
 			_camera.look_at(_camera.global_position + _olhar_1p())
@@ -665,25 +674,34 @@ func _criar_interface() -> void:
 	espaco.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	espaco.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	topo.add_child(espaco)
-	var moedas := PanelContainer.new()
-	moedas.theme_type_variation = &"Etiqueta"
-	moedas.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# açúcar e moedas (o açúcar vai para as máquinas da confeitaria)
+	var saldos := PanelContainer.new()
+	saldos.name = "Saldos"
+	saldos.theme_type_variation = &"Etiqueta"
+	saldos.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var linha := HBoxContainer.new()
 	linha.add_theme_constant_override("separation", 6)
-	moedas.add_child(linha)
-	var icone := TextureRect.new()
-	icone.texture = ICONE_MOEDA
-	icone.custom_minimum_size = Vector2(24, 24)
-	icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	linha.add_child(icone)
-	var valor := Label.new()
-	valor.theme_type_variation = &"TituloClaro"
-	valor.add_theme_font_size_override("font_size", 26)
-	valor.text = Jogo.formatar(Progresso.moedas)
-	linha.add_child(valor)
-	topo.add_child(moedas)
+	saldos.add_child(linha)
+	Confeitaria.atualizar()
+	for par in [[Itens.ACUCAR, str(Confeitaria.acucar()), "Acucar"], [ICONE_MOEDA, Jogo.formatar(Progresso.moedas), "Moedas"]]:
+		var icone := TextureRect.new()
+		icone.texture = par[0]
+		icone.custom_minimum_size = Vector2(24, 24)
+		icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		linha.add_child(icone)
+		var valor := Label.new()
+		valor.name = par[2]
+		valor.theme_type_variation = &"TituloClaro"
+		valor.add_theme_font_size_override("font_size", 26)
+		valor.text = par[1]
+		linha.add_child(valor)
+		if par[2] == "Acucar":
+			var espaco_saldo := Control.new()
+			espaco_saldo.custom_minimum_size = Vector2(8, 0)
+			linha.add_child(espaco_saldo)
+	topo.add_child(saldos)
 	var camera := Button.new()
 	camera.name = "Camera"
 	camera.theme_type_variation = &"BotaoIconeAmarelo"
@@ -734,3 +752,32 @@ func _criar_interface() -> void:
 	_botao_pular = pular
 	baixo.add_child(pular)
 	baixo.add_theme_constant_override("separation", 18)
+
+
+# --- Câmera suave --------------------------------------------------------------
+# O doce anda no ritmo da física; a câmera, a cada quadro da tela. Seguir a
+# posição "crua" fazia a tela tremer na câmera de terceira pessoa (o ponto
+# para onde ela olha pulava a cada passo da física). A câmera segue uma
+# posição interpolada entre os dois últimos passos e olha para um ponto suave.
+
+func _guardar_posicao() -> void:
+	_pos_antes = _pos_agora
+	_pos_agora = jogador.global_position
+
+
+## Posição do doce para a câmera, sem os "degraus" da física.
+func _pos_visual() -> Vector3:
+	var real := jogador.global_position
+	if not is_physics_processing() or _pos_agora.distance_to(real) > 1.0:
+		_pos_antes = real  # teleporte (porta, começo) ou teste: sem interpolar
+		_pos_agora = real
+		return real
+	return _pos_antes.lerp(_pos_agora, Engine.get_physics_interpolation_fraction())
+
+
+func _olhar_suave(alvo: Vector3, delta: float) -> Vector3:
+	if _olhar.distance_to(alvo) > 3.0:
+		_olhar = alvo
+	else:
+		_olhar = _olhar.lerp(alvo, minf(1.0, 14.0 * delta))
+	return _olhar

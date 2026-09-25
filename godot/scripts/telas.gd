@@ -46,10 +46,20 @@ var _trocando := false
 
 
 func _ready() -> void:
+	_ajustar_fisica()
 	_detectar_renderizacao()
 	_criar_cortina()
 	_criar_aviso_girar()
 	_tirar_dicas.call_deferred()
+
+
+## A física (o andar dos doces) roda no ritmo da tela do aparelho (60, 90 ou
+## 120 Hz), para o movimento não "dar degraus" em telas mais rápidas.
+func _ajustar_fisica() -> void:
+	var hz := roundi(DisplayServer.screen_get_refresh_rate())
+	if hz >= 60:
+		Engine.physics_ticks_per_second = clampi(hz, 60, 120)
+		Engine.max_physics_steps_per_frame = 4
 
 
 # --- Navegação ---------------------------------------------------------------

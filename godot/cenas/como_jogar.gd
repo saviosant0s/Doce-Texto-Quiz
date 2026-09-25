@@ -1,16 +1,83 @@
 extends Control
-## Como jogar: passo a passo e os títulos de doceiro.
+## Como jogar: uma aba para cada parte do jogo (vila, quiz, laboratório,
+## confeitaria, Doce Match, baús e missões) e os títulos de doceiro.
 
-const PASSOS := [
-	{"icone": "camadas", "titulo": "ESCOLHA O NÍVEL",
-		"texto": "Comece pelo fácil. Passando nele, você libera o médio, e depois o difícil."},
-	{"icone": "relogio", "titulo": "RESPONDA RÁPIDO",
-		"texto": "10 perguntas, 30 segundos cada. Rapidez e acertos seguidos valem mais pontos!"},
-	{"icone": "estrela", "titulo": "FAÇA 6 ACERTOS",
-		"texto": "Com 6 acertos você passa no nível. Com 8 e 10, ganha mais estrelas."},
-	{"icone": "trofeu", "titulo": "GANHE SEU TÍTULO",
-		"texto": "Cada nível vencido dá um título de doceiro. Use moedas para pedir ajuda e revise seus erros!"},
+## Abas do "Como jogar": cada uma com 4 cartões (ícone da pasta de ícones ou
+## item 3D do jogo, título e texto curto).
+const ABAS := [
+	{"nome": "VILA", "passos": [
+		{"icone": "casa", "titulo": "ANDE PELA VILA",
+			"texto": "Use o joystick (ou WASD no computador). Empurre até o fim para correr; o botão de seta pula."},
+		{"icone": "avancar", "titulo": "ENTRE NOS PRÉDIOS",
+			"texto": "Chegue na porta e toque em ENTRAR: Escola, Laboratório, Confeitaria, Fliperama e Troféus."},
+		{"icone": "camera", "titulo": "TROQUE A CÂMERA",
+			"texto": "O botão da câmera muda entre de cima, de perto e 1ª pessoa. Arraste o dedo para olhar em volta."},
+		{"icone": "lampada", "titulo": "SIGA OS AVISOS",
+			"texto": "A seta amarela mostra o próximo passo. O \"!\" aparece nos prédios com algo esperando você."},
+	]},
+	{"nome": "QUIZ", "passos": [
+		{"icone": "camadas", "titulo": "ESCOLHA O NÍVEL",
+			"texto": "Na Escola, comece pelo fácil. Passando nele, você libera o médio, e depois o difícil."},
+		{"icone": "relogio", "titulo": "RESPONDA RÁPIDO",
+			"texto": "10 perguntas, 30 segundos cada. Rapidez e acertos seguidos valem mais pontos!"},
+		{"item": "ESTRELA", "titulo": "FAÇA 6 ACERTOS",
+			"texto": "Com 6 acertos você passa no nível. Com 8 e 10, ganha mais estrelas, moedas e açúcar."},
+		{"icone": "trofeu", "titulo": "GANHE SEU TÍTULO",
+			"texto": "Cada nível vencido dá um título de doceiro. Revise seus erros para aprender de vez!"},
+	]},
+	{"nome": "LABORATÓRIO", "passos": [
+		{"icone": "laboratorio", "titulo": "FASES PRÁTICAS",
+			"texto": "Use o Excel e o Word de verdade: fórmulas, negrito, listas, títulos... São 40 fases em 5 capítulos."},
+		{"icone": "grafico", "titulo": "EXCEL",
+			"texto": "Toque nas células e nos botões para montar a fórmula e aperte CONFERIR. Toda fórmula começa com =."},
+		{"icone": "camadas", "titulo": "WORD",
+			"texto": "Toque numa palavra para selecionar (duas vezes = parágrafo) e use a barra: N, cores, listas, títulos."},
+		{"item": "BAU_CHEFE", "titulo": "ESTRELAS E CHEFES",
+			"texto": "Sem erro e sem dica = 3 estrelas. No fim de cada capítulo tem um chefe e, no caminho, baús."},
+	]},
+	{"nome": "CONFEITARIA", "passos": [
+		{"item": "ACUCAR", "titulo": "AÇÚCAR",
+			"texto": "Cada acerto no quiz e cada fase nova do laboratório dá açúcar para a sua confeitaria."},
+		{"icone": "confeitaria", "titulo": "MÁQUINAS",
+			"texto": "As máquinas transformam o açúcar em doces sozinhas. Construa e melhore nos círculos do chão."},
+		{"icone": "pessoas", "titulo": "ATENDA",
+			"texto": "Pegue os doces nas bandejas e leve ao balcão: os clientes pagam em moedas."},
+		{"item": "MOEDA", "titulo": "RECOLHA",
+			"texto": "As moedas ficam no caixa. Passe por lá para guardar e use para construir e comprar doces."},
+	]},
+	{"nome": "DOCE MATCH", "passos": [
+		{"icone": "controle", "titulo": "TROQUE AS PEÇAS",
+			"texto": "No Fliperama, arraste uma peça para a vizinha e forme filas de 3 ou mais iguais."},
+		{"icone": "estrela", "titulo": "COMBOS",
+			"texto": "Peças que caem e formam novas filas fazem combo: valem muito mais pontos!"},
+		{"item": "ESTRELA", "titulo": "ESTRELAS",
+			"texto": "Faça pontos nas jogadas da partida para ganhar até 3 estrelas e moedas."},
+		{"item": "ACUCAR", "titulo": "CUSTA AÇÚCAR",
+			"texto": "Cada partida custa açúcar. Faltou? Jogue o quiz para ganhar mais."},
+	]},
+	{"nome": "BAÚS E DOCES", "passos": [
+		{"item": "BAU_DOCE", "titulo": "BAÚS SURPRESA",
+			"texto": "Ganhe baús passando no quiz, nas missões, no laboratório e subindo de nível."},
+		{"icone": "doce", "titulo": "PEDAÇOS",
+			"texto": "Dentro vêm pedaços de doces: junte 10 e o doce é seu. Com mais, ele sobe de nível."},
+		{"item": "BAU_OURO", "titulo": "RARIDADE",
+			"texto": "Comum, raro, épico e lendário (a cor da borda). A cada 10 baús vem um épico ou lendário."},
+		{"icone": "coracao", "titulo": "COMPANHEIRO",
+			"texto": "Escolha um doce na coleção: o bônus dele (mais açúcar, mais tempo...) vale no jogo todo."},
+	]},
+	{"nome": "MISSÕES", "passos": [
+		{"icone": "missoes", "titulo": "DO DIA",
+			"texto": "3 missões novas todo dia. Cumpriu? Toque em RESGATAR. As 3 juntas dão um baú de prata."},
+		{"item": "BAU_OURO", "titulo": "DA SEMANA",
+			"texto": "3 missões maiores por semana. As 3 juntas dão um baú de ouro."},
+		{"icone": "relogio", "titulo": "VOLTE TODO DIA",
+			"texto": "O prêmio por entrar cresce a cada dia seguido. O 7º dia dá um baú de ouro!"},
+		{"item": "XP", "titulo": "SUBA DE NÍVEL",
+			"texto": "Tudo o que você faz dá experiência (XP). Cada nível novo dá um baú."},
+	]},
 ]
+const ITENS := {"ESTRELA": Itens.ESTRELA, "ACUCAR": Itens.ACUCAR, "MOEDA": Itens.MOEDA, "XP": Itens.XP,
+	"BAU_DOCE": Itens.BAU_DOCE, "BAU_OURO": Itens.BAU_OURO, "BAU_CHEFE": Itens.BAU_CHEFE}
 const FAIXAS := [
 	{"personagem": "brigadeiro_triste", "faixa": "MENOS DE 6", "nome": "AINDA NÃO É DOCEIRO"},
 	{"personagem": "maca_noob", "faixa": "PASSOU NO FÁCIL", "nome": "DOCEIRO NOOB"},
@@ -19,16 +86,52 @@ const FAIXAS := [
 ]
 
 
+var _abas: HBoxContainer
+var aba_atual := -1
+
+
 func _ready() -> void:
 	%Voltar.pressed.connect(Telas.voltar)
-	%Jogar.pressed.connect(Telas.ir_para.bind("niveis"))
-	for i in PASSOS.size():
-		var cartao := _criar_passo(i + 1, PASSOS[i])
-		%Passos.add_child(cartao)
-		Animacoes.entrar(cartao, Vector2(0, 40), 0.07 * i)
+	%Jogar.pressed.connect(Telas.ir_para_casa)
 	for faixa in FAIXAS:
 		%Faixas.add_child(_criar_faixa(faixa))
-	Animacoes.entrar(%Coluna.get_node("Titulos"), Vector2(0, 40), 0.3)
+	# abas logo abaixo do topo
+	_abas = HBoxContainer.new()
+	_abas.name = "Abas"
+	_abas.add_theme_constant_override("separation", 8)
+	%Coluna.add_child(_abas)
+	%Coluna.move_child(_abas, 1)
+	for i in ABAS.size():
+		var b := Button.new()
+		b.name = "Aba%d" % i
+		b.text = ABAS[i]["nome"]
+		b.custom_minimum_size = Vector2(0, 50)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.add_theme_font_size_override("font_size", 20)
+		b.focus_mode = Control.FOCUS_NONE
+		b.pressed.connect(mostrar_aba.bind(i))
+		_abas.add_child(b)
+	mostrar_aba(0)
+
+
+## Mostra os 4 cartões de uma aba (os títulos de doceiro só na aba QUIZ).
+func mostrar_aba(indice: int) -> void:
+	if indice == aba_atual:
+		return
+	aba_atual = indice
+	for i in _abas.get_child_count():
+		var aba: Button = _abas.get_child(i)
+		aba.theme_type_variation = &"BotaoRoxo" if i == indice else &"Alternativa"
+		aba.add_theme_font_size_override("font_size", 26 if i == indice else 20)  # a fonte do roxo é mais estreita
+	for filho in %Passos.get_children():
+		%Passos.remove_child(filho)
+		filho.queue_free()
+	var passos: Array = ABAS[indice]["passos"]
+	for i in passos.size():
+		var cartao := _criar_passo(i + 1, passos[i])
+		%Passos.add_child(cartao)
+		Animacoes.entrar(cartao, Vector2(0, 30), 0.05 * i)
+	%Coluna.get_node("Titulos").visible = ABAS[indice]["nome"] == "QUIZ"
 
 
 func _criar_passo(numero: int, passo: Dictionary) -> PanelContainer:
@@ -55,8 +158,11 @@ func _criar_passo(numero: int, passo: Dictionary) -> PanelContainer:
 	espaco.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	topo.add_child(espaco)
 	var icone := TextureRect.new()
-	icone.texture = load("res://assets/icones/%s.svg" % passo["icone"])
-	icone.modulate = Cores.ROXO
+	if passo.has("item"):
+		icone.texture = ITENS[passo["item"]]  # item 3D do jogo, com as cores dele
+	else:
+		icone.texture = load("res://assets/icones/%s.svg" % passo["icone"])
+		icone.modulate = Cores.ROXO
 	icone.custom_minimum_size = Vector2(60, 60)
 	icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -64,7 +170,7 @@ func _criar_passo(numero: int, passo: Dictionary) -> PanelContainer:
 
 	var titulo := Label.new()
 	titulo.theme_type_variation = &"Subtitulo"
-	titulo.add_theme_font_size_override("font_size", 38)
+	titulo.add_theme_font_size_override("font_size", 32)
 	titulo.text = passo["titulo"]
 	titulo.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	coluna.add_child(titulo)
