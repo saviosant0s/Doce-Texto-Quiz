@@ -815,9 +815,20 @@ func _testar_tela_doce_match() -> void:
 
 func _testar_configuracoes() -> void:
 	_secao("configurações")
+	# qualidade dos gráficos: BAIXA tira a grama e as sombras da vila
+	Qualidade.escolher(Qualidade.BAIXA)
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	verificar(vila.find_child("Grama", true, false) == null, "gráficos BAIXA: sem grama com volume")
+	verificar(not vila.find_children("*", "DirectionalLight3D", true, false)[0].shadow_enabled, "gráficos BAIXA: sem sombras")
+	Qualidade.escolher(Qualidade.ALTA)
+	Telas.ir_para("niveis")
+	await _esperar_tela("Niveis")
 	Telas.abrir("configuracoes")
 	verificar(await _esperar_tela("Configuracoes"), "abre as configurações")
 	var tela := get_tree().current_scene
+	verificar(tela.find_child("Qualidade", true, false) != null, "opção de qualidade dos gráficos")
 	var controles := tela.find_children("*", "HSlider", true, false)
 	verificar(controles.size() == 2, "dois controles de volume")
 	if controles.size() == 2:

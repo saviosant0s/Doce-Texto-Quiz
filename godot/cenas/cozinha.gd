@@ -583,7 +583,7 @@ func _criar_ambiente() -> void:
 	var luz := DirectionalLight3D.new()
 	luz.rotation_degrees = Vector3(-60, -25, 0)
 	luz.light_energy = 0.3 if CenarioVila.modo_leve() else 0.55
-	luz.shadow_enabled = true
+	luz.shadow_enabled = Qualidade.sombras()
 	luz.shadow_opacity = 0.5
 	luz.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	luz.directional_shadow_max_distance = 30.0

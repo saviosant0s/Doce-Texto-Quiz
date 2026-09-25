@@ -12,6 +12,7 @@ func _ready() -> void:
 	_criar_volume("MÚSICA", "volume_musica", false)
 	_criar_volume("EFEITOS SONOROS", "volume_efeitos", true)
 	_criar_chave_animacoes()
+	_criar_qualidade()
 	_atualizar_resumo()
 	Animacoes.entrar(%Coluna, Vector2(0, 30))
 
@@ -67,6 +68,37 @@ func _criar_chave_animacoes() -> void:
 		aviso.custom_minimum_size = Vector2(200, 0)
 		%Linhas.add_child(aviso)
 		chave.disabled = true
+
+
+## Gráficos: BAIXA / MÉDIA / ALTA (grama, sombras, nitidez do 3D).
+func _criar_qualidade() -> void:
+	var linha := HBoxContainer.new()
+	linha.name = "Qualidade"
+	linha.add_theme_constant_override("separation", 8)
+	var rotulo := Label.new()
+	rotulo.theme_type_variation = &"Texto"
+	rotulo.text = "GRÁFICOS"
+	rotulo.tooltip_text = "Se a vila ou a cozinha ficarem lentas, use MÉDIA ou BAIXA."
+	rotulo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	linha.add_child(rotulo)
+	var grupo := ButtonGroup.new()
+	for i in Qualidade.NOMES.size():
+		var botao := Button.new()
+		botao.name = "Qualidade%d" % i
+		botao.text = Qualidade.NOMES[i]
+		botao.toggle_mode = true
+		botao.button_group = grupo
+		botao.button_pressed = i == Qualidade.nivel()
+		botao.custom_minimum_size = Vector2(110, 46)
+		botao.add_theme_font_size_override("font_size", 24)
+		botao.theme_type_variation = &"BotaoRoxo" if i == Qualidade.nivel() else &"Alternativa"
+		botao.pressed.connect(func():
+			Qualidade.escolher(i)
+			for outro in linha.get_children():
+				if outro is Button:
+					outro.theme_type_variation = &"BotaoRoxo" if outro == botao else &"Alternativa")
+		linha.add_child(botao)
+	%Linhas.add_child(linha)
 
 
 func _atualizar_resumo() -> void:

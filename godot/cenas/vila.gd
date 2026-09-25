@@ -378,7 +378,7 @@ func _criar_ambiente() -> void:
 	var sol := DirectionalLight3D.new()
 	sol.rotation_degrees = Vector3(-55, -35, 0)
 	sol.light_energy = 0.45
-	sol.shadow_enabled = true
+	sol.shadow_enabled = Qualidade.sombras()
 	sol.shadow_opacity = 0.55  # sombra suave, de desenho
 	sol.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sol.directional_shadow_max_distance = 45.0
@@ -414,7 +414,7 @@ func _enfeitar() -> void:
 	# florzinhas pelo gramado
 	var pontos := []
 	tentativas = 0
-	while pontos.size() < 90 and tentativas < 1500:
+	while pontos.size() < Qualidade.flores() and tentativas < 1500:
 		tentativas += 1
 		var ponto := Vector3(sorteio.randf_range(-19, 19), 0, sorteio.randf_range(-19, 19))
 		if ponto.length() > 5.0 and _longe_dos_caminhos(ponto, 0.0) and _longe_dos_predios(ponto, 3.8):
@@ -424,7 +424,7 @@ func _enfeitar() -> void:
 	# câmera passa; nada em cima de caminhos, praça e prédios
 	var tufos := []
 	tentativas = 0
-	while tufos.size() < 5000 and tentativas < 20000:
+	while tufos.size() < Qualidade.grama() and tentativas < 20000:
 		tentativas += 1
 		var raio := sqrt(sorteio.randf()) * 19.5
 		var angulo := sorteio.randf() * TAU
@@ -433,7 +433,8 @@ func _enfeitar() -> void:
 			continue
 		if _longe_dos_caminhos(ponto, 0.15) and _longe_dos_predios(ponto, 3.6):
 			tufos.append(ponto)
-	CenarioVila.grama(self, tufos, 23)
+	if not tufos.is_empty():
+		CenarioVila.grama(self, tufos, 23)
 	CenarioVila.morros(self, 31.0)
 	_nuvens = CenarioVila.nuvens(self)
 	# jujubas enfeitando a praça

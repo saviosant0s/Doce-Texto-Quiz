@@ -674,14 +674,14 @@ static func camera_sem_parede(mundo: World3D, de: Vector3, ate: Vector3) -> Vect
 	return de + (ate - de) * fracao[0]
 
 
-## Qualidade do 3D nas cenas grandes (vila e cozinha): antisserrilhado leve e
-## o 3D desenhado a 80% do tamanho da tela (a interface continua nítida) —
-## bem mais leve em celular de tela grande. Devolve o que havia antes, para
-## restaurar_qualidade() ao sair da cena.
+## Qualidade do 3D nas cenas grandes (vila e cozinha), conforme a escolha nas
+## configurações (Qualidade): antisserrilhado e o 3D desenhado menor que a
+## tela (a interface continua nítida) — bem mais leve em celular de tela
+## grande. Devolve o que havia antes, para restaurar_qualidade() ao sair.
 static func qualidade_3d(viewport: Viewport) -> Dictionary:
 	var antes := {"msaa": viewport.msaa_3d, "escala": viewport.scaling_3d_scale}
-	viewport.msaa_3d = Viewport.MSAA_2X
-	viewport.scaling_3d_scale = 0.8
+	viewport.msaa_3d = Qualidade.ANTISSERRILHADO[Qualidade.nivel()]
+	viewport.scaling_3d_scale = Qualidade.ESCALA_3D[Qualidade.nivel()]
 	return antes
 
 
