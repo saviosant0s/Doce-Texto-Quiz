@@ -42,13 +42,14 @@ personagens, fontes) é a mesma da versão original.
   (luz em degraus, contorno, sombras) e cada prédio tem o seu jeito: Escola
   de biscoito com torre do sino, Confeitaria-cupcake, torre dos Troféus e
   Fliperama em forma de máquina.
-- Minha Confeitaria (`scripts/confeitaria.gd`, `cenas/confeitaria.*`): cada
-  acerto no quiz dá 10 de açúcar; máquinas (panela de brigadeiro, tacho de maçã
-  do amor e forno de cupcake, liberadas passando nos níveis) transformam açúcar
-  em doces sozinhas. Os doces vão para o estoque (ampliável) e são vendidos ou
-  entregues em encomendas dos moradores, que pagam mais. Moedas melhoram as
-  máquinas (3 níveis). Com o jogo fechado, produz no máximo 2 horas.
-  Entrada: prédio da Confeitaria na vila ou botão no menu dos níveis.
+- Minha Confeitaria (`scripts/confeitaria.gd`): uma cozinha 3D no estilo
+  Pizza Ready (`cenas/cozinha.*`), aberta pelo prédio da Confeitaria na vila.
+  Cada acerto no quiz dá 10 de açúcar; as máquinas (panela de brigadeiro,
+  tacho de maçã do amor, forno de cupcake, liberadas passando nos níveis)
+  fazem doces na bandeja; o jogador pega os doces, atende os clientes no
+  balcão, recolhe as moedas no caixa e para nos círculos do chão para
+  construir e melhorar. Com o jogo fechado, as máquinas produzem no máximo
+  2 horas. Sem placa de vídeo, abre um painel 2D simples.
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
   brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.

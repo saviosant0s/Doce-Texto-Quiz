@@ -580,39 +580,34 @@ func _testar_confeitaria() -> void:
 	_secao("minha confeitaria")
 	Progresso.apagar()
 	verificar(Confeitaria.liberada("brigadeiro") and not Confeitaria.liberada("maca"), "panela liberada; maçã só passando no fácil")
-	verificar(not Confeitaria.construir("maca"), "não constrói máquina bloqueada")
-	verificar(Confeitaria.construir("brigadeiro") and Confeitaria.nivel("brigadeiro") == 1, "constrói a panela de graça")
-	verificar(Confeitaria.encomendas().size() == Confeitaria.ENCOMENDAS_ABERTAS, "abre as encomendas")
+	verificar(not Confeitaria.construir_ou_melhorar("maca"), "não constrói máquina bloqueada")
+	verificar(Confeitaria.construir_ou_melhorar("brigadeiro") and Confeitaria.nivel("brigadeiro") == 1, "constrói a panela de graça")
+	verificar(Confeitaria.acucar() == Confeitaria.ACUCAR_PRESENTE, "primeira máquina vem com açúcar de presente")
+	Progresso.confeitaria["acucar"] = 0
 	var t0: float = Progresso.confeitaria["atualizado"]
 	verificar(Confeitaria.atualizar(t0 + 60) == 0 and Confeitaria.parada("brigadeiro") == "SEM AÇÚCAR", "sem açúcar, a máquina para")
 	Progresso.confeitaria["atualizado"] = t0
-	Progresso.confeitaria["acucar"] = 50
-	Confeitaria.atualizar(t0 + 60)  # 20 s já prontos + 60 s = 4 doces de 5 de açúcar
-	verificar(Confeitaria.estoque("brigadeiro") == 4 and Confeitaria.acucar() == 30, "açúcar vira doce com o tempo")
-	Confeitaria.atualizar(t0 + 60 + 100000)
-	verificar(Confeitaria.estoque("brigadeiro") == 10 and Confeitaria.acucar() == 0, "fora do jogo, produz até o açúcar acabar")
+	Progresso.confeitaria["acucar"] = 22
+	Confeitaria.atualizar(t0 + 12)  # 6 s já prontos + 12 s = 3 doces de 5 de açúcar
+	verificar(Confeitaria.bandeja("brigadeiro") == 3 and Confeitaria.acucar() == 7, "açúcar vira doce na bandeja")
 	Progresso.confeitaria["acucar"] = 5000
-	Confeitaria.atualizar(t0 + 300000)
-	verificar(Confeitaria.estoque_total() == Confeitaria.capacidade() and Confeitaria.parada("brigadeiro") == "ESTOQUE CHEIO", "para com o estoque cheio")
-	var fora := Confeitaria.acucar()
-	Confeitaria.atualizar(t0 + 300000 + 3 * Confeitaria.LIMITE_FORA)
-	verificar(Confeitaria.acucar() == fora, "cheio, não gasta açúcar")
+	Confeitaria.atualizar(t0 + 100000)
+	verificar(Confeitaria.bandeja("brigadeiro") == Confeitaria.capacidade_bandeja("brigadeiro") and Confeitaria.parada("brigadeiro") == "BANDEJA CHEIA", "para com a bandeja cheia")
+	var sobrou := Confeitaria.acucar()
+	Confeitaria.atualizar(t0 + 100000 + 3 * Confeitaria.LIMITE_FORA)
+	verificar(Confeitaria.acucar() == sobrou, "cheia, não gasta açúcar")
+	verificar(Confeitaria.pegar("brigadeiro", 4) == 4 and Confeitaria.bandeja("brigadeiro") == 2, "pega doces da bandeja")
+	verificar(Confeitaria.cobrar("brigadeiro", 3) == 3 * 2 + Confeitaria.GORJETA, "cliente paga o valor mais a gorjeta")
 	Progresso.moedas = 0
-	verificar(Confeitaria.vender("brigadeiro") == 60 and Progresso.moedas == 60 and Confeitaria.estoque_total() == 0, "vende o estoque (30 x 2)")
-	var pedido: Dictionary = Confeitaria.encomendas()[0]
-	verificar(Confeitaria.entregar(0) == 0, "sem doces, não entrega")
-	Progresso.confeitaria["estoque"]["brigadeiro"] = 20
-	var antes := Progresso.moedas
-	verificar(Confeitaria.entregar(0) == int(pedido["recompensa"]) and Progresso.moedas == antes + int(pedido["recompensa"]), "entrega a encomenda e ganha moedas")
-	verificar(Confeitaria.estoque("brigadeiro") == 20 - int(pedido["quantidade"]) and Confeitaria.encomendas().size() == Confeitaria.ENCOMENDAS_ABERTAS, "gasta os doces e chega encomenda nova")
-	verificar(int(pedido["recompensa"]) > int(pedido["quantidade"]) * Confeitaria.valor("brigadeiro"), "encomenda paga mais que vender")
+	verificar(Confeitaria.vender_bandeja("brigadeiro") == 4 and Progresso.moedas == 4 and Confeitaria.bandeja("brigadeiro") == 0, "painel simples vende a bandeja")
 	Progresso.moedas = 100
-	verificar(Confeitaria.melhorar("brigadeiro") and Confeitaria.nivel("brigadeiro") == 2 and Confeitaria.tempo("brigadeiro") < 20.0, "melhorar deixa a máquina mais rápida")
-	verificar(not Confeitaria.melhorar("brigadeiro"), "sem moedas, não melhora")
-	Progresso.moedas = 150
-	verificar(Confeitaria.ampliar_estoque() and Confeitaria.capacidade() == 60, "amplia o estoque")
+	verificar(Confeitaria.construir_ou_melhorar("brigadeiro") and Confeitaria.nivel("brigadeiro") == 2 \
+		and Confeitaria.tempo("brigadeiro") < 6.0 and Confeitaria.capacidade_bandeja("brigadeiro") > 6, "melhorar: mais rápida e bandeja maior")
+	verificar(not Confeitaria.construir_ou_melhorar("brigadeiro"), "sem moedas, não melhora")
+	Progresso.moedas = 120
+	verificar(Confeitaria.aumentar_carregar() and Confeitaria.carregar() == 8, "carrega mais doces")
 	Progresso.niveis[0]["aprovado"] = true
-	verificar(Confeitaria.liberada("maca") and not Confeitaria.construir("maca"), "passou no fácil: libera a maçã (mas custa moedas)")
+	verificar(Confeitaria.liberada("maca") and not Confeitaria.construir_ou_melhorar("maca"), "passou no fácil: libera a maçã (mas custa moedas)")
 	# o quiz dá açúcar: 10 por acerto
 	Progresso.apagar()
 	Jogo.preparar_partida(0)
@@ -624,10 +619,47 @@ func _testar_confeitaria() -> void:
 	Progresso.apagar()
 
 
+## Cozinha 3D: construir no círculo, pegar da bandeja, atender e recolher.
+func _testar_cozinha() -> void:
+	Progresso.apagar()
+	var moedas_antes := 0
+	Telas.ir_para("cozinha")
+	verificar(await _esperar_tela("Cozinha"), "abre a cozinha da confeitaria")
+	var cozinha: Cozinha = get_tree().current_scene
+	cozinha.set_physics_process(false)  # o teste move o doce (e os clientes)
+	cozinha._proximo_cliente = 999.0  # sem clientes chegando sozinhos
+	var jogador := cozinha.jogador
+	jogador.global_position = cozinha._circulos["brigadeiro"]["no"].global_position
+	await get_tree().create_timer(Cozinha.TEMPO_CIRCULO + 0.4).timeout
+	verificar(Confeitaria.construida("brigadeiro"), "parar no círculo constrói a panela")
+	Progresso.confeitaria["maquinas"]["brigadeiro"]["bandeja"] = 3
+	cozinha._atualizar_bandejas()
+	verificar(cozinha._maquinas["brigadeiro"]["doces"].get_child_count() == 3, "a bandeja mostra os doces")
+	jogador.global_position = cozinha._maquinas["brigadeiro"]["mesa"] + Vector3(0, 0, 1.0)
+	await get_tree().create_timer(0.8).timeout
+	verificar(cozinha.carregando.size() == 3 and Confeitaria.bandeja("brigadeiro") == 0, "pega os doces da bandeja")
+	verificar(jogador.pilha().get_child_count() == 3, "carrega os doces em pilha")
+	var cliente := cozinha.novo_cliente("brigadeiro", 2)
+	cliente["no"].global_position = Cozinha.FILA[0]
+	cliente["estado"] = "esperando"  # já chegou no balcão
+	jogador.global_position = Cozinha.BALCAO + Vector3(0, 0, -1.0)
+	await get_tree().create_timer(1.0).timeout
+	verificar(cliente["estado"] == "saindo" and cozinha.carregando.size() == 1, "entrega no balcão e o cliente vai embora")
+	verificar(cozinha.caixa == 2 * 2 + Confeitaria.GORJETA, "as moedas vão para o caixa")
+	moedas_antes = Progresso.moedas
+	jogador.global_position = Cozinha.CAIXA + Vector3(1.0, 0, 0)
+	await get_tree().create_timer(0.3).timeout
+	verificar(cozinha.caixa == 0 and Progresso.moedas == moedas_antes + 6, "recolhe as moedas do caixa")
+	jogador.global_position = Cozinha.SAIDA
+	verificar(await _esperar_tela("Inicio"), "o tapete SAIR volta (sem histórico: início)")
+	verificar(Confeitaria.bandeja("brigadeiro") == 1, "o doce que sobrou nas mãos volta para a bandeja")
+	Progresso.apagar()
+
+
 func _testar_tela_confeitaria() -> void:
 	Progresso.apagar()
 	Telas.ir_para("confeitaria")
-	verificar(await _esperar_tela("Confeitaria"), "abre a Minha Confeitaria")
+	verificar(await _esperar_tela("Confeitaria"), "abre o painel simples da confeitaria")
 	var caixa := await _esperar_confirmacao()
 	verificar(caixa != null, "primeira visita explica como funciona")
 	if caixa:
@@ -640,13 +672,14 @@ func _testar_tela_confeitaria() -> void:
 	verificar(tela._cartoes["cupcake"]["principal"].disabled, "máquina bloqueada não constrói")
 	principal.pressed.emit()
 	verificar(Confeitaria.construida("brigadeiro") and principal.text.begins_with("MELHORAR"), "botão constrói a máquina")
-	verificar(tela._linha_encomendas.get_child_count() == Confeitaria.ENCOMENDAS_ABERTAS, "mostra as encomendas")
-	Progresso.confeitaria["estoque"]["brigadeiro"] = 6
+	Progresso.confeitaria["maquinas"]["brigadeiro"]["bandeja"] = 6
 	tela._atualizar_tudo()
 	var vender: Button = tela._cartoes["brigadeiro"]["vender"]
-	verificar(vender.text == "VENDER 6 · +12", "botão de vender mostra quanto ganha")
+	verificar(vender.text == "VENDER 6/6 · +12", "botão de vender mostra quanto ganha")
 	vender.pressed.emit()
-	verificar(Progresso.moedas == 12 and Confeitaria.estoque("brigadeiro") == 0, "vende pela tela")
+	verificar(Progresso.moedas == 12 and Confeitaria.bandeja("brigadeiro") == 0, "vende pela tela")
+	await _testar_cozinha()
+	Progresso.moedas = 12
 	Telas.ir_para("niveis")
 	await _esperar_tela("Niveis")
 	verificar(get_tree().current_scene.find_child("Confeitaria", true, false) is Button, "botão da confeitaria no menu dos níveis")

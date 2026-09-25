@@ -1,15 +1,18 @@
 class_name Confeitaria
-## Minha Confeitaria: minijogo de fábrica de doces, ligado ao quiz.
+## Minha Confeitaria: regras da fábrica de doces, ligada ao quiz. A cozinha 3D
+## (cenas/cozinha.*) e o painel simples (cenas/confeitaria.*, para aparelhos
+## sem placa de vídeo) usam estas regras.
 ##
-## - Cada acerto no quiz dá AÇÚCAR_POR_ACERTO de açúcar (o ingrediente).
-## - As máquinas transformam açúcar em doces, sozinhas, com o tempo. Cada
-##   máquina faz um doce da coleção e é liberada passando no nível que dá
-##   esse doce (a panela de brigadeiro já vem liberada).
-## - Construir e melhorar máquinas custa moedas; cada melhoria deixa a
-##   máquina mais rápida e o doce mais valioso.
-## - Os doces vão para o estoque (com limite, que dá para ampliar). Dá para
-##   vender o estoque por moedas ou entregar encomendas dos moradores da vila,
-##   que pagam mais.
+## - Cada acerto no quiz dá ACUCAR_POR_ACERTO de açúcar (o ingrediente).
+## - As máquinas transformam açúcar em doces, sozinhas, com o tempo, e põem
+##   os doces na bandeja delas (até encher). Cada máquina faz um doce da
+##   coleção e é liberada passando no nível que dá esse doce (a panela de
+##   brigadeiro já vem liberada).
+## - Na cozinha, o jogador pega os doces das bandejas (até CARREGAR por vez),
+##   leva ao balcão e os clientes pagam em moedas. No painel simples, vende a
+##   bandeja direto.
+## - Construir e melhorar custa moedas: cada melhoria deixa a máquina mais
+##   rápida, a bandeja maior e o doce mais valioso.
 ## - Com o jogo fechado, as máquinas continuam, mas só por até LIMITE_FORA
 ##   segundos (para as moedas não crescerem sem jogar o quiz).
 ##
@@ -17,38 +20,35 @@ class_name Confeitaria
 
 const ACUCAR_POR_ACERTO := 10
 const LIMITE_FORA := 2 * 60 * 60.0  # segundos de produção contados de uma vez
-const ENCOMENDAS_ABERTAS := 2
+## Presente de inauguração: açúcar ao construir a primeira máquina.
+const ACUCAR_PRESENTE := 50
 
-## Máquinas, na ordem da tela. Listas por nível (1, 2 e 3):
-## "tempo" = segundos por doce; "valor" = moedas ao vender cada doce;
-## "melhoria" = preço para ir ao próximo nível.
+## Máquinas, na ordem da cozinha. Listas por nível (1, 2 e 3):
+## "tempo" = segundos por doce; "valor" = moedas por doce; "bandeja" = quantos
+## doces cabem nela; "melhoria" = preço para ir ao próximo nível.
 const MAQUINAS := [
 	{"id": "brigadeiro", "nome": "PANELA DE BRIGADEIRO", "doce": "brigadeiro",
-		"construir": 0, "acucar": 5, "tempo": [20.0, 14.0, 9.0], "valor": [2, 3, 4],
-		"melhoria": [100, 250]},
+		"construir": 0, "acucar": 5, "tempo": [6.0, 4.5, 3.0], "valor": [2, 3, 4],
+		"bandeja": [6, 10, 15], "melhoria": [100, 250]},
 	{"id": "maca", "nome": "TACHO DE MAÇÃ DO AMOR", "doce": "maca", "nivel_quiz": 0,
-		"construir": 150, "acucar": 8, "tempo": [30.0, 21.0, 14.0], "valor": [4, 6, 8],
-		"melhoria": [200, 400]},
+		"construir": 150, "acucar": 8, "tempo": [9.0, 7.0, 5.0], "valor": [4, 6, 8],
+		"bandeja": [6, 10, 15], "melhoria": [200, 400]},
 	{"id": "cupcake", "nome": "FORNO DE CUPCAKE", "doce": "cupcake", "nivel_quiz": 1,
-		"construir": 300, "acucar": 12, "tempo": [45.0, 32.0, 22.0], "valor": [7, 10, 13],
-		"melhoria": [300, 600]},
+		"construir": 300, "acucar": 12, "tempo": [12.0, 9.0, 6.5], "valor": [7, 10, 13],
+		"bandeja": [6, 10, 15], "melhoria": [300, 600]},
 ]
 const NIVEL_MAXIMO := 3
-## Quantos doces cabem no estoque em cada tamanho, e o preço para ampliar.
-const ESTOQUE := [30, 60, 120]
-const PRECO_AMPLIAR := [150, 400]
-## Moradores que fazem encomendas (nomes como em Personagens.textura).
-const CLIENTES := [
-	{"id": "bala_verde", "nome": "BALA VERDE"},
-	{"id": "milho_doce", "nome": "MILHO DOCE"},
-	{"id": "fantasma", "nome": "FANTASMA"},
-]
+## Quantos doces o jogador carrega de uma vez, e o preço de cada aumento.
+const CARREGAR := [4, 8, 12]
+const PRECO_CARREGAR := [120, 300]
+## Gorjeta de cada cliente atendido (além do valor dos doces).
+const GORJETA := 2
 
 
 static func padrao() -> Dictionary:
 	return {
-		"acucar": 0, "acucar_ganho": 0, "estoque_nivel": 0, "maquinas": {}, "estoque": {},
-		"encomendas": [], "atualizado": 0.0, "feitos": 0, "entregues": 0,
+		"acucar": 0, "acucar_ganho": 0, "maquinas": {}, "carregar_nivel": 0,
+		"atualizado": 0.0, "feitos": 0, "atendidos": 0, "presente": false,
 	}
 
 
@@ -75,17 +75,34 @@ static func construida(id: String) -> bool:
 	return _estado()["maquinas"].has(id)
 
 
+static func alguma_construida() -> bool:
+	return not _estado()["maquinas"].is_empty()
+
+
 ## Nível da máquina (0 = não construída).
 static func nivel(id: String) -> int:
 	return int(_estado()["maquinas"].get(id, {}).get("nivel", 0))
 
 
+static func _do_nivel(id: String, chave: String) -> Variant:
+	return maquina(id)[chave][maxi(nivel(id), 1) - 1]
+
+
 static func tempo(id: String) -> float:
-	return maquina(id)["tempo"][maxi(nivel(id), 1) - 1]
+	return _do_nivel(id, "tempo")
 
 
 static func valor(id: String) -> int:
-	return maquina(id)["valor"][maxi(nivel(id), 1) - 1]
+	return _do_nivel(id, "valor")
+
+
+static func capacidade_bandeja(id: String) -> int:
+	return _do_nivel(id, "bandeja")
+
+
+## Doces prontos na bandeja da máquina.
+static func bandeja(id: String) -> int:
+	return int(_estado()["maquinas"].get(id, {}).get("bandeja", 0))
 
 
 ## Quanto falta para o próximo doce da máquina (0 a 1).
@@ -95,48 +112,44 @@ static func andamento(id: String) -> float:
 	return clampf(float(_estado()["maquinas"][id]["progresso"]) / tempo(id), 0.0, 1.0)
 
 
-static func preco_melhoria(id: String) -> int:
+## Preço para construir (se não construída) ou melhorar; -1 = já no máximo.
+static func preco(id: String) -> int:
 	var n := nivel(id)
-	return maquina(id)["melhoria"][n - 1] if n >= 1 and n < NIVEL_MAXIMO else -1
+	if n == 0:
+		return maquina(id)["construir"]
+	return maquina(id)["melhoria"][n - 1] if n < NIVEL_MAXIMO else -1
 
 
 static func acucar() -> int:
 	return int(_estado()["acucar"])
 
 
-static func estoque(doce: String) -> int:
-	return int(_estado()["estoque"].get(doce, 0))
+static func carregar() -> int:
+	return CARREGAR[int(_estado()["carregar_nivel"])]
 
 
-static func estoque_total() -> int:
-	var total := 0
-	for doce in _estado()["estoque"]:
-		total += int(_estado()["estoque"][doce])
-	return total
-
-
-static func capacidade() -> int:
-	return ESTOQUE[int(_estado()["estoque_nivel"])]
-
-
-static func preco_ampliar() -> int:
-	var n := int(_estado()["estoque_nivel"])
-	return PRECO_AMPLIAR[n] if n < PRECO_AMPLIAR.size() else -1
+static func preco_carregar() -> int:
+	var n := int(_estado()["carregar_nivel"])
+	return PRECO_CARREGAR[n] if n < PRECO_CARREGAR.size() else -1
 
 
 ## Por que a máquina está parada ("" = funcionando).
 static func parada(id: String) -> String:
 	if not construida(id):
 		return ""
-	if estoque_total() >= capacidade():
-		return "ESTOQUE CHEIO"
+	if bandeja(id) >= capacidade_bandeja(id):
+		return "BANDEJA CHEIA"
 	if acucar() < maquina(id)["acucar"]:
 		return "SEM AÇÚCAR"
 	return ""
 
 
-static func encomendas() -> Array:
-	return _estado()["encomendas"]
+## Máquina que faz o doce ("" se nenhuma).
+static func maquina_do_doce(doce: String) -> String:
+	for m in MAQUINAS:
+		if m["doce"] == doce:
+			return m["id"]
+	return ""
 
 
 # --- Ações -------------------------------------------------------------------
@@ -152,69 +165,67 @@ static func ganhar_acucar(quantidade: int) -> void:
 	Progresso.salvar()
 
 
-## Constrói a máquina (paga as moedas). Falso se não está liberada, já existe
-## ou faltam moedas.
-static func construir(id: String) -> bool:
-	var m := maquina(id)
-	if m.is_empty() or not liberada(id) or construida(id) or Progresso.moedas < m["construir"]:
+## Constrói (nível 0 -> 1) ou melhora a máquina, pagando as moedas. Falso se
+## não está liberada, já está no máximo ou faltam moedas. A primeira máquina
+## vem com um presente de açúcar.
+static func construir_ou_melhorar(id: String) -> bool:
+	var custo := preco(id)
+	if maquina(id).is_empty() or not liberada(id) or custo < 0 or Progresso.moedas < custo:
 		return false
 	atualizar()
-	_estado()["maquinas"][id] = {"nivel": 1, "progresso": 0.0}
-	_completar_encomendas()
-	if m["construir"] > 0:
-		Progresso.gastar_moedas(m["construir"])  # também salva
+	var e := _estado()
+	if construida(id):
+		e["maquinas"][id]["nivel"] = nivel(id) + 1
+	else:
+		e["maquinas"][id] = {"nivel": 1, "progresso": 0.0, "bandeja": 0}
+		if not e["presente"]:
+			e["presente"] = true
+			e["acucar"] = int(e["acucar"]) + ACUCAR_PRESENTE
+	if custo > 0:
+		Progresso.gastar_moedas(custo)  # também salva
 	else:
 		Progresso.salvar()
 	return true
 
 
-static func melhorar(id: String) -> bool:
-	var preco := preco_melhoria(id)
-	if preco < 0 or Progresso.moedas < preco:
+static func aumentar_carregar() -> bool:
+	var custo := preco_carregar()
+	if custo < 0 or Progresso.moedas < custo:
 		return false
-	atualizar()
-	_estado()["maquinas"][id]["nivel"] = nivel(id) + 1
-	Progresso.gastar_moedas(preco)
+	_estado()["carregar_nivel"] = int(_estado()["carregar_nivel"]) + 1
+	Progresso.gastar_moedas(custo)
 	return true
 
 
-static func ampliar_estoque() -> bool:
-	var preco := preco_ampliar()
-	if preco < 0 or Progresso.moedas < preco:
-		return false
-	atualizar()
-	_estado()["estoque_nivel"] = int(_estado()["estoque_nivel"]) + 1
-	Progresso.gastar_moedas(preco)
-	return true
+## Tira até `quantos` doces da bandeja. Retorna quantos tirou.
+static func pegar(id: String, quantos := 1) -> int:
+	var tirados := mini(quantos, bandeja(id))
+	if tirados > 0:
+		_estado()["maquinas"][id]["bandeja"] = bandeja(id) - tirados
+	return tirados
 
 
-## Vende todo o estoque de um doce. Retorna as moedas ganhas.
-static func vender(doce: String) -> int:
-	var quantos := estoque(doce)
-	if quantos <= 0:
+## Quanto um cliente paga por `quantos` doces (valor da máquina + gorjeta), e
+## conta o atendimento. Não dá as moedas: elas ficam no caixa até o jogador
+## pegar (ver receber()).
+static func cobrar(doce: String, quantos: int) -> int:
+	_estado()["atendidos"] = int(_estado()["atendidos"]) + 1
+	return quantos * valor(maquina_do_doce(doce)) + GORJETA
+
+
+## Vende a bandeja inteira de uma vez (painel simples). Retorna as moedas.
+static func vender_bandeja(id: String) -> int:
+	var quantos := pegar(id, bandeja(id))
+	if quantos == 0:
 		return 0
-	var id := _maquina_do_doce(doce)
 	var ganho := quantos * valor(id)
-	_estado()["estoque"][doce] = 0
 	Progresso.ganhar_moedas(ganho)  # também salva
 	return ganho
 
 
-## Entrega a encomenda `indice` (se houver doces). Retorna as moedas ganhas
-## (0 = não deu) e abre uma encomenda nova no lugar.
-static func entregar(indice: int) -> int:
-	var lista := encomendas()
-	if indice < 0 or indice >= lista.size():
-		return 0
-	var pedido: Dictionary = lista[indice]
-	if estoque(pedido["doce"]) < int(pedido["quantidade"]):
-		return 0
-	_estado()["estoque"][pedido["doce"]] = estoque(pedido["doce"]) - int(pedido["quantidade"])
-	lista.remove_at(indice)
-	_estado()["entregues"] = int(_estado()["entregues"]) + 1
-	_completar_encomendas()
-	Progresso.ganhar_moedas(int(pedido["recompensa"]))
-	return int(pedido["recompensa"])
+static func receber(moedas: int) -> void:
+	if moedas > 0:
+		Progresso.ganhar_moedas(moedas)
 
 
 ## Faz as máquinas trabalharem pelo tempo que passou desde a última vez (no
@@ -238,44 +249,12 @@ static func atualizar(agora := -1.0) -> int:
 		var t := tempo(id)
 		dados["progresso"] = float(dados["progresso"]) + passou
 		while float(dados["progresso"]) >= t:
-			if estoque_total() >= capacidade() or int(e["acucar"]) < m["acucar"]:
+			if bandeja(id) >= capacidade_bandeja(id) or int(e["acucar"]) < m["acucar"]:
 				dados["progresso"] = t  # parada, com o próximo doce "quase pronto"
 				break
 			dados["progresso"] = float(dados["progresso"]) - t
 			e["acucar"] = int(e["acucar"]) - m["acucar"]
-			e["estoque"][m["doce"]] = estoque(m["doce"]) + 1
+			dados["bandeja"] = bandeja(id) + 1
 			e["feitos"] = int(e["feitos"]) + 1
 			prontos += 1
 	return prontos
-
-
-static func _maquina_do_doce(doce: String) -> String:
-	for m in MAQUINAS:
-		if m["doce"] == doce:
-			return m["id"]
-	return ""
-
-
-## Abre encomendas até ENCOMENDAS_ABERTAS, só de doces que alguma máquina
-## construída faz. Quantidade e recompensa crescem com as entregas.
-static func _completar_encomendas() -> void:
-	var e := _estado()
-	var feitas := []
-	for m in MAQUINAS:
-		if construida(m["id"]):
-			feitas.append(m)
-	if feitas.is_empty():
-		return
-	var entregues := int(e["entregues"])
-	while e["encomendas"].size() < ENCOMENDAS_ABERTAS:
-		var numero: int = entregues + e["encomendas"].size()
-		# alterna os doces e os clientes, sem sorteio (fica igual em todo aparelho)
-		var m: Dictionary = feitas[(numero * 2 + 1) % feitas.size()] if numero > 0 else feitas[0]
-		var cliente: Dictionary = CLIENTES[numero % CLIENTES.size()]
-		var quantidade: int = 5 + (numero % 4) * 2 + mini(entregues, 10)
-		e["encomendas"].append({
-			"cliente": cliente["id"], "nome": cliente["nome"], "doce": m["doce"],
-			"quantidade": quantidade,
-			# paga como vender com a máquina no nível máximo, mais um agrado
-			"recompensa": quantidade * m["valor"][NIVEL_MAXIMO - 1] + 10,
-		})

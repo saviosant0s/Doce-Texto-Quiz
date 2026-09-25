@@ -15,7 +15,8 @@ extends Node
 ##   --selecionar=pudim  escolhe esse doce na tela da coleção
 ##   --camera=1   na Vila dos Doces: 0 = aérea, 1 = perto, 2 = primeira pessoa
 ##   --porta=escola  na Vila dos Doces, começa na porta desse prédio
-##   --confeitaria  Minha Confeitaria já em andamento (máquinas, estoque, açúcar)
+##   --confeitaria  Minha Confeitaria já em andamento (máquinas, bandejas, açúcar)
+##   --movimento  na cozinha: clientes chegando e o doce carregando uma pilha
 ##   --ver_predio=confeitaria  na Vila, câmera de perto olhando a fachada desse prédio
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
 ##   --companheiro=pudim  compra esse doce e o escolhe como companheiro
@@ -47,15 +48,16 @@ func _ready() -> void:
 		Progresso.colecao["companheiro"] = args["companheiro"]
 	if args.has("confeitaria"):
 		Progresso.niveis[0]["aprovado"] = true
-		Progresso.moedas = 320
+		Progresso.moedas = 400
 		Progresso.config["viu_confeitaria"] = true
-		Confeitaria.construir("brigadeiro")
-		Confeitaria.construir("maca")
-		Confeitaria.melhorar("brigadeiro")
+		Confeitaria.construir_ou_melhorar("brigadeiro")
+		Confeitaria.construir_ou_melhorar("maca")
+		Confeitaria.construir_ou_melhorar("brigadeiro")
 		Progresso.confeitaria["acucar"] = 140
-		Progresso.confeitaria["estoque"] = {"brigadeiro": 14, "maca": 3}
-		Progresso.confeitaria["maquinas"]["maca"]["progresso"] = 18.0
-		Progresso.moedas = 320
+		Progresso.confeitaria["maquinas"]["brigadeiro"]["bandeja"] = 8
+		Progresso.confeitaria["maquinas"]["maca"]["bandeja"] = 4
+		Progresso.confeitaria["atendidos"] = 5
+		Progresso.moedas = 180
 	if args.has("acertos"):
 		_simular_partida(int(args.get("nivel", "0")), int(args["acertos"]))
 	if args.has("revisao"):
@@ -81,6 +83,19 @@ func _ready() -> void:
 	if args.has("aba"):
 		await get_tree().process_frame
 		get_tree().current_scene.mostrar_aba(int(args["aba"]))
+	if args.has("movimento"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var cozinha: Cozinha = get_tree().current_scene
+		for i in 3:
+			var cliente := cozinha.novo_cliente(["brigadeiro", "maca", "brigadeiro"][i], 2 + i)
+			cliente["no"].global_position = Cozinha.FILA[i] + Vector3(0.5, 0, 0.3)
+		for i in 4:
+			cozinha._empilhar("brigadeiro" if i < 3 else "maca", cozinha.jogador.global_position)
+		cozinha.jogador.global_position = Vector3(-2.5, 0, -1.2)
+		cozinha.jogador.olhar_para(Vector3(-2.5, 0, 3))
+		cozinha.caixa = 18
+		cozinha._atualizar_moedas_visiveis()
 	if args.has("ver_predio"):
 		await get_tree().process_frame
 		await get_tree().process_frame

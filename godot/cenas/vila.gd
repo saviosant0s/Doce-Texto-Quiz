@@ -34,7 +34,7 @@ const PREDIOS := [
 	{"id": "escola", "nome": "ESCOLA", "posicao": Vector3(0, 0, -14), "parede": "#F4E038",
 		"telhado": "#7E57B1", "cena": "niveis", "acao": "JOGAR O QUIZ"},
 	{"id": "confeitaria", "nome": "CONFEITARIA", "posicao": Vector3(-13, 0, -2), "parede": "#FFB3D1",
-		"telhado": "#E8364F", "cena": "confeitaria", "acao": "MINHA CONFEITARIA"},
+		"telhado": "#E8364F", "cena": "cozinha", "acao": "ENTRAR NA CONFEITARIA"},
 	{"id": "trofeus", "nome": "TROFÉUS", "posicao": Vector3(13, 0, -2), "parede": "#C9B3EC",
 		"telhado": "#F2C230", "cena": "titulos", "acao": "VER TROFÉUS"},
 	{"id": "fliperama", "nome": "FLIPERAMA", "posicao": Vector3(-10, 0, -13), "parede": "#8FD3F4",

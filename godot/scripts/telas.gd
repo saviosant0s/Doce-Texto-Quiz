@@ -13,6 +13,7 @@ const CENAS := {
 	"titulos": "res://cenas/titulos.tscn",
 	"colecao": "res://cenas/colecao.tscn",
 	"confeitaria": "res://cenas/confeitaria.tscn",
+	"cozinha": "res://cenas/cozinha.tscn",
 	"vila": "res://cenas/vila.tscn",
 	"carregamento": "res://cenas/carregamento.tscn",
 	"partida": "res://cenas/partida.tscn",
@@ -61,6 +62,11 @@ func abrir(nome: String) -> void:
 ## de vídeo, onde a vila em 3D travaria).
 func ir_para_casa() -> void:
 	ir_para("vila" if placa_rapida else "niveis")
+
+
+## Minha Confeitaria: a cozinha 3D ou, sem placa de vídeo, o painel simples.
+func abrir_confeitaria() -> void:
+	abrir("cozinha" if placa_rapida else "confeitaria")
 
 
 func voltar() -> void:

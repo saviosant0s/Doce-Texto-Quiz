@@ -111,6 +111,16 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 25/09: **Cozinha 3D da Confeitaria** (estilo Pizza Ready, pedido do Sávio):
+  `cenas/cozinha.*` + `componentes/cozinha/cenario_cozinha.gd`. O doce anda
+  na cozinha; máquinas fazem doces na mesa-bandeja (com o açúcar do quiz);
+  passando na bandeja ele pega (pilha nas mãos, `CARREGAR` 4/8/12); clientes
+  (moradores) fazem fila no balcão pedindo doces; atrás do balcão entrega;
+  moedas ficam na mesinha do caixa até recolher; círculos amarelos no chão
+  constroem/melhoram (parar 1,2 s); seta e dica mostram o próximo passo;
+  tapete SAIR volta à vila. Regras novas em `scripts/confeitaria.gd`
+  (bandejas no lugar de estoque/encomendas). Sem placa de vídeo, abre o
+  painel 2D simples (`cenas/confeitaria.*`).
 - 25/09 (v0.6.0): **Minha Confeitaria** (1ª versão) — o prédio da
   Confeitaria na vila agora abre ela (a coleção fica no botão dentro dela e no
   menu dos níveis). APK e executável gerados.
@@ -130,7 +140,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (654 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (660 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

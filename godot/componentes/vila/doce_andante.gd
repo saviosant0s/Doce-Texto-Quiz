@@ -20,6 +20,9 @@ var id := "brigadeiro"
 var passeando := false
 ## Sombra redonda falsa embaixo (desligada quando a luz já faz sombra de verdade).
 var sombra_redonda := true
+## Sem colisão e sem gravidade (clientes da confeitaria: passam uns pelos
+## outros e pelo jogador, sempre no chão).
+var sem_colisao := false
 
 var _modelo: Node3D
 var _sombra: MeshInstance3D
@@ -33,6 +36,9 @@ var _inclinacao := 0.0
 
 
 func _ready() -> void:
+	if sem_colisao:
+		collision_layer = 0
+		collision_mask = 0
 	var forma := CollisionShape3D.new()
 	var capsula := CapsuleShape3D.new()
 	capsula.radius = 0.48
@@ -71,10 +77,14 @@ func andar(direcao: Vector3, delta: float) -> void:
 	horizontal = horizontal.move_toward(Vector2(alvo.x, alvo.z), taxa * delta)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.y
-	velocity.y -= GRAVIDADE * delta  # ao bater no chão, move_and_slide zera
+	if sem_colisao:
+		velocity.y = 0.0
+	else:
+		velocity.y -= GRAVIDADE * delta  # ao bater no chão, move_and_slide zera
 	move_and_slide()
+	var no_chao := is_on_floor() or sem_colisao
 	var velocidade := horizontal.length()
-	var andando := velocidade > 0.3 and is_on_floor()
+	var andando := velocidade > 0.3 and no_chao
 	_animacao.andando = andando
 	_animacao.ritmo = velocidade / VELOCIDADE
 	var giro := 0.0
@@ -90,9 +100,9 @@ func andar(direcao: Vector3, delta: float) -> void:
 	# poeirinha de açúcar ao correr
 	_poeira.emitting = andando and velocidade > VELOCIDADE * 0.9
 	# chegou no chão depois de um pulo: amassadinha de desenho animado
-	if is_on_floor() and not _no_chao:
+	if no_chao and not _no_chao:
 		_amassar()
-	_no_chao = is_on_floor()
+	_no_chao = no_chao
 
 
 ## Pula (só se estiver no chão).
@@ -121,6 +131,20 @@ func virar_para_angulo(angulo: float) -> void:
 func olhar_para(ponto: Vector3) -> void:
 	var direcao := ponto - global_position
 	_modelo.rotation.y = atan2(direcao.x, direcao.z)
+
+
+## Nó à frente do doce, na altura das mãos, onde vai a pilha de coisas que
+## ele carrega (doces da confeitaria). Vira junto com o doce; tamanho normal
+## (sem a escala do modelo).
+func pilha() -> Node3D:
+	var no := _modelo.get_node_or_null("Pilha") as Node3D
+	if no == null:
+		no = Node3D.new()
+		no.name = "Pilha"
+		no.scale = Vector3.ONE / ESCALA
+		no.position = Vector3(0, -0.15, 0.95)
+		_modelo.add_child(no)
+	return no
 
 
 ## Esconde o doce (câmera em primeira pessoa: a câmera fica "dentro" dele).

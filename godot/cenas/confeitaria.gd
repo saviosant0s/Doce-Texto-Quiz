@@ -1,26 +1,21 @@
 extends Control
-## Minha Confeitaria: as máquinas de doces (construir, melhorar, vender), as
-## encomendas dos moradores e o tamanho do estoque. O açúcar vem dos acertos
-## no quiz. Regras em scripts/confeitaria.gd.
+## Minha Confeitaria, painel simples (aparelhos sem placa de vídeo; com placa,
+## a confeitaria é a cozinha 3D em cenas/cozinha.*): as máquinas de doces
+## (construir, melhorar, vender a bandeja). O açúcar vem dos acertos no quiz.
+## Regras em scripts/confeitaria.gd.
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
 const ICONE_ACUCAR := preload("res://assets/icones/acucar.svg")
-const ICONE_ESTOQUE := preload("res://assets/icones/estoque.svg")
 const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
 const ICONE_COLECAO := preload("res://assets/icones/doce.svg")
 const ICONE_AJUDA := preload("res://assets/icones/interrogacao.svg")
 const NOMES_NIVEIS := ["FÁCIL", "MÉDIO", "DIFÍCIL"]
-## Nome do doce no plural, para as encomendas.
-const PLURAIS := {"brigadeiro": "BRIGADEIROS", "maca": "MAÇÃS DO AMOR", "cupcake": "CUPCAKES"}
 const INTERVALO := 0.2  # segundos entre uma conta e outra das máquinas
 
 var _rotulo_acucar: Label
-var _rotulo_estoque: Label
 var _rotulo_moedas: Label
 var _cartoes := {}  # id da máquina -> {cartao, imagem, barra, ...}
-var _linha_encomendas: HBoxContainer
-var _ampliar: Button
 var _relogio := 0.0
 
 
@@ -80,8 +75,8 @@ func _explicar() -> void:
 	Progresso.salvar()
 	var jogar := await Telas.confirmar("MINHA CONFEITARIA",
 		"Cada acerto no quiz dá %d de açúcar. As máquinas transformam açúcar em doces " % Confeitaria.ACUCAR_POR_ACERTO
-		+ "sozinhas. Venda os doces ou entregue as encomendas dos moradores para ganhar moedas, "
-		+ "e use as moedas para melhorar as máquinas.",
+		+ "sozinhas e põem na bandeja. Venda as bandejas para ganhar moedas e use as moedas "
+		+ "para melhorar as máquinas.",
 		"JOGAR O QUIZ", "ENTENDI")
 	if jogar:
 		Telas.abrir("niveis")
@@ -107,7 +102,6 @@ func _criar_topo() -> HBoxContainer:
 	espaco.size_flags_horizontal = SIZE_EXPAND_FILL
 	topo.add_child(espaco)
 	_rotulo_acucar = _etiqueta(topo, "Acucar", ICONE_ACUCAR, Color.WHITE)
-	_rotulo_estoque = _etiqueta(topo, "Estoque", ICONE_ESTOQUE, Cores.AZUL)
 	_rotulo_moedas = _etiqueta(topo, "Moedas", ICONE_MOEDA, Cores.AMARELO)
 	var ajuda := _botao_icone("Ajuda", ICONE_AJUDA)
 	ajuda.pressed.connect(_explicar)
@@ -228,7 +222,7 @@ func _botao_acao(nome: String, variacao := &"") -> Button:
 	return botao
 
 
-## Parte de baixo: encomendas dos moradores e o botão de ampliar o estoque.
+## Parte de baixo: dica de como ganhar açúcar e o aumento do "carregar".
 func _criar_baixo() -> HBoxContainer:
 	var baixo := HBoxContainer.new()
 	baixo.add_theme_constant_override("separation", 16)
@@ -236,24 +230,12 @@ func _criar_baixo() -> HBoxContainer:
 	painel.theme_type_variation = &"PainelEscuro"
 	painel.size_flags_horizontal = SIZE_EXPAND_FILL
 	baixo.add_child(painel)
-	var coluna := VBoxContainer.new()
-	coluna.add_theme_constant_override("separation", 6)
-	painel.add_child(coluna)
-	var titulo := Label.new()
-	titulo.theme_type_variation = &"SubtituloClaro"
-	titulo.add_theme_font_size_override("font_size", 24)
-	titulo.text = "ENCOMENDAS DOS MORADORES"
-	coluna.add_child(titulo)
-	_linha_encomendas = HBoxContainer.new()
-	_linha_encomendas.name = "Encomendas"
-	_linha_encomendas.add_theme_constant_override("separation", 12)
-	coluna.add_child(_linha_encomendas)
-	_ampliar = Button.new()
-	_ampliar.name = "Ampliar"
-	_ampliar.custom_minimum_size = Vector2(200, 0)
-	_ampliar.add_theme_font_size_override("font_size", 24)
-	_ampliar.pressed.connect(_ampliar_estoque)
-	baixo.add_child(_ampliar)
+	var dica := Label.new()
+	dica.theme_type_variation = &"TextoClaro"
+	dica.add_theme_font_size_override("font_size", 20)
+	dica.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dica.text = "CADA ACERTO NO QUIZ DÁ %d DE AÇÚCAR. AS MÁQUINAS FAZEM OS DOCES SOZINHAS; VENDA A BANDEJA PARA GANHAR MOEDAS." % Confeitaria.ACUCAR_POR_ACERTO
+	painel.add_child(dica)
 	return baixo
 
 
@@ -261,19 +243,9 @@ func _criar_baixo() -> HBoxContainer:
 
 func _atualizar_tudo() -> void:
 	_rotulo_acucar.text = Jogo.formatar(Confeitaria.acucar())
-	_rotulo_estoque.text = "%d/%d" % [Confeitaria.estoque_total(), Confeitaria.capacidade()]
 	_rotulo_moedas.text = Jogo.formatar(Progresso.moedas)
 	for m in Confeitaria.MAQUINAS:
 		_atualizar_cartao(m)
-	_atualizar_encomendas()
-	var preco := Confeitaria.preco_ampliar()
-	if preco < 0:
-		_ampliar.text = "ESTOQUE\nNO MÁXIMO"
-		_ampliar.disabled = true
-	else:
-		_ampliar.text = "AMPLIAR ESTOQUE\n%d → %d  ·  %s" % [Confeitaria.capacidade(),
-			Confeitaria.ESTOQUE[int(Progresso.confeitaria["estoque_nivel"]) + 1], Jogo.formatar(preco)]
-		_ampliar.disabled = Progresso.moedas < preco
 
 
 func _atualizar_cartao(m: Dictionary) -> void:
@@ -310,14 +282,14 @@ func _atualizar_cartao(m: Dictionary) -> void:
 	if parada == "SEM AÇÚCAR":
 		situacao.text = "SEM AÇÚCAR: JOGUE O QUIZ"
 	elif not parada.is_empty():
-		situacao.text = "ESTOQUE CHEIO: VENDA"
+		situacao.text = "BANDEJA CHEIA: VENDA"
 	else:
-		situacao.text = "1 A CADA %ds · %d DE AÇÚCAR" % [roundi(Confeitaria.tempo(id)), m["acucar"]]
+		situacao.text = "1 A CADA %ss · %d DE AÇÚCAR" % [String.num(Confeitaria.tempo(id), 1).trim_suffix(".0"), m["acucar"]]
 	situacao.add_theme_color_override("font_color", Cores.VERMELHO if not parada.is_empty() else Cores.ROXO)
-	var quantos := Confeitaria.estoque(m["doce"])
-	vender.text = "VENDER %d · +%d" % [quantos, quantos * Confeitaria.valor(id)]
+	var quantos := Confeitaria.bandeja(id)
+	vender.text = "VENDER %d/%d · +%d" % [quantos, Confeitaria.capacidade_bandeja(id), quantos * Confeitaria.valor(id)]
 	vender.disabled = quantos == 0
-	var preco := Confeitaria.preco_melhoria(id)
+	var preco := Confeitaria.preco(id)
 	if preco < 0:
 		principal.text = "NÍVEL MÁXIMO"
 		principal.disabled = true
@@ -326,103 +298,21 @@ func _atualizar_cartao(m: Dictionary) -> void:
 		principal.disabled = Progresso.moedas < preco
 
 
-func _atualizar_encomendas() -> void:
-	for filho in _linha_encomendas.get_children():
-		_linha_encomendas.remove_child(filho)
-		filho.queue_free()
-	var lista := Confeitaria.encomendas()
-	if lista.is_empty():
-		var aviso := Label.new()
-		aviso.theme_type_variation = &"TextoClaro"
-		aviso.add_theme_font_size_override("font_size", 20)
-		aviso.text = "CONSTRUA UMA MÁQUINA PARA RECEBER ENCOMENDAS"
-		_linha_encomendas.add_child(aviso)
-		return
-	for i in lista.size():
-		_linha_encomendas.add_child(_criar_encomenda(lista[i], i))
-
-
-func _criar_encomenda(pedido: Dictionary, indice: int) -> PanelContainer:
-	var caixa := PanelContainer.new()
-	caixa.name = "Encomenda%d" % indice
-	caixa.theme_type_variation = &"PainelRoxo"
-	caixa.size_flags_horizontal = SIZE_EXPAND_FILL
-	var linha := HBoxContainer.new()
-	linha.add_theme_constant_override("separation", 10)
-	caixa.add_child(linha)
-	var rosto := TextureRect.new()
-	rosto.texture = Personagens.textura(pedido["cliente"])
-	rosto.custom_minimum_size = Vector2(56, 64)
-	rosto.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	rosto.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	linha.add_child(rosto)
-	var textos := VBoxContainer.new()
-	textos.size_flags_horizontal = SIZE_EXPAND_FILL
-	textos.alignment = BoxContainer.ALIGNMENT_CENTER
-	textos.add_theme_constant_override("separation", 0)
-	linha.add_child(textos)
-	var quem := Label.new()
-	quem.theme_type_variation = &"TextoClaro"
-	quem.add_theme_font_size_override("font_size", 16)
-	quem.text = "%s QUER" % pedido["nome"]
-	quem.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	textos.add_child(quem)
-	var o_que := Label.new()
-	o_que.theme_type_variation = &"SubtituloClaro"
-	o_que.add_theme_font_size_override("font_size", 24)
-	o_que.text = "%d %s" % [pedido["quantidade"], PLURAIS.get(pedido["doce"], pedido["doce"].to_upper())]
-	o_que.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	textos.add_child(o_que)
-	var tem := Confeitaria.estoque(pedido["doce"])
-	var entregar := Button.new()
-	entregar.name = "Entregar"
-	entregar.custom_minimum_size = Vector2(140, 56)
-	entregar.add_theme_font_size_override("font_size", 22)
-	if tem >= int(pedido["quantidade"]):
-		entregar.text = "ENTREGAR +%d" % int(pedido["recompensa"])
-	else:
-		entregar.text = "TEM %d/%d" % [tem, int(pedido["quantidade"])]
-		entregar.disabled = true
-	entregar.pressed.connect(_entregar.bind(indice))
-	linha.add_child(entregar)
-	return caixa
-
-
 # --- Ações ------------------------------------------------------------------------------
 
 func _acao_principal(m: Dictionary) -> void:
 	var id: String = m["id"]
-	if not Confeitaria.construida(id):
-		if Confeitaria.construir(id):
-			Audio.tocar("acerto")
-			Telas.mostrar_aviso("%s CONSTRUÍDA!" % m["nome"])
-			Animacoes.pular(_cartoes[id]["imagem"], 18.0, 0.0)
-	elif Confeitaria.melhorar(id):
+	var nova := not Confeitaria.construida(id)
+	if Confeitaria.construir_ou_melhorar(id):
 		Audio.tocar("acerto")
-		Telas.mostrar_aviso("%s: NÍVEL %d!" % [m["nome"], Confeitaria.nivel(id)])
+		Telas.mostrar_aviso(("%s CONSTRUÍDA!" % m["nome"]) if nova else ("%s: NÍVEL %d!" % [m["nome"], Confeitaria.nivel(id)]))
 		Animacoes.pular(_cartoes[id]["imagem"], 18.0, 0.0)
 	_atualizar_tudo()
 
 
 func _vender(m: Dictionary) -> void:
-	var ganho := Confeitaria.vender(m["doce"])
+	var ganho := Confeitaria.vender_bandeja(m["id"])
 	if ganho > 0:
 		Audio.tocar("acerto")
 		Telas.mostrar_aviso("+%d MOEDAS" % ganho)
-	_atualizar_tudo()
-
-
-func _entregar(indice: int) -> void:
-	var pedido: Dictionary = Confeitaria.encomendas()[indice]
-	var ganho := Confeitaria.entregar(indice)
-	if ganho > 0:
-		Audio.tocar("acerto")
-		Telas.mostrar_aviso("%s AGRADECE! +%d MOEDAS" % [pedido["nome"], ganho])
-	_atualizar_tudo()
-
-
-func _ampliar_estoque() -> void:
-	if Confeitaria.ampliar_estoque():
-		Audio.tocar("acerto")
-		Telas.mostrar_aviso("ESTOQUE AMPLIADO: %d DOCES" % Confeitaria.capacidade())
 	_atualizar_tudo()

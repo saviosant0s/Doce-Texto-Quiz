@@ -9,7 +9,7 @@ func _ready() -> void:
 	%Inicio.pressed.connect(Telas.voltar)  # volta para a vila (ou o início)
 	%Titulos.pressed.connect(Telas.abrir.bind("titulos"))
 	%Colecao.pressed.connect(Telas.abrir.bind("colecao"))
-	%Confeitaria.pressed.connect(Telas.abrir.bind("confeitaria"))
+	%Confeitaria.pressed.connect(Telas.abrir_confeitaria)
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))
