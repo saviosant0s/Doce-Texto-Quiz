@@ -111,6 +111,14 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 25/09: **Gráfico melhor**: APK e Windows usam o renderizador **Mobile**
+  (Vulkan; cai para o modo leve se o aparelho não tiver Vulkan); o navegador
+  continua no modo leve (Compatibility). As luzes mudam conforme o modo
+  (`CenarioVila.modo_leve()`), mais um leve reforço de cor
+  (`CenarioVila.acabamento`). Grama com volume balançando no vento
+  (`tema/grama.gdshader`, MultiMesh com 5.000 tufos). Para os prints saírem
+  iguais ao APK: `apt-get install mesa-vulkan-drivers` (o `capturar.sh` usa
+  Vulkan por software se houver; `MODO=leve` força o modo leve).
 - 25/09: **Cozinha 3D da Confeitaria** (estilo Pizza Ready, pedido do Sávio):
   `cenas/cozinha.*` + `componentes/cozinha/cenario_cozinha.gd`. O doce anda
   na cozinha; máquinas fazem doces na mesa-bandeja (com o açúcar do quiz);

@@ -287,6 +287,7 @@ func _criar_ambiente() -> void:
 	ambiente.fog_light_color = Color("#FFE3F0")
 	ambiente.fog_density = 0.004
 	ambiente.fog_sky_affect = 0.0
+	CenarioVila.acabamento(ambiente)
 	var sol := DirectionalLight3D.new()
 	sol.rotation_degrees = Vector3(-55, -35, 0)
 	sol.light_energy = 0.45
@@ -333,6 +334,20 @@ func _enfeitar() -> void:
 		if ponto.length() > 5.0 and _longe_dos_caminhos(ponto, 0.0) and _longe_dos_predios(ponto, 3.8):
 			pontos.append(ponto)
 	CenarioVila.flores(self, pontos, 17)
+	# grama com volume: mais tufos perto da praça e dos caminhos, onde a
+	# câmera passa; nada em cima de caminhos, praça e prédios
+	var tufos := []
+	tentativas = 0
+	while tufos.size() < 5000 and tentativas < 20000:
+		tentativas += 1
+		var raio := sqrt(sorteio.randf()) * 19.5
+		var angulo := sorteio.randf() * TAU
+		var ponto := Vector3(cos(angulo) * raio, 0, sin(angulo) * raio)
+		if absf(ponto.x) > 19.5 or absf(ponto.z) > 19.5 or ponto.length() < 4.6:
+			continue
+		if _longe_dos_caminhos(ponto, 0.15) and _longe_dos_predios(ponto, 3.6):
+			tufos.append(ponto)
+	CenarioVila.grama(self, tufos, 23)
 	CenarioVila.morros(self, 31.0)
 	_nuvens = CenarioVila.nuvens(self)
 	# jujubas enfeitando a praça

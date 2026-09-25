@@ -500,8 +500,8 @@ static func jujuba(pai: Node3D, posicao: Vector3, cor: String, tamanho := 1.0) -
 	Pecas3D.granulado(pai, posicao, 0.45 * tamanho, 10, [Color("#FFFFFF")], int(posicao.x * 100 + posicao.z), 0.3, tamanho)
 
 
-## Florzinhas e tufos de grama espalhados (MultiMesh: centenas de peças
-## desenhadas de uma vez só, leve até no celular).
+## Florzinhas espalhadas (MultiMesh: centenas de peças desenhadas de uma vez
+## só, leve até no celular).
 static func flores(pai: Node3D, pontos: Array, semente: int) -> void:
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = semente
@@ -516,14 +516,8 @@ static func flores(pai: Node3D, pontos: Array, semente: int) -> void:
 	miolo.height = 0.1
 	miolo.radial_segments = 10
 	miolo.rings = 5
-	var tufo := CylinderMesh.new()
-	tufo.top_radius = 0.0
-	tufo.bottom_radius = 0.07
-	tufo.height = 0.35
-	tufo.radial_segments = 5
 	var petalas := _multimesh(pai, petala, pontos.size() * 5)
 	var miolos := _multimesh(pai, miolo, pontos.size())
-	var tufos := _multimesh(pai, tufo, pontos.size() * 3)
 	for i in pontos.size():
 		var centro: Vector3 = pontos[i] + Vector3(0, 0.12, 0)
 		var cor: Color = cores[sorteio.randi() % cores.size()]
@@ -533,11 +527,58 @@ static func flores(pai: Node3D, pontos: Array, semente: int) -> void:
 			petalas.multimesh.set_instance_color(i * 5 + j, cor)
 		miolos.multimesh.set_instance_transform(i, Transform3D(Basis(), centro + Vector3(0, 0.03, 0)))
 		miolos.multimesh.set_instance_color(i, Color("#F4A53A") if cor != Color("#FFD23F") else Color("#FF6FAE"))
-		for j in 3:
-			var ao_lado := Vector3(sorteio.randf_range(-0.5, 0.5), 0.17, sorteio.randf_range(-0.5, 0.5))
-			var inclinada := Basis(Vector3(sorteio.randf_range(-1, 1), 0, sorteio.randf_range(-1, 1)).normalized(), sorteio.randf_range(0.0, 0.35))
-			tufos.multimesh.set_instance_transform(i * 3 + j, Transform3D(inclinada, pontos[i] + ao_lado))
-			tufos.multimesh.set_instance_color(i * 3 + j, Color("#4FAE6E") if j % 2 == 0 else Color("#5CBD7B"))
+
+
+## Grama com volume: um tufo de folhinhas em cada ponto, balançando com o
+## vento (tema/grama.gdshader). Um MultiMesh só para todos os tufos.
+static func grama(pai: Node3D, pontos: Array, semente: int) -> MultiMeshInstance3D:
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = semente
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.use_colors = true
+	multi.mesh = _tufo_de_grama()
+	multi.instance_count = pontos.size()
+	for i in pontos.size():
+		var base := Basis(Vector3.UP, sorteio.randf() * TAU).scaled(Vector3.ONE * sorteio.randf_range(0.6, 1.1))
+		multi.set_instance_transform(i, Transform3D(base, pontos[i]))
+		var tom := sorteio.randf_range(0.85, 1.1)
+		multi.set_instance_color(i, Color(tom, tom * sorteio.randf_range(0.97, 1.05), tom))
+	var no := MultiMeshInstance3D.new()
+	no.name = "Grama"
+	no.multimesh = multi
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://tema/grama.gdshader")
+	no.material_override = mat
+	no.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pai.add_child(no)
+	return no
+
+
+## Tufo com 5 folhinhas finas e curvadas (UV.y vai de 0 na base a 1 na ponta).
+static func _tufo_de_grama() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for f in 5:
+		var angulo := f * TAU / 5.0 + 0.3
+		var lado := Vector3(cos(angulo), 0, sin(angulo))
+		var frente := Vector3(-lado.z, 0, lado.x)
+		var inclina := lado.rotated(Vector3.UP, PI / 2) * 0.12 * (1 + f % 2)
+		var altura := 0.34 + (f % 3) * 0.08
+		var largura := 0.045
+		var meio := frente * 0.08 * (f % 2) + lado * 0.05
+		var pontos := [
+			[meio - frente * largura, 0.0], [meio + frente * largura, 0.0],
+			[meio - frente * largura * 0.6 + inclina * 0.5 + Vector3(0, altura * 0.5, 0), 0.5],
+			[meio + frente * largura * 0.6 + inclina * 0.5 + Vector3(0, altura * 0.5, 0), 0.5],
+			[meio + inclina + Vector3(0, altura, 0), 1.0],
+		]
+		for tri in [[0, 1, 2], [1, 3, 2], [2, 3, 4]]:
+			for k in tri:
+				st.set_uv(Vector2(0.5, pontos[k][1]))
+				st.set_normal(Vector3.UP)
+				st.add_vertex(pontos[k][0])
+	return st.commit()
 
 
 static func _multimesh(pai: Node3D, malha: Mesh, quantidade: int) -> MultiMeshInstance3D:
@@ -598,6 +639,22 @@ static func nuvens(pai: Node3D) -> Array:
 
 
 # --- Estilo de desenho animado -----------------------------------------------------
+
+## Verdadeiro no modo leve de desenho (navegador e aparelhos sem Vulkan), que
+## ilumina mais forte: as cenas usam luzes mais fracas nele.
+static func modo_leve() -> bool:
+	return RenderingServer.get_current_rendering_method() == "gl_compatibility"
+
+
+## Acabamento de imagem do modo Mobile (APK e Windows): cores um pouco mais
+## vivas. (Brilho/"glow" e tonemap deixavam tudo esbranquiçado.) No modo leve
+## não faz nada.
+static func acabamento(ambiente: Environment) -> void:
+	if modo_leve():
+		return
+	ambiente.adjustment_enabled = true
+	ambiente.adjustment_saturation = 1.1
+	ambiente.adjustment_contrast = 1.04
 
 const CONTORNO := preload("res://tema/contorno.gdshader")
 const COR_CONTORNO := Color("#3A2060")

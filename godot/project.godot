@@ -54,6 +54,8 @@ pointing/emulate_touch_from_mouse=false
 
 textures/vram_compression/import_etc2_astc=true
 textures/canvas_textures/default_texture_filter=2
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+renderer/rendering_method.web="gl_compatibility"
+rendering_device/fallback_to_opengl3=true
 environment/defaults/default_clear_color=Color(0.494118, 0.341176, 0.694118, 1)
