@@ -123,7 +123,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 ## Onde parou
 
 - 25/09 (pedido "pode fazer tudo, só não vamos colocar na Play Store ainda"),
-  tudo gravado no GitHub, **APK ainda não gerado** (próximo: 0.9.0):
+  tudo gravado no GitHub; **APK e executável da 0.9.0 publicados** (APK ~94 MB, perto do limite de 100 MB do GitHub):
   - **Doce Match custa 40 de açúcar** por partida (sem açúcar, manda para o
     quiz) e tem botão no menu dos níveis; placar com recorde e açúcar.
   - **Qualidade gráfica** em Configurações (BAIXA/MÉDIA/ALTA,
