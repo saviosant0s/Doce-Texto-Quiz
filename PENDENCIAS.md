@@ -9,6 +9,9 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
 - [x] "Cristian Lins" removido dos créditos (não fez parte da equipe).
 - [x] Reescrever o banco de perguntas: agora são 60 (20 por nível), cada partida
       sorteia 10 e embaralha as alternativas.
+- [ ] Pedir para a equipe/professor(a) jogar e revisar as 40 fases do
+      Laboratório (`godot/dados/laboratorio.json`): textos das tarefas, dicas e
+      explicações.
 - [ ] Pedir para um(a) professor(a) revisar as 150 perguntas (`godot/dados/perguntas.json`;
       as 90 novas são f21–f50, m21–m50 e d21–d50)
       e as dicas da tela de carregamento (`godot/cenas/carregamento.gd`).
@@ -32,7 +35,7 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
 
 ## Funcionalidades
 - [ ] Botão "Apoie" nos créditos ainda mostra "Disponível em breve".
-- [ ] Gerar o APK para Android.
+- [x] Gerar o APK para Android (0.10.2 publicada: 64 e 32 bits).
 
 ## Futuro (não fazer agora)
 - [ ] **Login com Google para guardar o progresso na nuvem** (continuar em outro
@@ -47,7 +50,7 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
         INPI, que hoje diz que o jogo não coleta dados.
       - Alternativa mais simples, se servir: exportar/importar o progresso por código.
 
-- [ ] **Doce Match** (minijogo estilo Candy Crush no Fliperama da Vila dos
+- [x] **Doce Match** (minijogo estilo Candy Crush no Fliperama da Vila dos
       Doces), com símbolos de informática próprios — ver `ANDAMENTO.md`.
 
 ## Android
