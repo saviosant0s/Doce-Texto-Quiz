@@ -74,6 +74,11 @@ var _girou_ha := 99.0
 ## Dedos que começaram num botão (não giram a visão).
 var _dedos_em_botao := {}
 var _qualidade_antes := {}
+## Primeiros passos: seta em cima da porta do próximo prédio e uma dica.
+var _seta: Node3D
+var _dica: PanelContainer
+var _interface: Control
+var passo_tutorial := ""
 
 
 func _ready() -> void:
@@ -99,6 +104,7 @@ func _ready() -> void:
 		boneco.otimizar()
 	_criar_camera()
 	_criar_interface()
+	_criar_tutorial()
 	usar_camera(int(Progresso.config.get("camera_vila", Camera.AEREA)))
 
 
@@ -160,6 +166,55 @@ func _process(delta: float) -> void:
 
 ## Câmera de perto: gira em volta da cabeça do doce; olhando para cima ela
 ## desce, olhando para baixo ela sobe.
+## Qual prédio o tutorial aponta agora ("" = já fez tudo): primeiro o quiz
+## (que dá moedas e açúcar), depois a confeitaria e por fim o Doce Match.
+static func proximo_passo() -> String:
+	if int(Progresso.estatisticas.get("partidas", 0)) == 0:
+		return "escola"
+	if not Confeitaria.alguma_construida():
+		return "confeitaria"
+	if int(Progresso.estatisticas.get("match_partidas", 0)) == 0:
+		return "fliperama"
+	return ""
+
+
+const DICAS := {
+	"escola": "COMECE PELA ESCOLA: JOGUE O QUIZ PARA GANHAR MOEDAS E AÇÚCAR!",
+	"confeitaria": "AGORA VÁ À CONFEITARIA E MONTE SUA PANELA DE BRIGADEIRO!",
+	"fliperama": "NO FLIPERAMA TEM O DOCE MATCH: TROQUE AÇÚCAR POR PONTOS!",
+}
+
+
+func _criar_tutorial() -> void:
+	passo_tutorial = proximo_passo()
+	if passo_tutorial == "":
+		return
+	var porta: Vector3 = _portas[passo_tutorial]["porta"]
+	_seta = CenarioCozinha.seta(self)
+	_seta.name = "SetaTutorial"
+	_seta.scale = Vector3.ONE * 1.8
+	_seta.position = porta - porta.normalized() * 1.0 + Vector3(0, 2.6, 0)
+	var tween := _seta.create_tween().set_loops()
+	tween.tween_property(_seta, "position:y", 3.2, 0.5).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(_seta, "position:y", 2.6, 0.5).set_trans(Tween.TRANS_SINE)
+	_dica = PanelContainer.new()
+	_dica.name = "Dica"
+	_dica.theme_type_variation = &"EtiquetaAmarela"
+	_dica.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dica.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_dica.position.y = 120
+	var texto := Label.new()
+	texto.theme_type_variation = &"Titulo"
+	texto.text = DICAS[passo_tutorial]
+	texto.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	texto.custom_minimum_size = Vector2(620, 0)
+	texto.add_theme_font_size_override("font_size", 26)
+	_dica.add_child(texto)
+	_interface.add_child(_dica)
+	_dica.grow_horizontal = Control.GROW_DIRECTION_BOTH
+
+
 func _posicao_perto(cabeca: Vector3, distancia: float, altura: float) -> Vector3:
 	var raio := Vector2(distancia, altura).length()
 	var elevacao := clampf(atan2(altura, distancia) - _inclinacao, -0.05, 1.35)
@@ -530,6 +585,7 @@ func _criar_interface() -> void:
 	raiz.set_anchors_preset(Control.PRESET_FULL_RECT)
 	raiz.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	camada.add_child(raiz)
+	_interface = raiz
 	var margem := MarginContainer.new()
 	margem.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margem.mouse_filter = Control.MOUSE_FILTER_IGNORE

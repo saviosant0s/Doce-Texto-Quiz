@@ -430,6 +430,26 @@ func _testar_vila() -> void:
 	var vila: Vila = get_tree().current_scene
 	verificar(vila.jogador != null and vila.jogador.id == "brigadeiro", "o jogador é o brigadeiro (sem companheiro)")
 	verificar(vila.find_children("*", "DoceAndante", true, false).size() >= 3, "moradores passeando")
+	# primeiros passos: a seta aponta o próximo prédio conforme o progresso
+	var passo_esperado := Vila.proximo_passo()
+	verificar(vila.passo_tutorial == passo_esperado, "tutorial aponta o próximo passo (%s)" % passo_esperado)
+	verificar((vila.find_child("SetaTutorial", false, false) != null) == (passo_esperado != ""), "seta do tutorial só quando falta algo")
+	var partidas_antes: int = Progresso.estatisticas["partidas"]
+	var match_antes: int = Progresso.estatisticas["match_partidas"]
+	var maquinas_antes: Dictionary = Progresso.confeitaria["maquinas"]
+	Progresso.estatisticas["partidas"] = 0
+	verificar(Vila.proximo_passo() == "escola", "tutorial: sem quiz jogado -> escola")
+	Progresso.estatisticas["partidas"] = 1
+	Progresso.confeitaria["maquinas"] = {}
+	verificar(Vila.proximo_passo() == "confeitaria", "tutorial: sem máquina -> confeitaria")
+	Progresso.confeitaria["maquinas"] = {"brigadeiro": {"nivel": 1, "progresso": 0.0, "bandeja": 0}}
+	Progresso.estatisticas["match_partidas"] = 0
+	verificar(Vila.proximo_passo() == "fliperama", "tutorial: sem Doce Match -> fliperama")
+	Progresso.estatisticas["match_partidas"] = 1
+	verificar(Vila.proximo_passo() == "", "tutorial: tudo feito, some")
+	Progresso.estatisticas["partidas"] = partidas_antes
+	Progresso.estatisticas["match_partidas"] = match_antes
+	Progresso.confeitaria["maquinas"] = maquinas_antes
 	vila.set_physics_process(false)  # só o teste controla o doce
 	var inicio := vila.jogador.global_position
 	for i in 20:
