@@ -19,6 +19,7 @@ const CENAS := {
 	"lab_fase": "res://cenas/lab_fase.tscn",
 	"baus": "res://cenas/baus.tscn",
 	"missoes": "res://cenas/missoes.tscn",
+	"torre": "res://cenas/torre.tscn",
 	"vila": "res://cenas/vila.tscn",
 	"carregamento": "res://cenas/carregamento.tscn",
 	"partida": "res://cenas/partida.tscn",

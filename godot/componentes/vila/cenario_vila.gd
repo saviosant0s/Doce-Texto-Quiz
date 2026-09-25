@@ -155,6 +155,8 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 			forma = _fliperama(no)
 		"laboratorio":
 			forma = _laboratorio(no)
+		"torre":
+			forma = _torre_doces(no)
 		_:
 			forma = _casa_simples(no, dados)
 	no.set_meta("pecas", no.find_children("*", "MeshInstance3D", true, false).size())
@@ -216,6 +218,41 @@ static func _placa(no: Node3D, nome: String, posicao: Vector3, largura := 3.0) -
 	texto.outline_size = 0
 	texto.position = posicao + Vector3(0, 0, 0.08)
 	no.add_child(texto)
+
+
+## TORRE DE DOCES: bolo gigante de seis andares (cada um de um sabor, com
+## cobertura escorrendo), afinando para cima, com uma vela acesa no topo.
+static func _torre_doces(no: Node3D) -> Dictionary:
+	var sabores := [["#FF8FB8", "#FFE3EE"], ["#7A4322", "#C98A5A"], ["#FFD23F", "#FFF6C8"],
+		["#8FE3C0", "#E9FFF6"], ["#8B7CF6", "#E4DEFF"], ["#E8364F", "#FFD1DC"]]
+	var y := 0.0
+	var raio := 2.5
+	for i in sabores.size():
+		var altura := 2.1 - i * 0.12
+		var massa := Texturas.real("reboco", sabores[i][0], 0.5)
+		Pecas3D.cilindro(no, raio, raio, altura, Vector3(0, y + altura / 2.0, 0), massa)
+		var cobertura := _texturizado(sabores[i][1], "glace", 1.2, 0.3)
+		Pecas3D.cilindro(no, raio + 0.06, raio + 0.06, 0.3, Vector3(0, y + altura - 0.1, 0), cobertura)
+		for k in 14:  # pingos escorrendo
+			var angulo := k * TAU / 14.0 + i * 0.3
+			var comprimento := 0.3 + (k % 3) * 0.18
+			var ponto := Vector3(cos(angulo) * (raio + 0.04), y + altura - 0.25 - comprimento / 2.0, sin(angulo) * (raio + 0.04))
+			if absf(angulo - PI / 2.0) < 0.35 and i == 0:
+				continue  # não cobre a porta
+			Pecas3D.cilindro(no, 0.11, 0.11, comprimento, ponto, cobertura)
+			Pecas3D.esfera(no, 0.12, ponto - Vector3(0, comprimento / 2.0, 0), cobertura)
+		y += altura
+		raio -= 0.26
+	# vela listrada com a chama acesa lá no alto
+	var vela := Pecas3D.material_textura(Pecas3D.faixas([Color("#6FD3FF"), Color("#FFFFFF")], 8), 0.4)
+	Pecas3D.cilindro(no, 0.22, 0.22, 1.8, Vector3(0, y + 0.9, 0), vela)
+	var chama := _m("#FFB020", 0.2)
+	chama.emission_enabled = true
+	chama.emission = Color("#FFB020")
+	chama.emission_energy_multiplier = 2.5
+	Pecas3D.esfera(no, 0.28, Vector3(0, y + 2.1, 0), chama, Vector3(1, 1.7, 1))
+	_poste(no, 2.55, y, Vector3.ZERO)
+	return {"frente": 2.53, "placa": 2.6}
 
 
 ## Janela de bala: vidro azul com moldura e cruz de glacê.

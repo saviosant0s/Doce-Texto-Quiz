@@ -19,6 +19,12 @@ func _ready() -> void:
 	%Confeitaria.pressed.connect(Telas.abrir_confeitaria)
 	%DoceMatch.pressed.connect(Telas.abrir.bind("doce_match"))
 	%Laboratorio.pressed.connect(Telas.abrir.bind("laboratorio"))
+	var torre: Button = %Laboratorio.duplicate()
+	torre.name = "Torre"
+	torre.icon = preload("res://assets/icones/torre.svg")
+	torre.tooltip_text = "Torre de Doces"
+	torre.pressed.connect(Telas.abrir.bind("torre"))
+	%Laboratorio.add_sibling(torre)
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))

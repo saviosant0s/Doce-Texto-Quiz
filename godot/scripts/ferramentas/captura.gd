@@ -37,6 +37,7 @@ extends Node
 ##   --vila_pos=0,20  na Vila, põe o doce nesse ponto (x,z)
 ##   --confeitaria_estagio  máquinas suficientes para a Confeitaria crescer (estágio 3)
 ##   --animacoes  liga as animações contínuas mesmo sem placa de vídeo (borboletas etc.)
+##   --torre=12  Torre de Doces: já empilha 12 andares (--torre_pergunta para na pergunta)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -217,6 +218,20 @@ func _ready() -> void:
 		vila.jogador.global_position = Vector3(float(xz[0]), 0, float(xz[1]))
 		if xz.size() > 2:
 			vila._giro = deg_to_rad(float(xz[2]))
+	if args.has("torre"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.confeitaria["acucar"] = 200
+		var t: Node = get_tree().current_scene
+		t.comecar()
+		for i in int(args["torre"]):
+			t.jogo.atual["x"] = t.jogo.topo()["x"] + [0.0, 14.0, -10.0, 0.0, 22.0, -6.0, 0.0][i % 7]
+			t.soltar()
+			await get_tree().create_timer(0.1).timeout
+			if t.jogo.pergunta_pendente:
+				await get_tree().create_timer(0.5).timeout
+				if args.has("torre_pergunta"):
+					break
+				t._resultado_pergunta(true)
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()

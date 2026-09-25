@@ -24,6 +24,7 @@ func _ready() -> void:
 	_testar_companheiros_e_baus()
 	_testar_missoes_e_nivel()
 	_testar_terrenos()
+	_testar_torre()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -387,6 +388,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_telas_novas()
 	await _testar_vila()
 	await _testar_vila_terrenos()
+	await _testar_tela_torre()
 	await _testar_tela_colecao()
 	await _testar_tela_confeitaria()
 	await _testar_tela_doce_match()
@@ -1784,3 +1786,69 @@ func _testar_vila_terrenos() -> void:
 	verificar(vila._texto_ponto("presente_mirante") == "PRESENTE: VOLTE AMANHÃ", "depois, só amanhã")
 	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes
+
+
+# --- Torre de Doces -------------------------------------------------------------------
+
+func _testar_torre() -> void:
+	_secao("torre de doces")
+	var t := Torre.new(5)
+	verificar(t.altura() == 0 and t.atual["largura"] == Torre.LARGURA_BASE, "começa só com a base")
+	t.avancar(0.1)
+	verificar(absf(t.atual["x"]) < Torre.LIMITE, "o andar anda de um lado para o outro")
+	t.atual["x"] = 0.0
+	var r := t.soltar()
+	verificar(r["ficou"] and r["perfeito"] and r["largura"] == Torre.LARGURA_BASE and t.altura() == 1, "soltar bem em cima: PERFEITO, largura toda")
+	t.atual["x"] = 40.0
+	r = t.soltar()
+	verificar(r["ficou"] and not r["perfeito"] and is_equal_approx(r["largura"], Torre.LARGURA_BASE - 40.0)
+		and is_equal_approx(r["sobra_largura"], 40.0), "soltar torto: a sobra cai e a torre afina")
+	verificar(is_equal_approx(t.atual["largura"], Torre.LARGURA_BASE - 40.0), "o próximo andar vem da largura nova")
+	# 3 perfeitos seguidos alargam
+	for i in 3:
+		t.atual["x"] = t.topo()["x"]
+		r = t.soltar()
+	verificar(r["cresceu"] and t.topo()["largura"] > Torre.LARGURA_BASE - 40.0, "3 perfeitos seguidos: o andar alarga")
+	# pergunta a cada 10 andares
+	while not t.pergunta_pendente:
+		t.atual["x"] = t.topo()["x"]
+		t.soltar()
+	verificar(t.altura() == 10 and t.soltar().is_empty(), "aos 10 andares: pausa para a pergunta")
+	t.topo()["largura"] = 100.0
+	t.responder(true)
+	verificar(not t.pergunta_pendente and t.topo()["largura"] == Torre.LARGURA_BASE, "acertou a pergunta: andar largo de novo")
+	# errar tudo acaba
+	t.atual["x"] = Torre.LIMITE
+	t.topo()["x"] = -Torre.LIMITE
+	r = t.soltar()
+	verificar(not r["ficou"] and t.acabou, "soltou fora da torre: acabou")
+	verificar(not Torre.sortear_pergunta().is_empty(), "sorteia uma pergunta do quiz")
+	# prêmio, recorde e baú
+	var recorde_antes: int = Progresso.estatisticas.get("torre_recorde", 0)
+	var moedas := Progresso.moedas
+	var baus_doce := Baus.quantos("doce")
+	Progresso.estatisticas["torre_recorde"] = 5
+	var premio := Torre.concluir(t)
+	verificar(premio["recorde_novo"] and Torre.recorde() == t.altura(), "novo recorde guardado")
+	verificar(Progresso.moedas == moedas + premio["moedas"] and premio["moedas"] >= t.altura(), "moedas por andar e por perfeito")
+	verificar(premio["bau"] == "doce" and Baus.quantos("doce") == baus_doce + 1, "passou de 10 andares acima do recorde: baú de doce")
+	Progresso.estatisticas["torre_recorde"] = recorde_antes
+
+
+func _testar_tela_torre() -> void:
+	Progresso.confeitaria["acucar"] = Torre.CUSTO_ACUCAR
+	Telas.ir_para("torre")
+	verificar(await _esperar_tela("Torre"), "abre a Torre de Doces")
+	var tela := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	tela.find_child("Jogar", true, false).pressed.emit()
+	await get_tree().process_frame
+	verificar(Confeitaria.acucar() == 0 and tela.jogo != null, "começar gasta o açúcar")
+	tela.jogo.atual["x"] = 0.0
+	tela.soltar()
+	verificar(tela.jogo.altura() == 1 and tela._andares_nos.size() == 2, "tocar solta o andar na torre")
+	tela.jogo.atual["x"] = Torre.LIMITE
+	tela.jogo.topo()["x"] = -Torre.LIMITE
+	tela.soltar()
+	await get_tree().create_timer(1.3).timeout
+	verificar(tela.find_child("DeNovo", true, false) is Button, "a torre caiu: tela de fim com DE NOVO")

@@ -46,6 +46,8 @@ const PREDIOS := [
 		"telhado": "#5E3D8E", "cena": "doce_match", "acao": "JOGAR DOCE MATCH"},
 	{"id": "laboratorio", "nome": "LABORATÓRIO", "posicao": Vector3(10, 0, -13), "parede": "#F3EEF9",
 		"telhado": "#7E57B1", "cena": "laboratorio", "acao": "ENTRAR NO LABORATÓRIO"},
+	{"id": "torre", "nome": "TORRE DE DOCES", "posicao": Vector3(13, 0, 7), "parede": "#FF8FB8",
+		"telhado": "#E8364F", "cena": "torre", "acao": "SUBIR NA TORRE"},
 ]
 ## Moradores que sempre passeiam (os mascotes dos níveis).
 const MORADORES := ["bala_verde", "milho_doce"]
@@ -870,7 +872,7 @@ func _atualizar_topo() -> void:
 # --- Bairro dos Terrenos, Lago e Mirante (ver Terrenos e BairroVila) ----------------
 
 func _criar_bairro() -> void:
-	BairroVila.placa_direcoes(self, Vector3(2.4, 0, 9.6))
+	BairroVila.placa_direcoes(self, Vector3(-2.6, 0, 13.6))
 	for l in Terrenos.LOTES:
 		var no := Node3D.new()
 		no.name = "Lote_" + l["id"]

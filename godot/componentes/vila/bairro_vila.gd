@@ -298,16 +298,16 @@ static func presente(no: Node3D, aberto: bool) -> void:
 
 ## Placa de direções no cruzamento da avenida.
 static func placa_direcoes(pai: Node3D, posicao: Vector3) -> void:
-	Pecas3D.cano(pai, posicao, posicao + Vector3(0, 3.0, 0), 0.1, _m("#FFFFFF", 0.4))
-	var setas := [["← LAGO DE CHOCOLATE", Vector3(-1, 0, 0), 2.6], ["MIRANTE DO SORVETE →", Vector3(1, 0, 0), 2.1],
-		["TERRENOS ↑ (ATRÁS DA ESCOLA)", Vector3(0, 0, -1), 1.6]]
+	Pecas3D.cano(pai, posicao, posicao + Vector3(0, 1.9, 0), 0.08, _m("#FFFFFF", 0.4))
+	var setas := [["← LAGO DE CHOCOLATE", Vector3(-1, 0, 0), 1.7], ["MIRANTE DO SORVETE →", Vector3(1, 0, 0), 1.3],
+		["TERRENOS ↑ (ATRÁS DA ESCOLA)", Vector3(0, 0, -1), 0.9]]
 	for s in setas:
 		var placa := Node3D.new()
 		placa.position = posicao + Vector3(0, s[2], 0)
 		pai.add_child(placa)
-		Pecas3D.caixa(placa, Vector3(3.2, 0.45, 0.1), Vector3(0, 0, 0.1), Texturas.real("madeira_pintada", "#8A62C0", 1.2))
-		_texto(placa, s[0], Vector3(0, 0, 0.17), 80, Color("#F4E038"), false)
-	CenarioVila._poste(pai, 0.2, 3.0, posicao)
+		Pecas3D.caixa(placa, Vector3(2.4, 0.34, 0.08), Vector3(0, 0, 0.1), Texturas.real("madeira_pintada", "#8A62C0", 1.2))
+		_texto(placa, s[0], Vector3(0, 0, 0.16), 62, Color("#F4E038"), false)
+	CenarioVila._poste(pai, 0.2, 2.0, posicao)
 
 
 # --- Confeitaria que cresce ------------------------------------------------------

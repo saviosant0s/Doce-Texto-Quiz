@@ -218,6 +218,18 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     (`cenas/baus.gd`): toque no baú (ou espere, ele abre sozinho), ele treme
     mais forte a cada toque, raios de luz NA COR DO MELHOR PRÊMIO crescem
     atrás, clarão, faíscas e "ÉPICO!"/"UAU! LENDÁRIO!".
+  - **Grama mais baixa e menos densa** (1.300/2.400 tufos em vez de
+    2.500/5.000; parecia mato).
+  - **Minigame novo: TORRE DE DOCES** (escolhido pelo Sávio): prédio de bolo
+    de 6 andares com vela acesa, ao lado da praça (`CenarioVila._torre_doces`).
+    Dentro (`cenas/torre.*`, regras em `scripts/torre.gd`): um andar de bolo
+    passa de um lado para o outro, toque para soltar; a sobra cai girando;
+    PERFEITO mantém a largura (3 seguidos alargam); a cada 10 andares uma
+    pergunta do quiz (12 s) dá pontos e o andar largo de novo. O céu vai do
+    dia à noite estrelada conforme sobe. Custa 20 de açúcar; 1 moeda por
+    andar + 1 por perfeito; baú de doce a cada nova dezena acima do recorde;
+    missão nova "SUBA N ANDARES NA TORRE". Também no menu dos níveis e no
+    "Como jogar". Print: `ferramentas/capturar.sh torre --torre=14`.
   - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
     Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 
@@ -410,7 +422,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.692 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.709 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,

@@ -59,6 +59,16 @@ const ABAS := [
 		{"item": "ACUCAR", "titulo": "CUSTA AÇÚCAR",
 			"texto": "Cada tentativa custa 30 de açúcar. Faltou? Jogue o quiz ou o Laboratório."},
 	]},
+	{"nome": "TORRE", "passos": [
+		{"icone": "controle", "titulo": "EMPILHE O BOLO",
+			"texto": "Na Torre de Doces, um andar passa de um lado para o outro: toque para soltar em cima da torre."},
+		{"icone": "estrela", "titulo": "PERFEITO!",
+			"texto": "O que sobra para fora cai. Solte certinho para um PERFEITO; 3 seguidos alargam o andar."},
+		{"icone": "lampada", "titulo": "PERGUNTA BÔNUS",
+			"texto": "A cada 10 andares vem uma pergunta do quiz: acertou, ganha pontos e o andar volta a ficar largo."},
+		{"item": "ACUCAR", "titulo": "CUSTA AÇÚCAR",
+			"texto": "Cada torre custa 20 de açúcar e dá moedas por andar. Bateu o recorde de 10 em 10? Baú!"},
+	]},
 	{"nome": "BAÚS E DOCES", "passos": [
 		{"item": "BAU_DOCE", "titulo": "BAÚS SURPRESA",
 			"texto": "Ganhe baús passando no quiz, nas missões, no laboratório e subindo de nível."},
