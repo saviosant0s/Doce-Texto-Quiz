@@ -30,7 +30,7 @@ const LISTA := [
 	{"id": "dedicado", "nome": "DEDICADO", "descricao": "Jogue 25 partidas.",
 		"moedas": 40, "icone": "camadas"},
 	{"id": "colecionador", "nome": "COFRINHO CHEIO", "descricao": "Ganhe 500 moedas no total.",
-		"moedas": 30, "icone": "moeda"},
+		"moedas": 30, "icone": "cofrinho"},
 	{"id": "primeira_compra", "nome": "DOCE NOVO", "descricao": "Compre um doce na sua coleção.",
 		"moedas": 20, "icone": "doce"},
 	{"id": "colecao_completa", "nome": "CONFEITARIA DOS SONHOS", "descricao": "Tenha todos os doces da coleção.",
