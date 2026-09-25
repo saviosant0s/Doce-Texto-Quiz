@@ -159,6 +159,7 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 			forma = _fliperama(no)
 		_:
 			forma = _casa_simples(no, dados)
+	no.set_meta("pecas", no.find_children("*", "MeshInstance3D", true, false).size())
 	var frente: float = forma["frente"]
 	# porta e placa num plano na frente do prédio; "inclinacao" deita esse
 	# plano para trás junto com paredes inclinadas (a forminha do cupcake)
@@ -654,6 +655,22 @@ static func nuvens(pai: Node3D) -> Array:
 ## ilumina mais forte: as cenas usam luzes mais fracas nele.
 static func modo_leve() -> bool:
 	return RenderingServer.get_current_rendering_method() == "gl_compatibility"
+
+
+## Qualidade do 3D nas cenas grandes (vila e cozinha): antisserrilhado leve e
+## o 3D desenhado a 80% do tamanho da tela (a interface continua nítida) —
+## bem mais leve em celular de tela grande. Devolve o que havia antes, para
+## restaurar_qualidade() ao sair da cena.
+static func qualidade_3d(viewport: Viewport) -> Dictionary:
+	var antes := {"msaa": viewport.msaa_3d, "escala": viewport.scaling_3d_scale}
+	viewport.msaa_3d = Viewport.MSAA_2X
+	viewport.scaling_3d_scale = 0.8
+	return antes
+
+
+static func restaurar_qualidade(viewport: Viewport, antes: Dictionary) -> void:
+	viewport.msaa_3d = antes["msaa"]
+	viewport.scaling_3d_scale = antes["escala"]
 
 
 ## Acabamento de imagem do modo Mobile (APK e Windows): cores um pouco mais

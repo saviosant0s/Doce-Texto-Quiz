@@ -17,6 +17,7 @@ extends Node
 ##   --porta=escola  na Vila dos Doces, começa na porta desse prédio
 ##   --confeitaria  Minha Confeitaria já em andamento (máquinas, bandejas, açúcar)
 ##   --entrar=escola  na Vila, começa a animação de entrar nesse prédio (use --espera=0.9)
+##   --andando  na Vila, o doce anda de lado (para ver o balanço dos braços)
 ##   --movimento  na cozinha: clientes chegando e o doce carregando uma pilha
 ##   --ver_predio=confeitaria  na Vila, câmera de perto olhando a fachada desse prédio
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
@@ -103,6 +104,16 @@ func _ready() -> void:
 		var vila_entrada: Vila = get_tree().current_scene
 		vila_entrada.jogador.global_position = vila_entrada._portas[args["entrar"]]["porta"]
 		vila_entrada.entrar(args["entrar"])
+	if args.has("andando"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var vila_andando: Vila = get_tree().current_scene
+		vila_andando.set_physics_process(false)
+		vila_andando.jogador.global_position = Vector3(-4, 0, 9)
+		var fim := Time.get_ticks_msec() + int(float(args.get("espera", "1.2")) * 1000) + 500
+		while Time.get_ticks_msec() < fim:
+			vila_andando.jogador.andar(Vector3(0.6, 0, 0), 1.0 / 60.0)
+			await get_tree().physics_frame
 	if args.has("ver_predio"):
 		await get_tree().process_frame
 		await get_tree().process_frame

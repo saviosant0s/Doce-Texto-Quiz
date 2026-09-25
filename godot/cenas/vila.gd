@@ -67,7 +67,7 @@ var _botao_camera: Button
 var _girou_ha := 99.0
 ## Dedos que começaram num botão (não giram a visão).
 var _dedos_em_botao := {}
-var _msaa_antes := Viewport.MSAA_DISABLED
+var _qualidade_antes := {}
 
 
 func _ready() -> void:
@@ -85,6 +85,12 @@ func _ready() -> void:
 	_criar_jogador()
 	_criar_moradores()
 	CenarioVila.estilo_desenho(self)
+	# leve para o celular: menos faces nas peças pequenas e o cenário parado
+	# juntado em poucos blocos (portas e nuvens se mexem, ficam de fora)
+	JuntarMalhas.simplificar(self)
+	JuntarMalhas.juntar(self, ["Folha", "Nuvem"])
+	for boneco in find_children("*", "DoceAndante", true, false):
+		boneco.otimizar()
 	_criar_camera()
 	_criar_interface()
 	usar_camera(int(Progresso.config.get("camera_vila", Camera.AEREA)))
@@ -354,13 +360,12 @@ func _criar_ambiente() -> void:
 	sol.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sol.directional_shadow_max_distance = 45.0
 	add_child(sol)
-	# antisserrilhado nas bordas (volta ao normal ao sair da vila)
-	_msaa_antes = get_viewport().msaa_3d
-	get_viewport().msaa_3d = Viewport.MSAA_4X
+	# antisserrilhado e 3D um pouco menor (volta ao normal ao sair da vila)
+	_qualidade_antes = CenarioVila.qualidade_3d(get_viewport())
 
 
 func _exit_tree() -> void:
-	get_viewport().msaa_3d = _msaa_antes
+	CenarioVila.restaurar_qualidade(get_viewport(), _qualidade_antes)
 
 
 func _enfeitar() -> void:

@@ -21,7 +21,7 @@ echo "APK do Android (64 bits)..."
 export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$KEYSTORE"
 export GODOT_ANDROID_KEYSTORE_RELEASE_USER="${KEYSTORE_ALIAS:-docetexto}"
 export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$KEYSTORE_SENHA"
-godot --headless --path godot --export-release "Android 64 bits" "../$SAIDA/DoceTextoQuiz.apk" > build/export_apk64.log 2>&1
+ferramentas/godot_exportar.sh --export-release "Android 64 bits" "../$SAIDA/DoceTextoQuiz.apk" > build/export_apk64.log 2>&1
 mv "$SAIDA/DoceTextoQuiz.apk" "$PASTA/1 - Executaveis/Android/"
 rm -f "$SAIDA"/*.idsig
 

@@ -133,6 +133,14 @@ func olhar_para(ponto: Vector3) -> void:
 	_modelo.rotation.y = atan2(direcao.x, direcao.z)
 
 
+## Deixa o boneco leve: menos faces nas peças pequenas e as peças de cada
+## parte (corpo, braços...) juntadas. Chame depois de
+## CenarioVila.estilo_desenho().
+func otimizar() -> void:
+	JuntarMalhas.simplificar(_modelo)
+	JuntarMalhas.juntar_boneco(_modelo)
+
+
 ## Liga/desliga as colisões (ex.: para atravessar a porta de um prédio).
 func atravessar(sim: bool) -> void:
 	sem_colisao = sim

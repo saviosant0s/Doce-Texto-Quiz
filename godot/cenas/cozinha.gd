@@ -68,6 +68,7 @@ var _relogio_entregar := 0.0
 var _proximo_cliente := 2.0
 var _tempo := 0.0
 var _saindo := false
+var _qualidade_antes := {}
 
 
 func _ready() -> void:
@@ -88,12 +89,18 @@ func _ready() -> void:
 	_criar_jogador()
 	CenarioVila.estilo_desenho(self)
 	_seta = CenarioCozinha.seta(self)
+	# leve para o celular: o que não se mexe vira poucos blocos
+	JuntarMalhas.simplificar(self)
+	JuntarMalhas.juntar(self, ["Maquina_", "Bandeja_", "Moedas", "Circulo", "Seta"])
+	jogador.otimizar()
+	_qualidade_antes = CenarioVila.qualidade_3d(get_viewport())
 	_criar_camera()
 	_criar_interface()
 	_atualizar_tudo()
 
 
 func _exit_tree() -> void:
+	CenarioVila.restaurar_qualidade(get_viewport(), _qualidade_antes)
 	# o que ficou nas mãos volta para as bandejas; as moedas do caixa vão para o jogador
 	for doce in carregando:
 		var id := Confeitaria.maquina_do_doce(doce)
@@ -224,6 +231,8 @@ func novo_cliente(doce: String, quantos: int) -> Dictionary:
 	no.sem_colisao = true
 	no.sombra_redonda = false
 	add_child(no)
+	CenarioVila.estilo_desenho(no)  # mesmo visual de desenho do resto
+	no.otimizar()
 	no.global_position = ENTRADA_CLIENTES
 	var balao := CenarioCozinha.rotulo(no, "", Vector3(0, 2.3, 0), 80, Color("#F4E038"))
 	var foto := Sprite3D.new()

@@ -452,6 +452,15 @@ func _testar_vila() -> void:
 	verificar(mais_alto > 0.8, "o doce pula")
 	verificar(vila.jogador.is_on_floor() and vila.jogador.global_position.y < 0.1, "e cai de volta no chão")
 	verificar(vila.find_child("Pular", true, false) is Button, "botão de pular na tela")
+	# andando, o braço do "oi" desce e os braços balançam
+	var aceno: Node3D = vila.jogador.find_child("Aceno", true, false)
+	var balancos := []
+	for i in 40:
+		vila.jogador.andar(Vector3(1, 0, 0), 1.0 / 60.0)
+		await get_tree().physics_frame
+		balancos.append(aceno.rotation.x)
+	verificar(absf(aceno.rotation.z - AnimacaoDoce.BRACO_ABAIXADO) < 0.2, "andando, o braço do aceno fica abaixado")
+	verificar(balancos.max() - balancos.min() > 0.8, "os braços balançam ao andar")
 	# dois dedos: um no joystick e outro girando a visão / apertando PULAR
 	vila.usar_camera(Vila.Camera.PERTO)
 	var toque := InputEventScreenTouch.new()
@@ -485,11 +494,11 @@ func _testar_vila() -> void:
 	var pecas := {}
 	for id in ["escola", "confeitaria", "trofeus", "fliperama"]:
 		var predio: Node3D = vila.find_child("Predio_" + id, true, false)
-		pecas[predio.find_children("*", "MeshInstance3D", true, false).size()] = true
+		pecas[predio.get_meta("pecas")] = true
 	verificar(pecas.size() == 4, "os quatro prédios são diferentes")
-	var com_contorno := vila.find_children("*", "MeshInstance3D", true, false) \
-		.filter(func(m): return m.material_overlay != null).size()
-	verificar(com_contorno > 40, "peças com contorno de desenho")
+	var blocos := vila.find_children("Bloco*", "MeshInstance3D", false, false)
+	verificar(blocos.any(func(b): return b.name.begins_with("BlocoContorno")), "cenário com contorno de desenho")
+	verificar(vila.find_children("*", "MeshInstance3D", true, false).size() < 300, "cenário juntado em poucos blocos (leve)")
 	# câmeras: troca em ciclo, 1ª pessoa esconde o doce, a escolha fica salva
 	vila.usar_camera(Vila.Camera.AEREA)
 	vila.proxima_camera()

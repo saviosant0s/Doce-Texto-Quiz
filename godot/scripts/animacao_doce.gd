@@ -6,6 +6,10 @@ extends Node
 ## Procura no modelo os nós "Corpo", "Olhos", "Aceno", "Braco" e "Perna"
 ## (criados por Pecas3D).
 
+## O braço do "oi" (nó "Aceno") é modelado levantado; parado ou andando ele
+## fica abaixado assim (giro no eixo z), e só sobe para acenar.
+const BRACO_ABAIXADO := -1.3
+
 ## Liga a animação de andar (e a velocidade, 0 a 1, para o ritmo dos passos).
 var andando := false
 var ritmo := 1.0
@@ -73,8 +77,8 @@ func _process(delta: float) -> void:
 		_acenando_ate = _tempo + 1.6
 		_proximo_aceno = _tempo + randf_range(3.5, 6.0)
 	if is_instance_valid(_aceno) and not andando:
-		var alvo := sin(_tempo * 12.0) * 0.6 if _tempo < _acenando_ate else 0.0
-		_aceno.rotation.z = lerpf(_aceno.rotation.z, alvo, minf(1.0, delta * 12.0))
+		var alvo := sin(_tempo * 12.0) * 0.5 if _tempo < _acenando_ate else BRACO_ABAIXADO
+		_aceno.rotation.z = lerpf(_aceno.rotation.z, alvo, minf(1.0, delta * 8.0))
 
 
 ## Pernas para frente e para trás, braços ao contrário, pulinho a cada passo.
@@ -87,8 +91,10 @@ func _animar_passos(delta: float) -> void:
 	if is_instance_valid(_aceno):
 		bracos.append(_aceno)
 	for i in bracos.size():
-		bracos[i].rotation.x = -balanco * 0.5 * (1.0 if i % 2 == 0 else -1.0)
-		bracos[i].rotation.z = lerpf(bracos[i].rotation.z, 0.0, minf(1.0, delta * 10.0))
+		# braços balançam para frente e para trás, ao contrário das pernas
+		bracos[i].rotation.x = -balanco * 0.75 * (1.0 if i % 2 == 0 else -1.0)
+		var abaixado := BRACO_ABAIXADO if bracos[i] == _aceno else 0.0
+		bracos[i].rotation.z = lerpf(bracos[i].rotation.z, abaixado, minf(1.0, delta * 10.0))
 	_corpo.position.y = absf(sin(_passo)) * 0.12
 	_corpo.rotation.z = sin(_passo) * 0.06
 	_corpo.scale = Vector3.ONE

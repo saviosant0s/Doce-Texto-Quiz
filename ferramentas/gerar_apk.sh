@@ -24,5 +24,5 @@ else
 	echo "Sem KEYSTORE: gerando APK de teste (depuração)."
 	MODO=--export-debug
 fi
-godot --headless --path godot $MODO "Android" ../build/android/doce-texto-quiz.apk
+ferramentas/godot_exportar.sh $MODO "Android" ../build/android/doce-texto-quiz.apk
 echo "APK gerado: build/android/doce-texto-quiz.apk"
