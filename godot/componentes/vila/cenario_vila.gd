@@ -170,6 +170,7 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 	# área na frente da porta: quando o doce entra, aparece o botão "ENTRAR"
 	var area := Area3D.new()
 	area.name = "Porta"
+	area.collision_mask = 3  # paredes (1) e bonecos (2)
 	area.position = Vector3(0, 1, frente + 1.6)
 	var forma_area := CollisionShape3D.new()
 	var caixa := BoxShape3D.new()
@@ -380,6 +381,7 @@ static func _torre_trofeus(no: Node3D) -> Dictionary:
 		var z := fundo / 2.0 + 0.3
 		Pecas3D.cilindro(no, 0.22, 0.22, altura, Vector3(x, altura / 2.0, z), listras)
 		Pecas3D.esfera(no, 0.28, Vector3(x, altura + 0.15, z), ouro)
+		_poste(no, 0.26, altura, Vector3(x, 0, z))  # colunas também são sólidas
 	for x in [-1, 1]:
 		Pecas3D.cilindro(no, 0.22, 0.22, altura, Vector3(x * (largura / 2.0 + 0.05), altura / 2.0, -fundo / 2.0 - 0.1), listras)
 	for lado in [-1, 1]:
@@ -505,6 +507,7 @@ static func jujuba(pai: Node3D, posicao: Vector3, cor: String, tamanho := 1.0) -
 	no.position = posicao
 	pai.add_child(no)
 	Pecas3D.granulado(pai, posicao, 0.45 * tamanho, 10, [Color("#FFFFFF")], int(posicao.x * 100 + posicao.z), 0.3, tamanho)
+	_poste(pai, 0.45 * tamanho, 0.5 * tamanho, posicao)  # não dá para atravessar
 
 
 ## Florzinhas espalhadas (MultiMesh: centenas de peças desenhadas de uma vez
@@ -651,6 +654,24 @@ static func nuvens(pai: Node3D) -> Array:
 ## ilumina mais forte: as cenas usam luzes mais fracas nele.
 static func modo_leve() -> bool:
 	return RenderingServer.get_current_rendering_method() == "gl_compatibility"
+
+
+## Onde pôr a câmera que vai de `de` (cabeça do doce) até `ate` sem entrar
+## em paredes: "empurra" uma bolinha do tamanho da câmera pelo caminho e para
+## antes de encostar (só nas paredes e no cenário, camada 1; os bonecos ficam
+## na camada 2 e não atrapalham a câmera).
+static func camera_sem_parede(mundo: World3D, de: Vector3, ate: Vector3) -> Vector3:
+	var bola := SphereShape3D.new()
+	bola.radius = 0.35
+	var consulta := PhysicsShapeQueryParameters3D.new()
+	consulta.shape = bola
+	consulta.transform = Transform3D(Basis(), de)
+	consulta.motion = ate - de
+	consulta.collision_mask = 1
+	var fracao := mundo.direct_space_state.cast_motion(consulta)
+	if fracao.is_empty():
+		return ate
+	return de + (ate - de) * fracao[0]
 
 
 ## Qualidade do 3D nas cenas grandes (vila e cozinha): antisserrilhado leve e

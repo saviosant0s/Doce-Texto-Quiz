@@ -430,7 +430,8 @@ func _testar_vila() -> void:
 		vila.jogador.andar(Vector3(0, 0, -1), 1.0 / 60.0)
 		await get_tree().physics_frame
 	verificar(vila.jogador.global_position.z < inicio.z - 0.5, "o doce anda para frente")
-	# joystick até o fim corre; meio caminho só anda
+	# joystick até o fim corre; meio caminho só anda (num lugar aberto)
+	vila.jogador.global_position = Vector3(-5, 0, 11)
 	for i in 40:
 		vila.jogador.andar(Vector3(1, 0, 0), 1.0 / 60.0)
 		await get_tree().physics_frame
@@ -540,6 +541,11 @@ func _testar_vila() -> void:
 	verificar(vila._porta_atual == "escola", "chegou na porta da escola")
 	verificar(vila._botao_entrar.visible and vila._botao_entrar.text == "JOGAR O QUIZ", "aparece o botão de entrar")
 	verificar(Vila.PREDIOS.filter(func(p): return p["id"] == "fliperama")[0]["cena"] == "doce_match", "o Fliperama abre o Doce Match")
+	# câmera não entra em parede: do lado de fora da escola até o meio dela
+	var fora: Vector3 = vila._portas["escola"]["porta"] + Vector3(0, 1.5, 0)
+	var meio: Vector3 = vila._portas["escola"]["no"].global_position + Vector3(0, 1.5, 0)
+	var parou := CenarioVila.camera_sem_parede(vila.get_world_3d(), fora, meio)
+	verificar(parou.distance_to(meio) > 1.8 and parou.distance_to(fora) < fora.distance_to(meio), "a câmera para antes da parede")
 	vila._botao_entrar.pressed.emit()
 	verificar(vila._entrando and not vila._botao_entrar.visible, "entrar começa a animação")
 	await get_tree().create_timer(0.6).timeout

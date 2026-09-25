@@ -36,9 +36,9 @@ var _inclinacao := 0.0
 
 
 func _ready() -> void:
-	if sem_colisao:
-		collision_layer = 0
-		collision_mask = 0
+	# bonecos na camada 2 (a câmera ignora), batendo em paredes (1) e uns nos outros (2)
+	collision_layer = 0 if sem_colisao else 2
+	collision_mask = 0 if sem_colisao else 3
 	var forma := CollisionShape3D.new()
 	var capsula := CapsuleShape3D.new()
 	capsula.radius = 0.48
@@ -145,8 +145,8 @@ func otimizar() -> void:
 ## Liga/desliga as colisões (ex.: para atravessar a porta de um prédio).
 func atravessar(sim: bool) -> void:
 	sem_colisao = sim
-	collision_layer = 0 if sim else 1
-	collision_mask = 0 if sim else 1
+	collision_layer = 0 if sim else 2
+	collision_mask = 0 if sim else 3
 
 
 ## Nó à frente do doce, na altura das mãos, onde vai a pilha de coisas que

@@ -147,7 +147,11 @@ func _process(delta: float) -> void:
 		Camera.PERTO:
 			var alvo := _posicao_perto(cabeca, PERTO_DISTANCIA, PERTO_ALTURA - ALTURA_OLHOS + 0.6)
 			alvo = _sem_atravessar_paredes(cabeca, alvo)
-			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
+			# se uma parede ficou no meio, a câmera pula na hora (sem passar por dentro dela)
+			if alvo.distance_to(cabeca) < _camera.global_position.distance_to(cabeca) - 0.05:
+				_camera.global_position = alvo
+			else:
+				_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
 			_camera.look_at(cabeca + _frente() * 1.5 + Vector3(0, _inclinacao * 2.0, 0))
 		Camera.PRIMEIRA_PESSOA:
 			_camera.global_position = cabeca + _frente() * 0.25
@@ -169,15 +173,12 @@ func _olhar_1p() -> Vector3:
 
 ## Se um prédio ficar entre o doce e a câmera, a câmera chega mais perto.
 func _sem_atravessar_paredes(de: Vector3, ate: Vector3) -> Vector3:
-	var consulta := PhysicsRayQueryParameters3D.create(de, ate)
-	consulta.exclude = [jogador.get_rid()]
-	var batida := get_world_3d().direct_space_state.intersect_ray(consulta)
-	if batida.is_empty():
+	var perto := CenarioVila.camera_sem_parede(get_world_3d(), de, ate)
+	if perto.is_equal_approx(ate):
 		return ate
-	# chega mais perto e sobe um pouco, para ver por cima do doce
-	var perto: Vector3 = batida["position"] + (de - ate).normalized() * 0.3
+	# chegou mais perto: sobe um pouco, para ver por cima do doce (sem bater no alto)
 	var encolheu := 1.0 - de.distance_to(perto) / maxf(de.distance_to(ate), 0.01)
-	return perto + Vector3(0, encolheu * 1.8, 0)
+	return CenarioVila.camera_sem_parede(get_world_3d(), perto, perto + Vector3(0, encolheu * 1.8, 0))
 
 
 ## Troca a câmera (e salva a escolha).

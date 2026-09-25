@@ -640,7 +640,10 @@ func _seguir_com_camera(delta: float) -> void:
 			var elevacao := clampf(atan2(PERTO_ALTURA - ALTURA_OLHOS, PERTO_DISTANCIA) - _inclinacao, -0.05, 1.35)
 			var alvo := cabeca - _frente() * raio * cos(elevacao) + Vector3(0, raio * sin(elevacao), 0)
 			alvo = _sem_atravessar_paredes(cabeca, alvo)
-			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
+			if alvo.distance_to(cabeca) < _camera.global_position.distance_to(cabeca) - 0.05:
+				_camera.global_position = alvo  # parede no meio: pula na hora
+			else:
+				_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, 8.0 * delta))
 			_camera.look_at(cabeca + _frente() * 1.5 + Vector3(0, -0.4 + _inclinacao * 2.0, 0))
 		Camera.PRIMEIRA_PESSOA:
 			_camera.global_position = cabeca - _frente() * 0.35
@@ -654,12 +657,7 @@ func _frente() -> Vector3:
 
 ## Se uma parede ficar entre o doce e a câmera, a câmera chega mais perto.
 func _sem_atravessar_paredes(de: Vector3, ate: Vector3) -> Vector3:
-	var consulta := PhysicsRayQueryParameters3D.create(de, ate)
-	consulta.exclude = [jogador.get_rid()]
-	var batida := get_world_3d().direct_space_state.intersect_ray(consulta)
-	if batida.is_empty():
-		return ate
-	return batida["position"] + (de - ate).normalized() * 0.3
+	return CenarioVila.camera_sem_parede(get_world_3d(), de, ate)
 
 
 ## Troca a câmera (e salva a escolha).
