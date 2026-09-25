@@ -51,6 +51,8 @@ personagens, fontes) é a mesma da versão original.
   balcão, recolhe as moedas no caixa e para nos círculos do chão para
   construir e melhorar. Com o jogo fechado, as máquinas produzem no máximo
   2 horas. Sem placa de vídeo, abre um painel 2D simples.
+- Texturas reais do cenário (grama, pedra, reboco, telhado, madeira): fotos
+  CC0 do Poly Haven e ambientCG (`godot/assets/texturas/reais/LEIA-ME.md`).
 - Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
   brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
   (100 a 600). O doce escolhido como companheiro aparece no carregamento.

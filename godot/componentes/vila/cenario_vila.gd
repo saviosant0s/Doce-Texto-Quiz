@@ -65,35 +65,13 @@ static func chao(pai: Node3D, metade: float) -> void:
 	no.name = "Chao"
 	no.mesh = plano
 	# gramado de menta com manchas de dois tons (estilo desenho, bordas duras)
-	var grama := _m("#6FCB8E", 0.95)
-	grama.albedo_texture = _textura_grama()
-	grama.uv1_scale = Vector3(9, 9, 1)
-	grama.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	no.material_override = grama
+	no.material_override = Texturas.real("grama", "#FFFFFF", 0.3)  # grama de verdade (foto)
 	pai.add_child(no)
 	_parede(pai, Vector3(metade * 4, 1, metade * 4), Vector3(0, -0.5, 0))  # piso
 	# cerca invisível em volta
 	for lado in [-1, 1]:
 		_parede(pai, Vector3(metade * 2, 4, 1), Vector3(0, 2, lado * metade))
 		_parede(pai, Vector3(1, 4, metade * 2), Vector3(lado * metade, 2, 0))
-
-
-static func _textura_grama() -> ImageTexture:
-	var ruido := FastNoiseLite.new()
-	ruido.seed = 7
-	ruido.frequency = 0.035
-	var tamanho := 128
-	var imagem := ruido.get_seamless_image(tamanho, tamanho)
-	imagem.convert(Image.FORMAT_RGBA8)
-	var claro := Color("#9ADBA8")
-	var meio := Color("#86CE98")
-	var escuro := Color("#76C189")
-	for y in tamanho:
-		for x in tamanho:
-			var valor := imagem.get_pixel(x, y).r
-			imagem.set_pixel(x, y, claro if valor > 0.58 else (escuro if valor < 0.4 else meio))
-	imagem.generate_mipmaps()
-	return ImageTexture.create_from_image(imagem)
 
 
 ## Caminho de `de` até `ate` (no chão): areia de açúcar com biscoitos de
@@ -103,7 +81,7 @@ static func caminho(pai: Node3D, de: Vector3, ate: Vector3, largura := 2.4) -> v
 	var caixa := BoxMesh.new()
 	caixa.size = Vector3(largura, 0.04, de.distance_to(ate))
 	no.mesh = caixa
-	no.material_override = _m("#E8C88C", 0.95)
+	no.material_override = Texturas.real("areia", "#F7D9A6", 0.6)
 	no.position = (de + ate) / 2.0 + Vector3(0, 0.02, 0)
 	no.rotation.y = atan2(ate.x - de.x, ate.z - de.z)
 	pai.add_child(no)
@@ -126,7 +104,7 @@ static func caminho(pai: Node3D, de: Vector3, ate: Vector3, largura := 2.4) -> v
 
 ## Praça redonda com a fonte de chocolate no meio.
 static func praca(pai: Node3D, raio: float) -> void:
-	Pecas3D.cilindro(pai, raio, raio, 0.08, Vector3(0, 0.04, 0), _texturizado("#F2D6A2", "pedras", 0.6, 0.9))
+	Pecas3D.cilindro(pai, raio, raio, 0.08, Vector3(0, 0.04, 0), Texturas.real("calcamento", "#FFF3E0", 0.45))
 	Pecas3D.rosquinha(pai, raio - 0.25, raio + 0.1, Vector3(0, 0.08, 0), _m("#E9B97A", 0.8), Vector3(1, 0.4, 1))
 	# fonte: bacia, coluna e pratinhos com chocolate escorrendo
 	var chocolate := _m("#5A2E17", 0.15)
@@ -254,7 +232,7 @@ static func _casa_simples(no: Node3D, dados: Dictionary) -> Dictionary:
 	var largura := 4.6
 	var altura := 3.2
 	var fundo := 3.8
-	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), _texturizado(dados.get("parede", "#FFB3D1"), "pedras", 0.8))
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), Texturas.real("reboco", dados.get("parede", "#FFB3D1"), 0.5))
 	Pecas3D.cilindro(no, 0.0, largura * 0.78, 2.0, Vector3(0, altura + 1.15, 0),
 		_m(dados.get("telhado", "#7E57B1"), 0.35), Vector3(1, 1, fundo / largura), Vector3(0, 45, 0))
 	for lado in [-1, 1]:
@@ -269,7 +247,7 @@ static func _escola(no: Node3D) -> Dictionary:
 	var largura := 5.4
 	var altura := 3.3
 	var fundo := 4.2
-	var biscoito := _texturizado("#B5733B", "biscoito", 0.7, 0.85)
+	var biscoito := Texturas.real("reboco_barro", "#E6A56E", 0.5)
 	var glace := _texturizado("#FFFFFF", "glace", 1.5, 0.35)
 	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), biscoito)
 	# glacê nos cantos e no rodapé da frente
@@ -280,7 +258,7 @@ static func _escola(no: Node3D) -> Dictionary:
 	# telhado de duas águas (cumeeira de frente para trás), com beiral
 	var telhado := PrismMesh.new()
 	telhado.size = Vector3(largura + 0.8, 2.3, fundo + 0.6)
-	var roxo := _texturizado("#8A62C0", "telhas", 0.55, 0.5)
+	var roxo := Texturas.real("ardosia", "#B590EC", 0.6)
 	var no_telhado := MeshInstance3D.new()
 	no_telhado.mesh = telhado
 	no_telhado.material_override = roxo
@@ -376,12 +354,12 @@ static func _torre_trofeus(no: Node3D) -> Dictionary:
 	var altura := 3.5
 	var fundo := 4.2
 	var ouro := _m("#F2C230", 0.15, 0.6)
-	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), _texturizado("#B497E4", "pedras", 0.8))
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), Texturas.real("tijolos", "#E4D4FF", 0.6))
 	Pecas3D.caixa(no, Vector3(largura + 0.3, 0.25, fundo + 0.3), Vector3(0, altura + 0.12, 0), ouro)
 	# segundo andar e cúpula
 	var andar := 1.5
 	var base_andar := altura + 0.25
-	Pecas3D.caixa(no, Vector3(3.2, andar, 3.0), Vector3(0, base_andar + andar / 2.0, 0), _texturizado("#9272CC", "pedras", 0.8))
+	Pecas3D.caixa(no, Vector3(3.2, andar, 3.0), Vector3(0, base_andar + andar / 2.0, 0), Texturas.real("tijolos", "#C7B0F0", 0.6))
 	Pecas3D.caixa(no, Vector3(3.5, 0.2, 3.3), Vector3(0, base_andar + andar + 0.1, 0), ouro)
 	var cupula := SphereMesh.new()
 	cupula.radius = 1.45
@@ -430,8 +408,8 @@ static func _fliperama(no: Node3D) -> Dictionary:
 	var altura := 5.4
 	var fundo := 3.6
 	var frente := fundo / 2.0
-	var azul := _m("#8FD3F4", 0.45)
-	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), _m("#5E3D8E", 0.5))
+	var azul := Texturas.real("reboco", "#A6E0FA", 0.5)
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), Texturas.real("reboco", "#7F5ABD", 0.5))
 	# laterais azuis mais altas, com listras amarelas
 	var amarelo := _m("#F4E038", 0.4)
 	for lado in [-1, 1]:
@@ -713,8 +691,9 @@ static func estilo_desenho(raiz: Node, espessura := 0.035) -> void:
 		var mat := peca.material_override as StandardMaterial3D
 		if mat == null or mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
 			continue
-		mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		if not mat.has_meta("real"):  # texturas reais ficam com a luz normal (mais natural)
+			mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+			mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		if mat.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or peca.mesh is PlaneMesh:
 			continue
 		var caixa := peca.get_aabb()

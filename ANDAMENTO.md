@@ -111,6 +111,14 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 25/09: **Texturas reais (CC0)** no cenário: grama, areia, calçamento,
+  reboco, tijolos, ardósia, madeira e piso (Poly Haven/ambientCG; lista e
+  links em `godot/assets/texturas/reais/LEIA-ME.md`). `Texturas.real()` aplica
+  cor + relevo + aspereza/AO por projeção triplanar; as fotos são clareadas
+  por `ferramentas/preparar_texturas_reais.py` e pintadas com as cores do
+  jogo. Materiais "reais" ficam com luz normal (sem degraus). A rede do
+  ambiente foi liberada (acesso "Completo") para baixar. **Para o memorial do
+  INPI (próxima versão): citar essas texturas de terceiros (CC0).**
 - 25/09 (pedido depois de testar a 0.7.0 no celular):
   - **Desempenho**: `scripts/juntar_malhas.gd` junta as peças paradas do
     cenário em poucos blocos (um por material; contornos um por cor) e tira

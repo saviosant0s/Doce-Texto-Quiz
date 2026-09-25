@@ -48,15 +48,8 @@ static func rotulo(pai: Node3D, texto: String, posicao: Vector3, tamanho := 64, 
 ## -`meio_fundo` (parede do fundo) a +`meio_fundo` (aberta para a câmera).
 ## A parede da direita tem a porta dos clientes (z entre `porta_z` ± 1).
 static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: float) -> void:
-	# piso xadrez rosa e creme
-	var imagem := Image.create(2, 2, false, Image.FORMAT_RGBA8)
-	imagem.set_pixel(0, 0, Color("#F2A7C6"))
-	imagem.set_pixel(1, 1, Color("#F2A7C6"))
-	imagem.set_pixel(1, 0, Color("#F7DDBF"))
-	imagem.set_pixel(0, 1, Color("#F7DDBF"))
-	var piso := Pecas3D.material_textura(ImageTexture.create_from_image(imagem), 0.8,
-		Vector3(meia_largura, meio_fundo, 1))
-	piso.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	# piso de mármore (textura real), levemente rosado
+	var piso := Texturas.real("piso_cozinha", "#FFE9F1", 0.08)
 	var plano := PlaneMesh.new()
 	plano.size = Vector2(meia_largura * 2 + 1, meio_fundo * 2 + 1)
 	var chao := MeshInstance3D.new()
@@ -67,8 +60,7 @@ static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: f
 	_parede(pai, Vector3(meia_largura * 4, 1, meio_fundo * 4), Vector3(0, -0.5, 0))
 	# papel de parede listrado, rodapé e faixa no alto
 	var altura := 4.0
-	var papel := Pecas3D.material_textura(Pecas3D.listras([Color("#9EDDBE"), Color("#E6F7EE")], 2), 0.8,
-		Vector3(meia_largura * 1.5, 1, 1))
+	var papel := Texturas.real("reboco", "#CFF0E0", 0.5)
 	var rodape := _m("#7E57B1", 0.5)
 	Pecas3D.caixa(pai, Vector3(meia_largura * 2 + 0.6, altura, 0.3), Vector3(0, altura / 2, -meio_fundo - 0.15), papel)
 	Pecas3D.caixa(pai, Vector3(meia_largura * 2 + 0.6, 0.35, 0.36), Vector3(0, 0.17, -meio_fundo - 0.1), rodape)
@@ -100,7 +92,7 @@ static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: f
 	sorteio.seed = 8
 	var cores := ["#FF6FAE", "#6FD3FF", "#FFD23F", "#7BE07B", "#B07CFF", "#FF8A5B"]
 	for x in [-6.5, -2.5, 2.5, 6.5]:
-		Pecas3D.caixa(pai, Vector3(2.4, 0.12, 0.5), Vector3(x, 2.9, -meio_fundo + 0.25), _m("#E9B97A", 0.7))
+		Pecas3D.caixa(pai, Vector3(2.4, 0.12, 0.5), Vector3(x, 2.9, -meio_fundo + 0.25), Texturas.real("madeira", "#FFFFFF", 0.8))
 		for i in 4:
 			var pote := Vector3(x - 0.85 + i * 0.57, 3.2, -meio_fundo + 0.25)
 			var altura_pote := sorteio.randf_range(0.35, 0.55)
@@ -125,8 +117,7 @@ static func paredes_altas(pai: Node3D, meia_largura: float, meio_fundo: float, p
 	var no := Node3D.new()
 	no.name = "ParedesAltas"
 	pai.add_child(no)
-	var papel := Pecas3D.material_textura(Pecas3D.listras([Color("#9EDDBE"), Color("#E6F7EE")], 2), 0.8,
-		Vector3(meia_largura * 1.5, 1, 1))
+	var papel := Texturas.real("reboco", "#CFF0E0", 0.5)
 	var roxo := _m("#7E57B1", 0.5)
 	var altura := 4.0
 	# frente, com a porta de saída em cima do tapete SAIR
@@ -248,7 +239,7 @@ static func _fogao(no: Node3D, cor: String) -> void:
 
 ## Mesa onde a máquina põe os doces prontos (topo em y = 0.95).
 static func mesa_bandeja(pai: Node3D, posicao: Vector3) -> void:
-	var madeira := _m("#E9B97A", 0.7)
+	var madeira := Texturas.real("madeira", "#FFFFFF", 0.8)
 	Pecas3D.caixa(pai, Vector3(2.0, 0.1, 0.95), posicao + Vector3(0, 0.9, 0), madeira)
 	Pecas3D.caixa(pai, Vector3(1.9, 0.04, 0.85), posicao + Vector3(0, 0.96, 0), _m("#FFFFFF", 0.4))
 	for x in [-0.85, 0.85]:
@@ -270,7 +261,7 @@ static func lugar_na_bandeja(i: int) -> Vector3:
 static func balcao(pai: Node3D, posicao: Vector3, largura: float) -> void:
 	var roxo := _m("#7E57B1", 0.5)
 	Pecas3D.caixa(pai, Vector3(largura, 1.0, 1.0), posicao + Vector3(0, 0.5, 0), roxo)
-	Pecas3D.caixa(pai, Vector3(largura + 0.2, 0.12, 1.2), posicao + Vector3(0, 1.06, 0), _m("#F7B8D2", 0.4))
+	Pecas3D.caixa(pai, Vector3(largura + 0.2, 0.12, 1.2), posicao + Vector3(0, 1.06, 0), Texturas.real("madeira", "#FFFFFF", 0.8))
 	for i in int(largura / 0.8):
 		var x := -largura / 2 + 0.4 + i * 0.8
 		Pecas3D.caixa(pai, Vector3(0.35, 0.8, 0.04), posicao + Vector3(x, 0.5, 0.51), _m("#F4E038", 0.4))
