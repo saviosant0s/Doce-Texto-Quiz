@@ -525,7 +525,7 @@ func _criar_ambiente() -> void:
 	# sombras ganham cor em vez de ficarem cinzas
 	ambiente.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	ambiente.ambient_light_sky_contribution = 0.6
-	ambiente.ambient_light_energy = 0.32
+	ambiente.ambient_light_energy = 0.22 if CenarioVila.modo_leve() else 0.32
 	# sem reflexo do céu nas superfícies (deixava tudo desbotado)
 	ambiente.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
 	var mundo := WorldEnvironment.new()
@@ -540,7 +540,7 @@ func _criar_ambiente() -> void:
 	var sol := DirectionalLight3D.new()
 	sol.rotation_degrees = Vector3(-55, -35, 0)
 	sol.light_color = Color("#FFF0D6")  # sol de fim de tarde, quentinho
-	sol.light_energy = 0.75 if CenarioVila.modo_leve() else 1.1
+	sol.light_energy = 0.55 if CenarioVila.modo_leve() else 1.1
 	sol.light_specular = 0.8
 	sol.shadow_enabled = Qualidade.sombras()
 	sol.shadow_opacity = 0.8
@@ -657,7 +657,7 @@ func _longe_dos_caminhos(ponto: Vector3, folga: float) -> bool:
 func _criar_jogador() -> void:
 	jogador = DoceAndante.new()
 	jogador.name = "Jogador"
-	jogador.sombra_redonda = false  # o sol já faz sombra de verdade
+	jogador.sombra_redonda = true  # sombra de contato (além da do sol)
 	jogador.com_som = true
 	var id := Colecao.companheiro()
 	jogador.id = id if not id.is_empty() else "brigadeiro"
@@ -687,7 +687,7 @@ func _criar_moradores() -> void:
 		var morador := DoceAndante.new()
 		morador.id = ids[i]
 		morador.passeando = true
-		morador.sombra_redonda = false
+		morador.sombra_redonda = true
 		add_child(morador)
 		var angulo := i * TAU / ids.size()
 		morador.global_position = Vector3(cos(angulo) * 5.5, 0, sin(angulo) * 5.5)
@@ -1154,7 +1154,7 @@ func _vizinho_da_casa(id: String) -> void:
 	vizinho.name = "Vizinho_" + id
 	vizinho.id = vizinhos[k % vizinhos.size()]
 	vizinho.passeando = true
-	vizinho.sombra_redonda = false
+	vizinho.sombra_redonda = true
 	add_child(vizinho)
 	vizinho.global_position = posicao + frente
 	var centro := posicao + frente

@@ -88,6 +88,7 @@ static func montar_lote(no: Node3D, id: String) -> void:
 			Pecas3D.caixa(no, Vector3(0.5, 0.25, 0.3), Vector3(-0.6 + (i % 3) * 0.55, 0.15 + (i / 3) * 0.26, 0.5),
 				_m("#D9A05B", 0.9))
 	else:
+		CenarioVila.sombra_contato(no, Vector3.ZERO, 3.2, 0.45)
 		var obra := Node3D.new()
 		obra.name = "Obra"
 		obra.rotation.y = giro  # de frente para a rua

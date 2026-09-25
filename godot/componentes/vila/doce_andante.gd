@@ -215,24 +215,12 @@ func _escolher_destino() -> void:
 		randf_range(_area_passeio.position.y, _area_passeio.end.y))
 
 
-## Sombra redonda e suave no chão (leve: sem sombras de verdade).
+## Sombra de contato: mancha macia embaixo do boneco (junto com a sombra do
+## sol, dá "peso"; sem sombras de verdade, é a única).
 func _criar_sombra() -> void:
-	var sombra := MeshInstance3D.new()
-	_sombra = sombra
-	var disco := CylinderMesh.new()
-	disco.top_radius = 0.6
-	disco.bottom_radius = 0.6
-	disco.height = 0.01
-	sombra.mesh = disco
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.15, 0.05, 0.2, 0.28)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	sombra.material_override = mat
-	sombra.position.y = 0.02
-	sombra.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	sombra.visible = sombra_redonda
-	add_child(sombra)
+	_sombra = CenarioVila.sombra_contato(self, Vector3.ZERO, 0.75, 0.5)
+	_sombra.position.y = 0.07  # acima dos caminhos de biscoito (0,04)
+	_sombra.visible = sombra_redonda
 
 
 ## Poeira de açúcar saindo dos pés (bolinhas brancas que sobem e somem).

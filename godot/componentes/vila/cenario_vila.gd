@@ -64,14 +64,87 @@ static func chao(pai: Node3D, metade: float) -> void:
 	var no := MeshInstance3D.new()
 	no.name = "Chao"
 	no.mesh = plano
-	# gramado de menta com manchas de dois tons (estilo desenho, bordas duras)
-	no.material_override = Texturas.real("grama", "#FFFFFF", 0.3)  # grama de verdade (foto)
+	# gramado verde suave e limpo (a foto de grama era "ruidosa" demais e
+	# escondia as sombras): cor lisa com uma variação bem de leve
+	no.material_override = gramado()
 	pai.add_child(no)
 	_parede(pai, Vector3(metade * 4, 1, metade * 4), Vector3(0, -0.5, 0))  # piso
 	# cerca invisível em volta
 	for lado in [-1, 1]:
 		_parede(pai, Vector3(metade * 2, 4, 1), Vector3(0, 2, lado * metade))
 		_parede(pai, Vector3(1, 4, metade * 2), Vector3(lado * metade, 2, 0))
+
+
+const COR_GRAMADO := Color("#86C96F")
+static var _gramado: StandardMaterial3D
+static var _mancha: Texture2D
+static var _mats_mancha := {}
+
+
+## Material do chão de grama: verde suave, fosco, com manchinhas bem sutis.
+static func gramado() -> StandardMaterial3D:
+	if _gramado:
+		return _gramado
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = COR_GRAMADO
+	var ruido := FastNoiseLite.new()
+	ruido.frequency = 0.02
+	ruido.seed = 3
+	var textura := NoiseTexture2D.new()
+	textura.width = 256
+	textura.height = 256
+	textura.seamless = true
+	textura.noise = ruido
+	var tons := Gradient.new()
+	tons.set_color(0, Color(0.93, 0.96, 0.9))
+	tons.set_color(1, Color(1.05, 1.05, 1.0))
+	textura.color_ramp = tons
+	mat.albedo_texture = textura
+	mat.uv1_triplanar = true
+	mat.uv1_world_triplanar = true
+	mat.uv1_scale = Vector3.ONE * 0.08
+	mat.roughness = 0.95
+	mat.set_meta("real", true)  # o acabamento não põe relevo nele (fica liso)
+	_gramado = mat
+	return mat
+
+
+## Sombra de contato: mancha escura e macia no chão onde a coisa encosta
+## (o Mobile não tem SSAO; é o truque dos jogos de celular para dar peso).
+static func sombra_contato(pai: Node3D, posicao: Vector3, raio: float, forca := 0.45) -> MeshInstance3D:
+	if _mancha == null:
+		var degrade := Gradient.new()
+		degrade.set_color(0, Color(0, 0, 0, 1))
+		degrade.set_color(1, Color(0, 0, 0, 0))
+		degrade.add_point(0.5, Color(0, 0, 0, 0.55))
+		var textura := GradientTexture2D.new()
+		textura.gradient = degrade
+		textura.fill = GradientTexture2D.FILL_RADIAL
+		textura.fill_from = Vector2(0.5, 0.5)
+		textura.fill_to = Vector2(1.0, 0.5)
+		textura.width = 128
+		textura.height = 128
+		_mancha = textura
+	var plano := PlaneMesh.new()
+	plano.size = Vector2.ONE * raio * 2.0
+	var chave := snappedf(forca, 0.05)
+	if not _mats_mancha.has(chave):  # um material por força: as manchas se juntam num bloco só
+		var novo := StandardMaterial3D.new()
+		novo.albedo_texture = _mancha
+		novo.albedo_color = Color(0.12, 0.06, 0.18, chave)
+		novo.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		novo.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		novo.render_priority = -1
+		_mats_mancha[chave] = novo
+	var mat: StandardMaterial3D = _mats_mancha[chave]
+	var no := MeshInstance3D.new()
+	no.name = "SombraContato"
+	no.mesh = plano
+	no.material_override = mat
+	no.position = posicao + Vector3(0, 0.035, 0)
+	no.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pai.add_child(no)
+	return no
 
 
 ## Caminho de `de` até `ate` (no chão): areia de açúcar com biscoitos de
@@ -126,6 +199,7 @@ static func praca(pai: Node3D, raio: float) -> void:
 		var angulo := i * TAU / 16.0
 		Pecas3D.esfera(pai, 0.13, Vector3(cos(angulo) * 2.05, 0.72, sin(angulo) * 2.05), _m(cores[i % cores.size()], 0.25))
 	_poste(pai, 2.2, 1.2, Vector3.ZERO)
+	sombra_contato(pai, Vector3.ZERO, 3.0, 0.45)
 
 
 # --- Prédios -----------------------------------------------------------------------
@@ -160,6 +234,7 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 		_:
 			forma = _casa_simples(no, dados)
 	no.set_meta("pecas", no.find_children("*", "MeshInstance3D", true, false).size())
+	sombra_contato(pai, dados["posicao"], 4.6, 0.5)
 	var frente: float = forma["frente"]
 	# porta e placa num plano na frente do prédio; "inclinacao" deita esse
 	# plano para trás junto com paredes inclinadas (a forminha do cupcake)
@@ -581,6 +656,7 @@ static func arvore_pirulito(pai: Node3D, posicao: Vector3, cor: String) -> void:
 	Pecas3D.esfera(pai, 0.85, posicao + Vector3(0, 2.7, 0), doce)
 	Pecas3D.rosquinha(pai, 0.5, 0.9, posicao + Vector3(0, 2.7, 0), _m("#FFFFFF", 0.25), Vector3(1, 1, 0.5), Vector3(90, 0, 0))
 	_poste(pai, 0.25, 2.0, posicao)
+	sombra_contato(pai, posicao, 1.1, 0.4)
 
 
 static func bengala(pai: Node3D, posicao: Vector3) -> void:
@@ -596,6 +672,7 @@ static func bengala(pai: Node3D, posicao: Vector3) -> void:
 	gancho.rotation_degrees = Vector3(90, 0, 0)
 	pai.add_child(gancho)
 	_poste(pai, 0.2, 2.2, posicao)
+	sombra_contato(pai, posicao, 0.7, 0.4)
 
 
 static func jujuba(pai: Node3D, posicao: Vector3, cor: String, tamanho := 1.0) -> void:
@@ -610,6 +687,7 @@ static func jujuba(pai: Node3D, posicao: Vector3, cor: String, tamanho := 1.0) -
 	pai.add_child(no)
 	Pecas3D.granulado(pai, posicao, 0.45 * tamanho, 10, [Color("#FFFFFF")], int(posicao.x * 100 + posicao.z), 0.3, tamanho)
 	_poste(pai, 0.45 * tamanho, 0.5 * tamanho, posicao)  # não dá para atravessar
+	sombra_contato(pai, posicao, 0.8 * tamanho, 0.45)
 
 
 ## Florzinhas espalhadas (MultiMesh: centenas de peças desenhadas de uma vez

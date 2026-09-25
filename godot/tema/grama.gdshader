@@ -3,10 +3,10 @@
 // da cor da instância (COLOR). As normais apontam para cima, para a grama
 // toda receber a luz por igual, como num desenho.
 shader_type spatial;
-render_mode cull_disabled, specular_disabled, shadows_disabled;
+render_mode cull_disabled, specular_disabled, shadows_disabled;  // folhas finas: com sombra ficavam manchadas
 
-uniform vec4 cor_base : source_color = vec4(0.22, 0.52, 0.30, 1.0);
-uniform vec4 cor_ponta : source_color = vec4(0.62, 0.88, 0.52, 1.0);
+uniform vec4 cor_base : source_color = vec4(0.30, 0.52, 0.27, 1.0);  // perto do chão (APK)
+uniform vec4 cor_ponta : source_color = vec4(0.40, 0.60, 0.33, 1.0);
 uniform float vento = 0.14;
 
 varying float altura;
@@ -22,5 +22,8 @@ void vertex() {
 }
 
 void fragment() {
+	// as duas faces da folha recebem a luz como se olhassem para cima (o verso
+	// ficava escuro no modo de compatibilidade)
+	NORMAL = normalize((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
 	ALBEDO = mix(cor_base.rgb, cor_ponta.rgb, altura) * COLOR.rgb;
 }

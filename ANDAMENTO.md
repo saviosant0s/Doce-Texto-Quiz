@@ -230,6 +230,18 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     andar + 1 por perfeito; baú de doce a cada nova dezena acima do recorde;
     missão nova "SUBA N ANDARES NA TORRE". Também no menu dos níveis e no
     "Como jogar". Print: `ferramentas/capturar.sh torre --torre=14`.
+  - **Sombras e chão limpo** (pedido do Sávio): o sol já tinha sombra ligada
+    (qualidades MÉDIA e ALTA). Descoberta: o Vulkan por software dos prints
+    (lavapipe) NÃO desenha a sombra do sol no renderizador Mobile — no modo
+    de compatibilidade a mesma cena mostra (ver `MODO=leve
+    ferramentas/capturar.sh vila`). No celular (placa de vídeo) ela é
+    desenhada. SSAO não existe no renderizador Mobile (só no Forward+); no
+    lugar, **sombras de contato** (`CenarioVila.sombra_contato`: manchas
+    macias no chão) embaixo de prédios, fonte, árvores, bengalas, jujubas,
+    construções dos lotes e de todos os bonecos (vila e cozinha). Chão: sai a
+    foto de grama "ruidosa", entra verde suave e liso (`CenarioVila.gramado`);
+    tufos com a cor do chão e iluminados por igual dos dois lados (o verso
+    ficava escuro no modo de compatibilidade).
   - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
     Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 

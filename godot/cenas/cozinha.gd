@@ -287,7 +287,7 @@ func novo_cliente(doce: String, quantos: int) -> Dictionary:
 	var no := DoceAndante.new()
 	no.id = ids.pick_random()
 	no.sem_colisao = true
-	no.sombra_redonda = false
+	no.sombra_redonda = true
 	add_child(no)
 	CenarioVila.estilo_desenho(no)  # mesmo visual de desenho do resto
 	no.otimizar()
@@ -635,7 +635,7 @@ func _criar_jogador() -> void:
 	var id := Colecao.companheiro()
 	jogador.id = id if not id.is_empty() else "brigadeiro"
 	jogador.nivel = Companheiros.nivel(jogador.id)
-	jogador.sombra_redonda = false
+	jogador.sombra_redonda = true
 	jogador.com_som = true
 	add_child(jogador)
 	jogador.global_position = INICIO
