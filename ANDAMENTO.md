@@ -122,7 +122,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-- 28/09 (pedidos do Sávio depois de jogar a 0.10.2), **ainda sem APK novo**:
+- 28/09 (pedidos do Sávio depois de jogar a 0.10.2), **publicado na 0.11.0**:
   - Feito antes (commit `edb8b1c`): câmera da vila e da cozinha sem tremer
     (posição suavizada entre os passos da física, física no ritmo da tela),
     açúcar visível na vila e "-X AÇÚCAR" nas máquinas da cozinha (o açúcar
