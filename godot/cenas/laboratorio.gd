@@ -16,7 +16,7 @@ const BAU_ABERTO := Itens.BAU_ABERTO
 const PASSO_X := 150.0
 const INICIO_X := 150.0
 const ESPACO_CAPITULO := 110.0
-const ALTURA_MAPA := 560.0
+const ALTURA_MAPA := 560.0  # mínimo; em tablet o mapa usa a altura toda
 const CORES_TIPO := {"excel": Color("#1B9E4B"), "word": Color("#1E6FD9")}
 
 var _rolagem: ScrollContainer
@@ -182,7 +182,7 @@ func _montar_mapa() -> void:
 				x += PASSO_X
 				k += 1
 		x += ESPACO_CAPITULO
-	_mapa.custom_minimum_size = Vector2(x, ALTURA_MAPA)
+	_mapa.custom_minimum_size = Vector2(x, _altura_mapa())
 
 	var linha := Line2D.new()
 	linha.points = caminho
@@ -205,8 +205,14 @@ func _montar_mapa() -> void:
 		_criar_bau(b)
 
 
+## Altura do mapa: a da tela (tirando o topo), no mínimo ALTURA_MAPA.
+func _altura_mapa() -> float:
+	return maxf(ALTURA_MAPA, get_viewport_rect().size.y - 130.0)
+
+
 func _altura(k: int) -> float:
-	return ALTURA_MAPA * 0.52 + sin(k * 0.8) * 150.0
+	var h := _altura_mapa()
+	return h * 0.52 + sin(k * 0.8) * h * 0.27
 
 
 func _faixa_capitulo(c: int, capitulo: Dictionary, x: float) -> void:

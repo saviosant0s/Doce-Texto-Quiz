@@ -131,6 +131,7 @@ func _montar() -> void:
 		var caixa := PanelContainer.new()
 		caixa.theme_type_variation = &"PainelEscuro"
 		caixa.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		caixa.size_flags_vertical = Control.SIZE_SHRINK_BEGIN  # em tablet não estica vazio
 		listas.add_child(caixa)
 		var lista := VBoxContainer.new()
 		lista.name = "Lista_" + periodo

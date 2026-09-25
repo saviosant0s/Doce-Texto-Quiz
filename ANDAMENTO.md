@@ -122,6 +122,12 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 27/09: **telas conferidas em 20:9 (celular comprido), 16:10 e 4:3
+  (tablets)**, além do 16:9 de sempre. Ajustes: mapa do laboratório usa a
+  altura toda; cartões de baús e painéis de missões não esticam vazios; tela
+  "Sobre" mostra o total de perguntas de verdade (estava "60"). Para repetir
+  o teste: `RES=1280x960 ferramentas/capturar.sh <tela>` (ou 1600x720,
+  1280x800).
 - 27/09: **Laboratório com 5 capítulos (40 fases)**. Novos: cap. 4
   "Planilhas de verdade" (SEERRO, PROCV, CONT.SES, SOMASES, marcadores,
   estilos de título, marca-texto; chefe "o caixa inteligente") e cap. 5

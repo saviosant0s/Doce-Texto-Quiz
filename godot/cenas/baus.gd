@@ -135,6 +135,7 @@ func _cartao_bau(tipo: String) -> PanelContainer:
 	var cartao := PanelContainer.new()
 	cartao.theme_type_variation = &"PainelEscuro"
 	cartao.custom_minimum_size = Vector2(340, 0)
+	cartao.size_flags_vertical = Control.SIZE_SHRINK_CENTER  # em tablet não estica vazio
 	var coluna := VBoxContainer.new()
 	coluna.alignment = BoxContainer.ALIGNMENT_CENTER
 	coluna.add_theme_constant_override("separation", 8)
