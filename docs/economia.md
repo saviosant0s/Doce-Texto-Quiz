@@ -25,7 +25,7 @@ para ganhar sem estudar. Valores no código: `scripts/jogo.gd`,
 | Laboratório: baú do chefe (3) | 50 a 90 × idem + 1 baú de OURO | 50 a 80 × idem |
 
 Baús: 15% de chance de "SORTE GRANDE" (tudo em dobro). O Laboratório inteiro
-(24 fases, 72 estrelas, 6 baús) dá cerca de 1.300 moedas e 1.000 de açúcar, só
+(40 fases, 120 estrelas, 10 baús; os números abaixo são dos 3 primeiros capítulos) dá cerca de 1.300 moedas e 1.000 de açúcar, só
 uma vez: ele também é estudo (fórmulas e formatação na prática). Revisão de
 27/09: os baús do laboratório dão menos moedas (cerca de 1.050 no total) e
 trazem um baú surpresa (pedaços de doces).

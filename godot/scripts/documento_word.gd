@@ -36,9 +36,10 @@ func _init(dados: Array = []) -> void:
 			palavras.append({
 				"texto": t, "negrito": bool(p.get("negrito", false)), "italico": bool(p.get("italico", false)),
 				"sublinhado": bool(p.get("sublinhado", false)), "cor": str(p.get("cor", "preto")),
-				"tamanho": int(p.get("tamanho", TAMANHO_PADRAO)),
+				"tamanho": int(p.get("tamanho", TAMANHO_PADRAO)), "realce": bool(p.get("realce", false)),
 			})
-		paragrafos.append({"alinhamento": str(p.get("alinhamento", "esquerda")), "palavras": palavras})
+		paragrafos.append({"alinhamento": str(p.get("alinhamento", "esquerda")), "palavras": palavras,
+			"lista": str(p.get("lista", "")), "estilo": str(p.get("estilo", "normal"))})
 	_inicial = paragrafos.duplicate(true)
 
 
@@ -207,10 +208,52 @@ func tamanho_atual() -> int:
 	return int(lista[0]["tamanho"]) if not lista.is_empty() else 0
 
 
+## Lista com marcadores (•) ou numerada (1. 2. 3.) nos parágrafos da seleção.
+## Apertar de novo tira a lista, como no Word.
+func mudar_lista(tipo: String) -> bool:
+	var lista := _paragrafos_selecionados()
+	if lista.is_empty():
+		return false
+	_guardar()
+	var todos := lista.all(func(p): return p["lista"] == tipo)
+	for p in lista:
+		p["lista"] = "" if todos else tipo
+	return true
+
+
+## Estilo do parágrafo: "titulo1", "titulo2" ou "normal" (como a galeria de
+## Estilos do Word: muda o jeito do parágrafo todo de uma vez).
+func mudar_estilo(estilo: String) -> bool:
+	var lista := _paragrafos_selecionados()
+	if lista.is_empty():
+		return false
+	_guardar()
+	for p in lista:
+		p["estilo"] = estilo
+	return true
+
+
+func estilo_atual() -> String:
+	var lista := _paragrafos_selecionados()
+	return lista[0]["estilo"] if not lista.is_empty() else ""
+
+
+func lista_atual() -> String:
+	var lista := _paragrafos_selecionados()
+	return lista[0]["lista"] if not lista.is_empty() else ""
+
+
 ## Atalhos do Word em português. Retorna o nome da ação ou "".
-static func acao_do_atalho(tecla: Key, ctrl: bool, shift: bool) -> String:
+static func acao_do_atalho(tecla: Key, ctrl: bool, shift: bool, alt := false) -> String:
 	if not ctrl:
 		return ""
+	if alt:
+		match tecla:
+			KEY_1: return "titulo1"
+			KEY_2: return "titulo2"
+		return ""
+	if shift and tecla == KEY_L:
+		return "marcadores"
 	match tecla:
 		KEY_N: return "negrito"
 		KEY_I: return "italico"
@@ -244,6 +287,12 @@ func fazer(acao: String) -> bool:
 			return mudar_tamanho(1)
 		"menor":
 			return mudar_tamanho(-1)
+		"realce":
+			return alternar("realce")
+		"marcadores", "numeros":
+			return mudar_lista(acao)
+		"titulo1", "titulo2", "normal":
+			return mudar_estilo(acao)
 	if acao.begins_with("cor_"):
 		return pintar(acao.trim_prefix("cor_"))
 	return false
@@ -256,8 +305,12 @@ func fazer(acao: String) -> bool:
 func _alvos(meta: Dictionary) -> Array:
 	var lista := []
 	var p := int(meta.get("paragrafo", -1))
+	var varios: Array = meta.get("paragrafos", [])
 	for i in paragrafos.size():
-		if p >= 0 and i != p:
+		if not varios.is_empty():
+			if not float(i) in varios.map(func(x): return float(x)):
+				continue
+		elif p >= 0 and i != p:
 			continue
 		for j in paragrafos[i]["palavras"].size():
 			var w: Dictionary = paragrafos[i]["palavras"][j]
@@ -277,18 +330,19 @@ static func _limpa(t: String) -> String:
 ## texto todo em negrito).
 func faltando(metas: Array) -> Array:
 	var faltas := []
-	var cobradas := {}  # propriedade -> {Vector2i: true}
+	# listas e estilos são sempre conferidos: só os parágrafos pedidos mudam
+	var cobradas := {"lista": {}, "estilo": {}}  # propriedade -> {Vector2i: true}
 	for meta in metas:
 		var alvos := _alvos(meta)
 		for prop in meta:
-			if prop in ["paragrafo", "palavras", "dica"]:
+			if prop in ["paragrafo", "paragrafos", "palavras", "dica"]:
 				continue
 			var ok := true
 			for a in alvos:
 				var w: Dictionary = paragrafos[a.x]["palavras"][a.y]
 				match prop:
-					"alinhamento":
-						ok = ok and paragrafos[a.x]["alinhamento"] == meta[prop]
+					"alinhamento", "lista", "estilo":
+						ok = ok and paragrafos[a.x][prop] == meta[prop]
 					"tamanho_min":
 						ok = ok and int(w["tamanho"]) >= int(meta[prop])
 					_:
@@ -304,6 +358,18 @@ func faltando(metas: Array) -> Array:
 	for prop in cobradas:
 		if prop == "alinhamento":
 			continue
+		if prop in ["lista", "estilo"]:
+			# listas e estilos só nos parágrafos pedidos
+			for i in paragrafos.size():
+				var pedido := false
+				for a in cobradas[prop]:
+					if a.x == i:
+						pedido = true
+						break
+				if not pedido and paragrafos[i][prop] != _inicial[i][prop]:
+					faltas.append("Só o que foi pedido deve mudar: confira o parágrafo %d." % (i + 1))
+					return faltas
+			continue
 		for i in paragrafos.size():
 			for j in paragrafos[i]["palavras"].size():
 				if cobradas[prop].has(Vector2i(i, j)):
@@ -318,6 +384,8 @@ static func _descrever(meta: Dictionary, prop: String) -> String:
 	var onde_texto := "o texto todo"
 	if meta.has("palavras"):
 		onde_texto = "\"" + " ".join(meta["palavras"]) + "\""
+	elif meta.has("paragrafos"):
+		onde_texto = "os parágrafos " + ", ".join(meta["paragrafos"].map(func(x): return str(int(x) + 1)))
 	elif int(meta.get("paragrafo", -1)) >= 0:
 		onde_texto = "o parágrafo %d" % (int(meta["paragrafo"]) + 1)
 	match prop:
@@ -333,6 +401,12 @@ static func _descrever(meta: Dictionary, prop: String) -> String:
 			return "Falta aumentar a fonte de %s (pelo menos %d)." % [onde_texto, int(meta[prop])]
 		"alinhamento":
 			return "Falta alinhar %s: %s." % [onde_texto, meta[prop]]
+		"realce":
+			return "Falta passar o marca-texto em %s." % onde_texto
+		"lista":
+			return "Falta pôr %s numa lista %s." % [onde_texto, "com marcadores" if meta[prop] == "marcadores" else "numerada"]
+		"estilo":
+			return "Falta aplicar o estilo %s em %s." % [{"titulo1": "Título 1", "titulo2": "Título 2", "normal": "Normal"}.get(meta[prop], meta[prop]), onde_texto]
 	return "Ainda falta algo."
 
 
@@ -354,9 +428,34 @@ func bbcode(p: int, escala := 2.0) -> String:
 			t = "[i]" + t + "[/i]"
 		if w["sublinhado"]:
 			t = "[u]" + t + "[/u]"
-		t = "[color=%s]%s[/color]" % [CORES.get(w["cor"], "#222222"), t]
-		t = "[font_size=%d]%s[/font_size]" % [roundi(int(w["tamanho"]) * escala), t]
+		var cor: String = CORES.get(w["cor"], "#222222")
+		var tamanho := int(w["tamanho"])
+		# estilos de título mudam o parágrafo todo (como no Word)
+		if par["estilo"] == "titulo1":
+			t = "[b]" + t + "[/b]"
+			cor = "#1F4E9C"
+			tamanho = maxi(tamanho, 20)
+		elif par["estilo"] == "titulo2":
+			t = "[b]" + t + "[/b]"
+			cor = "#2F6FD0"
+			tamanho = maxi(tamanho, 16)
+		t = "[color=%s]%s[/color]" % [cor, t]
+		t = "[font_size=%d]%s[/font_size]" % [roundi(tamanho * escala), t]
 		if selecionada(i):
 			t = "[bgcolor=#B9D7FF]%s[/bgcolor]" % t
+		elif w["realce"]:
+			t = "[bgcolor=#FFF06A]%s[/bgcolor]" % t
 		partes.append("[url=%d]%s[/url]" % [i, t])
-	return "[p align=%s]%s[/p]" % [alinhar_bb.get(par["alinhamento"], "left"), " ".join(partes)]
+	var marcador := ""
+	if par["lista"] == "marcadores":
+		marcador = "[font_size=%d]•  [/font_size]" % roundi(TAMANHO_PADRAO * escala)
+	elif par["lista"] == "numeros":
+		var numero := 1
+		var k := p - 1
+		while k >= 0 and paragrafos[k]["lista"] == "numeros":
+			numero += 1
+			k -= 1
+		marcador = "[font_size=%d]%d.  [/font_size]" % [roundi(TAMANHO_PADRAO * escala), numero]
+	# recuo da lista com espaços largos (o [indent] do RichTextLabel pula linha)
+	var recuo := "\u2003\u2003" if par["lista"] != "" else ""
+	return "[p align=%s]%s%s%s[/p]" % [alinhar_bb.get(par["alinhamento"], "left"), recuo, marcador, " ".join(partes)]

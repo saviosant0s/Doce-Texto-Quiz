@@ -58,7 +58,7 @@ personagens, fontes) é a mesma da versão original.
   comum a lendário). Cada doce companheiro dá um bônus que cresce com o nível
   (`scripts/baus.gd`, `companheiros.gd`, `missoes.gd`, `experiencia.gd`).
 - Laboratório do Office (prédio da vila e menu dos níveis): mapa de aventura
-  com 24 fases práticas de Excel (planilha com fórmulas de verdade, calculadas
+  com 40 fases práticas (5 capítulos) de Excel (planilha com fórmulas de verdade, calculadas
   por `scripts/formulas.gd`) e de Word (formatar uma página), chefes, estrelas
   e baús. Fases em `godot/dados/laboratorio.json`.
 - Doce Match (Fliperama da vila): jogo de combinar 3 com peças de informática

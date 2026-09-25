@@ -22,7 +22,8 @@ const ICONES_ACAO := {
 	"desfazer": preload("res://assets/icones/desfazer.svg"),
 }
 const FONTE_TEXTO := preload("res://assets/fontes/Nunito.ttf")
-const NOMES_FUNCOES := {"MEDIA": "MÉDIA", "MAXIMO": "MÁXIMO", "MINIMO": "MÍNIMO"}
+const NOMES_FUNCOES := {"MEDIA": "MÉDIA", "MAXIMO": "MÁXIMO", "MINIMO": "MÍNIMO", "INDICE": "ÍNDICE",
+	"MEDIASE": "MÉDIASE", "NUM.CARACT": "NÚM.CARACT", "MAIUSCULA": "MAIÚSCULA", "CONT.NUM": "CONT.NÚM"}
 const LARGURA_CABECALHO := 46.0
 const ALTURA_LINHA := 38.0
 
@@ -490,7 +491,7 @@ func _montar_excel() -> void:
 	_area.add_child(moldura)
 	var colunas := int(fase["planilha"]["colunas"])
 	var linhas := int(fase["planilha"]["linhas"])
-	var largura := clampf(760.0 / colunas, 118.0, 260.0)
+	var largura := clampf(760.0 / colunas, 104.0, 260.0)
 	_grade = GridContainer.new()
 	_grade.name = "Planilha"
 	_grade.columns = colunas + 1
@@ -627,6 +628,11 @@ func _atualizar_atalhos_excel() -> void:
 		var t := achado.get_string()
 		if not t in textos:
 			textos.append(t)
+	# VERDADEIRO e FALSO (PROCV exato, SES "o resto") também viram botões
+	var sem_textos := RegEx.create_from_string("\"[^\"]*\"").sub(resposta, "", true)
+	for palavra in ["VERDADEIRO", "FALSO"]:
+		if sem_textos.contains(palavra):
+			textos.append(palavra)
 	var itens: Array
 	if _numeros:
 		itens = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", "%"]
@@ -725,6 +731,31 @@ func _montar_word() -> void:
 		b.pressed.connect(fazer.bind("cor_" + cor))
 		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		fita.add_child(b)
+	var realce := Button.new()
+	realce.name = "Acao_realce"
+	realce.text = "ab"
+	realce.custom_minimum_size = Vector2(46, 46)
+	realce.focus_mode = Control.FOCUS_NONE
+	realce.tooltip_text = "Marca-texto (realce)"
+	realce.add_theme_font_size_override("font_size", 20)
+	realce.add_theme_color_override("font_color", Color("#222222"))
+	var estilo_realce := StyleBoxFlat.new()
+	estilo_realce.bg_color = Color("#FFF06A")
+	estilo_realce.set_corner_radius_all(8)
+	estilo_realce.set_border_width_all(4)
+	estilo_realce.border_color = Color.WHITE
+	for estado in ["normal", "hover", "pressed", "focus"]:
+		realce.add_theme_stylebox_override(estado, estilo_realce)
+	realce.pressed.connect(fazer.bind("realce"))
+	realce.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	fita.add_child(realce)
+	_botoes_acao["realce"] = realce
+	_separador(fita)
+	_botao_fita(fita, "marcadores", "•")
+	_botao_fita(fita, "numeros", "1.")
+	_botao_fita(fita, "titulo1", "T1")
+	_botao_fita(fita, "titulo2", "T2")
+	_botao_fita(fita, "normal", "T")
 	_separador(fita)
 	_botao_fita(fita, "tudo", "TUDO")
 	_botao_fita(fita, "desfazer", "")
@@ -758,11 +789,17 @@ func _montar_word() -> void:
 		rt.meta_clicked.connect(_tocar_palavra)
 		texto.add_child(rt)
 		_paragrafos.append(rt)
+	# a dica de como selecionar fica no painel da tarefa (a página usa todo o espaço)
+	if _feedback.get_parent().has_node("AjudaSelecao"):
+		return  # "DE NOVO": a dica já está no painel
 	var ajuda := Label.new()
+	ajuda.name = "AjudaSelecao"
 	ajuda.theme_type_variation = &"TextoClaro"
-	ajuda.add_theme_font_size_override("font_size", 17)
+	ajuda.add_theme_font_size_override("font_size", 16)
+	ajuda.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ajuda.text = "Toque numa palavra para selecionar; toque de novo para pegar o parágrafo todo."
-	_area.add_child(ajuda)
+	_feedback.get_parent().add_child(ajuda)
+	_feedback.get_parent().move_child(ajuda, _rotulo_pedido.get_index() + 1)
 
 
 ## Nunito com o peso pedido (o tema do jogo usa negrito em tudo; na página
@@ -830,10 +867,20 @@ func fazer(acao: String) -> void:
 
 func _desenhar_documento() -> void:
 	for i in _paragrafos.size():
-		_paragrafos[i].text = doc.bbcode(i)
+		# documentos com muitos parágrafos usam letra um pouco menor para caber
+		_paragrafos[i].text = doc.bbcode(i, 2.0 if doc.paragrafos.size() <= 5 else 1.7)
 	for acao in ["negrito", "italico", "sublinhado"]:
 		if _botoes_acao.has(acao):
 			_botoes_acao[acao].theme_type_variation = &"BotaoRoxo" if doc.ligado(acao) else &"Alternativa"
+	for acao in ["marcadores", "numeros"]:
+		if _botoes_acao.has(acao):
+			_botoes_acao[acao].theme_type_variation = &"BotaoRoxo" if doc.lista_atual() == acao else &"Alternativa"
+	for acao in ["titulo1", "titulo2", "normal"]:
+		if _botoes_acao.has(acao):
+			_botoes_acao[acao].theme_type_variation = &"BotaoRoxo" if doc.estilo_atual() == acao else &"Alternativa"
+	if _botoes_acao.has("realce"):
+		var borda: StyleBoxFlat = _botoes_acao["realce"].get_theme_stylebox("normal")
+		borda.border_color = Cores.ROXO_ESCURO if doc.ligado("realce") else Color.WHITE
 	var alinhamento := doc.alinhamento_atual()
 	for acao in DocumentoWord.ALINHAMENTOS:
 		if _botoes_acao.has(acao):
@@ -845,7 +892,7 @@ func _desenhar_documento() -> void:
 func _input(evento: InputEvent) -> void:
 	if fase.get("tipo", "") != "word" or not evento is InputEventKey or not evento.pressed or evento.echo:
 		return
-	var acao := DocumentoWord.acao_do_atalho(evento.keycode, evento.ctrl_pressed or evento.meta_pressed, evento.shift_pressed)
+	var acao := DocumentoWord.acao_do_atalho(evento.keycode, evento.ctrl_pressed or evento.meta_pressed, evento.shift_pressed, evento.alt_pressed)
 	if acao != "":
 		get_viewport().set_input_as_handled()
 		fazer(acao)

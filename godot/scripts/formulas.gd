@@ -18,6 +18,7 @@ extends RefCounted
 const DIV0 := "#DIV/0!"
 const NOME := "#NOME?"
 const VALOR := "#VALOR!"
+const ND := "#N/D"
 const INCOMPLETA := "INCOMPLETA"
 const VIRGULA := "VIRGULA"
 const ARGUMENTOS := "ARGUMENTOS"
@@ -27,6 +28,7 @@ const EXPLICACOES := {
 	DIV0: "#DIV/0! aparece quando a fórmula divide por zero (ou por uma célula vazia).",
 	NOME: "#NOME? aparece quando o Excel não conhece um nome: confira como a função se escreve.",
 	VALOR: "#VALOR! aparece quando a conta recebe o tipo errado, como texto numa soma com +.",
+	ND: "#N/D aparece quando a busca (PROCV, CORRESP) não acha o valor procurado. Confira se ele está na primeira coluna.",
 	INCOMPLETA: "A fórmula está incompleta: confira os parênteses, as aspas e se falta algum número ou célula.",
 	VIRGULA: "No Excel em português, os argumentos são separados por ; (ponto e vírgula). A vírgula é das casas decimais.",
 	ARGUMENTOS: "A função recebeu argumentos de menos ou de mais. Confira o que ela pede.",
@@ -42,6 +44,8 @@ const FUNCOES := {
 	"ARRED": [2, 2], "ABS": [1, 1], "INT": [1, 1], "RAIZ": [1, 1],
 	"CONCATENAR": [1, -1], "CONCAT": [1, -1], "MAIUSCULA": [1, 1], "MINUSCULA": [1, 1],
 	"ESQUERDA": [1, 2], "DIREITA": [1, 2], "NUM.CARACT": [1, 1],
+	"PROCV": [3, 4], "SEERRO": [2, 2], "SES": [2, -1], "CONT.SES": [2, -1], "SOMASES": [3, -1],
+	"INDICE": [2, 3], "CORRESP": [2, 3],
 }
 
 
@@ -58,6 +62,11 @@ class Erro:
 ## Valores de um intervalo (A1:B3), na ordem linha por linha.
 class Intervalo:
 	var valores: Array = []
+	var linhas := 0
+	var colunas := 0
+
+	func em(linha: int, coluna: int) -> Variant:
+		return valores[linha * colunas + coluna]
 
 
 var _tokens: Array = []
@@ -380,6 +389,8 @@ func _intervalo(de: String, ate: String) -> Intervalo:
 	var a := posicao(de)
 	var b := posicao(ate)
 	var saida := Intervalo.new()
+	saida.linhas = absi(a.y - b.y) + 1
+	saida.colunas = absi(a.x - b.x) + 1
 	for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
 		for x in range(mini(a.x, b.x), maxi(a.x, b.x) + 1):
 			saida.valores.append(_celulas.get(nome_celula(Vector2i(x, y))))
@@ -604,6 +615,96 @@ func _funcao(nome: String, args: Array) -> Variant:
 			if not args[0] is Intervalo:
 				return Erro.new(VALOR)
 			return float(args[0].valores.filter(func(v): return v == null or (v is String and v == "")).size())
+		"SEERRO":
+			return args[1] if args[0] is Erro else args[0]
+		"SES":
+			if args.size() % 2 != 0:
+				return _falhar(ARGUMENTOS)
+			for i in range(0, args.size(), 2):
+				var cond: Variant = _verdade(args[i])
+				if cond is Erro:
+					return cond
+				if cond:
+					return args[i + 1]
+			return Erro.new(ND)
+		"CONT.SES", "SOMASES":
+			var inicio := 1 if nome == "SOMASES" else 0
+			if (args.size() - inicio) % 2 != 0:
+				return _falhar(ARGUMENTOS)
+			for a in args:
+				if a is Erro:
+					return a
+			var base: Intervalo = args[0] if args[0] is Intervalo else null
+			if base == null:
+				return Erro.new(VALOR)
+			var total := 0.0
+			var quantos := 0
+			for i in base.valores.size():
+				var todas := true
+				for j in range(inicio, args.size(), 2):
+					if not args[j] is Intervalo or args[j].valores.size() != base.valores.size():
+						return Erro.new(VALOR)
+					if not _atende(args[j].valores[i], args[j + 1]):
+						todas = false
+						break
+				if todas:
+					quantos += 1
+					var v: Variant = base.valores[i]
+					if v is float or v is int:
+						total += float(v)
+			return total if nome == "SOMASES" else float(quantos)
+		"PROCV":
+			if args[0] is Erro:
+				return args[0]
+			if not args[1] is Intervalo:
+				return Erro.new(VALOR)
+			var tabela: Intervalo = args[1]
+			var coluna: Variant = _numero(args[2])
+			if coluna is Erro:
+				return coluna
+			var c := int(coluna) - 1
+			if c < 0 or c >= tabela.colunas:
+				return Erro.new(VALOR)
+			var aproximado: bool = args.size() < 4 or _verdade(args[3]) == true
+			var achou := -1
+			for linha in tabela.linhas:
+				var chave: Variant = tabela.em(linha, 0)
+				if chave == null:
+					continue
+				if not aproximado:
+					if _ordem(chave, args[0]) == 0:
+						achou = linha
+						break
+				elif _tipo(chave) == _tipo(args[0]) and _ordem(chave, args[0]) <= 0:
+					achou = linha  # aproximado: o maior que não passa do valor
+			if achou < 0:
+				return Erro.new(ND)
+			var achado: Variant = tabela.em(achou, c)
+			return achado if achado != null else 0.0  # célula vazia volta como 0, como no Excel
+		"INDICE":
+			if not args[0] is Intervalo:
+				return Erro.new(VALOR)
+			var t: Intervalo = args[0]
+			var l: Variant = _numero(args[1])
+			var col: Variant = _numero(args[2]) if args.size() == 3 else 1.0
+			if l is Erro or col is Erro:
+				return l if l is Erro else col
+			# numa linha só (A1:E1), o 2º argumento é a coluna
+			if t.linhas == 1 and args.size() == 2:
+				col = l
+				l = 1.0
+			if int(l) < 1 or int(l) > t.linhas or int(col) < 1 or int(col) > t.colunas:
+				return Erro.new(VALOR)
+			return t.em(int(l) - 1, int(col) - 1)
+		"CORRESP":
+			if args[0] is Erro:
+				return args[0]
+			if not args[1] is Intervalo:
+				return Erro.new(VALOR)
+			for i in args[1].valores.size():
+				if args[1].valores[i] != null and _ordem(args[1].valores[i], args[0]) == 0:
+					return float(i + 1)
+			return Erro.new(ND)
 		"CONT.SE", "SOMASE", "MEDIASE":
 			if not args[0] is Intervalo or (args.size() == 3 and not args[2] is Intervalo):
 				return Erro.new(VALOR)

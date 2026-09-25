@@ -122,6 +122,14 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 27/09: **Laboratório com 5 capítulos (40 fases)**. Novos: cap. 4
+  "Planilhas de verdade" (SEERRO, PROCV, CONT.SES, SOMASES, marcadores,
+  estilos de título, marca-texto; chefe "o caixa inteligente") e cap. 5
+  "Mestre do Office" (porcentagem, SES, ÍNDICE+CORRESP, texto com &, lista
+  numerada, capa de trabalho; chefe final "o jornal da escola", 5 tarefas).
+  O motor de fórmulas ganhou PROCV, SEERRO, SES, CONT.SES, SOMASES, ÍNDICE,
+  CORRESP e o erro #N/D; o Word ganhou listas (• e 1.), estilos Título 1/2
+  e marca-texto, com botões e atalhos (Ctrl+Shift+L, Ctrl+Alt+1/2).
 - 27/09 (pedido "pode fazer tudo" antes da 0.10.1):
   - **Dois APKs**: 64 bits (principal) e 32 bits (celulares antigos), cada
     um com cerca de metade do tamanho; página de download em `apk/index.html`

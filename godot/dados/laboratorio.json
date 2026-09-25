@@ -939,6 +939,767 @@
           ]
         }
       ]
+    },
+    {
+      "titulo": "PLANILHAS DE VERDADE",
+      "subtitulo": "PROCV, SEERRO, SOMASES, listas e estilos",
+      "fases": [
+        {
+          "id": "c4f1",
+          "tipo": "excel",
+          "titulo": "Sem erro na tela (SEERRO)",
+          "chefe": false,
+          "planilha": {
+            "colunas": 4,
+            "linhas": 4,
+            "celulas": {
+              "A1": "Doce",
+              "B1": "Vendas",
+              "C1": "Dias",
+              "D1": "Por dia",
+              "A2": "Brigadeiro",
+              "B2": 30,
+              "C2": 5,
+              "A3": "Cupcake",
+              "B3": 12,
+              "C3": 0
+            }
+          },
+          "passos": [
+            {
+              "celula": "D2",
+              "pedido": "Quantos brigadeiros foram vendidos por dia? Em D2, divida B2 por C2.",
+              "resposta": "=B2/C2",
+              "dica": "=B2/C2.",
+              "explicacao": "30 brigadeiros em 5 dias: 6 por dia."
+            },
+            {
+              "celula": "D3",
+              "pedido": "O cupcake ficou 0 dias à venda, e B3/C3 daria #DIV/0!. Em D3, use SEERRO para mostrar 0 no lugar do erro.",
+              "resposta": "=SEERRO(B3/C3;0)",
+              "dica": "=SEERRO(B3/C3;0): primeiro a conta, depois o que mostrar se der erro.",
+              "explicacao": "SEERRO deixa a planilha limpa: no lugar do erro aparece o que você escolher.",
+              "exige": [
+                "SEERRO"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "c4f2",
+          "tipo": "word",
+          "titulo": "Lista com marcadores",
+          "chefe": false,
+          "documento": [
+            {
+              "texto": "Ingredientes do brigadeiro"
+            },
+            {
+              "texto": "1 lata de leite condensado"
+            },
+            {
+              "texto": "1 colher de manteiga"
+            },
+            {
+              "texto": "4 colheres de chocolate em pó"
+            },
+            {
+              "texto": "Granulado para enfeitar"
+            }
+          ],
+          "passos": [
+            {
+              "pedido": "Transforme os 4 ingredientes (não o título) numa lista com marcadores.",
+              "metas": [
+                {
+                  "paragrafos": [
+                    1,
+                    2,
+                    3,
+                    4
+                  ],
+                  "lista": "marcadores"
+                }
+              ],
+              "dica": "Toque duas vezes em cada ingrediente e depois no botão • (atalho Ctrl+Shift+L).",
+              "explicacao": "Marcadores deixam listas fáceis de ler. No Word ficam na guia Página Inicial."
+            }
+          ]
+        },
+        {
+          "id": "c4f3",
+          "tipo": "excel",
+          "titulo": "PROCV: buscar na tabela",
+          "chefe": false,
+          "planilha": {
+            "colunas": 5,
+            "linhas": 7,
+            "celulas": {
+              "A1": "Doce",
+              "B1": "Preço",
+              "D1": "Procurar",
+              "E1": "Preço",
+              "A2": "Brigadeiro",
+              "B2": 2,
+              "D2": "Cupcake",
+              "A3": "Beijinho",
+              "B3": 2,
+              "A4": "Cupcake",
+              "B4": 6,
+              "A5": "Pudim",
+              "B5": 8,
+              "A6": "Pirulito",
+              "B6": 1
+            }
+          },
+          "passos": [
+            {
+              "celula": "E2",
+              "pedido": "Qual é o preço do doce escrito em D2? Use PROCV em E2 para buscar na tabela A2:B6.",
+              "resposta": "=PROCV(D2;A2:B6;2;FALSO)",
+              "dica": "=PROCV(D2;A2:B6;2;FALSO): o que procurar; onde; qual coluna trazer; FALSO = exato.",
+              "explicacao": "PROCV procura na primeira coluna da tabela e traz o valor da coluna pedida. Troque D2 e o preço muda sozinho!",
+              "exige": [
+                "PROCV"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "c4f4",
+          "tipo": "word",
+          "titulo": "Estilos de título",
+          "chefe": false,
+          "documento": [
+            {
+              "texto": "Relatório da Feira"
+            },
+            {
+              "texto": "Como foi a feira"
+            },
+            {
+              "texto": "A feira de doces arrecadou dinheiro para a formatura."
+            },
+            {
+              "texto": "Próximos passos"
+            },
+            {
+              "texto": "Vamos repetir a feira no próximo mês."
+            }
+          ],
+          "passos": [
+            {
+              "pedido": "Aplique o estilo Título 1 no título principal e Título 2 nos dois subtítulos (\"Como foi a feira\" e \"Próximos passos\").",
+              "metas": [
+                {
+                  "paragrafo": 0,
+                  "estilo": "titulo1"
+                },
+                {
+                  "paragrafos": [
+                    1,
+                    3
+                  ],
+                  "estilo": "titulo2"
+                }
+              ],
+              "dica": "Toque no parágrafo e use T1 ou T2 (atalhos Ctrl+Alt+1 e Ctrl+Alt+2).",
+              "explicacao": "Com os estilos de título, o Word monta o sumário sozinho e o documento fica padronizado."
+            }
+          ]
+        },
+        {
+          "id": "c4f5",
+          "tipo": "excel",
+          "titulo": "Contar com duas condições",
+          "chefe": false,
+          "planilha": {
+            "colunas": 4,
+            "linhas": 8,
+            "celulas": {
+              "A1": "Doce",
+              "B1": "Turno",
+              "D1": "Brigadeiros de manhã",
+              "A2": "Brigadeiro",
+              "B2": "Manhã",
+              "A3": "Cupcake",
+              "B3": "Tarde",
+              "A4": "Brigadeiro",
+              "B4": "Tarde",
+              "A5": "Brigadeiro",
+              "B5": "Manhã",
+              "A6": "Pudim",
+              "B6": "Manhã",
+              "A7": "Cupcake",
+              "B7": "Manhã"
+            }
+          },
+          "passos": [
+            {
+              "celula": "D2",
+              "pedido": "Quantos pedidos foram de brigadeiro E de manhã? Use CONT.SES em D2.",
+              "resposta": "=CONT.SES(A2:A7;\"Brigadeiro\";B2:B7;\"Manhã\")",
+              "dica": "=CONT.SES(A2:A7;\"Brigadeiro\";B2:B7;\"Manhã\") — pares de onde procurar e o quê.",
+              "explicacao": "CONT.SES conta só as linhas que atendem a TODAS as condições.",
+              "exige": [
+                "CONT.SES"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "c4f6",
+          "tipo": "word",
+          "titulo": "Marca-texto",
+          "chefe": false,
+          "documento": [
+            {
+              "texto": "Recado da Professora"
+            },
+            {
+              "texto": "A prova de Excel será na sexta-feira e vale dois pontos na média."
+            }
+          ],
+          "passos": [
+            {
+              "pedido": "Passe o marca-texto nas palavras \"sexta-feira\", \"dois\" e \"pontos\".",
+              "metas": [
+                {
+                  "paragrafo": 1,
+                  "palavras": [
+                    "sexta-feira",
+                    "dois",
+                    "pontos"
+                  ],
+                  "realce": true
+                }
+              ],
+              "dica": "Toque em cada palavra e no botão amarelo \"ab\".",
+              "explicacao": "O realce funciona como um marca-texto de verdade: chama atenção sem mudar a letra."
+            }
+          ]
+        },
+        {
+          "id": "c4f7",
+          "tipo": "excel",
+          "titulo": "Somar com duas condições",
+          "chefe": false,
+          "planilha": {
+            "colunas": 5,
+            "linhas": 7,
+            "celulas": {
+              "A1": "Vendedor",
+              "B1": "Doce",
+              "C1": "Quantidade",
+              "E1": "Brigadeiros da Ana",
+              "A2": "Ana",
+              "B2": "Brigadeiro",
+              "C2": 10,
+              "A3": "Beto",
+              "B3": "Brigadeiro",
+              "C3": 6,
+              "A4": "Ana",
+              "B4": "Cupcake",
+              "C4": 4,
+              "A5": "Ana",
+              "B5": "Brigadeiro",
+              "C5": 5,
+              "A6": "Beto",
+              "B6": "Cupcake",
+              "C6": 3
+            }
+          },
+          "passos": [
+            {
+              "celula": "E2",
+              "pedido": "Quantos brigadeiros a Ana vendeu? Use SOMASES em E2.",
+              "resposta": "=SOMASES(C2:C6;A2:A6;\"Ana\";B2:B6;\"Brigadeiro\")",
+              "dica": "=SOMASES(C2:C6;A2:A6;\"Ana\";B2:B6;\"Brigadeiro\") — primeiro o que somar, depois os pares de condição.",
+              "explicacao": "SOMASES soma só as linhas que atendem a todas as condições: 10 + 5.",
+              "exige": [
+                "SOMASES"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "c4f8",
+          "tipo": "excel",
+          "titulo": "Chefe: o caixa inteligente",
+          "chefe": true,
+          "planilha": {
+            "colunas": 7,
+            "linhas": 8,
+            "celulas": {
+              "A1": "Doce",
+              "B1": "Preço",
+              "D1": "Pedido",
+              "E1": "Qtd",
+              "F1": "Preço",
+              "G1": "Total",
+              "A2": "Brigadeiro",
+              "B2": 2,
+              "D2": "Pudim",
+              "E2": 3,
+              "A3": "Cupcake",
+              "B3": 6,
+              "D3": "Sorvete",
+              "E3": 2,
+              "A4": "Pudim",
+              "B4": 8,
+              "A5": "Beijinho",
+              "B5": 2,
+              "A7": "Mais de 5"
+            }
+          },
+          "passos": [
+            {
+              "celula": "F2",
+              "pedido": "O caixa precisa achar os preços sozinho! Em F2, busque o preço do pedido D2 na tabela A2:B5.",
+              "resposta": "=PROCV(D2;A2:B5;2;FALSO)",
+              "dica": "=PROCV(D2;A2:B5;2;FALSO).",
+              "explicacao": "Pudim custa 8.",
+              "exige": [
+                "PROCV"
+              ]
+            },
+            {
+              "celula": "G2",
+              "pedido": "Agora o total do pedido em G2: preço vezes quantidade.",
+              "resposta": "=F2*E2",
+              "dica": "=F2*E2.",
+              "explicacao": "3 pudins de 8 = 24."
+            },
+            {
+              "celula": "F3",
+              "pedido": "Sorvete não está na tabela, e o PROCV daria #N/D. Em F3, use SEERRO com PROCV para mostrar 0.",
+              "resposta": "=SEERRO(PROCV(D3;A2:B5;2;FALSO);0)",
+              "dica": "=SEERRO(PROCV(D3;A2:B5;2;FALSO);0).",
+              "explicacao": "Uma função dentro da outra: o PROCV busca e o SEERRO segura o erro.",
+              "exige": [
+                "SEERRO",
+                "PROCV"
+              ]
+            },
+            {
+              "celula": "B7",
+              "pedido": "Por fim: quantos doces custam mais de 5? Use CONT.SE em B7.",
+              "resposta": "=CONT.SE(B2:B5;\">5\")",
+              "dica": "=CONT.SE(B2:B5;\">5\").",
+              "explicacao": "Você derrotou o chefe! Esse caixa acha preços e não trava com erro.",
+              "exige": [
+                "CONT.SE"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "titulo": "MESTRE DO OFFICE",
+      "subtitulo": "SES, ÍNDICE, porcentagem e o jornal da escola",
+      "fases": [
+        {
+          "id": "c5f1",
+          "tipo": "excel",
+          "titulo": "Porcentagem de aumento",
+          "chefe": false,
+          "planilha": {
+            "colunas": 4,
+            "linhas": 4,
+            "celulas": {
+              "A1": "Doce",
+              "B1": "2023",
+              "C1": "2024",
+              "D1": "Aumento %",
+              "A2": "Brigadeiro",
+              "B2": 100,
+              "C2": 125,
+              "A3": "Cupcake",
+              "B3": 40,
+              "C3": 46
+            }
+          },
+          "passos": [
+            {
+              "celula": "D2",
+              "pedido": "As vendas de brigadeiro subiram de 100 para 125. Em D2, calcule o aumento em %: (C2-B2)/B2*100.",
+              "resposta": "=(C2-B2)/B2*100",
+              "dica": "=(C2-B2)/B2*100 — os parênteses fazem a subtração primeiro.",
+              "explicacao": "Subiu 25 em cima de 100: aumento de 25%."
+            },
+            {
+              "celula": "D3",
+              "pedido": "Agora o aumento do cupcake em D3.",
+              "resposta": "=(C3-B3)/B3*100",
+              "dica": "Mesma fórmula na linha 3.",
+              "explicacao": "De 40 para 46: 15% a mais."
+            }
+          ]
+        },
+        {
+          "id": "c5f2",
+          "tipo": "word",
+          "titulo": "Lista numerada",
+          "chefe": false,
+          "documento": [
+            {
+              "texto": "Como fazer brigadeiro"
+            },
+            {
+              "texto": "Misture tudo na panela"
+            },
+            {
+              "texto": "Mexa no fogo baixo"
+            },
+            {
+              "texto": "Espere esfriar"
+            },
+            {
+              "texto": "Enrole as bolinhas"
+            }
+          ],
+          "passos": [
+            {
+              "pedido": "Numere os 4 passos da receita (não o título).",
+              "metas": [
+                {
+                  "paragrafos": [
+                    1,
+                    2,
+                    3,
+                    4
+                  ],
+                  "lista": "numeros"
+                }
+              ],
+              "dica": "Toque duas vezes em cada passo e no botão \"1.\".",
+              "explicacao": "Listas numeradas mostram a ordem das coisas. Se um passo mudar de lugar, os números se ajustam."
+            }
+          ]
+        },
+        {
+          "id": "c5f3",
+          "tipo": "excel",
+          "titulo": "Conceitos com SES",
+          "chefe": false,
+          "planilha": {
+            "colunas": 3,
+            "linhas": 5,
+            "celulas": {
+              "A1": "Aluno",
+              "B1": "Nota",
+              "C1": "Conceito",
+              "A2": "Ana",
+              "B2": 9.5,
+              "A3": "Beto",
+              "B3": 7,
+              "A4": "Caio",
+              "B4": 4
+            }
+          },
+          "passos": [
+            {
+              "celula": "C2",
+              "pedido": "Conceito A para nota 9 ou mais, B para 6 ou mais, C para o resto. Em C2, use SES.",
+              "resposta": "=SES(B2>=9;\"A\";B2>=6;\"B\";VERDADEIRO;\"C\")",
+              "dica": "=SES(B2>=9;\"A\";B2>=6;\"B\";VERDADEIRO;\"C\") — o VERDADEIRO no fim pega todo o resto.",
+              "explicacao": "SES testa as condições em ordem e para na primeira verdadeira.",
+              "exige": [
+                "SES"
+              ]
+            },
+            {
+              "celula": "C4",
+              "pedido": "Agora o conceito do Caio em C4.",
+              "resposta": "=SES(B4>=9;\"A\";B4>=6;\"B\";VERDADEIRO;\"C\")",
+              "dica": "A mesma fórmula, com B4.",
+              "explicacao": "Nota 4: nenhuma das duas primeiras vale, então fica C.",
+              "exige": [
+                "SES"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "c5f4",
+          "tipo": "word",
+          "titulo": "Capa do trabalho",
+          "chefe": false,
+          "documento": [
+            {
+              "texto": "Trabalho de Informática"
+            },
+            {
+              "texto": "O Word e o Excel na escola"
+            },
+            {
+              "texto": "Aluno: Pedro Souza"
+            },
+            {
+              "texto": "Turma: 8º ano B"
+            }
+          ],
+          "passos": [
+            {
+              "pedido": "Monte a capa: título com Título 1 e centralizado; subtítulo com Título 2 e centralizado; nome e turma alinhados à direita.",
+              "metas": [
+                {
+                  "paragrafo": 0,
+                  "estilo": "titulo1",
+                  "alinhamento": "centro"
+                },
+                {
+                  "paragrafo": 1,
+                  "estilo": "titulo2",
+                  "alinhamento": "centro"
+                },
+                {
+                  "paragrafos": [
+                    2,
+                    3
+                  ],
+                  "alinhamento": "direita"
+                }
+              ],
+              "dica": "Faça um parágrafo de cada vez: T1 + centralizar; T2 + centralizar; depois alinhe os dois últimos à direita.",
+              "explicacao": "Uma capa bem feita já mostra capricho antes de ler o trabalho."
+            }
+          ]
+        },
+        {
+          "id": "c5f5",
+          "tipo": "excel",
+          "titulo": "Quem vendeu mais",
+          "chefe": false,
+          "planilha": {
+            "colunas": 4,
+            "linhas": 6,
+            "celulas": {
+              "A1": "Vendedor",
+              "B1": "Vendas",
+              "D1": "Maior venda",
+              "A2": "Ana",
+              "B2": 30,
+              "A3": "Beto",
+              "B3": 45,
+              "D3": "Quem vendeu",
+              "A4": "Caio",
+              "B4": 20,
+              "A5": "Duda",
+              "B5": 38
+            }
+          },
+          "passos": [
+            {
+              "celula": "D2",
+              "pedido": "Qual foi a maior venda? Em D2, use MÁXIMO.",
+              "resposta": "=MÁXIMO(B2:B5)",
+              "dica": "=MÁXIMO(B2:B5).",
+              "explicacao": "45 foi a maior venda.",
+              "exige": [
+                "MAXIMO"
+              ]
+            },
+            {
+              "celula": "D4",
+              "pedido": "E quem vendeu isso? Em D4, use ÍNDICE com CORRESP: CORRESP acha a posição de D2 em B2:B5 e ÍNDICE traz o nome dessa posição.",
+              "resposta": "=ÍNDICE(A2:A5;CORRESP(D2;B2:B5;0))",
+              "dica": "=ÍNDICE(A2:A5;CORRESP(D2;B2:B5;0)) (pode ser INDICE, sem acento).",
+              "explicacao": "CORRESP deu a posição 2; ÍNDICE trouxe o 2º nome: Beto. Essa dupla é famosa no Excel!",
+              "exige": [
+                "INDICE",
+                "CORRESP"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "c5f6",
+          "tipo": "excel",
+          "titulo": "Texto com números",
+          "chefe": false,
+          "planilha": {
+            "colunas": 4,
+            "linhas": 5,
+            "celulas": {
+              "A1": "Dia",
+              "B1": "Doces",
+              "D1": "Frase",
+              "A2": "Segunda",
+              "B2": 10,
+              "A3": "Terça",
+              "B3": 12,
+              "A4": "Quarta",
+              "B4": 8
+            }
+          },
+          "passos": [
+            {
+              "celula": "D2",
+              "pedido": "Monte a frase \"Total: 30 doces\" em D2, juntando texto com a SOMA de B2:B4.",
+              "resposta": "=\"Total: \"&SOMA(B2:B4)&\" doces\"",
+              "dica": "=\"Total: \"&SOMA(B2:B4)&\" doces\" — o & junta os pedaços.",
+              "explicacao": "Se uma venda mudar, a frase muda junto. Ótimo para relatórios!",
+              "exige": [
+                "SOMA"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "c5f7",
+          "tipo": "word",
+          "titulo": "Regras em destaque",
+          "chefe": false,
+          "documento": [
+            {
+              "texto": "Regras do Laboratório"
+            },
+            {
+              "texto": "Nunca coma nada no laboratório de ciências."
+            },
+            {
+              "texto": "Lave as mãos antes e depois das aulas."
+            }
+          ],
+          "passos": [
+            {
+              "pedido": "Título com Título 1; a palavra \"Nunca\" em negrito e vermelho; \"Lave\" e \"mãos\" com marca-texto.",
+              "metas": [
+                {
+                  "paragrafo": 0,
+                  "estilo": "titulo1"
+                },
+                {
+                  "paragrafo": 1,
+                  "palavras": [
+                    "Nunca"
+                  ],
+                  "negrito": true,
+                  "cor": "vermelho"
+                },
+                {
+                  "paragrafo": 2,
+                  "palavras": [
+                    "Lave",
+                    "mãos"
+                  ],
+                  "realce": true
+                }
+              ],
+              "dica": "Faça por partes: T1 no título; toque em \"Nunca\", N e bolinha vermelha; depois marca-texto em \"Lave\" e \"mãos\".",
+              "explicacao": "Cada tipo de destaque tem seu uso: vermelho para perigo, marca-texto para lembrar."
+            }
+          ]
+        },
+        {
+          "id": "c5f8",
+          "tipo": "word",
+          "titulo": "Chefe final: o jornal da escola",
+          "chefe": true,
+          "documento": [
+            {
+              "texto": "Jornal da Turma"
+            },
+            {
+              "texto": "Feira de doces é sucesso"
+            },
+            {
+              "texto": "A turma vendeu mais de duzentos doces e bateu o recorde da escola."
+            },
+            {
+              "texto": "Mais vendidos"
+            },
+            {
+              "texto": "Brigadeiro"
+            },
+            {
+              "texto": "Cupcake"
+            },
+            {
+              "texto": "Pudim"
+            },
+            {
+              "texto": "Parabéns a todos!"
+            }
+          ],
+          "passos": [
+            {
+              "pedido": "O jornal chegou sem formatação! Primeiro, o nome do jornal: Título 1 e centralizado.",
+              "metas": [
+                {
+                  "paragrafo": 0,
+                  "estilo": "titulo1",
+                  "alinhamento": "centro"
+                }
+              ],
+              "dica": "Toque duas vezes em \"Jornal da Turma\", depois T1 e centralizar.",
+              "explicacao": "Isso! O nome do jornal em destaque."
+            },
+            {
+              "pedido": "Agora as manchetes \"Feira de doces é sucesso\" e \"Mais vendidos\" com Título 2.",
+              "metas": [
+                {
+                  "paragrafos": [
+                    1,
+                    3
+                  ],
+                  "estilo": "titulo2"
+                }
+              ],
+              "dica": "Um de cada vez: toque duas vezes e T2.",
+              "explicacao": "As manchetes organizam o jornal."
+            },
+            {
+              "pedido": "Justifique o texto da notícia e passe marca-texto na palavra \"recorde\".",
+              "metas": [
+                {
+                  "paragrafo": 2,
+                  "alinhamento": "justificado"
+                },
+                {
+                  "paragrafo": 2,
+                  "palavras": [
+                    "recorde"
+                  ],
+                  "realce": true
+                }
+              ],
+              "dica": "Toque na notícia e justifique (Ctrl+J); depois toque em \"recorde\" e no \"ab\".",
+              "explicacao": "Texto justificado fica com cara de jornal."
+            },
+            {
+              "pedido": "Numere os três mais vendidos (Brigadeiro, Cupcake, Pudim).",
+              "metas": [
+                {
+                  "paragrafos": [
+                    4,
+                    5,
+                    6
+                  ],
+                  "lista": "numeros"
+                }
+              ],
+              "dica": "Toque duas vezes em cada doce e no botão \"1.\".",
+              "explicacao": "Um ranking numerado!"
+            },
+            {
+              "pedido": "Por fim, \"Parabéns a todos!\" alinhado à direita, em negrito e roxo.",
+              "metas": [
+                {
+                  "paragrafo": 7,
+                  "alinhamento": "direita",
+                  "negrito": true,
+                  "cor": "roxo"
+                }
+              ],
+              "dica": "Toque duas vezes na última linha, alinhe à direita, N e a bolinha roxa.",
+              "explicacao": "Você derrotou o chefe final! Agora você é MESTRE DO OFFICE!"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -938,6 +938,11 @@ func _testar_formulas() -> void:
 		["=ESQUERDA(A2;4)", "Brig"], ["=NÚM.CARACT(A1)", 4.0], ["=D2+1", 8.0], ["=$B$2*C2", 30.0],
 		["=B$2+$B3", 20.0], ["=B2>=12", true], ["=A2=\"brigadeiro\"", true], ["=Z9+1", 1.0],
 		["=\"a\"\"b\"", "a\"b"], ["=VERDADEIRO", true],
+		["=PROCV(\"Cupcake\";A2:B4;2;FALSO)", 8.0], ["=PROCV(\"cupcake\";A2:C4;3;FALSO)", 0.0], ["=PROCV(\"Cupcake\";A2:D4;4;FALSO)", 0.0], ["=SEERRO(B2/C3;-1)", -1.0],
+		["=SEERRO(B2/C2;0)", 4.8], ["=SES(B2>20;\"a\";B2>10;\"b\";VERDADEIRO;\"c\")", "b"],
+		["=CONT.SES(A2:A4;\"Brigadeiro\";B2:B4;\">=10\")", 2.0], ["=SOMASES(B2:B4;A2:A4;\"Brigadeiro\";B2:B4;\">10\")", 12.0],
+		["=ÍNDICE(A2:A4;2)", "Cupcake"], ["=INDICE(A1:B4;3;2)", 8.0], ["=CORRESP(10;B2:B4;0)", 3.0],
+		["=ÍNDICE(A2:A4;CORRESP(MÁXIMO(B2:B4);B2:B4;0))", "Brigadeiro"],
 	]
 	for caso in casos:
 		var r: Variant = Formulas.calcular(caso[0], c)
@@ -949,6 +954,8 @@ func _testar_formulas() -> void:
 		["=SOMA(B2,B3)", Formulas.VIRGULA], ["=SE(B2)", Formulas.ARGUMENTOS], ["=", Formulas.INCOMPLETA],
 		["=B2+", Formulas.INCOMPLETA], ["=\"abc", Formulas.INCOMPLETA], ["=B2:B4", Formulas.VALOR],
 		["=B2 B3", Formulas.INCOMPLETA], ["=SOMA", Formulas.NOME], ["=SE(A2;1;2)", Formulas.VALOR],
+		["=PROCV(\"Sorvete\";A2:B4;2;FALSO)", Formulas.ND], ["=CORRESP(99;B2:B4;0)", Formulas.ND],
+		["=SES(B2>99;1)", Formulas.ND], ["=PROCV(\"Cupcake\";A2:B4;5;FALSO)", Formulas.VALOR],
 	]
 	for caso in erros:
 		var r: Variant = Formulas.calcular(caso[0], c)
@@ -995,30 +1002,64 @@ func _testar_documento_word() -> void:
 	verificar(DocumentoWord.acao_do_atalho(KEY_N, true, false) == "negrito" and DocumentoWord.acao_do_atalho(KEY_E, true, false) == "centro"
 		and DocumentoWord.acao_do_atalho(KEY_T, true, false) == "tudo" and DocumentoWord.acao_do_atalho(KEY_N, false, false) == "", "atalhos do Word em português")
 	verificar(doc.bbcode(0).begins_with("[p align=left]") and doc.bbcode(0).contains("[url=0]"), "desenha o parágrafo com toque nas palavras")
+	var lista := DocumentoWord.new([{"texto": "Receita"}, {"texto": "Leite"}, {"texto": "Chocolate"}])
+	lista.tocar(1)
+	lista.fazer("marcadores")
+	verificar(lista.paragrafos[1]["lista"] == "marcadores" and lista.bbcode(1).contains("•"), "lista com marcadores")
+	lista.fazer("marcadores")
+	verificar(lista.paragrafos[1]["lista"] == "", "apertar de novo tira a lista")
+	lista.tocar(1)
+	lista.tocar(2, true)
+	lista.fazer("numeros")
+	verificar(lista.bbcode(2).contains("2."), "lista numerada conta 1, 2...")
+	verificar(lista.faltando([{"paragrafos": [1, 2], "lista": "numeros"}]).is_empty(), "meta de lista em vários parágrafos")
+	lista.limpar_selecao()
+	lista.tocar(0)
+	lista.fazer("titulo1")
+	verificar(lista.estilo_atual() == "titulo1" and lista.bbcode(0).contains("[b]"), "estilo Título 1")
+	verificar(lista.faltando([{"paragrafos": [1, 2], "lista": "numeros"}]).size() == 1, "estilo a mais (não pedido) não vale")
+	lista.tocar(1)
+	lista.fazer("realce")
+	verificar(lista.palavra(1)["realce"] and lista.bbcode(1).contains("FFF06A") == false, "marca-texto (a seleção aparece por cima)")
+	lista.limpar_selecao()
+	verificar(lista.bbcode(1).contains("FFF06A"), "marca-texto aparece sem seleção")
+	verificar(DocumentoWord.acao_do_atalho(KEY_L, true, true) == "marcadores" and DocumentoWord.acao_do_atalho(KEY_1, true, false, true) == "titulo1", "atalhos de lista e estilo")
 
 
 ## Resolve os passos de Word pelas próprias ações da tela.
 func _resolver_word(doc: DocumentoWord, metas: Array) -> void:
 	for meta in metas:
 		var alvos := []
+		var varios: Array = meta.get("paragrafos", []).map(func(x): return int(x))
 		for i in doc.paragrafos.size():
-			if int(meta.get("paragrafo", -1)) >= 0 and i != int(meta["paragrafo"]):
+			if not varios.is_empty():
+				if not i in varios:
+					continue
+			elif int(meta.get("paragrafo", -1)) >= 0 and i != int(meta["paragrafo"]):
 				continue
 			for j in doc.paragrafos[i]["palavras"].size():
 				var t: String = doc.paragrafos[i]["palavras"][j]["texto"]
 				if not meta.has("palavras") or DocumentoWord._limpa(t) in meta["palavras"].map(func(x): return DocumentoWord._limpa(x)):
 					alvos.append(doc.indice(i, j))
+		var feitos := {}  # parágrafos que já receberam lista/estilo/alinhamento
 		for alvo in alvos:
 			doc.limpar_selecao()
 			doc.tocar(alvo)
+			var par := doc.onde(alvo).x
 			for prop in meta:
 				match prop:
-					"negrito", "italico", "sublinhado":
+					"negrito", "italico", "sublinhado", "realce":
 						if doc.ligado(prop) != meta[prop]:
 							doc.fazer(prop)
 					"cor":
 						doc.fazer("cor_" + meta[prop])
 					"alinhamento":
+						doc.fazer(meta[prop])
+					"lista":
+						if not feitos.has([par, prop]) and doc.lista_atual() != meta[prop]:
+							doc.fazer(meta[prop])
+						feitos[[par, prop]] = true
+					"estilo":
 						doc.fazer(meta[prop])
 					"tamanho_min":
 						while doc.tamanho_atual() < int(meta[prop]):
@@ -1028,7 +1069,7 @@ func _resolver_word(doc: DocumentoWord, metas: Array) -> void:
 func _testar_laboratorio() -> void:
 	_secao("laboratório do office")
 	var fases := Laboratorio.fases()
-	verificar(Laboratorio.capitulos().size() == 3 and fases.size() == 24, "3 capítulos com 8 fases")
+	verificar(Laboratorio.capitulos().size() == 5 and fases.size() == 40, "5 capítulos com 8 fases")
 	var ids := {}
 	for f in fases:
 		ids[f["id"]] = true
@@ -1080,7 +1121,7 @@ func _testar_laboratorio() -> void:
 	verificar(r2["moedas"] == 0 and r2["acucar"] == 0 and Laboratorio.estrelas("c1f1") == 2, "jogar de novo sem melhorar não dá nada")
 	var r3 := Laboratorio.concluir("c1f1", 3)
 	verificar(r3["moedas"] == Laboratorio.MOEDAS_POR_ESTRELA and r3["acucar"] == 0 and Laboratorio.estrelas("c1f1") == 3, "estrela nova dá moedas")
-	verificar(Laboratorio.baus().size() == 6 and Laboratorio.baus_prontos() == 0, "6 baús, nenhum pronto")
+	verificar(Laboratorio.baus().size() == 10 and Laboratorio.baus_prontos() == 0, "10 baús, nenhum pronto")
 	verificar(Laboratorio.abrir_bau("c1_meio").is_empty(), "baú fechado antes da 4ª fase")
 	for id in ["c1f2", "c1f3", "c1f4"]:
 		Laboratorio.concluir(id, 3)
