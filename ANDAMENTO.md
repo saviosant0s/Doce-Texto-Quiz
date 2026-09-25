@@ -111,6 +111,9 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- **Atenção (tamanho):** o APK da 0.8.0 tem ~92 MB e o GitHub recusa
+  arquivos acima de 100 MB no gh-pages. Se crescer mais: publicar o APK como
+  "Release" do GitHub (limite 2 GB) ou gerar APKs separados por arquitetura.
 - 25/09: **Texturas reais (CC0)** no cenário: grama, areia, calçamento,
   reboco, tijolos, ardósia, madeira e piso (Poly Haven/ambientCG; lista e
   links em `godot/assets/texturas/reais/LEIA-ME.md`). `Texturas.real()` aplica
