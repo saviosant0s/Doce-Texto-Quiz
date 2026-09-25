@@ -123,7 +123,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 ## Onde parou
 
 - 26/09 (noite, pedido "pode fazer tudo"; partes 2 e 3 do plano "estilo
-  Vikings Rise"), **v0.10.0 publicada (APK e Windows)**:
+  Vikings Rise"), **v0.10.0 publicada (APK ~94 MB e Windows)**:
   - **Baús surpresa** (`scripts/baus.gd`, tela `cenas/baus.*`): DOCE (partida
     aprovada, até 5/dia), PRATA e OURO. Abrem tremendo e mostram cartas na cor
     da raridade. Garantia de épico/lendário em 10 baús.
