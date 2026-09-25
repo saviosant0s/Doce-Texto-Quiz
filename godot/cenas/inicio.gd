@@ -19,8 +19,12 @@ func _preparar_mascote() -> Control:
 	if not Mascote3D.disponivel():
 		Animacoes.flutuar(%Mascote)
 		return %Mascote
+	# o 3D entra por cima do desenho; o desenho só some quando o 3D já
+	# apareceu (assim não fica um espaço roxo vazio ao abrir o jogo)
 	var mascote_3d := Mascote3D.new()
-	mascote_3d.custom_minimum_size = Vector2(520, 500)
-	%Mascote.add_sibling(mascote_3d)
-	%Mascote.queue_free()
-	return mascote_3d
+	mascote_3d.set_anchors_preset(Control.PRESET_FULL_RECT)
+	%Mascote.add_child(mascote_3d)
+	mascote_3d.pronto.connect(func(): %Mascote.texture = null, CONNECT_ONE_SHOT)
+	%Mascote.custom_minimum_size = Vector2(520, 500)
+	%Mascote.mouse_filter = Control.MOUSE_FILTER_PASS
+	return %Mascote

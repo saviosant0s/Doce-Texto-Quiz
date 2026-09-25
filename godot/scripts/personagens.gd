@@ -67,7 +67,10 @@ static func animar(imagem: TextureRect, nome: String, silhueta := false,
 	doce.anchor_bottom = 1.0 + FOLGA_3D
 	imagem.add_child(doce)
 	imagem.move_child(doce, 0)  # atrás de cadeados e outros enfeites
-	imagem.texture = null
-	imagem.material = null
 	imagem.mouse_filter = Control.MOUSE_FILTER_PASS
+	# a foto fica até o 3D aparecer (sem "buraco" roxo enquanto ele prepara)
+	doce.pronto.connect(func():
+		if is_instance_valid(imagem):
+			imagem.texture = null
+			imagem.material = null, CONNECT_ONE_SHOT)
 	return doce

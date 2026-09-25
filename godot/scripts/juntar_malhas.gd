@@ -22,17 +22,23 @@ static func simplificar(raiz: Node) -> void:
 		var tamanho := (peca.get_aabb().size * peca.global_transform.basis.get_scale()).abs()
 		var maior := maxf(tamanho.x, maxf(tamanho.y, tamanho.z))
 		var lados := clampi(roundi(5 + maior * 9.0), 6, 24)
+		# só mexe se for diminuir (mexer na forma obriga a refazê-la)
 		if peca.mesh is SphereMesh:
-			peca.mesh.radial_segments = mini(peca.mesh.radial_segments, lados)
-			peca.mesh.rings = mini(peca.mesh.rings, maxi(3, lados / 2))
+			_menor(peca.mesh, "radial_segments", lados)
+			_menor(peca.mesh, "rings", maxi(3, lados / 2))
 		elif peca.mesh is CylinderMesh:
-			peca.mesh.radial_segments = mini(peca.mesh.radial_segments, lados)
+			_menor(peca.mesh, "radial_segments", lados)
 		elif peca.mesh is TorusMesh:
-			peca.mesh.rings = mini(peca.mesh.rings, lados)
-			peca.mesh.ring_segments = mini(peca.mesh.ring_segments, maxi(4, lados / 2))
+			_menor(peca.mesh, "rings", lados)
+			_menor(peca.mesh, "ring_segments", maxi(4, lados / 2))
 		elif peca.mesh is CapsuleMesh:
-			peca.mesh.radial_segments = mini(peca.mesh.radial_segments, maxi(4, lados / 2))
-			peca.mesh.rings = mini(peca.mesh.rings, 1 if maior < 0.3 else 3)
+			_menor(peca.mesh, "radial_segments", maxi(4, lados / 2))
+			_menor(peca.mesh, "rings", 1 if maior < 0.3 else 3)
+
+
+static func _menor(malha: Mesh, propriedade: String, valor: int) -> void:
+	if malha.get(propriedade) > valor:
+		malha.set(propriedade, valor)
 
 
 ## Junta as peças paradas de `raiz`. Ficam de fora os bonecos (DoceAndante) e
@@ -43,7 +49,7 @@ static func simplificar(raiz: Node) -> void:
 static func juntar(raiz: Node3D, excluir: Array, so_filhos := false) -> int:
 	var inversa := raiz.global_transform.affine_inverse()
 	var solidos := {}  # chave do material -> {"mat", "st"}
-	var contornos := {}  # cor -> {"cor", "espessura", "pos", "dir", "ind"}
+	var contornos := {}  # cor -> {"cor", "espessura", "pos", "dir" (direção de inchar), "ind"}
 	var juntadas := 0
 	var pecas: Array = raiz.get_children().filter(func(n): return n is MeshInstance3D) if so_filhos \
 		else raiz.find_children("*", "MeshInstance3D", true, false)
@@ -78,7 +84,7 @@ static func juntar(raiz: Node3D, excluir: Array, so_filhos := false) -> int:
 		var arrays := []
 		arrays.resize(Mesh.ARRAY_MAX)
 		arrays[Mesh.ARRAY_VERTEX] = c["pos"]
-		arrays[Mesh.ARRAY_COLOR] = c["dir"]
+		arrays[Mesh.ARRAY_NORMAL] = c["dir"]
 		arrays[Mesh.ARRAY_INDEX] = c["ind"]
 		var malha := ArrayMesh.new()
 		malha.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
@@ -129,47 +135,51 @@ static func _chave(mat: StandardMaterial3D) -> String:
 
 
 ## Acrescenta a peça ao bloco de contorno da cor dela, gravando em cada vértice
-## a direção de "inchar" (a mesma que tema/contorno.gdshader calculava).
+## (no lugar da normal) a direção de "inchar", a mesma que
+## tema/contorno.gdshader calculava. Formas arredondadas usam a própria normal
+## (conta feita de uma vez, rápida); caixas e cilindros calculam vértice a vértice.
 static func _somar_contorno(contornos: Dictionary, malha: Mesh, xf: Transform3D, contorno: ShaderMaterial) -> void:
 	var cor: Color = contorno.get_shader_parameter("cor")
 	var chave := cor.to_html()
 	if not contornos.has(chave):
 		contornos[chave] = {"cor": cor, "espessura": contorno.get_shader_parameter("espessura"),
-			"pos": PackedVector3Array(), "dir": PackedColorArray(), "ind": PackedInt32Array()}
+			"pos": PackedVector3Array(), "dir": PackedVector3Array(), "ind": PackedInt32Array()}
 	var c: Dictionary = contornos[chave]
 	var forma: int = contorno.get_shader_parameter("forma")
 	var arrays := malha.surface_get_arrays(0)
 	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-	var normais: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
 	var indices = arrays[Mesh.ARRAY_INDEX]
-	var giro := xf.basis.orthonormalized()
+	var giro := Transform3D(xf.basis.orthonormalized(), Vector3.ZERO)
 	var inicio: int = c["pos"].size()
 	var pos: PackedVector3Array = c["pos"]
-	var dir: PackedColorArray = c["dir"]
-	for i in vertices.size():
-		var v := vertices[i]
-		var d: Vector3
-		match forma:
-			1:
-				d = v.sign()
-			2:
-				var lado := Vector2(v.x, v.z)
-				lado = lado.normalized() if lado.length() > 0.001 else Vector2.ZERO
-				d = Vector3(lado.x, signf(v.y), lado.y)
-			3:
-				d = v.normalized() if v.length() > 0.001 else Vector3.ZERO
-			_:
-				d = normais[i]
-		d = (giro * d).clamp(-Vector3.ONE, Vector3.ONE)
-		pos.append(xf * v)
-		dir.append(Color(d.x * 0.5 + 0.5, d.y * 0.5 + 0.5, d.z * 0.5 + 0.5))
+	var dir: PackedVector3Array = c["dir"]
+	pos.append_array(xf * vertices)
+	if forma == 0:
+		dir.append_array(giro * PackedVector3Array(arrays[Mesh.ARRAY_NORMAL]))
+	else:
+		var direcoes := PackedVector3Array()
+		direcoes.resize(vertices.size())
+		for i in vertices.size():
+			var v := vertices[i]
+			match forma:
+				1:
+					direcoes[i] = v.sign()
+				2:
+					var lado := Vector2(v.x, v.z)
+					lado = lado.normalized() if lado.length() > 0.001 else Vector2.ZERO
+					direcoes[i] = Vector3(lado.x, signf(v.y), lado.y)
+				_:
+					direcoes[i] = v.normalized() if v.length() > 0.001 else Vector3.UP
+		dir.append_array(giro * direcoes)
 	var ind: PackedInt32Array = c["ind"]
 	if indices == null or indices.is_empty():
 		for i in vertices.size():
 			ind.append(inicio + i)
 	else:
-		for i in indices:
-			ind.append(inicio + i)
+		var novos := PackedInt32Array(indices)
+		for i in novos.size():
+			novos[i] += inicio
+		ind.append_array(novos)
 	c["pos"] = pos
 	c["dir"] = dir
 	c["ind"] = ind

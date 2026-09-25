@@ -33,6 +33,9 @@ var placa_rapida := true
 
 var _historico: Array[String] = []
 var _cortina: ColorRect
+var _carregando: VBoxContainer
+var _destino := ""
+var _pendente := ""
 var _camada_avisos: CanvasLayer
 var _trocando := false
 
@@ -78,17 +81,52 @@ func voltar() -> void:
 
 func _trocar_cena(caminho: String) -> void:
 	if _trocando:
+		# pedido no meio de uma troca (ex.: o carregamento indo para a partida):
+		# fica na fila; toque repetido para a mesma tela é ignorado
+		if caminho != _destino:
+			_pendente = caminho
 		return
 	_trocando = true
+	_destino = caminho
 	var tween := create_tween()
 	tween.tween_property(_cortina, "color:a", 1.0, DURACAO_TRANSICAO)
 	await tween.finished
+	# telas 3D demoram um pouco para montar: mostra "carregando" com o doce
+	# companheiro (já desenhado antes de a montagem começar)
+	var pesada := caminho in [CENAS["vila"], CENAS["cozinha"]]
+	if pesada:
+		_mostrar_carregando()
+		await quadro_desenhado()
 	get_tree().change_scene_to_file(caminho)
 	await get_tree().process_frame
+	# só abre a cortina depois de a tela nova ter sido desenhada (a primeira
+	# imagem de uma cena 3D é a mais demorada)
+	for i in 2:
+		await quadro_desenhado()
+	_carregando.visible = false
 	_tirar_dicas()
+	_trocando = false
+	if not _pendente.is_empty():
+		var proxima := _pendente
+		_pendente = ""
+		_trocar_cena(proxima)  # a cortina continua fechada
+		return
 	tween = create_tween()
 	tween.tween_property(_cortina, "color:a", 0.0, DURACAO_TRANSICAO)
-	_trocando = false
+
+
+## Espera a tela ser desenhada (sem tela, nos testes, espera um quadro).
+func quadro_desenhado() -> void:
+	if DisplayServer.get_name() == "headless":
+		await get_tree().process_frame
+	else:
+		await RenderingServer.frame_post_draw
+
+
+func _mostrar_carregando() -> void:
+	var id := Colecao.companheiro()
+	(_carregando.get_node("Doce") as TextureRect).texture = Personagens.textura(id if not id.is_empty() else "brigadeiro")
+	_carregando.visible = true
 
 
 ## Botão "voltar" do Android (e Esc no computador). A caixa de confirmação
@@ -198,6 +236,25 @@ func _criar_cortina() -> void:
 	_cortina.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cortina.set_anchors_preset(Control.PRESET_FULL_RECT)
 	camada.add_child(_cortina)
+	# "CARREGANDO..." com o doce companheiro, no meio da cortina
+	_carregando = VBoxContainer.new()
+	_carregando.name = "Carregando"
+	_carregando.visible = false
+	_carregando.alignment = BoxContainer.ALIGNMENT_CENTER
+	_carregando.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_carregando.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cortina.add_child(_carregando)
+	var doce := TextureRect.new()
+	doce.name = "Doce"
+	doce.custom_minimum_size = Vector2(0, 180)
+	doce.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	doce.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_carregando.add_child(doce)
+	var texto := Label.new()
+	texto.theme_type_variation = &"TituloClaro"
+	texto.text = "CARREGANDO..."
+	texto.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_carregando.add_child(texto)
 	_camada_avisos = CanvasLayer.new()
 	_camada_avisos.layer = 90
 	add_child(_camada_avisos)

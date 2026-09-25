@@ -61,6 +61,12 @@ static func listras(cores: Array, quantidade: int, largura := 256) -> ImageTextu
 
 # --- Formas --------------------------------------------------------------------
 
+## Quantos lados uma forma redonda precisa pelo tamanho (em metros): bolas
+## grandes lisinhas, granulado e confeitos com poucas faces (mais leve).
+static func lados_para(tamanho: float) -> int:
+	return clampi(roundi(8 + tamanho * 16.0), 8, 40)
+
+
 static func _no(pai: Node3D, malha: Mesh, mat: Material, posicao: Vector3, escala: Vector3, rotacao: Vector3) -> MeshInstance3D:
 	var no := MeshInstance3D.new()
 	no.mesh = malha
@@ -77,8 +83,9 @@ static func esfera(pai: Node3D, raio: float, posicao: Vector3, mat: Material,
 	var malha := SphereMesh.new()
 	malha.radius = raio
 	malha.height = raio * 2.0
-	malha.radial_segments = 40
-	malha.rings = 20
+	var lados := lados_para(raio * 2.0 * maxf(escala.x, maxf(escala.y, escala.z)))
+	malha.radial_segments = lados
+	malha.rings = maxi(4, lados / 2)
 	return _no(pai, malha, mat, posicao, escala, rotacao)
 
 
@@ -88,7 +95,7 @@ static func cilindro(pai: Node3D, raio_topo: float, raio_base: float, altura: fl
 	malha.top_radius = raio_topo
 	malha.bottom_radius = raio_base
 	malha.height = altura
-	malha.radial_segments = 40
+	malha.radial_segments = lados_para(maxf(raio_topo, raio_base) * 2.0 * maxf(escala.x, escala.z))
 	return _no(pai, malha, mat, posicao, escala, rotacao)
 
 
@@ -97,8 +104,9 @@ static func rosquinha(pai: Node3D, raio_interno: float, raio_externo: float, pos
 	var malha := TorusMesh.new()
 	malha.inner_radius = raio_interno
 	malha.outer_radius = raio_externo
-	malha.rings = 48
-	malha.ring_segments = 24
+	var lados := lados_para(raio_externo * 2.0 * maxf(escala.x, maxf(escala.y, escala.z)))
+	malha.rings = lados + 8
+	malha.ring_segments = maxi(6, lados / 2)
 	return _no(pai, malha, mat, posicao, escala, rotacao)
 
 
