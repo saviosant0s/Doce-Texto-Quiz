@@ -23,6 +23,7 @@ const TIPOS := {
 	"match": {"texto": "JOGUE %d PARTIDAS DO DOCE MATCH", "dia": 1, "semana": 5},
 	"baus": {"texto": "ABRA %d BAÚS SURPRESA", "dia": 2, "semana": 8},
 	"torre": {"texto": "SUBA %d ANDARES NA TORRE DE DOCES", "dia": 15, "semana": 80},
+	"fabrica": {"texto": "COMPLETE %d PEDIDOS NA FÁBRICA DE CHOCOLATE", "dia": 5, "semana": 25},
 }
 const QUANTAS := 3
 const PREMIO_DIA := {"moedas": 20, "xp": 25}

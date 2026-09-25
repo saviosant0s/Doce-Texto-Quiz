@@ -38,6 +38,7 @@ extends Node
 ##   --confeitaria_estagio  máquinas suficientes para a Confeitaria crescer (estágio 3)
 ##   --animacoes  liga as animações contínuas mesmo sem placa de vídeo (borboletas etc.)
 ##   --torre=12  Torre de Doces: já empilha 12 andares (--torre_pergunta para na pergunta)
+##   --fabrica=4  Fábrica de Chocolate: já começa e completa 4 pedidos
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -232,6 +233,14 @@ func _ready() -> void:
 				if args.has("torre_pergunta"):
 					break
 				t._resultado_pergunta(true)
+	if args.has("fabrica"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.confeitaria["acucar"] = 200
+		var f: Node = get_tree().current_scene
+		f.comecar()
+		f.jogo.pedidos_feitos = int(args["fabrica"])
+		f.jogo._novo_pedido()
+		f._montar_pedido()
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()

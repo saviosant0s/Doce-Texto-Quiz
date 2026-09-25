@@ -48,6 +48,8 @@ const PREDIOS := [
 		"telhado": "#7E57B1", "cena": "laboratorio", "acao": "ENTRAR NO LABORATÓRIO"},
 	{"id": "torre", "nome": "TORRE DE DOCES", "posicao": Vector3(13, 0, 7), "parede": "#FF8FB8",
 		"telhado": "#E8364F", "cena": "torre", "acao": "SUBIR NA TORRE"},
+	{"id": "fabrica", "nome": "FÁBRICA DE CHOCOLATE", "posicao": Vector3(-13, 0, 7), "parede": "#B06A45",
+		"telhado": "#8B4A2B", "cena": "fabrica", "acao": "ENTRAR NA FÁBRICA"},
 ]
 ## Moradores que sempre passeiam (os mascotes dos níveis).
 const MORADORES := ["bala_verde", "milho_doce"]
@@ -1203,6 +1205,8 @@ func _criar_vida() -> void:
 			"raio": sorteio.randf_range(1.5, 4.0), "velocidade": sorteio.randf_range(0.25, 0.6),
 			"fase": sorteio.randf() * TAU})
 	_respingos_da_fonte()
+	for chamine in find_children("Chamine", "Marker3D", true, false):
+		_fumaca(chamine)
 	for lugar in _presentes:
 		var brilho := _faiscas(_presentes[lugar], Vector3(0, 0.9, 0), Color("#FFE27A"))
 		brilho.emitting = Terrenos.presente_disponivel(lugar)
@@ -1282,3 +1286,41 @@ func _faiscas(pai: Node3D, posicao: Vector3, cor: Color) -> CPUParticles3D:
 	faiscas.color_ramp = sumir
 	pai.add_child(faiscas)
 	return faiscas
+
+
+## Fumaça de chocolate saindo das chaminés da fábrica (bolinhas marrons que
+## sobem, crescem e somem).
+func _fumaca(marcador: Node3D) -> void:
+	var fumaca := CPUParticles3D.new()
+	fumaca.name = "Fumaca"
+	fumaca.amount = 14
+	fumaca.lifetime = 2.6
+	fumaca.direction = Vector3.UP
+	fumaca.spread = 12.0
+	fumaca.initial_velocity_min = 0.7
+	fumaca.initial_velocity_max = 1.1
+	fumaca.gravity = Vector3(0.25, 0.1, 0)  # o vento leva de leve
+	fumaca.scale_amount_min = 0.6
+	fumaca.scale_amount_max = 1.0
+	var crescer := Curve.new()
+	crescer.add_point(Vector2(0, 0.4))
+	crescer.add_point(Vector2(1, 1.6))
+	fumaca.scale_amount_curve = crescer
+	var bola := SphereMesh.new()
+	bola.radius = 0.35
+	bola.height = 0.7
+	bola.radial_segments = 8
+	bola.rings = 4
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color("#8B5A3C")
+	mat.roughness = 1.0
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.vertex_color_use_as_albedo = true
+	bola.material = mat
+	fumaca.mesh = bola
+	var sumir := Gradient.new()
+	sumir.set_color(0, Color(1, 1, 1, 0.85))
+	sumir.set_color(1, Color(1, 1, 1, 0))
+	fumaca.color_ramp = sumir
+	fumaca.position = marcador.global_position
+	add_child(fumaca)

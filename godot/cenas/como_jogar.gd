@@ -69,6 +69,16 @@ const ABAS := [
 		{"item": "ACUCAR", "titulo": "CUSTA AÇÚCAR",
 			"texto": "Cada torre custa 20 de açúcar e dá moedas por andar. Bateu o recorde de 10 em 10? Baú!"},
 	]},
+	{"nome": "FÁBRICA", "passos": [
+		{"icone": "controle", "titulo": "OLHE O PEDIDO",
+			"texto": "Na Fábrica de Chocolate, o pedido fica no alto: quantos bombons, trufas, barras e corações."},
+		{"icone": "doce", "titulo": "TOQUE NOS CERTOS",
+			"texto": "Toque nos chocolates do pedido que passam na esteira. Queimados e quebrados NÃO: tiram 3 segundos."},
+		{"icone": "lampada", "titulo": "PEDIDO ESPECIAL",
+			"texto": "Pedido pronto dá mais tempo e a esteira acelera. A cada 3, uma pergunta do quiz vale bônus."},
+		{"item": "ACUCAR", "titulo": "CUSTA AÇÚCAR",
+			"texto": "Cada turno custa 20 de açúcar e dá moedas por pedido. Recorde de 5 em 5 pedidos? Baú!"},
+	]},
 	{"nome": "BAÚS E DOCES", "passos": [
 		{"item": "BAU_DOCE", "titulo": "BAÚS SURPRESA",
 			"texto": "Ganhe baús passando no quiz, nas missões, no laboratório e subindo de nível."},

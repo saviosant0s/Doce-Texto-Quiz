@@ -66,6 +66,8 @@ personagens, fontes) é a mesma da versão original.
   jardim, fonte) e presentes diários (`scripts/terrenos.gd`).
 - Torre de Doces (prédio de bolo na vila): empilhar andares, com pergunta
   bônus do quiz a cada 10 (`scripts/torre.gd`, `cenas/torre.*`).
+- Fábrica de Chocolate (galpão na vila): tocar nos chocolates do pedido
+  na esteira, com pedido especial do quiz (`scripts/fabrica.gd`, `cenas/fabrica.*`).
 - Doce Match (Fliperama da vila): jogo de combinar 3 com peças de informática
   desenhadas por nós, 30 níveis com objetivos (pontos, juntar peças, limpar
   gelatina) e peças especiais (listrada, embrulhada, bomba)

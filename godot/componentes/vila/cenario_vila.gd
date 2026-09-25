@@ -231,6 +231,8 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 			forma = _laboratorio(no)
 		"torre":
 			forma = _torre_doces(no)
+		"fabrica":
+			forma = _fabrica_chocolate(no)
 		_:
 			forma = _casa_simples(no, dados)
 	no.set_meta("pecas", no.find_children("*", "MeshInstance3D", true, false).size())
@@ -293,6 +295,56 @@ static func _placa(no: Node3D, nome: String, posicao: Vector3, largura := 3.0) -
 	texto.outline_size = 0
 	texto.position = posicao + Vector3(0, 0, 0.08)
 	no.add_child(texto)
+
+
+## FÁBRICA DE CHOCOLATE: galpão de tijolos com telhado em serra, duas
+## chaminés (a vila solta fumaça de chocolate nos marcadores "Chamine"), um
+## cano de chocolate e a placa em cima da porta.
+static func _fabrica_chocolate(no: Node3D) -> Dictionary:
+	var largura := 5.6
+	var altura := 3.6
+	var fundo := 4.2
+	var frente := fundo / 2.0
+	var tijolo := Texturas.real("tijolos", "#D99468", 0.6)
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), tijolo)
+	# rodapé e cantos de chocolate
+	var choco := Texturas.real("madeira_pintada", "#5A2E17", 1.0)
+	Pecas3D.caixa(no, Vector3(largura + 0.1, 0.4, fundo + 0.1), Vector3(0, 0.2, 0), choco)
+	for x in [-1, 1]:
+		Pecas3D.caixa(no, Vector3(0.3, altura + 0.1, 0.3), Vector3(x * (largura / 2.0), altura / 2.0, frente), choco)
+	# telhado em serra (dentes de chocolate ao leite)
+	var telhado := _m("#8B4A2B", 0.5)
+	for i in 3:
+		var x := -largura / 2.0 + largura / 6.0 + i * largura / 3.0
+		Pecas3D.cilindro(no, 0.0, largura / 6.0 * 1.3, fundo, Vector3(x, altura + 0.55, 0), telhado,
+			Vector3(1, 1, 0.8), Vector3(90, 0, 0))
+	# chaminés com a borda de chocolate derretido
+	for px in [-1.6, 1.4]:
+		var base := Vector3(px, altura, -0.8)
+		Pecas3D.cilindro(no, 0.45, 0.5, 2.6, base + Vector3(0, 1.3, 0), Texturas.real("tijolos", "#9A5A3A", 0.8))
+		Pecas3D.cilindro(no, 0.55, 0.55, 0.25, base + Vector3(0, 2.62, 0), _m("#4A2412", 0.2))
+		var marcador := Marker3D.new()
+		marcador.name = "Chamine"
+		marcador.position = base + Vector3(0, 2.8, 0)
+		no.add_child(marcador)
+	# cano grosso de metal com chocolate escorrendo
+	var metal := Texturas.real("metal", "#C9CED6", 1.0, 0.6)
+	Pecas3D.cilindro(no, 0.3, 0.3, 2.2, Vector3(largura / 2.0 + 0.35, 2.2, 0.3), metal)
+	Pecas3D.cilindro(no, 0.3, 0.3, 0.9, Vector3(largura / 2.0 + 0.05, 3.3, 0.3), metal, Vector3.ONE, Vector3(0, 0, 90))
+	Pecas3D.cilindro(no, 0.18, 0.12, 1.1, Vector3(largura / 2.0 + 0.35, 0.55, 0.3), _m("#5A2E17", 0.1))
+	# janelas redondas acesas
+	for x in [-1.8, 1.8]:
+		var janela := Node3D.new()
+		janela.position = Vector3(x, 2.2, frente + 0.03)
+		no.add_child(janela)
+		Pecas3D.rosquinha(janela, 0.38, 0.52, Vector3.ZERO, _m("#5A2E17", 0.3), Vector3.ONE, Vector3(90, 0, 0))
+		var luz := _m("#FFE6A8", 0.2)
+		luz.emission_enabled = true
+		luz.emission = Color("#FFD27A")
+		luz.emission_energy_multiplier = 0.6
+		Pecas3D.cilindro(janela, 0.4, 0.4, 0.05, Vector3(0, 0, -0.02), luz, Vector3.ONE, Vector3(90, 0, 0))
+	_parede(no, Vector3(largura + 0.6, altura + 1.2, fundo), Vector3(0, (altura + 1.2) / 2.0, 0))
+	return {"frente": frente + 0.02, "placa": altura - 0.55}
 
 
 ## TORRE DE DOCES: bolo gigante de seis andares (cada um de um sabor, com

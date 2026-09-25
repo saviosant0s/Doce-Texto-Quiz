@@ -25,6 +25,7 @@ func _ready() -> void:
 	_testar_missoes_e_nivel()
 	_testar_terrenos()
 	_testar_torre()
+	_testar_fabrica()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -389,6 +390,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_vila()
 	await _testar_vila_terrenos()
 	await _testar_tela_torre()
+	await _testar_tela_fabrica()
 	await _testar_tela_colecao()
 	await _testar_tela_confeitaria()
 	await _testar_tela_doce_match()
@@ -1852,3 +1854,78 @@ func _testar_tela_torre() -> void:
 	tela.soltar()
 	await get_tree().create_timer(1.3).timeout
 	verificar(tela.find_child("DeNovo", true, false) is Button, "a torre caiu: tela de fim com DE NOVO")
+
+
+# --- Fábrica de Chocolate ---------------------------------------------------------------
+
+func _testar_fabrica() -> void:
+	_secao("fábrica de chocolate")
+	var f := Fabrica.new(4)
+	verificar(f.faltam() > 0 and f.tempo == Fabrica.TEMPO_INICIAL, "começa com um pedido e 60 segundos")
+	f.avancar(0.1)
+	verificar(f.esteira.size() == 1, "chocolates entram na esteira")
+	# pega um chocolate que o pedido quer (sem defeito)
+	f.pedido = {"trufa": 2, "bombom": 1}
+	var tipo := "trufa"
+	f.esteira = [{"id": 100, "tipo": tipo, "x": 0.5, "defeito": false}]
+	var antes := f.faltam()
+	var r := f.tocar(100)
+	verificar(r["certo"] and f.faltam() == antes - 1 and f.pontos > 0, "tocar no chocolate do pedido: vai para a caixa")
+	var tempo := f.tempo
+	f.esteira = [{"id": 101, "tipo": tipo, "x": 0.5, "defeito": true}]
+	r = f.tocar(101)
+	verificar(not r["certo"] and r["motivo"] == "defeito" and is_equal_approx(f.tempo, tempo - Fabrica.TEMPO_ERRO), "chocolate queimado: tira tempo")
+	var fora: Array = Fabrica.TIPOS.filter(func(t): return not f.pedido.has(t))
+	f.esteira = [{"id": 102, "tipo": fora[0], "x": 0.5, "defeito": false}]
+	r = f.tocar(102)
+	verificar(not r["certo"] and r["motivo"] == "nao_pediu", "chocolate que o pedido não quer: erro")
+	# completar pedidos até o especial
+	var especial := false
+	f.pedidos_feitos = 0
+	for n in 3:
+		while f.faltam() > 0 and not f.pergunta_pendente:
+			var t: String = f.pedido.keys().filter(func(k): return int(f.pedido[k]) > 0)[0]
+			f.esteira = [{"id": 200, "tipo": t, "x": 0.3, "defeito": false}]
+			r = f.tocar(200)
+		especial = r["especial"]
+	verificar(f.pedidos_feitos == 3 and especial and f.pergunta_pendente, "3 pedidos: vem o pedido especial (pergunta)")
+	var t_antes := f.tempo
+	f.responder(true)
+	verificar(not f.pergunta_pendente and f.tempo > t_antes, "acertou a pergunta: mais tempo")
+	verificar(f.velocidade() > Fabrica.VELOCIDADE_INICIAL, "a esteira acelera a cada pedido")
+	# o que chega ao fim cai
+	f.esteira = [{"id": 300, "tipo": "trufa", "x": 0.99, "defeito": false}]
+	var caidos := f.avancar(0.2)
+	verificar(300 in caidos and f.item(300).is_empty(), "o que chega ao fim da esteira cai")
+	f.tempo = 0.1
+	f.avancar(0.2)
+	verificar(f.acabou, "o tempo acabou: fim do turno")
+	var recorde_antes: int = Progresso.estatisticas.get("fabrica_recorde", 0)
+	Progresso.estatisticas["fabrica_recorde"] = 0
+	f.pedidos_feitos = 6
+	var moedas := Progresso.moedas
+	var premio := Fabrica.concluir(f)
+	verificar(premio["recorde_novo"] and Fabrica.recorde() == 6 and premio["bau"] == "doce" and Progresso.moedas == moedas + premio["moedas"],
+		"fim: moedas, recorde e baú a cada 5 pedidos")
+	Progresso.estatisticas["fabrica_recorde"] = recorde_antes
+
+
+func _testar_tela_fabrica() -> void:
+	Progresso.confeitaria["acucar"] = Fabrica.CUSTO_ACUCAR
+	Telas.ir_para("fabrica")
+	verificar(await _esperar_tela("Fabrica"), "abre a Fábrica de Chocolate")
+	var tela := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	tela.find_child("Jogar", true, false).pressed.emit()
+	await get_tree().create_timer(1.2).timeout
+	verificar(Confeitaria.acucar() == 0 and tela._nos.size() >= 1, "começar gasta o açúcar e os chocolates andam na esteira")
+	var tipo: String = tela.jogo.pedido.keys()[0]
+	var item: Dictionary = tela.jogo.esteira[0]
+	item["tipo"] = tipo
+	item["defeito"] = false
+	var pontos: int = tela.jogo.pontos
+	tela.tocar_em(tela._nos[item["id"]].position)
+	verificar(tela.jogo.pontos > pontos, "tocar no chocolate certo pela tela conta ponto")
+	tela.jogo.tempo = 0.01
+	await get_tree().create_timer(1.2).timeout
+	verificar(tela.find_child("DeNovo", true, false) is Button, "o tempo acabou: tela de fim com DE NOVO")

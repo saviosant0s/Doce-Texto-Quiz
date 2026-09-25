@@ -242,6 +242,17 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     foto de grama "ruidosa", entra verde suave e liso (`CenarioVila.gramado`);
     tufos com a cor do chão e iluminados por igual dos dois lados (o verso
     ficava escuro no modo de compatibilidade).
+  - **Minigame novo: FÁBRICA DE CHOCOLATE** (escolhido pelo Sávio): galpão
+    de tijolos com telhado em serra, chaminés soltando fumaça de chocolate e
+    cano de chocolate, do lado oeste da praça (`CenarioVila._fabrica_chocolate`).
+    Dentro (`cenas/fabrica.*`, regras em `scripts/fabrica.gd`): o pedido fica
+    no alto (bombons, trufas, barras, corações); toque nos chocolates certos
+    da esteira e eles voam para a caixa; queimados/quebrados ou fora do pedido
+    tiram 3 s; pedido pronto dá +6 s e acelera a esteira; a cada 3 pedidos, um
+    PEDIDO ESPECIAL (pergunta do quiz, +8 s). Turno de 60 s, 20 de açúcar;
+    moedas por pedido; baú de doce a cada nova marca de 5 pedidos; missão
+    nova "COMPLETE N PEDIDOS NA FÁBRICA". Menu dos níveis e "Como jogar".
+    Print: `ferramentas/capturar.sh fabrica --fabrica=4`.
   - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
     Doce Match, o pódio, os enfeites por nível e o carregamento novo).
 
@@ -434,7 +445,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (1.709 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.724 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
