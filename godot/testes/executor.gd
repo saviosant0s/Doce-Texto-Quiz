@@ -250,7 +250,7 @@ func _testar_estatisticas() -> void:
 	var erradas := Jogo.mais_erradas(5)
 	verificar(erradas.size() == 3 and erradas.all(func(p): return p["erros"] == 1), "3 mais erradas")
 	verificar(Jogo.pergunta_por_id("m07")["nivel"] == 1, "acha pergunta pelo id")
-	verificar(Jogo.total_de_perguntas() == 60, "60 perguntas no total")
+	verificar(Jogo.total_de_perguntas() == 150, "150 perguntas no total")
 
 
 func _testar_colecao() -> void:

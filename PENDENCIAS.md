@@ -9,7 +9,8 @@ Itens em aberto do projeto. Marque com [x] quando resolver.
 - [x] "Cristian Lins" removido dos créditos (não fez parte da equipe).
 - [x] Reescrever o banco de perguntas: agora são 60 (20 por nível), cada partida
       sorteia 10 e embaralha as alternativas.
-- [ ] Pedir para um(a) professor(a) revisar as 60 perguntas (`godot/dados/perguntas.json`)
+- [ ] Pedir para um(a) professor(a) revisar as 150 perguntas (`godot/dados/perguntas.json`;
+      as 90 novas são f21–f50, m21–m50 e d21–d50)
       e as dicas da tela de carregamento (`godot/cenas/carregamento.gd`).
 
 ## Personagens

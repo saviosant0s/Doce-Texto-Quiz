@@ -122,6 +122,28 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 25/09 (pedido "pode fazer tudo, só não vamos colocar na Play Store ainda"),
+  tudo gravado no GitHub, **APK ainda não gerado** (próximo: 0.9.0):
+  - **Doce Match custa 40 de açúcar** por partida (sem açúcar, manda para o
+    quiz) e tem botão no menu dos níveis; placar com recorde e açúcar.
+  - **Qualidade gráfica** em Configurações (BAIXA/MÉDIA/ALTA,
+    `scripts/qualidade.gd`): grama, flores, sombras, escala do 3D e
+    antisserrilhado. Padrão: MÉDIA no celular, ALTA no computador.
+  - **Sons novos** sintetizados por nós (`ferramentas/gerar_sons.py`):
+    moeda, estouro, porta, passo, pulo, construir, caixa; até 8 efeitos ao
+    mesmo tempo.
+  - **Economia balanceada**: `docs/economia.md`.
+  - **Tutorial de primeira vez na vila**: seta amarela na porta do próximo
+    prédio + dica no topo (Escola se nunca jogou o quiz -> Confeitaria se
+    não construiu máquina -> Fliperama se nunca jogou o Doce Match; some
+    depois). `Vila.proximo_passo()`.
+  - **150 perguntas** (eram 60): 30 novas por nível, ids f21–f50, m21–m50,
+    d21–d50, com explicação. **Pedir para a equipe/professor revisar as
+    novas**, principalmente os atalhos do Office em português (Ctrl+N
+    negrito, Ctrl+B salvar, Ctrl+T selecionar tudo, Ctrl+E/J/G/Q
+    alinhamentos, Ctrl+U substituir).
+  - Fora por enquanto (pedido do Sávio): publicar na Play Store (AAB, página
+    da loja, política de privacidade).
 - 25/09 (depois da 0.8.0): andar com as duas pernas (bug: só uma mexia),
   pé levantando e passos no ritmo do chão; jujubas/colunas sólidas, bonecos
   na camada 2 e câmera com "bolinha" para não entrar em paredes; botão
@@ -197,7 +219,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Como trabalhar no projeto
 
-- **Testes:** `godot/testes/rodar.sh` (694 verificações; falha também em erro
+- **Testes:** `godot/testes/rodar.sh` (1.158 verificações; falha também em erro
   de script). Rode antes de cada commit.
 - **Print de uma tela:** `ferramentas/capturar.sh niveis` → `build/prints/niveis.png`.
   Opções em `godot/scripts/ferramentas/captura.gd` (ex.: `--acertos=7`,
@@ -222,7 +244,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 - `cenas/`: uma tela por arquivo (inicio, niveis, partida, aproveitamento,
   resultado, titulos = troféus, configuracoes, carregamento, como_jogar,
   creditos, sobre)
-- `dados/perguntas.json`: 60 perguntas (id, assunto, enunciado, alternativas,
+- `dados/perguntas.json`: 150 perguntas (id, assunto, enunciado, alternativas,
   resposta, explicacao)
 - `testes/`: testes automáticos
 

@@ -19,7 +19,7 @@ personagens, fontes) é a mesma da versão original.
 
 ### Regras
 
-- Cada partida sorteia 10 das 20 perguntas do nível (primeiro as nunca vistas
+- Cada partida sorteia 10 das 50 perguntas do nível (primeiro as nunca vistas
   e as erradas da última vez) e embaralha as alternativas.
 - Com 6 acertos ou mais, você passa no nível: ganha o título dele (Fácil →
   Noob, Médio → Pro, Difícil → Mestre) e libera o próximo.
