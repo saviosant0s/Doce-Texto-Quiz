@@ -639,7 +639,7 @@ static func _tufo_de_grama() -> ArrayMesh:
 		var lado := Vector3(cos(angulo), 0, sin(angulo))
 		var frente := Vector3(-lado.z, 0, lado.x)
 		var inclina := lado.rotated(Vector3.UP, PI / 2) * 0.12 * (1 + f % 2)
-		var altura := 0.34 + (f % 3) * 0.08
+		var altura := 0.2 + (f % 3) * 0.05  # grama baixinha (a alta parecia mato)
 		var largura := 0.045
 		var meio := frente * 0.08 * (f % 2) + lado * 0.05
 		var pontos := [

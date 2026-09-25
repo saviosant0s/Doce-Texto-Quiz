@@ -6,7 +6,7 @@ class_name Qualidade
 enum { BAIXA, MEDIA, ALTA }
 const NOMES := ["BAIXA", "MÉDIA", "ALTA"]
 
-const GRAMA := [0, 2500, 5000]  # tufos de grama com volume na vila
+const GRAMA := [0, 1300, 2400]  # tufos de grama com volume na vila (menos: parecia mato)
 const FLORES := [40, 90, 90]
 const SOMBRAS := [false, true, true]
 const ESCALA_3D := [0.6, 0.8, 1.0]  # tamanho do 3D em relação à tela
