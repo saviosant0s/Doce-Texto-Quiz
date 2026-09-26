@@ -26,6 +26,7 @@ func _ready() -> void:
 	_testar_terrenos()
 	_testar_ciclo_dia()
 	_testar_casa()
+	_testar_historia()
 	_testar_torre()
 	_testar_fabrica()
 	await _testar_fluxo_completo()
@@ -393,6 +394,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_vila_terrenos()
 	await _testar_vila_noite()
 	await _testar_tela_casa()
+	await _testar_vila_historia()
 	await _testar_tela_torre()
 	await _testar_tela_fabrica()
 	await _testar_tela_colecao()
@@ -1877,6 +1879,92 @@ func _testar_casa() -> void:
 	Progresso.titulos = titulos
 	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes
+
+
+func _testar_historia() -> void:
+	_secao("histórias da vila")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.vila.erase("historia")
+	Progresso.jogador["nivel"] = 1
+	verificar(Historia.capitulo() == 0 and Historia.morador_da_vez() == "milho_doce", "a primeira história começa com o Seu Milho")
+	verificar(Historia.chegou(Vector3.ZERO).is_empty(), "passo de falar: chegar num lugar não avança")
+	Historia.avancar()
+	verificar(Historia.lugar_da_vez() == "praca" and Historia.chegou(Vector3(20, 0, 20)).is_empty(), "longe da fonte, nada")
+	verificar(not Historia.chegou(Vector3(1, 0, 1)).is_empty() and Historia.lugar_da_vez() == "lago", "na fonte: pista e o próximo lugar")
+	Historia.chegou(Vector3(-30, 0, 12))
+	var moedas := Progresso.moedas
+	var premio := Historia.avancar()
+	verificar(premio.get("moedas", 0) == 40 and Progresso.moedas == moedas + 40 and Historia.capitulo() == 1,
+		"terminou a primeira história: prêmio e próximo capítulo")
+	verificar(Historia.premio_pendente().get("capitulo", -1) == 0 and Historia.premio_pendente().is_empty(), "o prêmio aparece uma vez")
+	Progresso.jogador = {"xp": 0, "nivel": 1}  # (o XP do prêmio já sobe de nível)
+	verificar(not Historia.liberado() and Historia.passo_atual().is_empty() and Historia.texto_meta().contains("nível 2"),
+		"o capítulo 2 espera o nível 2 do jogador")
+	Progresso.jogador["nivel"] = 9
+	Historia.avancar()
+	Historia.avancar()
+	Historia.avancar()
+	verificar(Historia.passo_atual()["tipo"] == "fazer" and Historia.texto_meta().contains("(0/1)"), "passo de fazer mostra o progresso")
+	Missoes.registrar("match", 1)
+	verificar(Historia.passo_atual()["tipo"] == "fazer", "outro jogo não conta")
+	Missoes.registrar("partidas", 1)
+	verificar(Historia.passo_atual()["tipo"] == "falar" and not Historia.falas_pendentes().is_empty(),
+		"jogar a partida (pelas missões) avança a história e guarda a fala")
+	Historia.avancar()
+	verificar(Historia.capitulo() == 2, "segunda história completa")
+	Historia.avancar()
+	for i in 5:
+		Missoes.registrar("clientes", 1)
+	verificar(Historia.passo_atual()["tipo"] == "entregar", "5 clientes na confeitaria")
+	Progresso.confeitaria["acucar"] = 10
+	verificar(not Historia.entregar() and Historia.passo_atual()["tipo"] == "entregar", "sem açúcar não entrega")
+	Progresso.confeitaria["acucar"] = 100
+	verificar(Historia.entregar() and Confeitaria.acucar() == 50, "entrega 50 de açúcar")
+	Historia.avancar()
+	verificar(Casa.quantos("banco_praca") == 1, "a festa dá o banco da praça para a casa")
+	Historia.avancar()
+	Missoes.registrar("torre", 6)
+	Missoes.registrar("torre", 7)
+	verificar(Historia.passo_atual()["tipo"] == "fazer", "\"max\": 6 e 7 andares não somam 10")
+	Missoes.registrar("torre", 11)
+	verificar(Historia.lugar_da_vez() == "mirante", "11 andares numa torre só: avança")
+	Progresso.vila = guardado
+	Progresso.jogador = jogador_antes
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_vila_historia() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	Progresso.vila["historia"] = {"capitulo": 0, "passo": 0, "progresso": 0}
+	Progresso.jogador["nivel"] = 9
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	var milho: Node3D = vila._moradores_historia["milho_doce"]
+	verificar(milho.get_node("Exclamacao").visible and vila.find_child("TextoHistoria", true, false).text.contains("SEU MILHO"),
+		"o Seu Milho tem o \"!\" e o quadro diz o que fazer")
+	vila.jogador.global_position = milho.global_position + Vector3(0, 0, 1.5)
+	await get_tree().create_timer(0.4).timeout
+	verificar(vila._ponto_atual == "morador" and vila._botao_entrar.text == "FALAR COM SEU MILHO", "perto dele: botão FALAR")
+	vila.agir("morador")
+	await get_tree().process_frame
+	verificar(vila.dialogo.aberto and vila.find_child("NomeMorador", true, false).text == "SEU MILHO", "abre a conversa")
+	for i in 3:
+		vila.dialogo.responder(0)
+		await get_tree().process_frame
+	verificar(not vila.dialogo.aberto and Historia.lugar_da_vez() == "praca", "depois da conversa, próximo passo")
+	verificar(vila.find_child("SetaHistoria", true, false).visible and not milho.get_node("Exclamacao").visible,
+		"a seta aponta o lugar e o \"!\" sai")
+	Progresso.vila = guardado
+	Progresso.jogador = jogador_antes
 
 
 func _testar_tela_casa() -> void:

@@ -166,6 +166,31 @@ static func montar(id: String, pai: Node3D) -> void:
 			for x in [-0.15, 0.1, 0.25]:
 				Pecas3D.esfera(pai, 0.05, Vector3(x, 0.97, 0.32), _m(["#E8364F", "#FFD23F", "#7BE07B"][[-0.15, 0.1, 0.25].find(x)], 0.2))
 			Pecas3D.caixa(pai, Vector3(0.72, 0.18, 0.62), Vector3(0, 1.65, -0.1), _luz("#FF6FAE", 0.8))
+		"banco_praca":
+			var madeira := _m("#B5773F", 0.7)
+			var ferro := _m("#2B2B30", 0.4, 0.6)
+			for k in 3:
+				Pecas3D.caixa(pai, Vector3(1.7, 0.06, 0.14), Vector3(0, 0.45, -0.15 + k * 0.16), madeira)
+			for k in 2:
+				Pecas3D.caixa(pai, Vector3(1.7, 0.12, 0.05), Vector3(0, 0.7 + k * 0.2, -0.3), madeira, Vector3(-10, 0, 0))
+			for x in [-0.75, 0.75]:
+				Pecas3D.caixa(pai, Vector3(0.06, 0.45, 0.5), Vector3(x, 0.22, -0.05), ferro)
+				Pecas3D.caixa(pai, Vector3(0.06, 0.6, 0.06), Vector3(x, 0.72, -0.32), ferro)
+			Pecas3D.esfera(pai, 0.12, Vector3(0.5, 0.55, 0.0), _m("#FF6FAE", 0.4), Vector3(1, 0.6, 1))
+		"retrato_vila":
+			Pecas3D.caixa(pai, Vector3(0.12, 1.3, 0.12), Vector3(0, 0.65, -0.1), _m("#6B3A1F", 0.5), Vector3(-8, 0, 0))
+			for x in [-0.3, 0.3]:
+				Pecas3D.caixa(pai, Vector3(0.06, 1.1, 0.06), Vector3(x, 0.52, 0.12), _m("#6B3A1F", 0.5), Vector3(8, 0, 0))
+			var quadro := Node3D.new()
+			quadro.position = Vector3(0, 1.25, 0.02)
+			quadro.rotation_degrees = Vector3(-8, 0, 0)
+			pai.add_child(quadro)
+			Pecas3D.caixa(quadro, Vector3(0.9, 0.7, 0.06), Vector3.ZERO, _m("#FFC83D", 0.2, 0.7))
+			Pecas3D.caixa(quadro, Vector3(0.76, 0.56, 0.04), Vector3(0, 0, 0.02), _m("#9FD4F7", 0.6))
+			Pecas3D.caixa(quadro, Vector3(0.76, 0.18, 0.04), Vector3(0, -0.19, 0.03), _m("#7BBF5A", 0.8))
+			Pecas3D.cilindro(quadro, 0.0, 0.12, 0.2, Vector3(-0.15, -0.02, 0.05), _m("#E8364F", 0.5))
+			Pecas3D.caixa(quadro, Vector3(0.14, 0.14, 0.02), Vector3(-0.15, -0.15, 0.05), _m("#FFF1DC", 0.6))
+			Pecas3D.cilindro(quadro, 0.1, 0.1, 0.3, Vector3(0.18, -0.05, 0.05), _m("#FF8FB8", 0.5))
 		"robo_office":
 			var metal := _m("#C9CED6", 0.3, 0.6)
 			Pecas3D.cilindro(pai, 0.25, 0.3, 0.7, Vector3(0, 0.45, 0), metal)

@@ -40,6 +40,8 @@ extends Node
 ##   --animacoes  liga as animações contínuas mesmo sem placa de vídeo (borboletas etc.)
 ##   --torre=12  Torre de Doces: já empilha 12 andares (--torre_pergunta para na pergunta)
 ##   --fabrica=4  Fábrica de Chocolate: já começa e completa 4 pedidos
+##   --historia=0,0  histórias da vila neste capítulo e passo; --conversar=N abre a
+##                 conversa com o morador da vez e passa N falas
 ##   --casa_cheia  Minha Casa decorada; --loja_casa=moveis|paredes|pisos; --decorar
 ##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
 ##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
@@ -122,6 +124,11 @@ func _ready() -> void:
 		Progresso.vila["lotes"]["lote_1"]["desde"] = Terrenos.agora() - 3 * 3600
 		Progresso.vila["lotes"]["lote_2"]["desde"] = Terrenos.agora() - 2 * 3600
 		Progresso.moedas = 850
+	if args.has("historia"):
+		# --historia=2,1: capítulo 3, passo 2 (contando do 0)
+		var partes: PackedStringArray = args["historia"].split(",")
+		Progresso.vila["historia"] = {"capitulo": int(partes[0]), "passo": int(partes[1]) if partes.size() > 1 else 0, "progresso": 0}
+		Progresso.jogador["nivel"] = 9
 	if args.has("casa_cheia"):
 		# sala decorada: parede, piso e vários móveis
 		var casa := Casa.padrao()
@@ -240,6 +247,15 @@ func _ready() -> void:
 		Telas._cortina.color.a = 1.0
 		Telas._mostrar_carregando(args["cortina"])
 		Telas._carregando.barra(45.0)
+	if args.has("conversar"):
+		await get_tree().create_timer(0.5).timeout
+		var vila: Node = get_tree().current_scene
+		var id: String = Historia.morador_da_vez()
+		vila.jogador.global_position = vila._moradores_historia[id].global_position + Vector3(0, 0, 2)
+		vila.conversar()
+		for i in int(args["conversar"]):
+			await get_tree().create_timer(0.2).timeout
+			vila.dialogo.responder(0)
 	if args.has("loja_casa"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene._aba_loja = args["loja_casa"] if args["loja_casa"] != "" else "moveis"

@@ -41,6 +41,10 @@ const MOVEIS := {
 		"libera": "match_10", "como": "Passe 10 níveis do DOCE MATCH."},
 	"robo_office": {"nome": "ROBÔ DO OFFICE", "preco": 0, "tam": [1, 1], "conforto": 45,
 		"libera": "lab_30", "como": "Junte 30 estrelas no LABORATÓRIO."},
+	"banco_praca": {"nome": "BANCO DA PRAÇA", "preco": 0, "tam": [2, 1], "conforto": 35,
+		"libera": "historia", "como": "Termine o capítulo FESTA NA PRAÇA das histórias da vila."},
+	"retrato_vila": {"nome": "RETRATO DA VILA", "preco": 0, "tam": [1, 1], "conforto": 55,
+		"libera": "historia", "como": "Termine o capítulo O SEGREDO DA FÁBRICA das histórias da vila."},
 }
 
 ## Papéis de parede e pisos: {id: {"nome", "preco", "conforto"}}; o primeiro
@@ -126,6 +130,13 @@ static func cumpriu(condicao: String) -> bool:
 		"lab_30":
 			return Laboratorio.total_estrelas() >= 30
 	return false
+
+
+## Dá um móvel (prêmio das histórias da vila).
+static func ganhar_movel(id: String) -> void:
+	if MOVEIS.has(id):
+		_estado()["moveis"][id] = quantos(id) + 1
+		Progresso.salvar()
 
 
 ## Dá os móveis especiais já conquistados (uma vez cada). Retorna os ids novos.

@@ -119,6 +119,14 @@ var _ambiente: Environment
 var _sol: DirectionalLight3D
 ## Céu, luzes da noite e clima (dia e noite pelo relógio, ver CicloDia).
 var ceu: CeuVila
+## Histórias da vila (ver Historia): moradores da história, caixa de conversa,
+## quadro com o objetivo e a seta no lugar do passo "ir".
+var dialogo: Dialogo
+var _moradores_historia := {}  # id do doce -> DoceAndante
+var _quadro_historia: PanelContainer
+var _texto_historia: Label
+var _marca_lugar: Node3D
+var _tempo_historia := 0.0
 
 
 func _ready() -> void:
@@ -155,6 +163,7 @@ func _ready() -> void:
 	_criar_camera()
 	_criar_ceu()
 	_criar_interface()
+	_criar_historia()
 	_criar_tutorial()
 	_criar_avisos()
 	usar_camera(int(Progresso.config.get("camera_vila", Camera.AEREA)))
@@ -188,6 +197,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _mover(delta: float) -> void:
+	if dialogo and dialogo.aberto:
+		jogador.andar(Vector3.ZERO, delta)  # parado enquanto conversa
+		return
 	if _entrando:
 		_andar_na_entrada(delta)
 		return
@@ -225,6 +237,10 @@ func _process(delta: float) -> void:
 		if is_instance_valid(pas):
 			pas.rotation.z += delta * 0.8
 	_animar_borboletas(delta)
+	_tempo_historia += delta
+	if _tempo_historia > 0.25:
+		_tempo_historia = 0.0
+		_passo_historia()
 	_tempo_rotulos += delta
 	if _tempo_rotulos > 1.0:
 		_tempo_rotulos = 0.0
@@ -725,6 +741,22 @@ func _criar_moradores() -> void:
 		var angulo := i * TAU / ids.size()
 		morador.global_position = Vector3(cos(angulo) * 5.5, 0, sin(angulo) * 5.5)
 		morador.definir_area_passeio(Rect2(-9, -9, 18, 16))
+		if Historia.MORADORES.has(ids[i]):
+			_moradores_historia[ids[i]] = morador
+			var aviso := Label3D.new()
+			aviso.name = "Exclamacao"
+			aviso.text = "!"
+			aviso.font = CenarioVila.FONTE
+			aviso.font_size = 160
+			aviso.pixel_size = 0.008
+			aviso.modulate = Color("#F4E038")
+			aviso.outline_modulate = Color("#5E3D8E")
+			aviso.outline_size = 30
+			aviso.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			aviso.no_depth_test = true
+			aviso.position.y = 2.5
+			aviso.visible = false
+			morador.add_child(aviso)
 	for l in Terrenos.LOTES:
 		if Terrenos.construcao(l["id"]) == "casa":
 			_vizinho_da_casa(l["id"])
@@ -902,6 +934,155 @@ func _atualizar_topo() -> void:
 		moedas.text = Jogo.formatar(Progresso.moedas)
 
 
+# --- Histórias da vila (ver Historia e Dialogo) ------------------------------------
+
+func _criar_historia() -> void:
+	_quadro_historia = PanelContainer.new()
+	_quadro_historia.name = "QuadroHistoria"
+	_quadro_historia.theme_type_variation = &"PainelRoxo"
+	_quadro_historia.position = Vector2(18, 86)
+	_quadro_historia.custom_minimum_size = Vector2(300, 0)
+	_quadro_historia.modulate.a = 0.92
+	_quadro_historia.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_texto_historia = Label.new()
+	_texto_historia.name = "TextoHistoria"
+	_texto_historia.theme_type_variation = &"TituloClaro"
+	_texto_historia.add_theme_font_size_override("font_size", 19)
+	_texto_historia.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_texto_historia.custom_minimum_size = Vector2(290, 0)
+	_quadro_historia.add_child(_texto_historia)
+	_interface.add_child(_quadro_historia)
+	_marca_lugar = Node3D.new()
+	_marca_lugar.name = "SetaHistoria"
+	add_child(_marca_lugar)
+	var seta := CenarioCozinha.seta(_marca_lugar)
+	seta.scale = Vector3.ONE * 2.2
+	var pulo := seta.create_tween().set_loops()
+	pulo.tween_property(seta, "position:y", 0.6, 0.5).set_trans(Tween.TRANS_SINE)
+	pulo.tween_property(seta, "position:y", 0.0, 0.5).set_trans(Tween.TRANS_SINE)
+	dialogo = Dialogo.new()
+	dialogo.name = "Dialogo"
+	_interface.add_child(dialogo)
+	_atualizar_historia()
+	_mostrar_pendentes.call_deferred()
+
+
+## Quadro do objetivo, "!" em cima do morador da vez e a seta do lugar.
+func _atualizar_historia() -> void:
+	_quadro_historia.visible = not Historia.terminou_tudo()
+	if not Historia.terminou_tudo():
+		var cap: Dictionary = Historia.CAPITULOS[Historia.capitulo()]
+		_texto_historia.text = "HISTÓRIA %d · %s\n%s" % [Historia.capitulo() + 1, cap["titulo"], Historia.texto_meta().to_upper()]
+	var vez := Historia.morador_da_vez()
+	for id in _moradores_historia:
+		var morador: Node3D = _moradores_historia[id]
+		morador.get_node("Exclamacao").visible = id == vez
+	var lugar := Historia.lugar_da_vez()
+	_marca_lugar.visible = lugar != ""
+	if lugar != "":
+		var centro: Vector3 = Historia.LUGARES[lugar][0]
+		_marca_lugar.position = centro + Vector3(0, 3.2, 0)
+
+
+func _passo_historia() -> void:
+	if dialogo == null or dialogo.aberto or _entrando:
+		return
+	_atualizar_historia()
+	var falas := Historia.chegou(jogador.global_position)
+	if not falas.is_empty():
+		Audio.tocar("caixa", 1.2, -4.0)
+		await dialogo.falar("PISTA", falas)
+		await _mostrar_premio()
+		_atualizar_historia()
+		return
+	var vez := Historia.morador_da_vez()
+	var perto := false
+	if _moradores_historia.has(vez):
+		var morador: Node3D = _moradores_historia[vez]
+		perto = morador.global_position.distance_to(jogador.global_position) < 2.6
+	if perto and _porta_atual == "" and (_ponto_atual == "" or _ponto_atual == "morador"):
+		if _ponto_atual != "morador":
+			_ponto_atual = "morador"
+			_botao_entrar.text = "FALAR COM " + Historia.MORADORES[vez]
+			_botao_entrar.visible = true
+	elif _ponto_atual == "morador":
+		_ponto_atual = ""
+		_botao_entrar.visible = false
+
+
+## Conversa com o morador da vez (conforme o passo: falar, pergunta ou entregar).
+func conversar() -> void:
+	var id := Historia.morador_da_vez()
+	if id == "" or not _moradores_historia.has(id) or dialogo.aberto:
+		return
+	var nome: String = Historia.MORADORES[id]
+	var morador: DoceAndante = _moradores_historia[id]
+	_ponto_atual = ""
+	_botao_entrar.visible = false
+	morador.set("_espera", 999.0)  # para de passear e olha para o jogador
+	morador.olhar_para(jogador.global_position)
+	jogador.olhar_para(morador.global_position)
+	var passo := Historia.passo_atual()
+	match str(passo["tipo"]):
+		"falar":
+			await dialogo.falar(nome, passo["falas"])
+			Historia.avancar()
+		"pergunta":
+			await dialogo.falar(nome, passo["falas"])
+			var pergunta := Torre.sortear_pergunta()
+			if pergunta.is_empty() or await dialogo.perguntar(nome, pergunta):
+				Historia.avancar()
+			else:
+				await dialogo.falar(nome, ["Quase! Fale comigo de novo e tente outra pergunta."])
+		"entregar":
+			await dialogo.falar(nome, passo["falas"])
+			var quanto := int(passo["acucar"])
+			if await dialogo.escolher(nome, "Dar %d de açúcar? (você tem %d)" % [quanto, Confeitaria.acucar()], "DAR", "AGORA NÃO"):
+				if Historia.entregar():
+					await dialogo.falar(nome, ["Muito obrigada! Vai ficar uma delícia."])
+				else:
+					await dialogo.falar(nome, ["Você ainda não tem esse açúcar. Jogue o quiz e volte aqui!"])
+	morador.set("_espera", 1.0)
+	await _mostrar_premio()
+	_atualizar_historia()
+	_atualizar_topo()
+
+
+## Falas de um passo "fazer" que terminou num jogo (mostra ao voltar à vila).
+func _mostrar_pendentes() -> void:
+	var falas := Historia.falas_pendentes()
+	if not falas.is_empty():
+		await dialogo.falar("HISTÓRIA", falas)
+	await _mostrar_premio()
+	_atualizar_historia()
+
+
+func _mostrar_premio() -> void:
+	var premio := Historia.premio_pendente()
+	if premio.is_empty():
+		return
+	Audio.tocar("vitoria")
+	jogador.comemorar()
+	var partes := []
+	if premio.has("moedas"):
+		partes.append("+%d MOEDAS" % premio["moedas"])
+	if premio.has("acucar"):
+		partes.append("+%d AÇÚCAR" % premio["acucar"])
+	if premio.has("xp"):
+		partes.append("+%d XP" % premio["xp"])
+	if premio.has("bau"):
+		partes.append("+1 BAÚ DE DOCE")
+	var falas := ["Você terminou \"%s\"! Prêmio: %s." % [Historia.CAPITULOS[int(premio["capitulo"])]["titulo"], ", ".join(partes)]]
+	if premio.has("movel"):
+		falas.append("E um móvel exclusivo para a sua casa: %s!" % Casa.MOVEIS[premio["movel"]]["nome"])
+	if not Historia.terminou_tudo():
+		var proximo: Dictionary = Historia.CAPITULOS[Historia.capitulo()]
+		falas.append("Próxima história: \"%s\"%s" % [proximo["titulo"],
+			"." if Historia.liberado() else " (no nível %d do jogador)." % proximo["nivel"]])
+	await dialogo.falar("HISTÓRIA CONCLUÍDA!", falas)
+	_atualizar_topo()
+
+
 # --- Bairro dos Terrenos, Lago e Mirante (ver Terrenos e BairroVila) ----------------
 
 func _criar_bairro() -> void:
@@ -1025,6 +1206,9 @@ func _texto_ponto(id: String) -> String:
 
 ## Ação do botão perto de um lote ou presente.
 func agir(id: String) -> void:
+	if id == "morador":
+		conversar()
+		return
 	if id.begins_with("presente_"):
 		var lugar := id.trim_prefix("presente_")
 		var premio := Terrenos.abrir_presente(lugar)
