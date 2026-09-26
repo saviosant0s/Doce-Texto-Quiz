@@ -186,10 +186,12 @@ static func lugares_itens() -> Array:
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = hash("evento" + hoje())
 	var lista := []
-	for i in ITENS_POR_DIA:
+	while lista.size() < ITENS_POR_DIA:
 		var angulo := sorteio.randf() * TAU
 		var raio := sorteio.randf_range(6.0, 24.0)
-		lista.append(Vector3(cos(angulo) * raio, 0, sin(angulo) * raio * 0.8))
+		var p := Vector3(cos(angulo) * raio, 0, sin(angulo) * raio * 0.8)
+		if CicloDia.lugar_livre(p):  # nada dentro de prédio, terreno ou lago
+			lista.append(p)
 	return lista
 
 

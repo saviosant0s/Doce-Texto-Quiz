@@ -152,11 +152,34 @@ static func lugares_gotas() -> Array:
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = hash("gotas" + id_hora())
 	var lista := []
-	for i in GOTAS:
+	while lista.size() < GOTAS:
 		var angulo := sorteio.randf() * TAU
 		var raio := sorteio.randf_range(5.5, 16.0)
-		lista.append(Vector3(cos(angulo) * raio, 0, sin(angulo) * raio + 2.0))
+		var p := Vector3(cos(angulo) * raio, 0, sin(angulo) * raio + 2.0)
+		if lugar_livre(p):
+			lista.append(p)
 	return lista
+
+
+## Se dá para chegar no ponto (fora dos prédios, dos terrenos, do lago, do
+## mirante e da fonte da praça). Usado para espalhar gotas e objetos.
+static func lugar_livre(p: Vector3) -> bool:
+	var chao := Vector2(p.x, p.z)
+	if chao.length() < 5.0 or absf(p.x) > 34.0 or absf(p.z) > 34.0:
+		return false
+	for predio in Vila.PREDIOS:
+		var pos: Vector3 = predio["posicao"]
+		if chao.distance_to(Vector2(pos.x, pos.z)) < 5.0:
+			return false
+	for lote in Terrenos.LOTES:
+		var pos: Vector3 = lote["posicao"]
+		if absf(p.x - pos.x) < Terrenos.TAMANHO_LOTE / 2.0 + 1.0 and absf(p.z - pos.z) < Terrenos.TAMANHO_LOTE / 2.0 + 1.0:
+			return false
+	for lugar in Terrenos.LUGARES:
+		var pos: Vector3 = Terrenos.LUGARES[lugar]["posicao"]
+		if chao.distance_to(Vector2(pos.x, pos.z)) < 8.0:
+			return false
+	return true
 
 
 static func _granulado() -> Dictionary:

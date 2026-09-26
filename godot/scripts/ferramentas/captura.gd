@@ -46,6 +46,8 @@ extends Node
 ##   --evento=2026-12-10  data do evento; --fichas=150; --painel_evento abre a trilha
 ##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
 ##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
+##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
+##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -76,6 +78,8 @@ func _ready() -> void:
 		Eventos.dia_fixo = args["evento"]
 	if args.has("fichas"):
 		Eventos.ganhar_fichas(int(args["fichas"]))
+	if args.has("qualidade"):
+		Progresso.config["qualidade"] = int(args["qualidade"])  # 0 baixa, 1 média, 2 alta
 	# dia e noite: --hora=21 (fixa a hora), --chuva (chuva de granulado)
 	CicloDia.hora_fixa = float(args.get("hora", "14"))
 	CicloDia.chuva_fixa = 1 if args.has("chuva") else 0
@@ -353,6 +357,41 @@ func _ready() -> void:
 		vila.jogador.olhar_para(predio)
 		vila.usar_camera(Vila.Camera.PERTO)
 	await get_tree().create_timer(float(args.get("espera", "1.2"))).timeout
+	if args.has("desempenho"):
+		# quanto a tela pesa para desenhar (o FPS aqui não vale: é sem placa de vídeo)
+		print("DESEMPENHO %s: objetos=%d chamadas=%d triangulos=%d nos=%d luzes=%d particulas=%d" % [args["capturar"],
+			Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME),
+			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+			Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+			Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+			get_tree().current_scene.find_children("*", "Light3D", true, false).filter(func(l): return l.is_visible_in_tree()).size(),
+			get_tree().current_scene.find_children("*", "CPUParticles3D", true, false).size()])
+		if args["desempenho"] == "detalhe":
+			# triângulos por parte da cena (filho direto da raiz), dos maiores para os menores
+			var raiz := get_tree().current_scene
+			var somas := {}
+			for no in raiz.find_children("*", "GeometryInstance3D", true, false):
+				if not no.is_visible_in_tree():
+					continue
+				var malha: Mesh = no.mesh if no is MeshInstance3D else (no.multimesh.mesh if no is MultiMeshInstance3D and no.multimesh else null)
+				if malha == null:
+					continue
+				var tri := 0
+				for sup in malha.get_surface_count():
+					var arr := malha.surface_get_arrays(sup)
+					var ind: PackedInt32Array = arr[Mesh.ARRAY_INDEX] if arr[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+					tri += (ind.size() if ind.size() > 0 else (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()) / 3
+				if no is MultiMeshInstance3D:
+					tri *= no.multimesh.visible_instance_count if no.multimesh.visible_instance_count >= 0 else no.multimesh.instance_count
+				var parte: Node = no
+				while parte.get_parent() != raiz:
+					parte = parte.get_parent()
+				var chave := String(parte.name).split("@")[0] + " (" + parte.get_class() + ")"
+				somas[chave] = somas.get(chave, 0) + tri
+			var chaves := somas.keys()
+			chaves.sort_custom(func(a, b): return somas[a] > somas[b])
+			for c in chaves.slice(0, 15):
+				print("  ", c, ": ", somas[c])
 	get_viewport().get_texture().get_image().save_png(args.get("saida", "user://captura.png"))
 	get_tree().quit()
 

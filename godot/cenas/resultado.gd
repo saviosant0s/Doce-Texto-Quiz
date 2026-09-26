@@ -17,6 +17,9 @@ const PERSONAGENS_TITULO := {"noob": "maca_noob", "pro": "cupcake_pro", "mestre"
 func _ready() -> void:
 	var r := Jogo.resumo
 	%Inicio.pressed.connect(Telas.ir_para_casa)
+	if r.is_empty():
+		Telas.ir_para_casa.call_deferred()  # sem partida jogada (não devia acontecer)
+		return
 	if r["revisao"]:
 		_mostrar_revisao(r)
 	else:

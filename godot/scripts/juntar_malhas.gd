@@ -14,14 +14,16 @@ const CONTORNO := preload("res://tema/contorno_junto.gdshader")
 
 
 ## Menos faces nas formas pequenas (pelo tamanho no mundo).
+## Na qualidade MÉDIA (padrão no celular) e BAIXA, ainda menos faces.
 static func simplificar(raiz: Node) -> void:
+	var fator: float = [0.55, 0.75, 1.0][Qualidade.nivel()]
 	for no in raiz.find_children("*", "MeshInstance3D", true, false):
 		var peca := no as MeshInstance3D
 		if not peca.mesh is PrimitiveMesh:
 			continue
 		var tamanho := (peca.get_aabb().size * peca.global_transform.basis.get_scale()).abs()
 		var maior := maxf(tamanho.x, maxf(tamanho.y, tamanho.z))
-		var lados := clampi(roundi(5 + maior * 9.0), 6, 24)
+		var lados := clampi(roundi((5 + maior * 9.0) * fator), 6, roundi(24 * fator))
 		# só mexe se for diminuir (mexer na forma obriga a refazê-la)
 		if peca.mesh is SphereMesh:
 			_menor(peca.mesh, "radial_segments", lados)

@@ -28,6 +28,7 @@ func _ready() -> void:
 	_testar_casa()
 	_testar_historia()
 	_testar_eventos()
+	_testar_salvar_vila_nova()
 	_testar_torre()
 	_testar_fabrica()
 	await _testar_fluxo_completo()
@@ -1815,6 +1816,19 @@ func _testar_ciclo_dia() -> void:
 	verificar(CicloDia.lugares_gotas().size() == CicloDia.GOTAS and CicloDia.pegar_gota(0) == CicloDia.ACUCAR_GOTA
 		and Confeitaria.acucar() == antes + CicloDia.ACUCAR_GOTA, "na chuva de granulado, cada gota dá açúcar")
 	verificar(CicloDia.pegar_gota(0) == 0, "a mesma gota não conta duas vezes")
+	var gotas_livres := true
+	for d in 30:
+		CicloDia.dia_fixo = "2026-11-%02d" % (1 + d % 28)
+		CicloDia.hora_fixa = float(d % 24)
+		Eventos.dia_fixo = CicloDia.dia_fixo
+		for p in CicloDia.lugares_gotas() + Eventos.lugares_itens():
+			if not CicloDia.lugar_livre(p):
+				gotas_livres = false
+	verificar(gotas_livres, "gotas e objetos de evento nunca caem dentro de prédio, terreno ou lago")
+	verificar(not CicloDia.lugar_livre(Vector3(0, 0, -14)) and not CicloDia.lugar_livre(Vector3(-30, 0, 12)),
+		"dentro da escola ou do lago não é lugar livre")
+	Eventos.dia_fixo = ""
+	CicloDia.dia_fixo = "2026-10-06"
 	CicloDia.chuva_fixa = 0
 	verificar(CicloDia.pegar_gota(1) == 0, "sem chuva, sem gotas")
 	CicloDia.chuva_fixa = -1
@@ -1990,6 +2004,49 @@ func _testar_eventos() -> void:
 	Progresso.colecao = colecao
 	Progresso.moedas = moedas_antes
 	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+## Casa, histórias, evento, obras e chuva depois de salvar em JSON e carregar
+## (o JSON devolve números inteiros como decimais).
+func _testar_salvar_vila_nova() -> void:
+	_secao("salvar e carregar a vila nova")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.moedas = 5000
+	Progresso.vila = Terrenos.padrao()
+	Terrenos.agora_fixo = 2000000.0
+	Terrenos.comprar("lote_1")
+	Terrenos.construir("lote_1", "moinho")
+	Terrenos.melhorar("lote_1")
+	Casa.comprar("sofa_marshmallow")
+	Casa.colocar("sofa_marshmallow", 0, 4, 1)
+	Progresso.vila["historia"] = {"capitulo": 1, "passo": 2, "progresso": 0}
+	Eventos.dia_fixo = "2026-10-20"
+	Eventos.ganhar_fichas(60)
+	Eventos.resgatar(0)
+	CicloDia.dia_fixo = "2026-10-20"
+	CicloDia.hora_fixa = 15.0
+	CicloDia.chuva_fixa = 1
+	CicloDia.pegar_gota(2)
+	# vai e volta pelo JSON, como no arquivo de salvamento
+	Progresso.vila = JSON.parse_string(JSON.stringify(Progresso.vila))
+	verificar(Terrenos.em_obra("lote_1") and Terrenos.nivel("lote_1") == 1 and Terrenos.falta_obra("lote_1") == 180,
+		"a obra continua depois de carregar")
+	Terrenos.agora_fixo += 200
+	verificar(Terrenos.nivel("lote_1") == 2, "e termina no tempo certo")
+	verificar(Casa.guardados("sofa_marshmallow") == 0 and Casa.no_lugar(0, 5) >= 0 and Casa.tamanho("sofa_marshmallow", int(Casa.colocados().back()["giro"])) == Vector2i(1, 2),
+		"os móveis voltam no lugar, girados")
+	verificar(not Casa.colocar("mesa_biscoito", 0, 4), "a grade continua sabendo o que está ocupado")
+	verificar(Historia.capitulo() == 1 and Historia.passo_atual()["tipo"] == "pergunta", "a história volta no mesmo passo")
+	verificar(Eventos.fichas() == 60 and Eventos.resgatado(0) and not Eventos.pode_resgatar(0), "fichas e prêmios do evento voltam")
+	verificar(CicloDia.gota_pega(2) and CicloDia.pegar_gota(2) == 0, "gota já pega continua pega")
+	Terrenos.agora_fixo = -1.0
+	Eventos.dia_fixo = ""
+	CicloDia.dia_fixo = ""
+	CicloDia.hora_fixa = -1.0
+	CicloDia.chuva_fixa = -1
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
 
 
 func _testar_vila_evento() -> void:

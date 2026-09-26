@@ -96,6 +96,7 @@ static func cilindro(pai: Node3D, raio_topo: float, raio_base: float, altura: fl
 	malha.bottom_radius = raio_base
 	malha.height = altura
 	malha.radial_segments = lados_para(maxf(raio_topo, raio_base) * 2.0 * maxf(escala.x, escala.z))
+	malha.rings = 0  # sem anéis no meio da altura (não mudam nada na forma; eram 4 a mais em cada cilindro)
 	return _no(pai, malha, mat, posicao, escala, rotacao)
 
 

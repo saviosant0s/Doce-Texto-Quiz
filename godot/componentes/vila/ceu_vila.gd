@@ -336,29 +336,25 @@ func _criar_gota(indice: int, lugar: Vector3) -> Node3D:
 	no.name = "Gota%d" % indice
 	no.position = lugar + Vector3(0, 0.55, 0)
 	add_child(no)
-	for k in 7:
+	# três granulados cruzados (poucos desenhos: são 12 gotas) que brilham
+	for k in 3:
 		var peca := MeshInstance3D.new()
 		var capsula := CapsuleMesh.new()
-		capsula.radius = 0.07
-		capsula.height = 0.34
+		capsula.radius = 0.08
+		capsula.height = 0.4
 		capsula.radial_segments = 8
-		capsula.rings = 2
+		capsula.rings = 1
 		peca.mesh = capsula
 		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(CORES_GRANULADO[(k + indice) % CORES_GRANULADO.size()])
+		mat.albedo_color = Color(CORES_GRANULADO[(k * 2 + indice) % CORES_GRANULADO.size()])
 		mat.roughness = 0.25
 		mat.emission_enabled = true
 		mat.emission = mat.albedo_color
-		mat.emission_energy_multiplier = 0.35
+		mat.emission_energy_multiplier = 0.5
 		peca.material_override = mat
-		var a := k * TAU / 7.0
-		peca.position = Vector3(cos(a) * 0.14, (k % 3) * 0.08, sin(a) * 0.14)
-		peca.rotation = Vector3(a, a * 1.7, 0.8 * k)
+		peca.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		peca.rotation = Vector3(k * 1.05, k * 0.9, PI / 2.0 * (k % 2))
 		no.add_child(peca)
-	var brilho := _particulas(6, Color("#FFFFFF"), 0.16, 1.0)
-	brilho.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	brilho.emission_sphere_radius = 0.35
-	no.add_child(brilho)
 	return no
 
 

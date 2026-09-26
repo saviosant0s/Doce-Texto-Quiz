@@ -884,13 +884,13 @@ static func flores(pai: Node3D, pontos: Array, semente: int) -> void:
 	var petala := SphereMesh.new()
 	petala.radius = 0.09
 	petala.height = 0.1
-	petala.radial_segments = 10
-	petala.rings = 5
+	petala.radial_segments = 6  # florzinha de 9 cm: poucas faces bastam (são centenas)
+	petala.rings = 3
 	var miolo := SphereMesh.new()
 	miolo.radius = 0.06
 	miolo.height = 0.1
-	miolo.radial_segments = 10
-	miolo.rings = 5
+	miolo.radial_segments = 6
+	miolo.rings = 3
 	var petalas := _multimesh(pai, petala, pontos.size() * 5)
 	var miolos := _multimesh(pai, miolo, pontos.size())
 	for i in pontos.size():

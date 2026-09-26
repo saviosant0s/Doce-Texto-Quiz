@@ -61,13 +61,9 @@ func _criar_chave_animacoes() -> void:
 		Progresso.salvar())
 	%Linhas.add_child(chave)
 	if not Telas.placa_rapida:
-		var aviso := Label.new()
-		aviso.theme_type_variation = &"Texto"
-		aviso.add_theme_font_size_override("font_size", 17)
-		aviso.text = "Este aparelho está sem aceleração de vídeo, então as animações ficam desligadas para o jogo não travar."
-		aviso.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		aviso.custom_minimum_size = Vector2(200, 0)
-		%Linhas.add_child(aviso)
+		# (sem placa de vídeo as animações ficam desligadas para não travar;
+		# o aviso vai no próprio texto, sem ocupar outra linha)
+		chave.text = "Animações de fundo (desligadas: aparelho sem aceleração de vídeo)"
 		chave.disabled = true
 
 

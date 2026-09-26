@@ -213,6 +213,8 @@ func _criar_item(indice: int, lugar: Vector3) -> Node3D:
 	no.add_child(aro)
 	CenarioVila.estilo_desenho(no)
 	JuntarMalhas.juntar(no, [])  # cada objeto vira um bloco só (leve)
+	for peca in no.find_children("*", "MeshInstance3D", true, false):
+		peca.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF  # flutua: sem sombra
 	return no
 
 

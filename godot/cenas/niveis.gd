@@ -41,12 +41,32 @@ func _ready() -> void:
 		for botao in [%Titulos, %Colecao, %ComoJogar, %Creditos, %Configuracoes]:
 			botao.visible = false
 		%Inicio.tooltip_text = "Voltar para a vila"
+	_ajustar_menu()
 	for i in Jogo.niveis.size():
 		var cartao := CARTAO.instantiate()
 		%Cartoes.add_child(cartao)
 		cartao.configurar(i, Jogo.niveis[i])
 		Animacoes.entrar(cartao, Vector2(0, 50), 0.08 * i)
 	_criar_botao_revisao()
+
+
+## Sem a vila aparecem os 11 botões do menu do lado: não cabem numa coluna
+## só (os de cima e de baixo ficavam cortados), então viram duas colunas.
+func _ajustar_menu() -> void:
+	var botoes: VBoxContainer = $Margem/Linha/Menu/Botoes
+	var visiveis := botoes.get_children().filter(func(b): return b is Button and b.visible)
+	var cabem := int((get_viewport_rect().size.y - 110.0) / 72.0)
+	if visiveis.size() <= cabem:
+		return
+	var grade := GridContainer.new()
+	grade.name = "BotoesGrade"
+	grade.columns = 2
+	grade.add_theme_constant_override("h_separation", 8)
+	grade.add_theme_constant_override("v_separation", 8)
+	botoes.add_sibling(grade)
+	for b in botoes.get_children():
+		botoes.remove_child(b)
+		grade.add_child(b)
 
 
 ## "REVISAR ERROS (n)": aparece quando há perguntas erradas para rever.

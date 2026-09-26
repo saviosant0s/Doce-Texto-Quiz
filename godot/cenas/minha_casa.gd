@@ -182,6 +182,10 @@ func montar_moveis() -> void:
 		no.add_child(modelo)
 		Moveis3D.montar(c["id"], modelo)
 		CenarioVila.estilo_desenho(modelo)
+		# leve: menos faces nas peças pequenas e cada móvel em poucos blocos
+		# (sem isso, a sala cheia passava de 600 desenhos por quadro)
+		JuntarMalhas.simplificar(modelo)
+		JuntarMalhas.juntar(modelo, [])
 		# caixa para o toque achar o móvel (e o doce não atravessar)
 		var corpo := StaticBody3D.new()
 		corpo.collision_layer = 1 if not Casa.MOVEIS[c["id"]].get("tapete", false) else 4
@@ -244,6 +248,7 @@ func _criar_doce() -> void:
 	_doce.global_position = Vector3(0.5, 0, 1.5)
 	_doce.definir_area_passeio(Rect2(-3.3, -2.3, 6.6, 4.8))
 	CenarioVila.estilo_desenho(_doce)
+	_doce.otimizar()
 
 
 # --- Toques ------------------------------------------------------------------------
@@ -251,11 +256,11 @@ func _criar_doce() -> void:
 func _unhandled_input(evento: InputEvent) -> void:
 	if not decorando or is_instance_valid(_loja):
 		return
+	# só o clique (no celular, o toque vira clique): quando o dedo está num
+	# botão da interface, o botão já usou o clique e ele não chega aqui (com o
+	# toque "cru", apertar GIRAR também tocava na sala e tirava a seleção)
 	var ponto := Vector2(-1, -1)
-	if evento is InputEventScreenTouch and not evento.pressed:
-		ponto = evento.position
-	elif evento is InputEventMouseButton and evento.button_index == MOUSE_BUTTON_LEFT and not evento.pressed \
-			and evento.device != InputEvent.DEVICE_ID_EMULATION:
+	if evento is InputEventMouseButton and evento.button_index == MOUSE_BUTTON_LEFT and not evento.pressed:
 		ponto = evento.position
 	if ponto.x < 0:
 		return

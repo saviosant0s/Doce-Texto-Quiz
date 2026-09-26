@@ -122,6 +122,30 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 29/09 (pedido do Sávio antes de "fechar o sistema por enquanto"): **botões
+  diferenciados + verificação geral**, ainda sem APK:
+  - Botões "de bala" (`ferramentas/gerar_botoes.py` gera as texturas com brilho
+    e listrinhas; o tema usa StyleBoxTexture). Cor por função: amarelo ação
+    principal, roxo escolhido, creme voltar/fechar/não e abas, menta
+    comprar/construir/evoluir/jogar, morango resgatar/coletar/abrir, céu
+    mapa/loja/jogar de novo, vermelho apagar. O botão de ação da vila muda de
+    cor conforme o que faz.
+  - Bugs corrigidos: gotas de chuva e objetos de evento podiam cair dentro de
+    prédios, terrenos ou do lago (agora `CicloDia.lugar_livre`); tela de
+    resultado sem partida quebrava; na Minha Casa, tocar num botão no celular
+    também tocava na sala (agora só o clique, que o botão consome); menu do
+    lado da escolha de nível cortado sem a vila (vira duas colunas);
+    configurações passando da tela sem placa de vídeo.
+  - Desempenho (medido com `capturar.sh <tela> --desempenho[=detalhe] --qualidade=1`):
+    cilindros sem anéis extras; peças simplificadas conforme a qualidade;
+    flores com menos faces; móveis e gotas juntados; objetos flutuantes sem
+    sombra. Qualidade MÉDIA (padrão do celular): vila 782 mil → 393 mil
+    triângulos; noite com chuva 716 → 556 desenhos; Minha Casa cheia 655 → 203
+    desenhos e 476 mil → 65 mil triângulos.
+  - Conferido: todas as telas em 16:9, as novas também em 20:9 e 4:3, e no
+    modo do navegador. Teste novo: vila nova salva e carregada em JSON.
+    1884 verificações passando.
+
 - 29/09 (pedido do Sávio: "os 4, começando pelo 2 depois o 1"), **ainda sem APK**:
   1. **Dia e noite + clima** (`CicloDia`, `CeuVila`): hora real do aparelho;
      céu, sol/lua, névoa e luz ambiente mudam (amanhecer 5–7h, pôr do sol

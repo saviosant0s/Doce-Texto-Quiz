@@ -1066,6 +1066,9 @@ func _criar_historia() -> void:
 ## Quadro do objetivo, "!" em cima do morador da vez e a seta do lugar.
 func _atualizar_historia() -> void:
 	_quadro_historia.visible = not Historia.terminou_tudo()
+	# com a dica do tutorial no alto (telas mais estreitas), o quadro desce
+	var dica_no_alto := is_instance_valid(_dica) and _dica.is_visible_in_tree()
+	_quadro_historia.position.y = 150.0 if dica_no_alto and get_viewport().get_visible_rect().size.x < 1500 else 86.0
 	if not Historia.terminou_tudo():
 		var cap: Dictionary = Historia.CAPITULOS[Historia.capitulo()]
 		_texto_historia.text = "HISTÓRIA %d · %s\n%s" % [Historia.capitulo() + 1, cap["titulo"], Historia.texto_meta().to_upper()]
