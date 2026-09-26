@@ -107,7 +107,12 @@ func _mostrar(nome: String, texto: String, opcoes: Array) -> int:
 		b.add_theme_font_size_override("font_size", 22)
 		b.focus_mode = Control.FOCUS_NONE
 		# CONTINUAR e o "sim" em destaque; alternativas de pergunta todas iguais
-		b.theme_type_variation = &"Button" if opcoes.size() <= 2 and i == 0 else &"Alternativa"
+		if opcoes.size() == 1 or (opcoes.size() == 2 and i == 0):
+			b.theme_type_variation = &"Button"
+		elif opcoes.size() == 2:
+			b.theme_type_variation = &"BotaoSecundario"  # "agora não"
+		else:
+			b.theme_type_variation = &"Alternativa"  # respostas do quiz
 		b.pressed.connect(func(): _respondeu.emit(i))
 		_botoes.add_child(b)
 	return await _respondeu

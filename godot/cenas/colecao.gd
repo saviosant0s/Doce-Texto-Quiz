@@ -62,6 +62,8 @@ func _atualizar_acao() -> void:
 	var doce := Colecao.dados(id)
 	_acao.disabled = false
 	_acao.icon = null
+	# à venda e ainda não tem: botão de compra (menta); senão, o amarelo
+	_acao.theme_type_variation = &"BotaoComprar" if Colecao.a_venda(id) and not Colecao.tem(id) else &"Button"
 	for estado in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_focus_color",
 			"icon_hover_pressed_color", "icon_disabled_color"]:
 		_acao.remove_theme_color_override(estado)  # a moeda (abaixo) tira a tinta
@@ -161,7 +163,7 @@ func _criar_painel() -> void:
 	coluna.add_child(_acao)
 	_melhorar = Button.new()
 	_melhorar.name = "Melhorar"
-	_melhorar.theme_type_variation = &"BotaoRoxo"
+	_melhorar.theme_type_variation = &"BotaoComprar"
 	_melhorar.custom_minimum_size = Vector2(0, 50)
 	_melhorar.add_theme_font_size_override("font_size", 22)
 	_melhorar.pressed.connect(_ao_melhorar)

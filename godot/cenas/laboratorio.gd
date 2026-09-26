@@ -434,7 +434,7 @@ func _tocar_fase(id: String) -> void:
 	var fechar := Button.new()
 	fechar.name = "Fechar"
 	fechar.text = "VOLTAR"
-	fechar.theme_type_variation = &"Alternativa"
+	fechar.theme_type_variation = &"BotaoSecundario"
 	fechar.custom_minimum_size = Vector2(200, 80)
 	fechar.pressed.connect(_fechar_painel)
 	botoes.add_child(fechar)

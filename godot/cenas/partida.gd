@@ -260,9 +260,17 @@ func _comemorar_pontos(botao: Button) -> void:
 
 ## Destaca uma alternativa (verde = correta, vermelho = escolha errada).
 func _pintar(botao: Button, cor: Color, cor_borda: Color, icone: Texture2D) -> void:
-	var estilo: StyleBoxFlat = botao.get_theme_stylebox("normal").duplicate()
+	# (os botões do tema são texturas de bala; aqui é uma caixa lisa da cor)
+	var estilo := StyleBoxFlat.new()
 	estilo.bg_color = cor
 	estilo.border_color = cor_borda
+	estilo.border_width_bottom = 7
+	estilo.set_corner_radius_all(18)
+	estilo.corner_detail = 10
+	estilo.content_margin_left = 22
+	estilo.content_margin_right = 22
+	estilo.content_margin_top = 11
+	estilo.content_margin_bottom = 11
 	botao.add_theme_stylebox_override("disabled", estilo)
 	botao.add_theme_color_override("font_disabled_color", Color.WHITE)
 	botao.add_theme_color_override("icon_disabled_color", Color.WHITE)

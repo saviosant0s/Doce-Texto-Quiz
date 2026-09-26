@@ -508,7 +508,7 @@ func mostrar_inicio() -> void:
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
-	botoes.add_child(_botao("Sair", "VOLTAR", &"Alternativa", Telas.voltar))
+	botoes.add_child(_botao("Sair", "VOLTAR", &"BotaoSecundario", Telas.voltar))
 	botoes.add_child(_botao("Jogar", "JOGAR (%d AÇÚCAR)" % Fabrica.CUSTO_ACUCAR, &"", comecar))
 
 
@@ -528,7 +528,7 @@ func _terminar() -> void:
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
-	botoes.add_child(_botao("Sair", "VOLTAR", &"Alternativa", Telas.voltar))
+	botoes.add_child(_botao("Sair", "VOLTAR", &"BotaoSecundario", Telas.voltar))
 	botoes.add_child(_botao("DeNovo", "DE NOVO (%d AÇÚCAR)" % Fabrica.CUSTO_ACUCAR, &"", comecar))
 	if premio["recorde_novo"] or premio["bau"] != "":
 		Audio.tocar("vitoria")
@@ -542,7 +542,7 @@ func _sem_acucar() -> void:
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
-	botoes.add_child(_botao("Sair", "VOLTAR", &"Alternativa", Telas.voltar))
+	botoes.add_child(_botao("Sair", "VOLTAR", &"BotaoSecundario", Telas.voltar))
 	botoes.add_child(_botao("JogarQuiz", "JOGAR O QUIZ", &"", Telas.abrir.bind("niveis")))
 
 
@@ -596,13 +596,5 @@ func _botao(nome: String, texto: String, estilo: StringName, acao: Callable) -> 
 	botao.focus_mode = Control.FOCUS_NONE
 	botao.pressed.connect(acao)
 	if estilo == &"":
-		for estado in ["normal", "hover", "pressed", "focus"]:
-			var caixa := botao.get_theme_stylebox(estado)
-			if caixa is StyleBoxFlat:
-				var verde: StyleBoxFlat = caixa.duplicate()
-				verde.bg_color = Cores.VERDE if estado != "pressed" else Cores.VERDE_ESCURO
-				verde.border_color = Cores.VERDE_ESCURO
-				botao.add_theme_stylebox_override(estado, verde)
-		for cor in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-			botao.add_theme_color_override(cor, Color.WHITE)
+		botao.theme_type_variation = &"BotaoComprar"  # o JOGAR (gasta açúcar) em menta
 	return botao

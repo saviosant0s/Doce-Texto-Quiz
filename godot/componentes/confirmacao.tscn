@@ -68,7 +68,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"BotaoRoxo"
+theme_type_variation = &"BotaoSecundario"
 text = "NÃO"
 
 [node name="Sim" type="Button" parent="Centro/Cartao/Coluna/Botoes"]

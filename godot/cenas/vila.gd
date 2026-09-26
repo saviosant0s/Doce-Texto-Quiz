@@ -537,6 +537,7 @@ func _chegou_na_porta(corpo: Node3D, id: String) -> void:
 	_porta_atual = id
 	var dados: Dictionary = PREDIOS.filter(func(p): return p["id"] == id)[0]
 	_botao_entrar.text = dados["acao"]
+	_pintar_botao_acao()
 	_botao_entrar.visible = true
 	_botao_entrar.pivot_offset = _botao_entrar.size / 2
 	_botao_entrar.scale = Vector2.ONE * 0.7
@@ -1014,6 +1015,7 @@ func abrir_evento() -> void:
 			b.disabled = true
 		elif Eventos.pode_resgatar(i):
 			b.text = "%d · %s\nRESGATAR!" % [meta, texto]
+			b.theme_type_variation = &"BotaoPremio"
 			b.pressed.connect(func():
 				if not Eventos.resgatar(i).is_empty():
 					Audio.tocar("vitoria")
@@ -1023,7 +1025,7 @@ func abrir_evento() -> void:
 					abrir_evento())
 		else:
 			b.text = "%d · %s\nFALTAM %d" % [meta, texto, meta - Eventos.fichas()]
-			b.theme_type_variation = &"Alternativa"
+			b.theme_type_variation = &"BotaoSecundario"
 		grade.add_child(b)
 
 
@@ -1098,6 +1100,7 @@ func _passo_historia() -> void:
 		if _ponto_atual != "morador":
 			_ponto_atual = "morador"
 			_botao_entrar.text = "FALAR COM " + Historia.MORADORES[vez]
+			_pintar_botao_acao()
 			_botao_entrar.visible = true
 	elif _ponto_atual == "morador":
 		_ponto_atual = ""
@@ -1255,6 +1258,23 @@ func _atualizar_rotulos_producao() -> void:
 			rotulo.text += " · CHEIO!"
 	if _ponto_atual != "" and not is_instance_valid(_painel_lote):
 		_botao_entrar.text = _texto_ponto(_ponto_atual)
+		_pintar_botao_acao()
+
+
+## Cor do botão de ação da vila conforme o que ele faz agora (entrar,
+## coletar/presente, comprar/construir/evoluir, falar).
+func _pintar_botao_acao() -> void:
+	var t := _botao_entrar.text
+	if t.begins_with("COLETAR") or t.begins_with("ABRIR PRESENTE"):
+		_botao_entrar.theme_type_variation = &"BotaoPremio"
+	elif t.begins_with("COMPRAR") or t.begins_with("CONSTRUIR") or t.begins_with("EVOLUIR"):
+		_botao_entrar.theme_type_variation = &"BotaoComprar"
+	elif t.begins_with("FALAR"):
+		_botao_entrar.theme_type_variation = &"BotaoAzul"
+	elif t.begins_with("OBRA") or t.begins_with("PRESENTE:"):
+		_botao_entrar.theme_type_variation = &"BotaoSecundario"
+	else:
+		_botao_entrar.theme_type_variation = &"Button"
 
 
 func _chegou_no_ponto(corpo: Node3D, id: String) -> void:
@@ -1263,6 +1283,7 @@ func _chegou_no_ponto(corpo: Node3D, id: String) -> void:
 	_ponto_atual = id
 	_porta_atual = ""
 	_botao_entrar.text = _texto_ponto(id)
+	_pintar_botao_acao()
 	_botao_entrar.visible = true
 	_botao_entrar.pivot_offset = _botao_entrar.size / 2
 	_botao_entrar.scale = Vector2.ONE * 0.7
@@ -1349,6 +1370,7 @@ func _depois_de_agir() -> void:
 	_atualizar_rotulos_producao()
 	if _ponto_atual != "":
 		_botao_entrar.text = _texto_ponto(_ponto_atual)
+		_pintar_botao_acao()
 
 
 ## Painel com o que dá para construir no lote.
@@ -1364,7 +1386,7 @@ func abrir_construcoes(id: String) -> void:
 		var botao := Button.new()
 		botao.name = "Construir_" + tipo
 		botao.custom_minimum_size = Vector2(250, 120)
-		botao.theme_type_variation = &"BotaoRoxo" if Progresso.moedas < int(dados["preco"]) else &"Button"
+		botao.theme_type_variation = &"BotaoSecundario" if Progresso.moedas < int(dados["preco"]) else &"BotaoComprar"
 		botao.text = "%s\n%d MOEDAS\n%s" % [dados["nome"], dados["preco"], dados["texto"]]
 		botao.add_theme_font_size_override("font_size", 19)
 		botao.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1418,6 +1440,7 @@ func _abrir_construcao(id: String) -> void:
 		var preco_ja := Terrenos.preco_acelerar(id)
 		var ja := Button.new()
 		ja.name = "TerminarJa"
+		ja.theme_type_variation = &"BotaoPremio"
 		ja.custom_minimum_size = Vector2(420, 70)
 		ja.focus_mode = Control.FOCUS_NONE
 		ja.text = "TERMINAR JÁ (%d AÇÚCAR)" % preco_ja
@@ -1451,6 +1474,7 @@ func _abrir_construcao(id: String) -> void:
 	coluna.add_child(proximo)
 	var melhorar := Button.new()
 	melhorar.name = "Melhorar"
+	melhorar.theme_type_variation = &"BotaoComprar"
 	melhorar.custom_minimum_size = Vector2(460, 70)
 	melhorar.focus_mode = Control.FOCUS_NONE
 	melhorar.text = "EVOLUIR (%d MOEDAS · %s)" % [preco, Terrenos.relogio(Terrenos.tempo_obra(nivel + 1))]
@@ -1500,7 +1524,7 @@ func _abrir_painel_lote(titulo: String) -> VBoxContainer:
 	var fechar := Button.new()
 	fechar.name = "FecharPainel"
 	fechar.text = "FECHAR"
-	fechar.theme_type_variation = &"Alternativa"
+	fechar.theme_type_variation = &"BotaoSecundario"
 	fechar.custom_minimum_size = Vector2(200, 64)
 	fechar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	fechar.focus_mode = Control.FOCUS_NONE

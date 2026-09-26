@@ -92,12 +92,12 @@ func _criar_qualidade() -> void:
 		botao.button_pressed = i == Qualidade.nivel()
 		botao.custom_minimum_size = Vector2(110, 46)
 		botao.add_theme_font_size_override("font_size", 24)
-		botao.theme_type_variation = &"BotaoRoxo" if i == Qualidade.nivel() else &"Alternativa"
+		botao.theme_type_variation = &"BotaoRoxo" if i == Qualidade.nivel() else &"BotaoSecundario"
 		botao.pressed.connect(func():
 			Qualidade.escolher(i)
 			for outro in linha.get_children():
 				if outro is Button:
-					outro.theme_type_variation = &"BotaoRoxo" if outro == botao else &"Alternativa")
+					outro.theme_type_variation = &"BotaoRoxo" if outro == botao else &"BotaoSecundario")
 		linha.add_child(botao)
 	%Linhas.add_child(linha)
 

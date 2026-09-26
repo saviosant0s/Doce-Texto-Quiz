@@ -238,7 +238,7 @@ func _montar_lista(periodo: String) -> void:
 			botao.disabled = true
 		elif Missoes.cumprida(m):
 			botao.text = "RESGATAR"
-			botao.theme_type_variation = &"Alternativa"
+			botao.theme_type_variation = &"BotaoPremio"
 			botao.pressed.connect(resgatar.bind(periodo, i))
 			if Telas.animacoes_continuas:
 				_pulsar(botao)

@@ -440,7 +440,7 @@ func _criar_interface() -> void:
 	_barra_ver.add_theme_constant_override("separation", 14)
 	_barra_ver.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	coluna.add_child(_barra_ver)
-	for par in [["LOJA", abrir_loja, &"Alternativa"], ["DECORAR", usar_modo.bind(true), &"Button"]]:
+	for par in [["LOJA", abrir_loja, &"BotaoAzul"], ["DECORAR", usar_modo.bind(true), &"Button"]]:
 		var b := Button.new()
 		b.name = "Botao" + par[0]
 		b.text = par[0]
@@ -488,6 +488,7 @@ func _criar_interface() -> void:
 	var pronto := Button.new()
 	pronto.name = "Pronto"
 	pronto.text = "PRONTO"
+	pronto.theme_type_variation = &"BotaoComprar"
 	pronto.custom_minimum_size = Vector2(170, 72)
 	pronto.add_theme_font_size_override("font_size", 28)
 	pronto.focus_mode = Control.FOCUS_NONE
@@ -534,7 +535,7 @@ func _atualizar_bandeja() -> void:
 		b.custom_minimum_size = Vector2(0, 72)
 		b.add_theme_font_size_override("font_size", 20)
 		b.focus_mode = Control.FOCUS_NONE
-		b.theme_type_variation = &"BotaoRoxo" if id == escolhido else &"Alternativa"
+		b.theme_type_variation = &"BotaoRoxo" if id == escolhido else &"BotaoSecundario"
 		b.pressed.connect(func():
 			escolhido = "" if escolhido == id else id
 			selecionado = -1
@@ -613,7 +614,7 @@ func abrir_loja() -> void:
 		aba.custom_minimum_size = Vector2(150, 54)
 		aba.add_theme_font_size_override("font_size", 22)
 		aba.focus_mode = Control.FOCUS_NONE
-		aba.theme_type_variation = &"Button" if par[0] == _aba_loja else &"Alternativa"
+		aba.theme_type_variation = &"BotaoRoxo" if par[0] == _aba_loja else &"BotaoSecundario"
 		aba.pressed.connect(func():
 			_aba_loja = par[0]
 			_escolha_loja = ""
@@ -622,7 +623,7 @@ func abrir_loja() -> void:
 	var fechar := Button.new()
 	fechar.name = "FecharLoja"
 	fechar.text = "FECHAR"
-	fechar.theme_type_variation = &"Alternativa"
+	fechar.theme_type_variation = &"BotaoSecundario"
 	fechar.custom_minimum_size = Vector2(150, 54)
 	fechar.focus_mode = Control.FOCUS_NONE
 	fechar.pressed.connect(fechar_loja)
@@ -670,6 +671,7 @@ func abrir_loja() -> void:
 	_comprar.custom_minimum_size = Vector2(320, 64)
 	_comprar.add_theme_font_size_override("font_size", 24)
 	_comprar.focus_mode = Control.FOCUS_NONE
+	_comprar.theme_type_variation = &"BotaoComprar"
 	_comprar.pressed.connect(_comprar_escolha)
 	lado.add_child(_comprar)
 	var rolar := ScrollContainer.new()
@@ -692,7 +694,7 @@ func abrir_loja() -> void:
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.focus_mode = Control.FOCUS_NONE
 		b.text = "%s\n%s" % [lista[id]["nome"], _preco_texto(id)]
-		b.theme_type_variation = &"Button" if id == _escolha_loja else &"Alternativa"
+		b.theme_type_variation = &"BotaoRoxo" if id == _escolha_loja else &"BotaoSecundario"
 		b.pressed.connect(escolher_na_loja.bind(id))
 		_itens_loja.add_child(b)
 	if _escolha_loja == "":
@@ -716,7 +718,7 @@ func _preco_texto(id: String) -> String:
 func escolher_na_loja(id: String) -> void:
 	_escolha_loja = id
 	for b in _itens_loja.get_children():
-		b.theme_type_variation = &"Button" if b.name == "Item_" + id else &"Alternativa"
+		b.theme_type_variation = &"BotaoRoxo" if b.name == "Item_" + id else &"BotaoSecundario"
 	for filho in _previa.get_children():
 		filho.queue_free()
 	match _aba_loja:

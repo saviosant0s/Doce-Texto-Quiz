@@ -176,7 +176,7 @@ func _cartao_bau(tipo: String) -> PanelContainer:
 	var abrir := Button.new()
 	abrir.name = "Abrir_" + tipo
 	abrir.text = "ABRIR"
-	abrir.theme_type_variation = &"BotaoRoxo"
+	abrir.theme_type_variation = &"BotaoPremio"
 	abrir.custom_minimum_size = Vector2(0, 72)
 	abrir.pressed.connect(abrir_bau.bind(tipo))
 	coluna.add_child(abrir)

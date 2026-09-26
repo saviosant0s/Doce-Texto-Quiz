@@ -149,7 +149,7 @@ func mostrar_aba(indice: int) -> void:
 	aba_atual = indice
 	for i in _abas.get_child_count():
 		var aba: Button = _abas.get_child(i)
-		aba.theme_type_variation = &"BotaoRoxo" if i == indice else &"Alternativa"
+		aba.theme_type_variation = &"BotaoRoxo" if i == indice else &"BotaoSecundario"
 		aba.add_theme_font_size_override("font_size", 26 if i == indice else 20)  # a fonte do roxo é mais estreita
 	for filho in %Passos.get_children():
 		%Passos.remove_child(filho)

@@ -347,7 +347,7 @@ func abrir_nivel(n: int) -> void:
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
-	botoes.add_child(_botao("Fechar", "VOLTAR", &"Alternativa", 200, _fechar_painel))
+	botoes.add_child(_botao("Fechar", "VOLTAR", &"BotaoSecundario", 200, _fechar_painel))
 	botoes.add_child(_botao("Jogar", "JOGAR (%d AÇÚCAR)" % DoceMatch.CUSTO_ACUCAR, &"", 330, comecar_nivel.bind(n)))
 	_abrir_painel(painel)
 
@@ -999,7 +999,7 @@ func _mostrar_vitoria(estrelas: int, premio: Dictionary) -> void:
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
-	botoes.add_child(_botao("Mapa", "MAPA", &"Alternativa", 180, _voltar_ao_mapa))
+	botoes.add_child(_botao("Mapa", "MAPA", &"BotaoAzul", 180, _voltar_ao_mapa))
 	if numero_nivel < DoceMatch.niveis().size():
 		botoes.add_child(_botao("Proximo", "PRÓXIMO (%d AÇÚCAR)" % DoceMatch.CUSTO_ACUCAR, &"", 340,
 			comecar_nivel.bind(numero_nivel + 1)))
@@ -1040,7 +1040,7 @@ func _mostrar_derrota() -> void:
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
-	botoes.add_child(_botao("Mapa", "MAPA", &"Alternativa", 180, _voltar_ao_mapa))
+	botoes.add_child(_botao("Mapa", "MAPA", &"BotaoAzul", 180, _voltar_ao_mapa))
 	botoes.add_child(_botao("TentarDeNovo", "DE NOVO (%d AÇÚCAR)" % DoceMatch.CUSTO_ACUCAR, &"", 340,
 		comecar_nivel.bind(numero_nivel)))
 	_abrir_painel(painel)
@@ -1065,7 +1065,7 @@ func _perguntar_sair() -> void:
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
-	botoes.add_child(_botao("Sair", "SAIR", &"Alternativa", 200, _voltar_ao_mapa))
+	botoes.add_child(_botao("Sair", "SAIR", &"BotaoSecundario", 200, _voltar_ao_mapa))
 	botoes.add_child(_botao("Continuar", "CONTINUAR", &"", 260, _fechar_painel))
 	_abrir_painel(painel)
 
@@ -1081,7 +1081,7 @@ func _mostrar_sem_acucar() -> void:
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
-	botoes.add_child(_botao("Sair", "MAPA", &"Alternativa", 200, _voltar_ao_mapa))
+	botoes.add_child(_botao("Sair", "MAPA", &"BotaoAzul", 200, _voltar_ao_mapa))
 	botoes.add_child(_botao("JogarQuiz", "JOGAR O QUIZ", &"", 300, Telas.abrir.bind("niveis")))
 	_abrir_painel(painel)
 
@@ -1151,16 +1151,7 @@ func _botao(nome: String, texto: String, estilo: StringName, largura: float, aca
 	botao.custom_minimum_size = Vector2(largura, 76)
 	botao.pressed.connect(acao)
 	if estilo == &"":
-		# ação principal em verde, para se destacar do botão amarelo ao lado
-		for estado in ["normal", "hover", "pressed", "focus"]:
-			var caixa := botao.get_theme_stylebox(estado)
-			if caixa is StyleBoxFlat:
-				var verde: StyleBoxFlat = caixa.duplicate()
-				verde.bg_color = Cores.VERDE if estado != "pressed" else Cores.VERDE_ESCURO
-				verde.border_color = Cores.VERDE_ESCURO
-				botao.add_theme_stylebox_override(estado, verde)
-		for cor in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-			botao.add_theme_color_override(cor, Color.WHITE)
+		botao.theme_type_variation = &"BotaoComprar"  # ação principal em menta
 	return botao
 
 
