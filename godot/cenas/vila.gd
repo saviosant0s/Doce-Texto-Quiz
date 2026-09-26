@@ -7,7 +7,7 @@ extends Node3D
 ## botão PULAR pula; Enter/E entra no prédio.
 ##
 ## Três câmeras (botão no topo; a escolha fica salva):
-## - AÉREA: de cima e de longe, sempre olhando para o norte.
+## - AÉREA: de cima e de longe; arrastar o dedo gira em volta do doce.
 ## - PERTO: atrás do doce; acompanha quando ele anda para frente; arrastar o
 ##   dedo na tela gira a visão; se um prédio ficar no meio, ela se aproxima.
 ## - 1ª PESSOA: pelos olhos do doce; joystick para cima/baixo anda e para os
@@ -104,7 +104,8 @@ const PRESENTES := {"lago": Vector3(-27.0, 0.13, 12), "mirante": Vector3(27.5, 0
 var _ponto_atual := ""  # lote ou presente perto do doce ("" = nenhum)
 var _lotes := {}  # id -> Node3D
 var _presentes := {}  # lugar -> Node3D
-var _rotulos_producao := {}  # id do lote -> Label3D ("12 AÇÚCAR")
+var _rotulos_producao := {}  # id do lote -> Label3D ("12 AÇÚCAR" ou "OBRA · 2:59")
+var _obras_antes := {}  # id do lote -> estava em obra (para remontar quando acaba)
 var _pas: Array[Node3D] = []  # pás dos moinhos (giram)
 var _painel_lote: Control
 var _tempo_rotulos := 0.0
@@ -206,9 +207,10 @@ func _process(delta: float) -> void:
 	match modo_camera:
 		Camera.AEREA:
 			# prédio no meio (ex.: atrás da Escola): a câmera sobe e olha mais de cima
-			var tapado := _tapado(cabeca, pos + CAMERA_DISTANCIA)
+			# arrastar o dedo gira a câmera em volta do doce (_giro)
+			var tapado := _tapado(cabeca, pos + CAMERA_DISTANCIA.rotated(Vector3.UP, _giro))
 			_alto = lerpf(_alto, 1.0 if tapado else 0.0, minf(1.0, 3.0 * delta))
-			var distancia := CAMERA_DISTANCIA.lerp(CAMERA_DE_CIMA, _alto)
+			var distancia := CAMERA_DISTANCIA.lerp(CAMERA_DE_CIMA, _alto).rotated(Vector3.UP, _giro)
 			var alvo := pos + distancia
 			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, CAMERA_SUAVIDADE * delta))
 			_camera.look_at(_camera.global_position - distancia + Vector3(0, 0.8, 0))
@@ -394,7 +396,7 @@ func _unhandled_input(evento: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_terminar_entrada()
 		return
-	# arrastar um dedo (fora do joystick) gira a visão nas câmeras de perto,
+	# arrastar um dedo (fora do joystick) gira a visão (a aérea só para os lados),
 	# mesmo com o outro dedo andando no joystick
 	if evento is InputEventScreenDrag and evento.index != _joystick.dedo \
 			and not _dedos_em_botao.has(evento.index):
@@ -419,9 +421,9 @@ func _unhandled_input(evento: InputEvent) -> void:
 
 
 func _girar_visao(pixels: Vector2) -> void:
-	if modo_camera == Camera.AEREA:
-		return
 	_giro -= pixels.x * GIRO_ARRASTO
+	if modo_camera == Camera.AEREA:
+		return  # de cima só gira para os lados
 	var limites := INCLINACAO_1P if modo_camera == Camera.PRIMEIRA_PESSOA else INCLINACAO_PERTO
 	_inclinacao = clampf(_inclinacao - pixels.y * GIRO_ARRASTO, limites.x, limites.y)
 	_girou_ha = 0.0
@@ -913,8 +915,9 @@ func _montar_lote(id: String, desenho := true) -> void:
 	if _rotulos_producao.has(id) and is_instance_valid(_rotulos_producao[id]):
 		_rotulos_producao[id].queue_free()
 	_rotulos_producao.erase(id)
-	if Terrenos.produz(id) != "":
-		var rotulo := BairroVila._texto(self, "", no.position + Vector3(0, 5.2, 0), 150)
+	_obras_antes[id] = Terrenos.em_obra(id)
+	if Terrenos.construcao(id) != "":
+		var rotulo := BairroVila._texto(self, "", no.position + Vector3(0, 5.6, 0), 150)
 		rotulo.name = "Producao_" + id
 		_rotulos_producao[id] = rotulo
 	_atualizar_rotulos_producao()
@@ -925,9 +928,21 @@ func _montar_lote(id: String, desenho := true) -> void:
 
 
 func _atualizar_rotulos_producao() -> void:
+	# obra que acabou com o jogador na vila: a construção aparece nova
+	for id in _obras_antes.keys():
+		if _obras_antes[id] and not Terrenos.em_obra(id):
+			_montar_lote(id)
+			Audio.tocar("construir")
+			Telas.mostrar_aviso("%s AGORA É NÍVEL %d!" % [Terrenos.CONSTRUCOES[Terrenos.construcao(id)]["nome"], Terrenos.nivel(id)])
+			if is_instance_valid(_painel_lote) and _ponto_atual == id:
+				_abrir_construcao(id)
 	for id in _rotulos_producao:
 		var rotulo: Label3D = _rotulos_producao[id]
 		if not is_instance_valid(rotulo):
+			continue
+		if Terrenos.em_obra(id):
+			rotulo.visible = true
+			rotulo.text = "OBRA · " + Terrenos.relogio(Terrenos.falta_obra(id))
 			continue
 		var pronto := Terrenos.pronto(id)
 		rotulo.visible = pronto > 0
@@ -972,6 +987,10 @@ func _texto_ponto(id: String) -> String:
 	var pronto := Terrenos.pronto(id)
 	if pronto > 0:
 		return "COLETAR %d %s" % [pronto, "AÇÚCAR" if Terrenos.produz(id) == "acucar" else "MOEDAS"]
+	if Terrenos.em_obra(id):
+		return "OBRA: FALTAM " + Terrenos.relogio(Terrenos.falta_obra(id))
+	if Terrenos.preco_melhoria(id) > 0:
+		return "EVOLUIR " + Terrenos.CONSTRUCOES[tipo]["nome"]
 	return Terrenos.CONSTRUCOES[tipo]["nome"]
 
 
@@ -1015,11 +1034,7 @@ func agir(id: String) -> void:
 		Telas.mostrar_aviso("+%d %s" % [quanto, "AÇÚCAR" if Terrenos.produz(id) == "acucar" else "MOEDAS"])
 		_depois_de_agir()
 		return
-	if Terrenos.produz(id) != "":
-		_abrir_producao(id)
-	else:
-		jogador.comemorar()
-		Telas.mostrar_aviso(Terrenos.CONSTRUCOES[tipo]["texto"].to_upper())
+	_abrir_construcao(id)
 
 
 func _depois_de_agir() -> void:
@@ -1062,42 +1077,91 @@ func abrir_construcoes(id: String) -> void:
 		grade.add_child(botao)
 
 
-## Painel do moinho/cofre: quanto produz, quanto guarda e o botão de melhorar.
-func _abrir_producao(id: String) -> void:
+## Painel da construção: o que ela faz, o que o próximo nível traz e o botão
+## de evoluir (a obra leva tempo; dá para terminar já com açúcar).
+func _abrir_construcao(id: String) -> void:
 	var tipo := Terrenos.construcao(id)
-	var coluna := _abrir_painel_lote("%s · NÍVEL %d" % [Terrenos.CONSTRUCOES[tipo]["nome"], Terrenos.nivel(id)])
-	var coisa := "AÇÚCAR" if Terrenos.produz(id) == "acucar" else "MOEDAS"
+	var dados: Dictionary = Terrenos.CONSTRUCOES[tipo]
+	var nivel := Terrenos.nivel(id)
+	var coluna := _abrir_painel_lote("%s · NÍVEL %d" % [dados["nome"], nivel])
 	var info := Label.new()
+	info.name = "Info"
 	info.theme_type_variation = &"SubtituloClaro"
-	info.add_theme_font_size_override("font_size", 28)
+	info.add_theme_font_size_override("font_size", 26)
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	info.text = "FAZ %d %s POR HORA E GUARDA ATÉ %d.\nPRONTO AGORA: %d" % [Terrenos.por_hora(id), coisa, Terrenos.maximo(id), Terrenos.pronto(id)]
-	coluna.add_child(info)
-	var preco := Terrenos.preco_melhoria(id)
-	if preco > 0:
-		var melhorar := Button.new()
-		melhorar.name = "Melhorar"
-		melhorar.custom_minimum_size = Vector2(420, 70)
-		melhorar.focus_mode = Control.FOCUS_NONE
-		melhorar.text = "MELHORAR PARA NÍVEL %d (%d MOEDAS)" % [Terrenos.nivel(id) + 1, preco]
-		melhorar.pressed.connect(func():
-			if not Terrenos.melhorar(id):
-				Telas.mostrar_aviso("FALTAM MOEDAS: CUSTA %d" % preco)
-				return
-			Audio.tocar("construir")
-			_fechar_painel_lote()
-			_montar_lote(id)
-			jogador.comemorar()
-			Telas.mostrar_aviso("AGORA É NÍVEL %d!" % Terrenos.nivel(id))
-			_depois_de_agir())
-		coluna.add_child(melhorar)
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size.x = 640
+	if Terrenos.produz(id) != "":
+		var coisa := "AÇÚCAR" if Terrenos.produz(id) == "acucar" else "MOEDAS"
+		info.text = "FAZ %d %s POR HORA E GUARDA ATÉ %d.\nPRONTO AGORA: %d" % [Terrenos.por_hora(id), coisa, Terrenos.maximo(id), Terrenos.pronto(id)]
+		if Terrenos.beleza() > 0:
+			info.text += "\nBELEZA DA VILA: +%d%%" % roundi(Terrenos.BONUS_BELEZA * Terrenos.beleza() * 100)
 	else:
+		info.text = "%s\nCADA NÍVEL DEIXA A VILA MAIS BONITA: +%d%% NO MOINHO E NO COFRE." % [
+			dados["texto"].to_upper(), roundi(Terrenos.BONUS_BELEZA * 100)]
+	coluna.add_child(info)
+	if Terrenos.em_obra(id):
+		var falta := Label.new()
+		falta.name = "Falta"
+		falta.theme_type_variation = &"TituloClaro"
+		falta.add_theme_font_size_override("font_size", 34)
+		falta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		falta.text = "EM OBRA PARA O NÍVEL %d · FALTAM %s" % [nivel + 1, Terrenos.relogio(Terrenos.falta_obra(id))]
+		coluna.add_child(falta)
+		var preco_ja := Terrenos.preco_acelerar(id)
+		var ja := Button.new()
+		ja.name = "TerminarJa"
+		ja.custom_minimum_size = Vector2(420, 70)
+		ja.focus_mode = Control.FOCUS_NONE
+		ja.text = "TERMINAR JÁ (%d AÇÚCAR)" % preco_ja
+		ja.pressed.connect(func():
+			if not Terrenos.acelerar(id):
+				Telas.mostrar_aviso("FALTA AÇÚCAR: CUSTA %d" % Terrenos.preco_acelerar(id))
+				return
+			_fechar_painel_lote()
+			_atualizar_rotulos_producao()  # remonta e avisa o nível novo
+			jogador.comemorar()
+			_depois_de_agir())
+		coluna.add_child(ja)
+		return
+	var preco := Terrenos.preco_melhoria(id)
+	if preco < 0:
 		var maximo := Label.new()
 		maximo.theme_type_variation = &"TituloClaro"
 		maximo.add_theme_font_size_override("font_size", 30)
 		maximo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		maximo.text = "NÍVEL MÁXIMO!"
 		coluna.add_child(maximo)
+		return
+	var proximo := Label.new()
+	proximo.name = "Proximo"
+	proximo.theme_type_variation = &"TituloClaro"
+	proximo.add_theme_font_size_override("font_size", 28)
+	proximo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	proximo.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	proximo.custom_minimum_size.x = 640
+	proximo.text = "NÍVEL %d: %s" % [nivel + 1, str(dados["niveis"][nivel]).to_upper()]
+	coluna.add_child(proximo)
+	var melhorar := Button.new()
+	melhorar.name = "Melhorar"
+	melhorar.custom_minimum_size = Vector2(460, 70)
+	melhorar.focus_mode = Control.FOCUS_NONE
+	melhorar.text = "EVOLUIR (%d MOEDAS · %s)" % [preco, Terrenos.relogio(Terrenos.tempo_obra(nivel + 1))]
+	melhorar.pressed.connect(func():
+		var ocupado := Terrenos.obra_em_andamento()
+		if not ocupado.is_empty():
+			Telas.mostrar_aviso("O CONSTRUTOR ESTÁ EM OUTRA OBRA (FALTAM %s)" % Terrenos.relogio(Terrenos.falta_obra(ocupado)))
+			return
+		if not Terrenos.melhorar(id):
+			Telas.mostrar_aviso("FALTAM MOEDAS: CUSTA %d" % preco)
+			return
+		Audio.tocar("construir")
+		_fechar_painel_lote()
+		_montar_lote(id)
+		jogador.comemorar()
+		Telas.mostrar_aviso("OBRA COMEÇOU! PRONTA EM " + Terrenos.relogio(Terrenos.falta_obra(id)))
+		_depois_de_agir())
+	coluna.add_child(melhorar)
 
 
 func _abrir_painel_lote(titulo: String) -> VBoxContainer:

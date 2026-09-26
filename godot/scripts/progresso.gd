@@ -234,7 +234,11 @@ func carregar() -> void:
 			estatisticas[chave] = int(estatisticas[chave])
 	conquistas = dados.get("conquistas", {})
 	colecao.merge(dados.get("colecao", {}), true)
-	confeitaria.merge(dados.get("confeitaria", {}), true)
+	var confeitaria_salva: Dictionary = dados.get("confeitaria", {})
+	confeitaria.merge(confeitaria_salva, true)
+	if not confeitaria_salva.is_empty() and not confeitaria_salva.has("presente_inicial"):
+		# save de antes do presente de açúcar: ganha agora, uma vez só
+		confeitaria["acucar"] = int(confeitaria["acucar"]) + Confeitaria.ACUCAR_INICIAL
 	laboratorio.merge(dados.get("laboratorio", {}), true)
 	for id in laboratorio["estrelas"]:
 		laboratorio["estrelas"][id] = int(laboratorio["estrelas"][id])

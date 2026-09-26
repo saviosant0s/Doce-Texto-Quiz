@@ -35,6 +35,7 @@ extends Node
 ##   --cortina=vila  mostra o carregamento de ir para a vila (ou cozinha)
 ##   --terrenos  compra lotes e constrói (moinho nv 2, cofre, casa, jardim, fonte; um vazio)
 ##   --vila_pos=0,20  na Vila, põe o doce nesse ponto (x,z)
+##   --terrenos=4  terrenos comprados, construções no nível 4 (lote 6 em obra)
 ##   --confeitaria_estagio  máquinas suficientes para a Confeitaria crescer (estágio 3)
 ##   --animacoes  liga as animações contínuas mesmo sem placa de vídeo (borboletas etc.)
 ##   --torre=12  Torre de Doces: já empilha 12 andares (--torre_pergunta para na pergunta)
@@ -106,7 +107,12 @@ func _ready() -> void:
 			Terrenos.comprar(id)
 			if obras[i] != "":
 				Terrenos.construir(id, obras[i])
-		Terrenos.melhorar("lote_1")
+		# --terrenos=N: todas as construções no nível N (e a do lote 6 em obra)
+		var nivel_todos := int(args["terrenos"]) if args["terrenos"] != "" else 2
+		for i in 5:
+			Progresso.vila["lotes"][Terrenos.LOTES[i]["id"]]["nivel"] = nivel_todos
+		Terrenos.construir("lote_6", "casa")
+		Terrenos.melhorar("lote_6")
 		Progresso.vila["lotes"]["lote_1"]["desde"] = Terrenos.agora() - 3 * 3600
 		Progresso.vila["lotes"]["lote_2"]["desde"] = Terrenos.agora() - 2 * 3600
 		Progresso.moedas = 850

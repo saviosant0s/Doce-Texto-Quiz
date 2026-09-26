@@ -4,10 +4,16 @@ class_name Terrenos
 ##   MOINHO DE AÇÚCAR e COFRE DE MOEDAS produzem com o tempo (até encher);
 ##   é só passar lá e coletar. Sobem de nível (produzem mais e guardam mais).
 ##   CASA DE DOCE traz um vizinho novo passeando; JARDIM e FONTE enfeitam.
+## EVOLUÇÃO: toda construção sobe até o nível 5 e muda de forma a cada nível.
+## Melhorar leva tempo de verdade (a obra, com andaime); só um construtor, uma
+## obra por vez; dá para terminar na hora pagando açúcar. Casa, jardim e
+## fonte deixam a vila bonita: cada nível deles é +BONUS_BELEZA de produção
+## no moinho e no cofre.
 ## Longe da praça ficam o LAGO DE CHOCOLATE e o MIRANTE DO SORVETE, cada um
 ## com um presente por dia para quem anda até lá.
 ##
-## Estado em Progresso.vila = {"lotes": {id: {"construcao", "nivel", "desde"}},
+## Estado em Progresso.vila = {"lotes": {id: {"construcao", "nivel", "desde"
+## [, "obra_ate": fim da obra (segundos Unix)]}},
 ## "presentes": {lugar: "AAAA-MM-DD"}}.
 
 ## "aberto": lado do lote virado para a rua (a construção olha para lá).
@@ -21,19 +27,34 @@ const LOTES := [
 ]
 const TAMANHO_LOTE := 6.0
 
-## "por_hora" e "maximo" por nível (1 a 3); "melhoria" = moedas para ir ao próximo.
+## "por_hora" e "maximo" por nível (1 a 5); "melhoria" = moedas para ir ao
+## próximo; "niveis" = o que muda na cara da construção a cada nível.
 const CONSTRUCOES := {
 	"moinho": {"nome": "MOINHO DE AÇÚCAR", "preco": 80, "produz": "acucar",
-		"por_hora": [6, 10, 15], "maximo": [30, 50, 80], "melhoria": [150, 300],
-		"texto": "Faz açúcar sozinho, até encher."},
+		"por_hora": [6, 10, 15, 21, 28], "maximo": [30, 50, 80, 120, 170], "melhoria": [150, 300, 550, 900],
+		"texto": "Faz açúcar sozinho, até encher.",
+		"niveis": ["", "bandeirinhas e base de pedra", "galpão de sacos de açúcar", "torre mais alta com janelas", "telhado de ouro e estrela"]},
 	"cofre": {"nome": "COFRE DE MOEDAS", "preco": 150, "produz": "moedas",
-		"por_hora": [4, 7, 11], "maximo": [20, 35, 55], "melhoria": [250, 450],
-		"texto": "Junta moedas sozinho, até encher."},
-	"casa": {"nome": "CASA DE DOCE", "preco": 120, "texto": "Um vizinho novo passeia pela vila."},
-	"jardim": {"nome": "JARDIM DE PIRULITOS", "preco": 60, "texto": "Árvores de pirulito e flores."},
-	"fonte": {"nome": "FONTE DE MORANGO", "preco": 100, "texto": "Uma fonte de calda de morango."},
+		"por_hora": [4, 7, 11, 16, 22], "maximo": [20, 35, 55, 85, 120], "melhoria": [250, 450, 750, 1200],
+		"texto": "Junta moedas sozinho, até encher.",
+		"niveis": ["", "pilha de moedas", "pedestal de pedra", "coroa e mais moedas", "porquinho de ouro"]},
+	"casa": {"nome": "CASA DE DOCE", "preco": 120, "melhoria": [100, 220, 400, 700],
+		"texto": "Um vizinho novo passeia pela vila.",
+		"niveis": ["", "chaminé, cerquinha e floreiras", "segundo andar", "varanda com colunas", "torrezinha com bandeira"]},
+	"jardim": {"nome": "JARDIM DE PIRULITOS", "preco": 60, "melhoria": [60, 150, 300, 500],
+		"texto": "Árvores de pirulito e flores.",
+		"niveis": ["", "mais árvores", "caminho de pedra e bancos", "coreto no meio", "arco de balas e postes de luz"]},
+	"fonte": {"nome": "FONTE DE MORANGO", "preco": 100, "melhoria": [90, 200, 380, 650],
+		"texto": "Uma fonte de calda de morango.",
+		"niveis": ["", "segundo prato", "canteiro de flores em volta", "ursinhos de goma jogando água", "bacia maior, três pratos e ouro"]},
 }
-const NIVEL_MAXIMO := 3
+const NIVEL_MAXIMO := 5
+## Segundos de obra para chegar a cada nível (índice = nível que vai ficar - 2):
+## 3 min, 15 min, 1 h e 4 h. Construir (nível 1) é na hora.
+const TEMPO_OBRA := [180, 900, 3600, 14400]
+## Cada nível de casa, jardim e fonte: +5% na produção do moinho e do cofre.
+const BONUS_BELEZA := 0.05
+const DECORACOES := ["casa", "jardim", "fonte"]
 
 ## Lugares longe da praça, com um presente por dia.
 const LUGARES := {
@@ -83,6 +104,7 @@ static func construcao(id: String) -> String:
 
 
 static func nivel(id: String) -> int:
+	_conferir_obra(id)
 	return int(_estado()["lotes"].get(id, {}).get("nivel", 0))
 
 
@@ -123,8 +145,18 @@ static func _do_nivel(id: String, chave: String) -> int:
 	return int(dados[chave][clampi(nivel(id), 1, NIVEL_MAXIMO) - 1])
 
 
+## Produção por hora, já com o bônus de beleza da vila.
 static func por_hora(id: String) -> int:
-	return _do_nivel(id, "por_hora")
+	return int(round(_do_nivel(id, "por_hora") * (1.0 + BONUS_BELEZA * beleza())))
+
+
+## Soma dos níveis de casas, jardins e fontes (obras prontas).
+static func beleza() -> int:
+	var soma := 0
+	for id in _estado()["lotes"]:
+		if construcao(id) in DECORACOES:
+			soma += nivel(id)
+	return soma
 
 
 static func maximo(id: String) -> int:
@@ -165,14 +197,75 @@ static func preco_melhoria(id: String) -> int:
 	return int(dados["melhoria"][n - 1])
 
 
+## Começa a obra do próximo nível (paga as moedas agora). Falso se já está
+## no máximo, se faltam moedas ou se o construtor está em outra obra.
 static func melhorar(id: String) -> bool:
 	var preco := preco_melhoria(id)
-	if preco < 0 or Progresso.moedas < preco:
+	if preco < 0 or Progresso.moedas < preco or not obra_em_andamento().is_empty():
 		return false
 	coletar(id)  # o que estava pronto não se perde
-	_estado()["lotes"][id]["nivel"] = nivel(id) + 1
+	_estado()["lotes"][id]["obra_ate"] = agora() + tempo_obra(nivel(id) + 1)
 	Progresso.gastar_moedas(preco)
 	return true
+
+
+## Segundos de obra para chegar ao `nivel_novo` (2 a 5).
+static func tempo_obra(nivel_novo: int) -> int:
+	return int(TEMPO_OBRA[clampi(nivel_novo - 2, 0, TEMPO_OBRA.size() - 1)])
+
+
+static func em_obra(id: String) -> bool:
+	_conferir_obra(id)
+	return _estado()["lotes"].get(id, {}).has("obra_ate")
+
+
+## Segundos que faltam para a obra acabar (0 = sem obra).
+static func falta_obra(id: String) -> int:
+	if not em_obra(id):
+		return 0
+	return maxi(1, ceili(float(_estado()["lotes"][id]["obra_ate"]) - agora()))
+
+
+## Lote com obra agora ("" = o construtor está livre).
+static func obra_em_andamento() -> String:
+	for id in _estado()["lotes"]:
+		if em_obra(id):
+			return id
+	return ""
+
+
+## Açúcar para terminar a obra agora: 1 por minuto que falta.
+static func preco_acelerar(id: String) -> int:
+	return ceili(falta_obra(id) / 60.0) if em_obra(id) else 0
+
+
+static func acelerar(id: String) -> bool:
+	var preco := preco_acelerar(id)
+	if preco <= 0 or not Confeitaria.gastar_acucar(preco):
+		return false
+	_estado()["lotes"][id]["obra_ate"] = agora()
+	_conferir_obra(id)
+	Progresso.salvar()
+	return true
+
+
+## Se a obra do lote já acabou: sobe o nível. A produção continua de onde
+## estava (nada do que já estava pronto se perde).
+static func _conferir_obra(id: String) -> void:
+	var dados: Dictionary = _estado()["lotes"].get(id, {})
+	if not dados.has("obra_ate") or float(dados["obra_ate"]) > agora():
+		return
+	dados.erase("obra_ate")
+	dados["nivel"] = mini(NIVEL_MAXIMO, int(dados.get("nivel", 1)) + 1)
+	Progresso.salvar()
+
+
+## "m:ss" ou "h:mm:ss" (para o relógio da obra).
+static func relogio(segundos: int) -> String:
+	var h := segundos / 3600
+	var m := (segundos % 3600) / 60
+	var s := segundos % 60
+	return "%d:%02d:%02d" % [h, m, s] if h > 0 else "%d:%02d" % [m, s]
 
 
 # --- Presentes dos lugares longe -------------------------------------------------

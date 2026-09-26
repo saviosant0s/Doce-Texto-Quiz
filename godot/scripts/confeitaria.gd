@@ -43,11 +43,15 @@ const CARREGAR := [4, 8, 12]
 const PRECO_CARREGAR := [120, 300]
 ## Gorjeta de cada cliente atendido (além do valor dos doces).
 const GORJETA := 2
+## Açúcar de presente para quem começa: dá para experimentar os minigames
+## (cada partida custa 20 a 30) antes de jogar o quiz. Quem já jogava ganha
+## o mesmo presente uma vez (ver Progresso.carregar).
+const ACUCAR_INICIAL := 100
 
 
 static func padrao() -> Dictionary:
 	return {
-		"acucar": 0, "acucar_ganho": 0, "maquinas": {}, "carregar_nivel": 0,
+		"acucar": ACUCAR_INICIAL, "acucar_ganho": 0, "presente_inicial": true, "maquinas": {}, "carregar_nivel": 0,
 		"atualizado": 0.0, "feitos": 0, "atendidos": 0, "presente": false,
 	}
 

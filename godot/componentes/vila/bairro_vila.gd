@@ -93,17 +93,24 @@ static func montar_lote(no: Node3D, id: String) -> void:
 		obra.name = "Obra"
 		obra.rotation.y = giro  # de frente para a rua
 		no.add_child(obra)
+		var nivel := Terrenos.nivel(id)
 		match tipo:
 			"moinho":
-				_moinho(obra, Terrenos.nivel(id))
+				_moinho(obra, nivel)
 			"cofre":
-				_cofre(obra, Terrenos.nivel(id))
+				_cofre(obra, nivel)
 			"casa":
-				_casa(obra, id)
+				_casa(obra, id, nivel)
 			"jardim":
-				_jardim(obra, id)
+				_jardim(obra, id, nivel)
 			"fonte":
-				_fonte(obra)
+				_fonte(obra, nivel)
+		if Terrenos.em_obra(id):
+			_andaime(obra)
+		# estrelinhas do nível na frente do lote
+		for i in nivel:
+			Pecas3D.esfera(no, 0.13, canto + Vector3(0, 0.2, 0) - aberto.cross(Vector3.UP) * (0.35 * i),
+				_m("#FFC83D", 0.25, 0.6), Vector3(1, 1, 0.5))
 
 
 static func _placa(no: Node3D, texto: String, posicao: Vector3, giro: float) -> void:
@@ -123,19 +130,53 @@ static func _placa_venda(no: Node3D, posicao: Vector3, preco: int, giro: float) 
 	moeda.name = "MoedaGirando"
 
 
-## Moinho de açúcar: torre de pão de mel com pás de bolacha wafer. Maior a
-## cada nível (e ganha bandeirinhas).
+## Andaime da obra: canos, tábuas em dois andares, tela de proteção e uma
+## placa "EM OBRA" (aparece enquanto a construção está subindo de nível).
+static func _andaime(no: Node3D) -> void:
+	var ferro := _m("#B8BEC6", 0.4, 0.6)
+	var tabua := Texturas.real("madeira_pintada", "#C8914F", 1.2)
+	var r := 2.25
+	for x in [-r, r]:
+		for z in [-r, r]:
+			Pecas3D.cilindro(no, 0.06, 0.06, 4.2, Vector3(x, 2.1, z), ferro)
+	for y in [1.6, 3.2]:
+		for z in [-r, r]:
+			Pecas3D.caixa(no, Vector3(r * 2 + 0.3, 0.08, 0.45), Vector3(0, y, z), tabua)
+		for x in [-r, r]:
+			Pecas3D.caixa(no, Vector3(0.45, 0.08, r * 2 + 0.3), Vector3(x, y, 0), tabua)
+	var tela := _m("#3FA34D", 0.9)
+	tela.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	tela.albedo_color.a = 0.45
+	Pecas3D.caixa(no, Vector3(r * 2, 1.4, 0.03), Vector3(0, 3.9, -r - 0.05), tela)
+	# placa amarela e preta
+	var placa := Node3D.new()
+	placa.position = Vector3(r - 0.6, 0, r + 0.5)
+	no.add_child(placa)
+	Pecas3D.cano(placa, Vector3.ZERO, Vector3(0, 1.0, 0), 0.05, ferro)
+	Pecas3D.caixa(placa, Vector3(1.3, 0.5, 0.06), Vector3(0, 1.15, 0), _m("#F4C430", 0.5))
+	_texto(placa, "EM OBRA", Vector3(0, 1.15, 0.04), 80, Color("#2A1D45"), false)
+	# cone e pilha de tijolos
+	Pecas3D.cilindro(no, 0.03, 0.22, 0.5, Vector3(-r + 0.4, 0.25, r + 0.5), _m("#FF7A1F", 0.5))
+	for k in 3:
+		Pecas3D.caixa(no, Vector3(0.45, 0.2, 0.25), Vector3(-r + 1.2 + k * 0.48, 0.1, r + 0.55), _m("#C8663F", 0.9))
+
+
+## Moinho de açúcar: torre de pão de mel com pás de bolacha wafer. Cada nível
+## acrescenta algo (ver Terrenos.CONSTRUCOES["moinho"]["niveis"]).
 static func _moinho(no: Node3D, nivel: int) -> void:
-	var escala := 0.85 + 0.15 * nivel
+	var escala := 0.82 + 0.08 * nivel
 	var torre := Node3D.new()
 	torre.scale = Vector3.ONE * escala
 	no.add_child(torre)
-	Pecas3D.cilindro(torre, 0.9, 1.3, 3.2, Vector3(0, 1.6, 0), Texturas.real("reboco", "#FFF3E0", 0.5))
-	Pecas3D.cilindro(torre, 0.0, 1.25, 1.2, Vector3(0, 3.8, 0), _m("#E8364F", 0.35))
+	var reboco := Texturas.real("reboco", "#FFF3E0", 0.5)
+	var alta := 0.8 if nivel >= 4 else 0.0  # nível 4: a torre ganha um andar
+	Pecas3D.cilindro(torre, 0.9, 1.3, 3.2 + alta, Vector3(0, (3.2 + alta) / 2.0, 0), reboco)
+	var telhado := _m("#FFC83D", 0.2, 0.7) if nivel >= 5 else _m("#E8364F", 0.35)
+	Pecas3D.cilindro(torre, 0.0, 1.25, 1.2, Vector3(0, 3.8 + alta, 0), telhado)
 	Pecas3D.caixa(torre, Vector3(0.8, 1.2, 0.1), Vector3(0, 0.6, 1.2), _m("#7A4322", 0.6))
 	var pas := Node3D.new()
 	pas.name = "Pas"  # a vila gira este nó
-	pas.position = Vector3(0, 2.9, 1.15)
+	pas.position = Vector3(0, 2.9 + alta, 1.15 - alta * 0.1)
 	torre.add_child(pas)
 	for i in 4:
 		var braco := Node3D.new()
@@ -151,18 +192,42 @@ static func _moinho(no: Node3D, nivel: int) -> void:
 		for x in [-1.2, 1.2]:
 			Pecas3D.cano(no, Vector3(x, 0, -1.2), Vector3(x, 2.2, -1.2), 0.04, _m("#FFFFFF", 0.4))
 			Pecas3D.cilindro(no, 0.0, 0.25, 0.4, Vector3(x + 0.2, 2.0, -1.2), _m("#6FD3FF", 0.4), Vector3(1, 1, 0.2), Vector3(0, 0, -90))
+		Pecas3D.rosquinha(torre, 1.25, 1.55, Vector3(0, 0.15, 0), Texturas.real("calcamento", "#CFC6B8", 1.3), Vector3(1, 0.6, 1))
+	if nivel >= 3:
+		# galpão de madeira do lado, cheio de sacos
+		var galpao := Vector3(-1.9, 0, 0.2)
+		Pecas3D.caixa(no, Vector3(1.3, 1.2, 1.6), galpao + Vector3(0, 0.6, 0), Texturas.real("madeira_pintada", "#B5773F", 1.2))
+		Pecas3D.caixa(no, Vector3(1.5, 0.12, 1.8), galpao + Vector3(0, 1.25, 0), _m("#8C3B2E", 0.6), Vector3(0, 0, 12))
+		for k in 3:
+			Pecas3D.esfera(no, 0.22, galpao + Vector3(0.75, 0.22, -0.5 + k * 0.5), _m("#FFFFFF", 0.8), Vector3(1, 1.2, 1))
+	if nivel >= 4:
+		for k in 3:
+			var a := -0.6 + k * 0.6
+			Pecas3D.caixa(torre, Vector3(0.3, 0.4, 0.06), Vector3(sin(a) * 1.08, 2.5, cos(a) * 1.08), _m("#8FBCD6", 0.06, 0.35),
+				Vector3(-8, rad_to_deg(a), 0))
+	if nivel >= 5:
+		var ouro := _m("#FFC83D", 0.15, 0.8)
+		Pecas3D.esfera(torre, 0.28, Vector3(0, 4.6 + alta, 0), ouro)
+		Pecas3D.cilindro(torre, 0.35, 0.35, 0.06, Vector3(0, 5.0 + alta, 0), ouro, Vector3.ONE, Vector3(90, 0, 0))
 	CenarioVila._poste(no, 1.3 * escala, 3.2 * escala, Vector3.ZERO)
 
 
 ## Cofre de moedas: porquinho gigante de açúcar cor-de-rosa (cofrinho).
 static func _cofre(no: Node3D, nivel: int) -> void:
-	var escala := 0.8 + 0.15 * nivel
+	var escala := 0.8 + 0.08 * nivel
 	var porco := Node3D.new()
 	porco.scale = Vector3.ONE * escala
 	no.add_child(porco)
-	var rosa := _m("#FF9EC4", 0.35)
+	var moeda := _m("#FFC83D", 0.25, 0.7)
+	if nivel >= 3:
+		# pedestal de pedra: o porquinho sobe
+		Pecas3D.cilindro(no, 1.9, 2.1, 0.45, Vector3(0, 0.22, 0), Texturas.real("calcamento", "#D8D0C4", 1.3))
+		Pecas3D.cilindro(no, 1.95, 1.95, 0.06, Vector3(0, 0.47, 0), _m("#FFFFFF", 0.35))
+		porco.position.y = 0.45
+	var rosa := _m("#FFC83D", 0.18, 0.75) if nivel >= 5 else _m("#FF9EC4", 0.35)
+	var focinho := _m("#F2B233", 0.2, 0.75) if nivel >= 5 else _m("#FF7FB0", 0.35)
 	Pecas3D.esfera(porco, 1.3, Vector3(0, 1.5, 0), rosa, Vector3(1.25, 1, 1))
-	Pecas3D.cilindro(porco, 0.45, 0.45, 0.35, Vector3(0, 1.4, 1.25), _m("#FF7FB0", 0.35), Vector3.ONE, Vector3(90, 0, 0))
+	Pecas3D.cilindro(porco, 0.45, 0.45, 0.35, Vector3(0, 1.4, 1.25), focinho, Vector3.ONE, Vector3(90, 0, 0))
 	for x in [-0.15, 0.15]:
 		Pecas3D.esfera(porco, 0.07, Vector3(x, 1.4, 1.43), _m("#B0406A", 0.4))
 	for x in [-0.5, 0.5]:
@@ -171,55 +236,159 @@ static func _cofre(no: Node3D, nivel: int) -> void:
 	for p in [Vector3(-0.8, 0.3, 0.6), Vector3(0.8, 0.3, 0.6), Vector3(-0.8, 0.3, -0.6), Vector3(0.8, 0.3, -0.6)]:
 		Pecas3D.cilindro(porco, 0.3, 0.3, 0.6, p, rosa)
 	Pecas3D.caixa(porco, Vector3(0.9, 0.08, 0.2), Vector3(0, 2.82, 0), _m("#B0406A", 0.4))
-	var moeda := _m("#FFC83D", 0.25, 0.7)
 	Pecas3D.cilindro(porco, 0.35, 0.35, 0.08, Vector3(0, 3.2, 0), moeda, Vector3.ONE, Vector3(90, 0, 0))
-	if nivel >= 3:
-		for i in 5:
-			Pecas3D.cilindro(no, 0.25, 0.25, 0.08, Vector3(-1.5 + i * 0.12, 0.05 + i * 0.08, 1.4), moeda)
+	if nivel >= 2:
+		for i in 6:
+			Pecas3D.cilindro(no, 0.25, 0.25, 0.08, Vector3(1.9, 0.05 + i * 0.08, 1.3), moeda)
+		for i in 4:
+			Pecas3D.cilindro(no, 0.25, 0.25, 0.08, Vector3(1.4, 0.05 + i * 0.08, 1.7), moeda)
+	if nivel >= 4:
+		var coroa := Vector3(0, 2.7, -0.3)
+		Pecas3D.cilindro(porco, 0.42, 0.36, 0.3, coroa, moeda)
+		for k in 5:
+			var a := k * TAU / 5.0
+			Pecas3D.esfera(porco, 0.08, coroa + Vector3(cos(a) * 0.4, 0.2, sin(a) * 0.4), _m("#E8364F", 0.1))
+		for i in 7:
+			Pecas3D.cilindro(no, 0.25, 0.25, 0.08, Vector3(-1.9, 0.05 + i * 0.08, 1.3), moeda)
 	CenarioVila._poste(no, 1.5 * escala, 3.0 * escala, Vector3.ZERO)
 
 
-## Casa de doce: casinha de bolo com telhado de chantili e morango.
-static func _casa(no: Node3D, id: String) -> void:
+## Casa de doce: casinha de bolo com telhado de chantili e morango; cresce a
+## cada nível (chaminé e cerquinha, segundo andar, varanda, torrezinha).
+static func _casa(no: Node3D, id: String, nivel := 1) -> void:
 	var cores := ["#C9F2D2", "#FFE08A", "#C9E4FF", "#FFD1E3", "#E4D4FF", "#FFD8B0"]
 	var cor: String = cores[Terrenos.LOTES.map(func(l): return l["id"]).find(id) % cores.size()]
-	Pecas3D.caixa(no, Vector3(3.4, 2.4, 3.0), Vector3(0, 1.2, 0), Texturas.real("reboco", cor, 0.5))
-	Pecas3D.cilindro(no, 0.0, 2.6, 1.6, Vector3(0, 3.2, 0), _m("#FFFFFF", 0.6), Vector3(1, 1, 0.9), Vector3(0, 45, 0))
-	Pecas3D.esfera(no, 0.35, Vector3(0, 4.1, 0), _m("#E8263F", 0.15))
+	var parede := Texturas.real("reboco", cor, 0.5)
+	var andar := 2.0 if nivel >= 3 else 0.0  # nível 3: segundo andar
+	Pecas3D.caixa(no, Vector3(3.4, 2.4, 3.0), Vector3(0, 1.2, 0), parede)
+	if andar > 0.0:
+		Pecas3D.caixa(no, Vector3(3.6, 0.15, 3.2), Vector3(0, 2.45, 0), _m("#FFFFFF", 0.4))
+		Pecas3D.caixa(no, Vector3(3.2, 2.0, 2.8), Vector3(0, 3.5, 0), parede)
+		for x in [-0.8, 0.8]:
+			Pecas3D.caixa(no, Vector3(0.6, 0.6, 0.1), Vector3(x, 3.5, 1.42), _m("#8FBCD6", 0.06, 0.35))
+	Pecas3D.cilindro(no, 0.0, 2.6, 1.6, Vector3(0, 3.2 + andar, 0), _m("#FFFFFF", 0.6), Vector3(1, 1, 0.9), Vector3(0, 45, 0))
+	Pecas3D.esfera(no, 0.35, Vector3(0, 4.1 + andar, 0), _m("#E8263F", 0.15))
 	Pecas3D.caixa(no, Vector3(0.9, 1.5, 0.1), Vector3(0, 0.75, 1.52), _m("#7A4322", 0.6))
 	for x in [-1.05, 1.05]:
-		Pecas3D.caixa(no, Vector3(0.7, 0.7, 0.1), Vector3(x, 1.5, 1.52), _m("#BFE9FF", 0.1))
-	CenarioVila._parede(no, Vector3(3.4, 3.0, 3.0), Vector3(0, 1.5, 0))
+		Pecas3D.caixa(no, Vector3(0.7, 0.7, 0.1), Vector3(x, 1.5, 1.52), _m("#8FBCD6", 0.06, 0.35))
+	if nivel >= 2:
+		Pecas3D.caixa(no, Vector3(0.5, 1.4, 0.5), Vector3(1.0, 3.4 + andar, -0.5), Texturas.real("tijolos", "#B8664A", 1.0))
+		var branco := _m("#FFFFFF", 0.4)
+		for k in 9:
+			var x := -2.6 + k * 0.65
+			if absf(x) < 0.7:
+				continue  # portão
+			Pecas3D.caixa(no, Vector3(0.1, 0.6, 0.06), Vector3(x, 0.3, 2.5), branco)
+		for x in [-1.65, 1.65]:
+			Pecas3D.caixa(no, Vector3(1.9, 0.07, 0.06), Vector3(x, 0.45, 2.5), branco)
+		for x in [-1.05, 1.05]:
+			Pecas3D.caixa(no, Vector3(0.8, 0.18, 0.22), Vector3(x, 1.08, 1.62), _m("#8C3B2E", 0.7))
+			for k in 3:
+				Pecas3D.esfera(no, 0.08, Vector3(x - 0.25 + k * 0.25, 1.22, 1.64), _m(["#FF6FAE", "#FFD23F", "#FFFFFF"][k], 0.4))
+	if nivel >= 4:
+		# varanda: piso, duas colunas e um telhadinho
+		var madeira := Texturas.real("madeira_pintada", "#FFFFFF", 1.2)
+		Pecas3D.caixa(no, Vector3(2.2, 0.12, 0.9), Vector3(0, 0.06, 1.95), madeira)
+		for x in [-0.95, 0.95]:
+			Pecas3D.cilindro(no, 0.08, 0.08, 2.2, Vector3(x, 1.1, 2.3), madeira)
+		Pecas3D.caixa(no, Vector3(2.4, 0.1, 1.0), Vector3(0, 2.25, 2.0), _m("#E8364F", 0.4), Vector3(-10, 0, 0))
+	if nivel >= 5:
+		var torre := Vector3(-1.5, 0, -1.2)
+		Pecas3D.cilindro(no, 0.6, 0.6, 4.4 + andar, torre + Vector3(0, (4.4 + andar) / 2.0, 0), parede)
+		Pecas3D.cilindro(no, 0.0, 0.8, 1.3, torre + Vector3(0, 5.05 + andar, 0), _m("#8B7CF6", 0.4))
+		Pecas3D.cano(no, torre + Vector3(0, 5.6 + andar, 0), torre + Vector3(0, 6.4 + andar, 0), 0.03, _m("#FFFFFF", 0.4))
+		Pecas3D.caixa(no, Vector3(0.5, 0.3, 0.03), torre + Vector3(0.25, 6.2 + andar, 0), _m("#FFD23F", 0.4))
+	CenarioVila._parede(no, Vector3(3.4, 3.0 + andar, 3.0), Vector3(0, (3.0 + andar) / 2.0, 0))
 
 
-static func _jardim(no: Node3D, id: String) -> void:
+static func _jardim(no: Node3D, id: String, nivel := 1) -> void:
 	var cores := ["#FF6FAE", "#6FD3FF", "#FFD23F", "#7BE07B", "#B07CFF"]
 	var k := Terrenos.LOTES.map(func(l): return l["id"]).find(id)
-	for i in 4:
-		var p := Vector3(-1.3 + (i % 2) * 2.6, 0, -1.3 + (i / 2) * 2.6)
+	var arvores := 2 if nivel <= 1 else 4
+	for i in arvores:
+		var p := Vector3(-1.9 + (i % 2) * 3.8, 0, -1.9 + (i / 2) * 3.8) if arvores == 4 else Vector3(-1.6 + i * 3.2, 0, -1.4)
 		CenarioVila.arvore_pirulito(no, p, cores[(i + k) % cores.size()])
 	for i in 10:
 		var angulo := i * TAU / 10.0
 		Pecas3D.esfera(no, 0.18, Vector3(cos(angulo) * 0.9, 0.2, sin(angulo) * 0.9), _m(cores[i % cores.size()], 0.3))
-	Pecas3D.esfera(no, 0.35, Vector3(0, 0.3, 0), _m("#FFF3E0", 0.5))
+	if nivel >= 3:
+		var pedra := Texturas.real("calcamento", "#D8D0C4", 1.4)
+		Pecas3D.caixa(no, Vector3(0.9, 0.04, 5.6), Vector3(0, 0.04, 0), pedra)
+		Pecas3D.caixa(no, Vector3(5.6, 0.04, 0.9), Vector3(0, 0.045, 0), pedra)
+		var madeira := Texturas.real("madeira_pintada", "#B5773F", 1.2)
+		for x in [-1.6, 1.6]:
+			Pecas3D.caixa(no, Vector3(1.1, 0.1, 0.4), Vector3(x, 0.45, 1.0), madeira)
+			Pecas3D.caixa(no, Vector3(1.1, 0.4, 0.08), Vector3(x, 0.7, 0.8), madeira)
+			for dx in [-0.45, 0.45]:
+				Pecas3D.caixa(no, Vector3(0.08, 0.45, 0.35), Vector3(x + dx, 0.22, 1.0), _m("#2B2B30", 0.4, 0.6))
+	if nivel >= 4:
+		# coreto: piso redondo, seis colunas e cúpula de chantili
+		Pecas3D.cilindro(no, 1.2, 1.3, 0.2, Vector3(0, 0.1, 0), Texturas.real("calcamento", "#FFF3E0", 1.2))
+		for c in 6:
+			var a := c * TAU / 6.0
+			Pecas3D.cilindro(no, 0.07, 0.07, 1.9, Vector3(cos(a) * 1.05, 1.15, sin(a) * 1.05), _m("#FFFFFF", 0.4))
+		Pecas3D.esfera(no, 1.25, Vector3(0, 2.1, 0), _m("#FFD1E3", 0.5), Vector3(1, 0.55, 1))
+		Pecas3D.esfera(no, 0.2, Vector3(0, 2.8, 0), _m("#E8263F", 0.15))
+	else:
+		Pecas3D.esfera(no, 0.35, Vector3(0, 0.3, 0), _m("#FFF3E0", 0.5))
+	if nivel >= 5:
+		# arco de balas na entrada e postes de luz
+		for c in 9:
+			var a := PI * c / 8.0
+			Pecas3D.esfera(no, 0.2, Vector3(cos(a) * 1.1, 0.2 + sin(a) * 2.2, 2.6), _m(cores[c % cores.size()], 0.2))
+		for x in [-2.5, 2.5]:
+			Pecas3D.cilindro(no, 0.05, 0.05, 2.0, Vector3(x, 1.0, 2.5), _m("#2B2B30", 0.4, 0.6))
+			var luz := _m("#FFF1C4", 0.2)
+			luz.emission_enabled = true
+			luz.emission = Color("#FFD27A")
+			luz.emission_energy_multiplier = 1.2
+			Pecas3D.esfera(no, 0.16, Vector3(x, 2.1, 2.5), luz)
 
 
-static func _fonte(no: Node3D) -> void:
-	var borda := _m("#FFFFFF", 0.4)
+static func _fonte(no: Node3D, nivel := 1) -> void:
+	var borda := _m("#FFC83D", 0.2, 0.7) if nivel >= 5 else _m("#FFFFFF", 0.4)
 	var calda := _m("#E8364F", 0.1)
-	Pecas3D.cilindro(no, 1.6, 1.8, 0.6, Vector3(0, 0.3, 0), borda)
-	Pecas3D.cilindro(no, 1.45, 1.45, 0.05, Vector3(0, 0.58, 0), calda)
-	Pecas3D.cilindro(no, 0.25, 0.3, 1.6, Vector3(0, 1.1, 0), borda)
+	var bacia := 2.2 if nivel >= 5 else 1.6
+	Pecas3D.cilindro(no, bacia, bacia + 0.2, 0.6, Vector3(0, 0.3, 0), _m("#FFFFFF", 0.4))
+	Pecas3D.cilindro(no, bacia - 0.15, bacia - 0.15, 0.05, Vector3(0, 0.58, 0), calda)
+	var alto := 0.7 if nivel >= 2 else 0.0
+	Pecas3D.cilindro(no, 0.25, 0.3, 1.6 + alto, Vector3(0, 1.1 + alto / 2.0, 0), borda)
 	Pecas3D.cilindro(no, 0.8, 0.55, 0.25, Vector3(0, 1.95, 0), borda)
-	Pecas3D.esfera(no, 0.45, Vector3(0, 2.3, 0), calda, Vector3(1, 1.2, 1))
+	Pecas3D.cilindro(no, 0.75, 0.75, 0.04, Vector3(0, 2.07, 0), calda)
+	if nivel >= 2:
+		Pecas3D.cilindro(no, 0.5, 0.35, 0.2, Vector3(0, 2.65, 0), borda)
+	if nivel >= 5:
+		Pecas3D.cilindro(no, 0.3, 0.2, 0.18, Vector3(0, 3.2, 0), borda)
+		Pecas3D.cilindro(no, 0.1, 0.1, 0.5, Vector3(0, 3.0, 0), borda)
+	var topo := 2.3 + alto + (0.5 if nivel >= 5 else 0.0)
+	Pecas3D.esfera(no, 0.45 if nivel < 2 else 0.3, Vector3(0, topo, 0), calda, Vector3(1, 1.2, 1))
 	for i in 5:
 		var angulo := i * TAU / 5.0
-		Pecas3D.esfera(no, 0.12, Vector3(cos(angulo) * 0.2, 2.75, sin(angulo) * 0.2), _m("#3FA34D", 0.4), Vector3(1.3, 0.4, 0.6))
+		Pecas3D.esfera(no, 0.12, Vector3(cos(angulo) * 0.2, topo + 0.45, sin(angulo) * 0.2), _m("#3FA34D", 0.4), Vector3(1.3, 0.4, 0.6))
 	for i in 8:
 		var angulo := i * TAU / 8.0
 		var saida := Vector3(cos(angulo) * 0.78, 1.9, sin(angulo) * 0.78)
 		Pecas3D.cano(no, saida, saida + Vector3(0, -0.3, 0), 0.06, calda)
-	CenarioVila._poste(no, 1.8, 1.0, Vector3.ZERO)
+	if nivel >= 3:
+		var flores := ["#FF6FAE", "#FFD23F", "#FFFFFF", "#B07CFF"]
+		for i in 12:
+			var a := i * TAU / 12.0
+			var p := Vector3(cos(a), 0, sin(a)) * (bacia + 0.55)
+			Pecas3D.esfera(no, 0.28, p + Vector3(0, 0.18, 0), _m("#3E7A34", 0.8), Vector3(1, 0.7, 1))
+			Pecas3D.esfera(no, 0.08, p + Vector3(0, 0.4, 0), _m(flores[i % flores.size()], 0.4))
+	if nivel >= 4:
+		# ursinhos de goma na borda, jogando calda para o meio
+		var gomas := ["#E8364F", "#7BE07B", "#FFD23F", "#6FD3FF"]
+		for i in 4:
+			var a := i * TAU / 4.0 + PI / 4.0
+			var p := Vector3(cos(a), 0, sin(a)) * (bacia - 0.1)
+			var goma := _m(gomas[i], 0.15)
+			goma.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			goma.albedo_color.a = 0.85
+			Pecas3D.esfera(no, 0.25, p + Vector3(0, 0.85, 0), goma, Vector3(1, 1.2, 1))
+			Pecas3D.esfera(no, 0.17, p + Vector3(0, 1.25, 0), goma)
+			Pecas3D.cano(no, p + Vector3(0, 1.3, 0), p * 0.45 + Vector3(0, 1.5, 0), 0.05, calda)
+	CenarioVila._poste(no, bacia + 0.2, 1.0, Vector3.ZERO)
 
 
 # --- Lugares longe -----------------------------------------------------------------

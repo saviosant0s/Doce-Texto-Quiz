@@ -37,6 +37,15 @@ var _area_passeio := Rect2(-6, -6, 12, 12)
 var _no_chao := true
 var _poeira: CPUParticles3D
 var _inclinacao := 0.0
+## O corpo anda no ritmo da física (60 por segundo); a tela do celular pode
+## desenhar 90 ou 120. Sem interpolar, o boneco dava "degraus" (tremia ao
+## correr, com a câmera suave atrás). O modelo é desenhado entre as duas
+## últimas posições da física.
+var _fisica_antes := Vector3.ZERO
+var _fisica_agora := Vector3.ZERO
+var _quadro_fisica := -10  # Engine.get_physics_frames() do último andar()
+var _base_modelo := 0.0
+var _base_sombra := 0.0
 
 
 func _ready() -> void:
@@ -54,6 +63,7 @@ func _ready() -> void:
 	_modelo.name = "Modelo"
 	_modelo.scale = Vector3.ONE * ESCALA
 	_modelo.position.y = 2.4 * ESCALA * 0.5 + 0.05  # o modelo é centrado; os pés ficam no chão
+	_base_modelo = _modelo.position.y
 	add_child(_modelo)
 	Doces3D.montar(id, _modelo)
 	Doces3D.enfeitar(_modelo, id, nivel)
@@ -78,8 +88,12 @@ func definir_area_passeio(area: Rect2) -> void:
 ## 1 = correndo). Acelera e freia aos poucos e inclina nas curvas.
 func andar(direcao: Vector3, delta: float) -> void:
 	var intensidade := clampf(direcao.length(), 0.0, 1.0)
-	var maxima := VELOCIDADE_CORRENDO if intensidade > 0.85 else VELOCIDADE
-	var alvo := direcao.normalized() * maxima * intensidade if intensidade > 0.05 else Vector3.ZERO
+	# até 0,8 anda (0 a VELOCIDADE); de 0,8 a 1 passa aos poucos para a
+	# corrida (antes pulava de uma velocidade para a outra em 0,85, e o dedo
+	# no limite fazia o doce acelerar e frear sem parar)
+	var rapidez := intensidade / 0.8 * VELOCIDADE if intensidade <= 0.8 \
+		else lerpf(VELOCIDADE, VELOCIDADE_CORRENDO, smoothstep(0.8, 0.97, intensidade))
+	var alvo := direcao.normalized() * rapidez if intensidade > 0.05 else Vector3.ZERO
 	var horizontal := Vector2(velocity.x, velocity.z)
 	var taxa := ACELERACAO if alvo.length() > horizontal.length() else FREIO
 	horizontal = horizontal.move_toward(Vector2(alvo.x, alvo.z), taxa * delta)
@@ -89,7 +103,10 @@ func andar(direcao: Vector3, delta: float) -> void:
 		velocity.y = 0.0
 	else:
 		velocity.y -= GRAVIDADE * delta  # ao bater no chão, move_and_slide zera
+	_fisica_antes = global_position
 	move_and_slide()
+	_fisica_agora = global_position
+	_quadro_fisica = Engine.get_physics_frames()
 	var no_chao := is_on_floor() or sem_colisao
 	var velocidade := horizontal.length()
 	var andando := velocidade > 0.3 and no_chao
@@ -193,6 +210,17 @@ func comemorar() -> void:
 	_animacao.comemorar()
 
 
+func _process(_delta: float) -> void:
+	# desenha o modelo entre as duas últimas posições da física (ver _fisica_*)
+	var desvio := Vector3.ZERO
+	# (só se andou neste passo da física e não foi teletransportado)
+	if Engine.get_physics_frames() - _quadro_fisica <= 1 and global_position.distance_to(_fisica_agora) < 0.01 \
+			and _fisica_antes.distance_to(_fisica_agora) < 1.0:
+		desvio = _fisica_antes.lerp(_fisica_agora, Engine.get_physics_interpolation_fraction()) - _fisica_agora
+	_modelo.position = Vector3(desvio.x, _base_modelo + desvio.y, desvio.z)
+	_sombra.position = Vector3(desvio.x, _base_sombra, desvio.z)
+
+
 func _physics_process(delta: float) -> void:
 	if not passeando:
 		return
@@ -220,6 +248,7 @@ func _escolher_destino() -> void:
 func _criar_sombra() -> void:
 	_sombra = CenarioVila.sombra_contato(self, Vector3.ZERO, 0.75, 0.5)
 	_sombra.position.y = 0.07  # acima dos caminhos de biscoito (0,04)
+	_base_sombra = _sombra.position.y
 	_sombra.visible = sombra_redonda
 
 

@@ -122,6 +122,30 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 29/09 (pedidos do Sávio depois de jogar a 0.12.0), **ainda sem APK**:
+  - Sem a borda escura em volta dos personagens (o contorno de desenho saiu
+    também dos bonecos; `CenarioVila.estilo_desenho` só aplica o realismo).
+  - Câmera aérea gira: arrastar o dedo gira em volta do doce (só para os lados).
+  - Correr sem tremer: o modelo do doce é desenhado entre os dois últimos
+    passos da física (a tela do celular desenha 90/120 por segundo) e a
+    velocidade passa de andar para correr aos poucos (antes pulava em 0,85
+    do joystick e o dedo no limite fazia acelerar e frear sem parar).
+  - Telhado da Fábrica de Chocolate refeito (dentes de serra em prisma com
+    vidro; os cones antigos tinham a base no mesmo plano da fachada e a tela
+    "tremia" ali).
+  - Prédios mais reais: janelas com vidro que reflete, peitoril, verga e
+    venezianas; todas as entradas com degraus de pedra, capacho, arbustos
+    com flores e luminárias acesas; Escola com base de pedra e chaminé.
+  - 100 de açúcar de presente para quem começa (quem já jogava ganha uma vez).
+  - **Evolução das construções** (estilo Viking Rise): todas as 5
+    construções vão até o nível 5 e mudam de forma a cada nível; a obra leva
+    tempo (3 min, 15 min, 1 h, 4 h) com andaime e relógio em cima do lote;
+    um construtor (uma obra por vez); "TERMINAR JÁ" por 1 açúcar/minuto;
+    beleza da vila (casa, jardim e fonte) dá +5% por nível no moinho e no
+    cofre. Tabela em `docs/economia.md`. Print: `capturar.sh vila --terrenos=5`.
+  - Como jogar: as 10 abas quebram em duas linhas (numa só, ficavam mais
+    largas que a tela e cortavam os lados); letras menores nas abas com 6 cartões.
+
 - 28/09 (pedidos do Sávio depois de jogar a 0.10.2), **publicado na 0.11.0**:
   - Feito antes (commit `edb8b1c`): câmera da vila e da cozinha sem tremer
     (posição suavizada entre os passos da física, física no ritmo da tela),

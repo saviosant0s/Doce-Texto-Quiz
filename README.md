@@ -63,7 +63,8 @@ personagens, fontes) é a mesma da versão original.
   e baús. Fases em `godot/dados/laboratorio.json`.
 - Bairro dos Terrenos, Lago de Chocolate e Mirante do Sorvete na vila:
   lotes para comprar e construir (moinho de açúcar, cofre de moedas, casa,
-  jardim, fonte) e presentes diários (`scripts/terrenos.gd`).
+  jardim, fonte), que evoluem até o nível 5 com obras que levam tempo, e
+  presentes diários (`scripts/terrenos.gd`).
 - Torre de Doces (prédio de bolo na vila): empilhar andares, com pergunta
   bônus do quiz a cada 10 (`scripts/torre.gd`, `cenas/torre.*`).
 - Fábrica de Chocolate (galpão na vila): tocar nos chocolates do pedido

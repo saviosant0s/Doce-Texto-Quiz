@@ -595,8 +595,8 @@ func _testar_vila() -> void:
 	var blocos := vila.find_children("Bloco*", "MeshInstance3D", false, false)
 	verificar(not blocos.any(func(b): return b.name.begins_with("BlocoContorno")), "cenário realista, sem contorno de desenho")
 	var jogador_vila: Node = vila.find_child("Jogador", true, false)
-	verificar(jogador_vila.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.material_overlay != null or m.name.begins_with("BlocoContorno")),
-		"os bonecos continuam com contorno")
+	verificar(not jogador_vila.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.material_overlay != null or m.name.begins_with("BlocoContorno")),
+		"bonecos sem a borda escura de desenho")
 	var com_relevo := vila.find_children("*", "MeshInstance3D", true, false).filter(func(b):
 		var mat := b.material_override as StandardMaterial3D
 		return mat != null and mat.normal_enabled and mat.diffuse_mode == BaseMaterial3D.DIFFUSE_BURLEY)
@@ -705,10 +705,11 @@ func _testar_tela_colecao() -> void:
 func _testar_confeitaria() -> void:
 	_secao("minha confeitaria")
 	Progresso.apagar()
+	verificar(Confeitaria.acucar() == 100, "quem começa ganha 100 de açúcar para experimentar os minigames")
 	verificar(Confeitaria.liberada("brigadeiro") and not Confeitaria.liberada("maca"), "panela liberada; maçã só passando no fácil")
 	verificar(not Confeitaria.construir_ou_melhorar("maca"), "não constrói máquina bloqueada")
 	verificar(Confeitaria.construir_ou_melhorar("brigadeiro") and Confeitaria.nivel("brigadeiro") == 1, "constrói a panela de graça")
-	verificar(Confeitaria.acucar() == Confeitaria.ACUCAR_PRESENTE, "primeira máquina vem com açúcar de presente")
+	verificar(Confeitaria.acucar() == Confeitaria.ACUCAR_INICIAL + Confeitaria.ACUCAR_PRESENTE, "primeira máquina vem com açúcar de presente")
 	Progresso.confeitaria["acucar"] = 0
 	var t0: float = Progresso.confeitaria["atualizado"]
 	verificar(Confeitaria.atualizar(t0 + 60) == 0 and Confeitaria.parada("brigadeiro") == "SEM AÇÚCAR", "sem açúcar, a máquina para")
@@ -739,10 +740,11 @@ func _testar_confeitaria() -> void:
 	Jogo.preparar_partida(0)
 	_jogar(7, 0)
 	# 10 por acerto, +10% do brigadeiro (companheiro inicial)
-	verificar(Jogo.resumo["acucar"] == 77 and Confeitaria.acucar() == 77, "cada acerto no quiz dá 10 de açúcar (+ bônus)")
+	var inicial := Confeitaria.ACUCAR_INICIAL
+	verificar(Jogo.resumo["acucar"] == 77 and Confeitaria.acucar() == inicial + 77, "cada acerto no quiz dá 10 de açúcar (+ bônus)")
 	Jogo.preparar_revisao()
 	_jogar(2, 0)
-	verificar(Confeitaria.acucar() == 77 + Companheiros.com_bonus("acucar", Jogo.resumo["acertos"] * 10), "a revisão também dá açúcar")
+	verificar(Confeitaria.acucar() == inicial + 77 + Companheiros.com_bonus("acucar", Jogo.resumo["acertos"] * 10), "a revisão também dá açúcar")
 	Progresso.apagar()
 
 
@@ -1722,13 +1724,28 @@ func _testar_terrenos() -> void:
 	var acucar := Confeitaria.acucar()
 	verificar(Terrenos.coletar("lote_1") == 30 and Confeitaria.acucar() == acucar + 30 and Terrenos.pronto("lote_1") == 0,
 		"coletar dá o açúcar e esvazia")
-	verificar(Terrenos.preco_melhoria("lote_1") == 150 and Terrenos.melhorar("lote_1") and Terrenos.por_hora("lote_1") == 10,
-		"melhorar o moinho: produz mais")
-	Terrenos.melhorar("lote_1")
-	verificar(Terrenos.nivel("lote_1") == 3 and Terrenos.preco_melhoria("lote_1") == -1 and not Terrenos.melhorar("lote_1"),
-		"nível 3 é o máximo")
+	verificar(Terrenos.preco_melhoria("lote_1") == 150 and Terrenos.melhorar("lote_1"), "evoluir o moinho começa a obra")
+	verificar(Terrenos.em_obra("lote_1") and Terrenos.nivel("lote_1") == 1 and Terrenos.falta_obra("lote_1") == 180,
+		"a obra leva tempo (3 minutos para o nível 2)")
 	Terrenos.comprar("lote_2")
 	Terrenos.construir("lote_2", "cofre")
+	verificar(Terrenos.obra_em_andamento() == "lote_1" and not Terrenos.melhorar("lote_2"), "um construtor: uma obra por vez")
+	Terrenos.agora_fixo += 181
+	verificar(not Terrenos.em_obra("lote_1") and Terrenos.nivel("lote_1") == 2 and Terrenos.por_hora("lote_1") == 10,
+		"obra pronta: nível 2, produz mais")
+	Progresso.moedas = 5000
+	Terrenos.melhorar("lote_1")
+	var acucar_obra := Confeitaria.acucar()
+	Progresso.confeitaria["acucar"] = 100
+	verificar(Terrenos.preco_acelerar("lote_1") == 15 and Terrenos.acelerar("lote_1") and Confeitaria.acucar() == 85
+		and Terrenos.nivel("lote_1") == 3, "terminar já custa 1 açúcar por minuto que falta")
+	Progresso.confeitaria["acucar"] = acucar_obra
+	for n in 2:
+		Terrenos.melhorar("lote_1")
+		Terrenos._estado()["lotes"]["lote_1"]["obra_ate"] = Terrenos.agora()
+	verificar(Terrenos.nivel("lote_1") == Terrenos.NIVEL_MAXIMO and Terrenos.preco_melhoria("lote_1") == -1
+		and not Terrenos.melhorar("lote_1"), "nível 5 é o máximo")
+	Terrenos._estado()["lotes"]["lote_2"]["desde"] = Terrenos.agora()
 	Terrenos.agora_fixo += 3600
 	var moedas := Progresso.moedas
 	verificar(Terrenos.coletar("lote_2") == 4 and Progresso.moedas == moedas + 4, "o cofre junta moedas")
@@ -1781,6 +1798,20 @@ func _testar_vila_terrenos() -> void:
 	verificar(Terrenos.construcao("lote_1") == "casa" and vila.find_child("Vizinho_lote_1", true, false) != null,
 		"construiu a casa e chegou um vizinho")
 	verificar(vila._lotes["lote_1"].find_child("Obra", true, false) != null, "a casa aparece no terreno")
+	# evoluir a casa: abre o painel, começa a obra (andaime e relógio) e ganha beleza
+	vila.agir("lote_1")
+	await get_tree().process_frame
+	var evoluir: Button = vila.find_child("Melhorar", true, false)
+	verificar(evoluir != null and vila.find_child("Proximo", true, false).text.begins_with("NÍVEL 2"),
+		"painel da casa mostra o que o próximo nível traz")
+	evoluir.pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	verificar(Terrenos.em_obra("lote_1") and vila._rotulos_producao["lote_1"].text.begins_with("OBRA"),
+		"começou a obra: relógio em cima do terreno")
+	Terrenos._estado()["lotes"]["lote_1"]["obra_ate"] = Terrenos.agora() - 1
+	vila._atualizar_rotulos_producao()
+	await get_tree().process_frame
+	verificar(Terrenos.nivel("lote_1") == 2 and Terrenos.beleza() == 2, "obra pronta: casa nível 2 e a vila mais bonita")
 	var moedas := Progresso.moedas
 	var tinha := Terrenos.presente_disponivel("mirante")
 	vila.agir("presente_mirante")

@@ -17,6 +17,7 @@ para ganhar sem estudar. Valores no código: `scripts/jogo.gd`,
 | Quiz: por estrela | 10 | — |
 | Revisão dos erros (por acerto) | 3 | 10 |
 | Conquistas (16) | 10 a 150 cada (~600 no total) | — |
+| Presente de começo (e uma vez para quem já jogava) | — | 100 |
 | Primeira máquina da cozinha | — | 50 (presente) |
 | Laboratório: fase feita (1ª vez) | 10 + 5 por estrela | 20 |
 | Laboratório: chefe (1ª vez) | 30 + 5 por estrela | 50 |
@@ -90,3 +91,21 @@ e melhorar os companheiros até o nível 5 (750 moedas + 110 pedaços cada, 13
 doces ≈ 9.750 moedas). Coleção comprada em ~8 dias; tudo no máximo em ~5
 semanas — bom para um bimestre de aulas. Se ficar rápido demais, baixe
 `Missoes.PREMIO_DIA` e as moedas dos baús antes de mexer no quiz.
+
+## Terrenos: evolução das construções (desde a 0.12.1)
+
+Toda construção vai do nível 1 ao 5 e muda de forma a cada nível. Evoluir
+custa moedas e leva tempo: 3 min (nível 2), 15 min (3), 1 h (4) e 4 h (5).
+Um construtor só: uma obra por vez. Terminar já custa 1 açúcar por minuto
+que falta.
+
+| Construção | Construir | Evoluir (2 / 3 / 4 / 5) | Produz por hora (nível 1 a 5) | Guarda até |
+|---|---|---|---|---|
+| Moinho de açúcar | 80 | 150 / 300 / 550 / 900 | 6 / 10 / 15 / 21 / 28 açúcar | 30 / 50 / 80 / 120 / 170 |
+| Cofre de moedas | 150 | 250 / 450 / 750 / 1.200 | 4 / 7 / 11 / 16 / 22 moedas | 20 / 35 / 55 / 85 / 120 |
+| Casa de doce | 120 | 100 / 220 / 400 / 700 | — | — |
+| Jardim de pirulitos | 60 | 60 / 150 / 300 / 500 | — | — |
+| Fonte de morango | 100 | 90 / 200 / 380 / 650 | — | — |
+
+Beleza da vila: cada nível de casa, jardim e fonte soma +5% na produção do
+moinho e do cofre.

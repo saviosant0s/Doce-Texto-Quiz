@@ -15,7 +15,7 @@ const ABAS := [
 		{"icone": "lampada", "titulo": "SIGA OS AVISOS",
 			"texto": "A seta amarela mostra o próximo passo. O \"!\" aparece nos prédios com algo esperando você."},
 		{"icone": "confeitaria", "titulo": "COMPRE TERRENOS",
-			"texto": "Atrás da Escola ficam os terrenos: construa um Moinho (açúcar), um Cofre (moedas), casas e jardins."},
+			"texto": "Atrás da Escola: construa Moinho (açúcar), Cofre (moedas), casas e jardins, e evolua tudo até o nível 5."},
 		{"item": "BAU_DOCE", "titulo": "EXPLORE LONGE",
 			"texto": "O Lago de Chocolate e o Mirante do Sorvete têm um presente por dia para quem anda até lá."},
 	]},
@@ -110,7 +110,7 @@ const FAIXAS := [
 ]
 
 
-var _abas: HBoxContainer
+var _abas: HFlowContainer
 var aba_atual := -1
 
 
@@ -119,17 +119,21 @@ func _ready() -> void:
 	%Jogar.pressed.connect(Telas.ir_para_casa)
 	for faixa in FAIXAS:
 		%Faixas.add_child(_criar_faixa(faixa))
-	# abas logo abaixo do topo
-	_abas = HBoxContainer.new()
+	# abas logo abaixo do topo, em até duas linhas (são 10: numa linha só
+	# ficavam mais largas que a tela e empurravam a tela toda para os lados)
+	_abas = HFlowContainer.new()
 	_abas.name = "Abas"
-	_abas.add_theme_constant_override("separation", 8)
+	_abas.alignment = FlowContainer.ALIGNMENT_CENTER
+	_abas.add_theme_constant_override("h_separation", 8)
+	_abas.add_theme_constant_override("v_separation", 6)
+	%Coluna.add_theme_constant_override("separation", 14)
 	%Coluna.add_child(_abas)
 	%Coluna.move_child(_abas, 1)
 	for i in ABAS.size():
 		var b := Button.new()
 		b.name = "Aba%d" % i
 		b.text = ABAS[i]["nome"]
-		b.custom_minimum_size = Vector2(0, 50)
+		b.custom_minimum_size = Vector2(0, 44)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.add_theme_font_size_override("font_size", 20)
 		b.focus_mode = Control.FOCUS_NONE
@@ -152,13 +156,14 @@ func mostrar_aba(indice: int) -> void:
 		filho.queue_free()
 	var passos: Array = ABAS[indice]["passos"]
 	for i in passos.size():
-		var cartao := _criar_passo(i + 1, passos[i])
+		var cartao := _criar_passo(i + 1, passos[i], passos.size() > 4)
 		%Passos.add_child(cartao)
 		Animacoes.entrar(cartao, Vector2(0, 30), 0.05 * i)
 	%Coluna.get_node("Titulos").visible = ABAS[indice]["nome"] == "QUIZ"
 
 
-func _criar_passo(numero: int, passo: Dictionary) -> PanelContainer:
+## `apertado`: aba com mais de 4 cartões (letras menores, para caber na altura).
+func _criar_passo(numero: int, passo: Dictionary, apertado := false) -> PanelContainer:
 	var cartao := PanelContainer.new()
 	cartao.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var coluna := VBoxContainer.new()
@@ -194,13 +199,13 @@ func _criar_passo(numero: int, passo: Dictionary) -> PanelContainer:
 
 	var titulo := Label.new()
 	titulo.theme_type_variation = &"Subtitulo"
-	titulo.add_theme_font_size_override("font_size", 32)
+	titulo.add_theme_font_size_override("font_size", 27 if apertado else 32)
 	titulo.text = passo["titulo"]
 	titulo.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	coluna.add_child(titulo)
 	var texto := Label.new()
 	texto.theme_type_variation = &"Texto"
-	texto.add_theme_font_size_override("font_size", 22)
+	texto.add_theme_font_size_override("font_size", 18 if apertado else 22)
 	texto.text = passo["texto"]
 	texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	texto.custom_minimum_size = Vector2(100, 0)

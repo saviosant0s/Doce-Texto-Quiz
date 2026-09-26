@@ -246,6 +246,7 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 	fachada.rotation.x = forma.get("inclinacao", 0.0)
 	no.add_child(fachada)
 	var folha := _porta(fachada, 0.0)
+	_entrada(no, frente, fachada)
 	if not forma.get("placa_propria", false):
 		_placa(fachada, dados["nome"], Vector3(0, forma["placa"], 0.1))
 	# área na frente da porta: quando o doce entra, aparece o botão "ENTRAR"
@@ -312,12 +313,24 @@ static func _fabrica_chocolate(no: Node3D) -> Dictionary:
 	Pecas3D.caixa(no, Vector3(largura + 0.1, 0.4, fundo + 0.1), Vector3(0, 0.2, 0), choco)
 	for x in [-1, 1]:
 		Pecas3D.caixa(no, Vector3(0.3, altura + 0.1, 0.3), Vector3(x * (largura / 2.0), altura / 2.0, frente), choco)
-	# telhado em serra (dentes de chocolate ao leite)
+	# telhado em serra de fábrica: dentes de chocolate ao leite (um prisma
+	# por dente, lado a lado, sem se sobrepor, passando um pouco das paredes
+	# como beiral) com a face em pé de vidro. Antes eram cones deitados cuja
+	# base ficava no mesmo plano da fachada: a tela "tremia" ali.
 	var telhado := _m("#8B4A2B", 0.5)
+	var vidro := _m("#BFE3F2", 0.08, 0.2)
+	var dente := largura / 3.0
 	for i in 3:
-		var x := -largura / 2.0 + largura / 6.0 + i * largura / 3.0
-		Pecas3D.cilindro(no, 0.0, largura / 6.0 * 1.3, fundo, Vector3(x, altura + 0.55, 0), telhado,
-			Vector3(1, 1, 0.8), Vector3(90, 0, 0))
+		var x := -largura / 2.0 + dente / 2.0 + i * dente
+		var prisma := PrismMesh.new()
+		prisma.left_to_right = 0.0  # lado em pé à esquerda
+		prisma.size = Vector3(dente, 1.1, fundo + 0.4)
+		var peca := MeshInstance3D.new()
+		peca.mesh = prisma
+		peca.material_override = telhado
+		peca.position = Vector3(x, altura + 0.56, 0)
+		no.add_child(peca)
+		Pecas3D.caixa(no, Vector3(0.05, 0.8, fundo + 0.2), Vector3(x - dente / 2.0 - 0.02, altura + 0.5, 0), vidro)
 	# chaminés com a borda de chocolate derretido
 	for px in [-1.6, 1.4]:
 		var base := Vector3(px, altura, -0.8)
@@ -387,11 +400,55 @@ static func _janela(no: Node3D, posicao: Vector3, moldura := "#FFFFFF") -> void:
 	var janela := Node3D.new()
 	janela.position = posicao
 	no.add_child(janela)
-	Pecas3D.caixa(janela, Vector3(0.95, 0.95, 0.08), Vector3.ZERO, Texturas.real("madeira_pintada", moldura, 1.2))
-	Pecas3D.caixa(janela, Vector3(0.75, 0.75, 0.1), Vector3(0, 0, 0.02), _m("#BFE9FF", 0.1))
+	var madeira := Texturas.real("madeira_pintada", moldura, 1.2)
+	Pecas3D.caixa(janela, Vector3(0.95, 0.95, 0.08), Vector3.ZERO, madeira)
+	# vidro com reflexo (liso e um pouco metálico: pega o brilho do sol)
+	Pecas3D.caixa(janela, Vector3(0.75, 0.75, 0.1), Vector3(0, 0, 0.02), _m("#8FBCD6", 0.06, 0.35))
 	var glace := _m("#FFFFFF", 0.35)
 	Pecas3D.caixa(janela, Vector3(0.75, 0.08, 0.12), Vector3(0, 0, 0.04), glace)
 	Pecas3D.caixa(janela, Vector3(0.08, 0.75, 0.12), Vector3(0, 0, 0.04), glace)
+	# peitoril de pedra embaixo e verga em cima (a janela "entra" na parede)
+	var pedra := Texturas.real("calcamento", "#E9E1D6", 1.2)
+	Pecas3D.caixa(janela, Vector3(1.15, 0.09, 0.24), Vector3(0, -0.52, 0.07), pedra)
+	Pecas3D.caixa(janela, Vector3(1.09, 0.12, 0.14), Vector3(0, 0.53, 0.03), pedra)
+	# venezianas abertas dos lados, com ripas
+	var cor_veneziana := Color(moldura).darkened(0.35) if moldura != "#FFFFFF" else Color("#7E57B1")
+	var veneziana := Texturas.real("madeira_pintada", cor_veneziana.to_html(false), 1.5)
+	for lado in [-1, 1]:
+		Pecas3D.caixa(janela, Vector3(0.28, 0.93, 0.05), Vector3(lado * 0.63, 0, 0.03), veneziana)
+		for k in 4:
+			Pecas3D.caixa(janela, Vector3(0.24, 0.04, 0.03), Vector3(lado * 0.63, -0.33 + k * 0.22, 0.065), veneziana)
+
+
+## Entrada de verdade para todos os prédios: dois degraus de pedra, um
+## capacho, arbustos com florzinhas dos lados e duas luminárias acesas ao
+## lado da porta. `no` = o prédio; `frente` = z da fachada; `fachada` = o nó
+## da porta (as luminárias acompanham paredes inclinadas).
+static func _entrada(no: Node3D, frente: float, fachada: Node3D) -> void:
+	var pedra := Texturas.real("calcamento", "#D8D0C4", 1.4)
+	Pecas3D.caixa(no, Vector3(1.9, 0.12, 0.9), Vector3(0, 0.06, frente + 0.42), pedra)
+	Pecas3D.caixa(no, Vector3(1.6, 0.12, 0.5), Vector3(0, 0.18, frente + 0.22), pedra)
+	Pecas3D.caixa(no, Vector3(0.9, 0.02, 0.45), Vector3(0, 0.13, frente + 0.62), _m("#8C3B2E", 0.95))  # capacho
+	var folhas := [_m("#3E7A34", 0.8), _m("#4F9142", 0.8)]
+	var flores := ["#FF6FAE", "#FFD23F", "#FFFFFF", "#B07CFF"]
+	for lado in [-1, 1]:
+		var centro := Vector3(lado * 1.55, 0, frente + 0.45)
+		Pecas3D.esfera(no, 0.42, centro + Vector3(0, 0.3, 0), folhas[0], Vector3(1.25, 0.85, 0.9))
+		Pecas3D.esfera(no, 0.3, centro + Vector3(lado * 0.35, 0.28, 0.12), folhas[1], Vector3(1.1, 0.9, 1.0))
+		for k in 4:
+			var angulo: float = k * 1.7 + lado
+			Pecas3D.esfera(no, 0.06, centro + Vector3(cos(angulo) * 0.35, 0.55 + (k % 2) * 0.08, 0.2 + sin(angulo) * 0.12),
+				_m(flores[k], 0.4))
+		# luminária de parede: suporte de ferro e vidro aceso
+		var ferro := _m("#2B2B30", 0.4, 0.6)
+		var lampada := _m("#FFF1C4", 0.2)
+		lampada.emission_enabled = true
+		lampada.emission = Color("#FFD27A")
+		lampada.emission_energy_multiplier = 1.2
+		var luz := Vector3(lado * 0.88, 1.5, 0.14)
+		Pecas3D.caixa(fachada, Vector3(0.08, 0.3, 0.1), luz + Vector3(0, 0, -0.08), ferro)
+		Pecas3D.caixa(fachada, Vector3(0.16, 0.22, 0.16), luz + Vector3(0, 0.02, 0.04), lampada)
+		Pecas3D.cilindro(fachada, 0.0, 0.14, 0.1, luz + Vector3(0, 0.18, 0.04), ferro)
 
 
 ## Casa simples (caixa com telhado de pirâmide), para prédios novos.
@@ -421,7 +478,10 @@ static func _escola(no: Node3D) -> Dictionary:
 	for x in [-1, 1]:
 		for z in [-1, 1]:
 			Pecas3D.cano(no, Vector3(x * largura / 2.0, 0.1, z * fundo / 2.0), Vector3(x * largura / 2.0, altura, z * fundo / 2.0), 0.1, glace)
-	Pecas3D.cano(no, Vector3(-largura / 2.0, 0.1, fundo / 2.0), Vector3(largura / 2.0, 0.1, fundo / 2.0), 0.1, glace)
+	# base de pedra (o prédio "senta" no chão em vez de flutuar na grama)
+	Pecas3D.caixa(no, Vector3(largura + 0.14, 0.42, fundo + 0.14), Vector3(0, 0.21, 0),
+		Texturas.real("calcamento", "#CFC6B8", 1.3))
+	Pecas3D.caixa(no, Vector3(largura + 0.2, 0.06, fundo + 0.2), Vector3(0, 0.44, 0), _m("#FFFFFF", 0.35))
 	# telhado de duas águas (cumeeira de frente para trás), com beiral
 	var telhado := PrismMesh.new()
 	telhado.size = Vector3(largura + 0.8, 2.3, fundo + 0.6)
@@ -463,6 +523,10 @@ static func _escola(no: Node3D) -> Dictionary:
 	var ouro := Texturas.real("metal", "#FFD04A", 1.0, 0.6)
 	Pecas3D.cilindro(no, 0.16, 0.38, 0.5, base_torre + Vector3(0, 1.2, 0), ouro)
 	Pecas3D.esfera(no, 0.1, base_torre + Vector3(0, 0.92, 0), ouro)
+	# chaminé de tijolo saindo do telhado
+	var chamine := Vector3(largura / 2.0 - 1.1, altura + 1.3, 0.6)
+	Pecas3D.caixa(no, Vector3(0.55, 1.9, 0.55), chamine, Texturas.real("tijolos", "#B8664A", 1.0))
+	Pecas3D.caixa(no, Vector3(0.7, 0.14, 0.7), chamine + Vector3(0, 0.98, 0), _m("#5A4A44", 0.7))
 	_parede(no, Vector3(largura, altura + 2.3, fundo), Vector3(0, (altura + 2.3) / 2.0, 0))
 	return {"frente": fundo / 2.0, "placa": altura - 0.55}
 
@@ -952,57 +1016,13 @@ static func acabamento(ambiente: Environment) -> void:
 	ambiente.adjustment_saturation = 1.25  # o ACES tira um pouco da cor dos doces
 	ambiente.adjustment_contrast = 1.04
 
-const CONTORNO := preload("res://tema/contorno.gdshader")
-
-
-static func _de_boneco(peca: Node, raiz: Node) -> bool:
-	var no := peca.get_parent()
-	while no != null:
-		if no is DoceAndante:
-			return true
-		if no == raiz:
-			break
-		no = no.get_parent()
-	return raiz is DoceAndante
-
-const COR_CONTORNO := Color("#3A2060")
-
 ## Acabamento de tudo em `raiz`: materiais realistas (Realismo.acabar: luz e
-## reflexo físicos, relevo nas superfícies lisas) e, só nos BONECOS (doces que
-## andam), o contorno escuro de desenho — o cenário fica sem contorno, mais
-## real. (O nome ficou da época em que tudo era "desenho", com luz em degraus.)
-static func estilo_desenho(raiz: Node, espessura := 0.035) -> void:
-	var contornos := {}
+## reflexo físicos, relevo nas superfícies lisas). Sem contorno de desenho,
+## nem nos bonecos (a borda escura em volta deles ficava estranha com a luz
+## realista). (O nome ficou da época em que tudo era "desenho".)
+static func estilo_desenho(raiz: Node) -> void:
 	for no in raiz.find_children("*", "MeshInstance3D", true, false):
-		var peca := no as MeshInstance3D
-		var mat := peca.material_override as StandardMaterial3D
+		var mat := (no as MeshInstance3D).material_override as StandardMaterial3D
 		if mat == null or mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
 			continue
 		Realismo.acabar(mat)
-		if not _de_boneco(peca, raiz):
-			continue
-		if mat.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or peca.mesh is PlaneMesh:
-			continue
-		var caixa := peca.get_aabb()
-		var tamanho := (caixa.size * peca.global_transform.basis.get_scale()).abs()
-		if maxf(tamanho.x, maxf(tamanho.y, tamanho.z)) < 0.45:
-			continue
-		var forma := 0
-		if peca.mesh is BoxMesh:
-			forma = 1
-		elif peca.mesh is CylinderMesh:
-			forma = 2
-		elif peca.mesh is PrismMesh:
-			forma = 3
-		var cor := COR_CONTORNO
-		if mat.albedo_texture == null:
-			cor = mat.albedo_color.darkened(0.55).lerp(COR_CONTORNO, 0.45)
-		var chave := "%s_%d" % [cor.to_html(), forma]
-		if not contornos.has(chave):
-			var contorno := ShaderMaterial.new()
-			contorno.shader = CONTORNO
-			contorno.set_shader_parameter("cor", cor)
-			contorno.set_shader_parameter("espessura", espessura)
-			contorno.set_shader_parameter("forma", forma)
-			contornos[chave] = contorno
-		peca.material_overlay = contornos[chave]
