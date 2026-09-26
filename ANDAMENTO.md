@@ -7,7 +7,7 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.11.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
+- Versão atual: 0.12.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
@@ -253,8 +253,8 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     moedas por pedido; baú de doce a cada nova marca de 5 pedidos; missão
     nova "COMPLETE N PEDIDOS NA FÁBRICA". Menu dos níveis e "Como jogar".
     Print: `ferramentas/capturar.sh fabrica --fabrica=4`.
-  - **Ainda sem APK com os terrenos e os 12 doces novos** (a 0.11.0 tem o
-    Doce Match, o pódio, os enfeites por nível e o carregamento novo).
+  - **Publicado na 0.12.0** (APK 64 e 32 bits, Windows e navegador): terrenos,
+    12 doces novos, baús novos, Torre de Doces, Fábrica de Chocolate e o visual novo.
 
 - 27/09: **telas conferidas em 20:9 (celular comprido), 16:10 e 4:3
   (tablets)**, além do 16:9 de sempre. Ajustes: mapa do laboratório usa a
