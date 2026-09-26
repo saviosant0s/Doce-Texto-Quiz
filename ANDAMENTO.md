@@ -144,7 +144,8 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     desenhos e 476 mil → 65 mil triângulos.
   - Conferido: todas as telas em 16:9, as novas também em 20:9 e 4:3, e no
     modo do navegador. Teste novo: vila nova salva e carregada em JSON.
-    1884 verificações passando.
+    1884 verificações passando. Conquista "coleção completa" não conta os
+    doces de evento (só saem em certas épocas do ano).
 
 - 29/09 (pedido do Sávio: "os 4, começando pelo 2 depois o 1"), **ainda sem APK**:
   1. **Dia e noite + clima** (`CicloDia`, `CeuVila`): hora real do aparelho;

@@ -117,7 +117,9 @@ static func alcancou(id: String, partida: Dictionary) -> bool:
 		"primeira_compra":
 			return not Progresso.colecao["doces"].is_empty()
 		"colecao_completa":
-			return Colecao.quantidade() == Colecao.LISTA.size()
+			# os doces dos eventos da temporada não contam (só saem em certas épocas)
+			var normais := Colecao.LISTA.filter(func(d): return not d.has("evento"))
+			return normais.all(func(d): return Colecao.tem(d["id"]))
 		"enciclopedia":
 			return Progresso.perguntas.size() >= Jogo.total_de_perguntas()
 	return false
