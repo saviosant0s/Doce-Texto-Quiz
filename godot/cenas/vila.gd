@@ -46,6 +46,8 @@ const PREDIOS := [
 		"telhado": "#5E3D8E", "cena": "doce_match", "acao": "JOGAR DOCE MATCH"},
 	{"id": "laboratorio", "nome": "LABORATÓRIO", "posicao": Vector3(10, 0, -13), "parede": "#F3EEF9",
 		"telhado": "#7E57B1", "cena": "laboratorio", "acao": "ENTRAR NO LABORATÓRIO"},
+	{"id": "casa", "nome": "MINHA CASA", "posicao": Vector3(0, 0, 21), "parede": "#FFF3E0",
+		"telhado": "#E8364F", "cena": "minha_casa", "acao": "ENTRAR EM CASA"},
 	{"id": "torre", "nome": "TORRE DE DOCES", "posicao": Vector3(13, 0, 7), "parede": "#FF8FB8",
 		"telhado": "#E8364F", "cena": "torre", "acao": "SUBIR NA TORRE"},
 	{"id": "fabrica", "nome": "FÁBRICA DE CHOCOLATE", "posicao": Vector3(-13, 0, 7), "parede": "#B06A45",

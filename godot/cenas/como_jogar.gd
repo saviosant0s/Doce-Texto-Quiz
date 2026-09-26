@@ -9,7 +9,7 @@ const ABAS := [
 		{"icone": "casa", "titulo": "ANDE PELA VILA",
 			"texto": "Use o joystick (ou WASD no computador). Empurre até o fim para correr; o botão de seta pula."},
 		{"icone": "avancar", "titulo": "ENTRE NOS PRÉDIOS",
-			"texto": "Chegue na porta e toque em ENTRAR: Escola, Laboratório, Confeitaria, Fliperama e Troféus."},
+			"texto": "Chegue na porta e toque em ENTRAR: Escola, Laboratório, Confeitaria, Fliperama, Troféus e a sua CASA para decorar."},
 		{"icone": "camera", "titulo": "TROQUE A CÂMERA",
 			"texto": "O botão da câmera muda entre de cima, de perto e 1ª pessoa. Arraste o dedo para olhar em volta."},
 		{"icone": "lampada", "titulo": "SIGA OS AVISOS",

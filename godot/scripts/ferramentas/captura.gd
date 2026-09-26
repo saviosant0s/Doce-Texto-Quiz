@@ -40,6 +40,7 @@ extends Node
 ##   --animacoes  liga as animações contínuas mesmo sem placa de vídeo (borboletas etc.)
 ##   --torre=12  Torre de Doces: já empilha 12 andares (--torre_pergunta para na pergunta)
 ##   --fabrica=4  Fábrica de Chocolate: já começa e completa 4 pedidos
+##   --casa_cheia  Minha Casa decorada; --loja_casa=moveis|paredes|pisos; --decorar
 ##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
 ##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
 ##   --espera=1.2  segundos até tirar o print
@@ -121,6 +122,23 @@ func _ready() -> void:
 		Progresso.vila["lotes"]["lote_1"]["desde"] = Terrenos.agora() - 3 * 3600
 		Progresso.vila["lotes"]["lote_2"]["desde"] = Terrenos.agora() - 2 * 3600
 		Progresso.moedas = 850
+	if args.has("casa_cheia"):
+		# sala decorada: parede, piso e vários móveis
+		var casa := Casa.padrao()
+		casa["parede"] = "listras_rosa"
+		casa["piso"] = "biscoito"
+		casa["colocados"] = [{"id": "tapete_glace", "x": 3, "z": 2, "giro": 0}, {"id": "sofa_marshmallow", "x": 3, "z": 1, "giro": 0},
+			{"id": "mesa_biscoito", "x": 4, "z": 3, "giro": 0}, {"id": "planta_cupcake", "x": 0, "z": 0, "giro": 0},
+			{"id": "estante_chocolate", "x": 5, "z": 0, "giro": 0}, {"id": "tv_wafer", "x": 0, "z": 2, "giro": 1},
+			{"id": "cama_bolo", "x": 7, "z": 3, "giro": 0}, {"id": "luminaria_bala", "x": 7, "z": 0, "giro": 0},
+			{"id": "piano_chocolate", "x": 1, "z": 0, "giro": 0}, {"id": "aquario_gelatina", "x": 2, "z": 5, "giro": 0},
+			{"id": "cadeira_pirulito", "x": 5, "z": 3, "giro": 3}, {"id": "trofeu_gigante", "x": 6, "z": 5, "giro": 0}]
+		for c in casa["colocados"]:
+			casa["moveis"][c["id"]] = int(casa["moveis"].get(c["id"], 0)) + 1
+		casa["moveis"]["geladeira_sorvete"] = 1
+		casa["moveis"]["relogio_cuco"] = 1
+		Progresso.vila["casa"] = casa
+		Progresso.moedas = 1200
 	if args.has("confeitaria_estagio"):
 		Progresso.moedas = 99999
 		for m in Confeitaria.MAQUINAS:
@@ -222,6 +240,15 @@ func _ready() -> void:
 		Telas._cortina.color.a = 1.0
 		Telas._mostrar_carregando(args["cortina"])
 		Telas._carregando.barra(45.0)
+	if args.has("loja_casa"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene._aba_loja = args["loja_casa"] if args["loja_casa"] != "" else "moveis"
+		get_tree().current_scene.abrir_loja()
+		get_tree().current_scene.escolher_na_loja(get_tree().current_scene._escolha_loja)
+	if args.has("decorar"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene.usar_modo(true)
+		get_tree().current_scene.selecionar(1)
 	if args.has("vila_pos"):
 		await get_tree().process_frame
 		await get_tree().process_frame

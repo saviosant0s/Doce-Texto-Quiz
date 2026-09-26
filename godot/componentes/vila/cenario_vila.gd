@@ -233,6 +233,8 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 			forma = _torre_doces(no)
 		"fabrica":
 			forma = _fabrica_chocolate(no)
+		"casa":
+			forma = _minha_casa(no)
 		_:
 			forma = _casa_simples(no, dados)
 	no.set_meta("pecas", no.find_children("*", "MeshInstance3D", true, false).size())
@@ -296,6 +298,61 @@ static func _placa(no: Node3D, nome: String, posicao: Vector3, largura := 3.0) -
 	texto.outline_size = 0
 	texto.position = posicao + Vector3(0, 0, 0.08)
 	no.add_child(texto)
+
+
+## MINHA CASA: chalé de massa de pão de mel com vigas de chocolate, telhado
+## de telhas de morango, chaminé, janelas com floreira e caixa de correio.
+static func _minha_casa(no: Node3D) -> Dictionary:
+	var largura := 5.0
+	var altura := 2.9
+	var fundo := 4.0
+	var frente := fundo / 2.0
+	Pecas3D.caixa(no, Vector3(largura + 0.14, 0.4, fundo + 0.14), Vector3(0, 0.2, 0), Texturas.real("calcamento", "#CFC6B8", 1.3))
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), Texturas.real("reboco", "#FFF1DC", 0.6))
+	# vigas de chocolate (enxaimel)
+	var viga := Texturas.real("madeira_pintada", "#6B3A1F", 1.2)
+	for x in [-largura / 2.0, -0.9, 0.9, largura / 2.0]:
+		Pecas3D.caixa(no, Vector3(0.18, altura, 0.08), Vector3(x, altura / 2.0, frente + 0.03), viga)
+	Pecas3D.caixa(no, Vector3(largura, 0.16, 0.08), Vector3(0, altura - 0.08, frente + 0.03), viga)
+	Pecas3D.caixa(no, Vector3(largura, 0.14, 0.08), Vector3(0, 0.55, frente + 0.03), viga)
+	for lado in [-1, 1]:
+		Pecas3D.caixa(no, Vector3(0.12, 1.6, 0.06), Vector3(lado * 2.1, 1.7, frente + 0.04), viga, Vector3(0, 0, lado * 28))
+	# telhado de duas águas de telhas de morango, com beiral
+	var telhado := PrismMesh.new()
+	telhado.size = Vector3(largura + 0.9, 1.9, fundo + 0.7)
+	var no_telhado := MeshInstance3D.new()
+	no_telhado.mesh = telhado
+	no_telhado.material_override = _texturizado("#E8364F", "telhas", 1.2, 0.6)
+	no_telhado.position = Vector3(0, altura + 0.95, 0)
+	no.add_child(no_telhado)
+	var glace := _m("#FFFFFF", 0.35)
+	var topo := altura + 1.9
+	for z in [-1, 1]:
+		var borda: float = z * (fundo / 2.0 + 0.35)
+		for lado in [-1, 1]:
+			Pecas3D.cano(no, Vector3(lado * (largura / 2.0 + 0.45), altura, borda), Vector3(0, topo, borda), 0.1, glace)
+	# chaminé com fumacinha (a vila solta fumaça no marcador "Chamine")
+	var chamine := Vector3(-1.4, altura + 1.2, -0.6)
+	Pecas3D.caixa(no, Vector3(0.55, 1.8, 0.55), chamine, Texturas.real("tijolos", "#B8664A", 1.0))
+	Pecas3D.caixa(no, Vector3(0.7, 0.14, 0.7), chamine + Vector3(0, 0.93, 0), _m("#5A4A44", 0.7))
+	var marcador := Marker3D.new()
+	marcador.name = "Chamine"
+	marcador.position = chamine + Vector3(0, 1.1, 0)
+	no.add_child(marcador)
+	# janelas com floreira
+	for lado in [-1, 1]:
+		_janela(no, Vector3(lado * 1.55, 1.55, frente + 0.05), "#E8364F")
+		Pecas3D.caixa(no, Vector3(1.0, 0.2, 0.25), Vector3(lado * 1.55, 0.95, frente + 0.2), _m("#7A4322", 0.6))
+		for k in 4:
+			Pecas3D.esfera(no, 0.1, Vector3(lado * 1.55 - 0.33 + k * 0.22, 1.1, frente + 0.22),
+				_m(["#FF6FAE", "#FFD23F", "#FFFFFF", "#B07CFF"][k], 0.4))
+	# caixa de correio
+	var correio := Vector3(2.9, 0, frente + 1.6)
+	Pecas3D.cilindro(no, 0.05, 0.05, 1.0, correio + Vector3(0, 0.5, 0), _m("#6B3A1F", 0.5))
+	Pecas3D.caixa(no, Vector3(0.35, 0.3, 0.5), correio + Vector3(0, 1.1, 0), _m("#6FB8FF", 0.4))
+	Pecas3D.caixa(no, Vector3(0.04, 0.2, 0.14), correio + Vector3(0.2, 1.25, 0.1), _m("#E8364F", 0.4))
+	_parede(no, Vector3(largura, altura + 1.9, fundo), Vector3(0, (altura + 1.9) / 2.0, 0))
+	return {"frente": frente + 0.04, "placa": altura - 0.35}
 
 
 ## FÁBRICA DE CHOCOLATE: galpão de tijolos com telhado em serra, duas

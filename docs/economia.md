@@ -111,3 +111,16 @@ que falta.
 
 Beleza da vila: cada nível de casa, jardim e fonte soma +5% na produção do
 moinho e do cofre.
+
+## Minha Casa (desde a 0.13.0)
+
+Casa na vila (ao sul da praça) com a sala para decorar. Vem com tapete,
+poltrona, mesa e planta de presente. Móveis de 45 a 400 moedas; papel de
+parede e piso de 80 a 150. Quatro móveis especiais não se compram: troféu
+gigante (título Mestre), mini torre de bolo (20 andares na Torre), fliperama
+de casa (10 níveis do Doce Match) e robô do Office (30 estrelas no Laboratório).
+
+Conforto = soma dos móveis na sala (repetido vale metade) + parede + piso.
+Prêmio uma vez por faixa: ACONCHEGANTE (60) 50 moedas, CHARMOSA (150) 100
+moedas, LINDA (280) baú de doce, DOS SONHOS (450) 250 moedas, DE REVISTA (700)
+baú de ouro.

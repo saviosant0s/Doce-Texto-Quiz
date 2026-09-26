@@ -25,6 +25,7 @@ func _ready() -> void:
 	_testar_missoes_e_nivel()
 	_testar_terrenos()
 	_testar_ciclo_dia()
+	_testar_casa()
 	_testar_torre()
 	_testar_fabrica()
 	await _testar_fluxo_completo()
@@ -391,6 +392,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_vila()
 	await _testar_vila_terrenos()
 	await _testar_vila_noite()
+	await _testar_tela_casa()
 	await _testar_tela_torre()
 	await _testar_tela_fabrica()
 	await _testar_tela_colecao()
@@ -605,7 +607,8 @@ func _testar_vila() -> void:
 	verificar(com_relevo.size() >= 5, "materiais do cenário com relevo e luz realista")
 	# a vila cresceu (terrenos, lago, mirante): os lotes e presentes ficam em
 	# blocos próprios e só são desenhados de perto
-	verificar(vila.find_children("*", "MeshInstance3D", true, false).size() < 330, "cenário juntado em poucos blocos (leve)")
+	var pecas_vila := vila.find_children("*", "MeshInstance3D", true, false).filter(func(m): return not vila.ceu.is_ancestor_of(m))
+	verificar(pecas_vila.size() < 360, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
 	var lote: Node3D = vila.find_child("Lote_lote_1", true, false)
 	verificar(lote.find_children("*", "MeshInstance3D", true, false).all(func(m): return m.visibility_range_end > 0.0),
 		"lotes longe da câmera não são desenhados")
@@ -1823,6 +1826,89 @@ func _testar_ciclo_dia() -> void:
 	CicloDia.dia_fixo = ""
 	Progresso.vila = guardado
 	Progresso.confeitaria["acucar"] = acucar_antes
+	Progresso.moedas = moedas_antes
+
+
+func _testar_casa() -> void:
+	_secao("minha casa")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.vila.erase("casa")
+	verificar(Casa.colocados().size() == 4 and Casa.conforto() > 0, "a casa já vem com móveis de presente arrumados")
+	Progresso.vila["casa"] = {"moveis": {}, "colocados": [], "parede": "creme", "piso": "madeira",
+		"paredes": ["creme"], "pisos": ["madeira"], "premio_conforto": 0}
+	Progresso.moedas = 0
+	verificar(not Casa.comprar("sofa_marshmallow"), "sem moedas não compra")
+	Progresso.moedas = 2000
+	verificar(Casa.comprar("sofa_marshmallow") and Progresso.moedas == 1820 and Casa.guardados("sofa_marshmallow") == 1,
+		"comprou o sofá: fica guardado")
+	verificar(not Casa.comprar("trofeu_gigante"), "móvel especial não se compra")
+	verificar(Casa.colocar("sofa_marshmallow", 0, 0) and Casa.guardados("sofa_marshmallow") == 0, "põe o sofá na sala")
+	verificar(not Casa.colocar("sofa_marshmallow", 3, 3), "não põe o que não tem guardado")
+	Casa.comprar("mesa_biscoito")
+	verificar(not Casa.colocar("mesa_biscoito", 1, 0), "não põe um móvel em cima do outro")
+	verificar(not Casa.colocar("mesa_biscoito", 7, 6) and not Casa.colocar("mesa_biscoito", -1, 0), "nem fora da sala")
+	Casa.comprar("tapete_glace")
+	verificar(Casa.colocar("tapete_glace", 0, 0), "tapete pode ficar embaixo de móvel")
+	verificar(Casa.colocar("mesa_biscoito", 0, 1), "a mesa cabe em cima do tapete")
+	verificar(Casa.no_lugar(0, 1) == 2 and Casa.no_lugar(1, 1) == 1, "tocar acha o móvel antes do tapete")
+	verificar(Casa.tamanho("sofa_marshmallow", 1) == Vector2i(1, 2), "girado, o sofá fica em pé")
+	verificar(not Casa.girar(0), "girar só se couber (a mesa atrapalha)")
+	verificar(Casa.mover(0, 4, 3) and Casa.girar(0) and Casa.colocados()[0]["giro"] == 1, "muda de lugar e gira")
+	var conforto := Casa.conforto()
+	Casa.comprar("sofa_marshmallow")
+	Casa.colocar("sofa_marshmallow", 0, 4)
+	verificar(Casa.conforto() == conforto + Casa.MOVEIS["sofa_marshmallow"]["conforto"] / 2, "móvel repetido vale metade")
+	Casa.guardar(3)
+	verificar(Casa.guardados("sofa_marshmallow") == 1 and Casa.conforto() == conforto, "guardar volta para a bandeja")
+	verificar(Casa.usar_parede("chocolate") and Casa.parede() == "chocolate" and Casa.tem_parede("chocolate"), "compra e usa o papel de parede")
+	var moedas := Progresso.moedas
+	verificar(Casa.usar_parede("creme") and Casa.usar_parede("chocolate") and Progresso.moedas == moedas, "trocar de volta não cobra de novo")
+	verificar(Casa.usar_piso("marmore") and Casa.piso() == "marmore", "piso novo")
+	Progresso.vila["casa"]["premio_conforto"] = 0
+	moedas = Progresso.moedas
+	var ganhos := Casa.premiar()
+	verificar(ganhos.size() == Casa.faixa() and Casa.faixa() >= 1 and Progresso.moedas > moedas, "cada faixa de conforto dá prêmio")
+	verificar(Casa.premiar().is_empty(), "o prêmio da faixa é uma vez só")
+	var titulos: Dictionary = Progresso.titulos.duplicate()
+	Progresso.titulos["mestre"] = 1
+	verificar("trofeu_gigante" in Casa.liberar_especiais() and Casa.quantos("trofeu_gigante") == 1, "título de mestre dá o troféu gigante")
+	verificar(Casa.liberar_especiais().is_empty(), "o especial vem uma vez")
+	Progresso.titulos = titulos
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+
+
+func _testar_tela_casa() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.vila.erase("casa")
+	Progresso.moedas = 1000
+	Telas.ir_para("minha_casa")
+	await _esperar_tela("MinhaCasa")
+	await get_tree().create_timer(0.2).timeout
+	var tela := get_tree().current_scene
+	verificar(tela.name == "MinhaCasa" and tela.find_child("Movel0", true, false) != null, "abre a Minha Casa com os móveis")
+	verificar(tela.find_child("Conforto", true, false).text.begins_with("CONFORTO"), "mostra o conforto")
+	tela.abrir_loja()
+	tela.escolher_na_loja("sofa_marshmallow")
+	tela._comprar_escolha()
+	verificar(Casa.quantos("sofa_marshmallow") == 1 and Progresso.moedas == 820, "compra pela loja")
+	tela.fechar_loja()
+	await get_tree().process_frame
+	tela.usar_modo(true)
+	verificar(tela.find_child("Grade", true, false).visible and tela.find_child("Guardado_sofa_marshmallow", true, false) != null,
+		"decorar mostra a grade e a bandeja")
+	tela.find_child("Guardado_sofa_marshmallow", true, false).pressed.emit()
+	tela.tocar_casa(Vector2i(1, 4))
+	verificar(Casa.colocados().any(func(c): return c["id"] == "sofa_marshmallow"), "toca no chão e o sofá vai para a sala")
+	tela.tocar_casa(Vector2i(1, 4))
+	verificar(tela.selecionado >= 0 and tela.find_child("Acoes", true, false).visible, "tocar num móvel mostra as ações")
+	tela.guardar_selecionado()
+	verificar(Casa.guardados("sofa_marshmallow") == 1, "guardar pela tela")
+	tela.ao_voltar()
+	verificar(not tela.decorando, "voltar sai do modo decorar")
+	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes
 
 
