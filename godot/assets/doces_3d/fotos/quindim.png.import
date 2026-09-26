@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d1xb77gor47hs"
-path="res://.godot/imported/moeda.svg-2f9a5b702185b2d3599dc5669ff8b788.ctex"
+uid="uid://c27kx10eltvtd"
+path="res://.godot/imported/quindim.png-f307831946b3840d3cf67b76ef2b9dba.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icones/moeda.svg"
-dest_files=["res://.godot/imported/moeda.svg-2f9a5b702185b2d3599dc5669ff8b788.ctex"]
+source_file="res://assets/doces_3d/fotos/quindim.png"
+dest_files=["res://.godot/imported/quindim.png-f307831946b3840d3cf67b76ef2b9dba.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

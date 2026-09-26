@@ -16,6 +16,21 @@ func _ready() -> void:
 	_testar_conquistas()
 	_testar_estatisticas()
 	_testar_colecao()
+	_testar_confeitaria()
+	_testar_doce_match()
+	_testar_formulas()
+	_testar_documento_word()
+	_testar_laboratorio()
+	_testar_companheiros_e_baus()
+	_testar_missoes_e_nivel()
+	_testar_terrenos()
+	_testar_ciclo_dia()
+	_testar_casa()
+	_testar_historia()
+	_testar_eventos()
+	_testar_salvar_vila_nova()
+	_testar_torre()
+	_testar_fabrica()
 	await _testar_fluxo_completo()
 	print("")
 	if _falhas == 0:
@@ -51,6 +66,12 @@ func _testar_regras() -> void:
 	verificar(Jogo.multiplicador(2) == 1.0 and Jogo.multiplicador(3) == 1.5 and Jogo.multiplicador(5) == 2.0, "combos x1,5 e x2")
 	verificar(Jogo.pontos_da_resposta(true, 15.0, 5) == 300, "meio tempo com combo x2 = 300")
 	verificar(Jogo.formatar(2198) == "2.198" and Jogo.formatar(1234567) == "1.234.567" and Jogo.formatar(12) == "12", "formata milhar")
+	# Efeitos sonoros: todos carregam e vários tocam ao mesmo tempo
+	verificar(Audio.EFEITOS.values().all(func(e): return e != null) and Audio.EFEITOS.size() >= 9, "efeitos sonoros carregados")
+	Audio.tocar("moeda")
+	Audio.tocar("estouro", 1.3, -6.0)
+	var tocando := Audio._efeitos.filter(func(c): return c.stream != null).size()
+	verificar(tocando >= 2, "dois efeitos tocam juntos (um não corta o outro)")
 	# Músicas: uma rodada toca todas, sem repetir a última em seguida
 	Audio._fila.clear()  # começa uma rodada nova
 	for rodada in 5:
@@ -242,7 +263,7 @@ func _testar_estatisticas() -> void:
 	var erradas := Jogo.mais_erradas(5)
 	verificar(erradas.size() == 3 and erradas.all(func(p): return p["erros"] == 1), "3 mais erradas")
 	verificar(Jogo.pergunta_por_id("m07")["nivel"] == 1, "acha pergunta pelo id")
-	verificar(Jogo.total_de_perguntas() == 60, "60 perguntas no total")
+	verificar(Jogo.total_de_perguntas() == 150, "150 perguntas no total")
 
 
 func _testar_colecao() -> void:
@@ -259,6 +280,34 @@ func _testar_colecao() -> void:
 		pivo.free()
 	for id in Colecao.LISTA.map(func(d): return d["id"]) + Doces3D.PERSONAGENS:
 		verificar(ResourceLoader.exists("res://assets/doces_3d/fotos/%s.png" % id), "foto 3D de %s" % id)
+	# enfeites por nível: 2 brilhos, 3 laço, 4 coroa, 5 coroa + luz
+	var enfeites_ok := true
+	for doce in Colecao.LISTA:
+		for n in [1, 2, 3, 4, 5]:
+			var pivo := Node3D.new()
+			Doces3D.montar(doce["id"], pivo)
+			Doces3D.enfeitar(pivo, doce["id"], n)
+			var tem := func(nome): return pivo.find_child(nome, true, false) != null
+			var esperado: bool = (tem.call("Orbita") == (n >= 2)) and (tem.call("Laco") == (n == 3)) \
+				and (tem.call("Coroa") == (n >= 4)) and (tem.call("Luz") == (n == 5))
+			if not esperado:
+				enfeites_ok = false
+				print("  enfeites errados: %s nível %d" % [doce["id"], n])
+			var corpo: Node3D = pivo.get_node("Corpo")
+			var coroa: Node3D = corpo.find_child("Coroa", false, false)
+			if coroa and coroa.position.y < 0.3:  # em cima da cabeça (o doce vai de ~-1,2 a ~1,2)
+				enfeites_ok = false
+				print("  coroa baixa demais: ", doce["id"])
+			pivo.free()
+	verificar(enfeites_ok, "cada nível do doce tem seu visual (brilhos, laço, coroa, luz), com a coroa no alto")
+	# pódio: doces de 2023 por padrão; troca só com o título e com doce que tem
+	verificar(Colecao.doce_do_podio("mestre") == "chocolate" and Colecao.doce_do_podio("noob") == "maca", "pódio começa com os doces de 2023")
+	verificar(not Colecao.escolher_do_podio("mestre", "brigadeiro"), "sem o título, não troca o doce do degrau")
+	Progresso.titulos["mestre"] = 1
+	verificar(not Colecao.escolher_do_podio("mestre", "pudim"), "não põe no pódio doce que não tem")
+	verificar(Colecao.escolher_do_podio("mestre", "brigadeiro") and Colecao.doce_do_podio("mestre") == "brigadeiro",
+		"com o título, põe qualquer doce da coleção no degrau")
+	Progresso.titulos["mestre"] = 0
 	for nome in Personagens.FOTOS_3D:
 		verificar(Personagens.textura(nome).resource_path.contains("doces_3d/fotos"), "%s usa a foto 3D" % nome)
 	verificar(Colecao.tem("brigadeiro"), "começa com o brigadeiro")
@@ -343,13 +392,30 @@ func _testar_fluxo_completo() -> void:
 	verificar(get_tree().current_scene.get_node("%ProximoNivel").visible, "oferece ir ao próximo nível")
 
 	await _testar_telas_novas()
+	await _testar_vila()
+	await _testar_vila_terrenos()
+	await _testar_vila_noite()
+	await _testar_tela_casa()
+	await _testar_vila_historia()
+	await _testar_vila_evento()
+	await _testar_tela_torre()
+	await _testar_tela_fabrica()
 	await _testar_tela_colecao()
+	await _testar_tela_confeitaria()
+	await _testar_tela_doce_match()
+	await _testar_tela_laboratorio()
+	await _testar_telas_baus_e_missoes()
 	await _testar_configuracoes()
 
 	# Botão "voltar" fora da partida
 	Telas.ir_para("niveis")
 	await _esperar_tela("Niveis")
 	await get_tree().create_timer(0.4).timeout
+	var menu := get_tree().current_scene
+	if Telas.placa_rapida:
+		verificar(not menu.find_child("Titulos", true, false).visible and not menu.find_child("Configuracoes", true, false).visible
+			and menu.find_child("DoceMatch", true, false).visible and menu.find_child("Laboratorio", true, false).visible,
+			"com a vila, o menu dos níveis só leva aos outros jogos")
 	Telas.abrir("creditos")
 	verificar(await _esperar_tela("Creditos"), "abre créditos")
 	await get_tree().create_timer(0.4).timeout
@@ -410,6 +476,194 @@ func _testar_telas_novas() -> void:
 	verificar(cartoes.size() == Conquistas.LISTA.size(), "um cartão por conquista")
 
 
+## Vila dos Doces: andar, chegar na porta, entrar e voltar para a porta.
+func _testar_vila() -> void:
+	_secao("vila dos doces")
+	Vila.ultima_porta = ""
+	Telas.ir_para("vila")
+	verificar(await _esperar_tela("Vila"), "abre a vila")
+	var vila: Vila = get_tree().current_scene
+	verificar(vila.jogador != null and vila.jogador.id == "brigadeiro", "o jogador é o brigadeiro (sem companheiro)")
+	verificar(vila.find_children("*", "DoceAndante", true, false).size() >= 3, "moradores passeando")
+	# primeiros passos: a seta aponta o próximo prédio conforme o progresso
+	var passo_esperado := Vila.proximo_passo()
+	verificar(vila.passo_tutorial == passo_esperado, "tutorial aponta o próximo passo (%s)" % passo_esperado)
+	verificar((vila.find_child("SetaTutorial", false, false) != null) == (passo_esperado != ""), "seta do tutorial só quando falta algo")
+	var partidas_antes: int = Progresso.estatisticas["partidas"]
+	var match_antes: int = Progresso.estatisticas["match_partidas"]
+	var maquinas_antes: Dictionary = Progresso.confeitaria["maquinas"]
+	Progresso.estatisticas["partidas"] = 0
+	verificar(Vila.proximo_passo() == "escola", "tutorial: sem quiz jogado -> escola")
+	Progresso.estatisticas["partidas"] = 1
+	var lab_antes: Dictionary = Progresso.laboratorio.duplicate(true)
+	Progresso.laboratorio = {"estrelas": {}, "baus": {}}
+	verificar(Vila.proximo_passo() == "laboratorio", "tutorial: sem fase do laboratório -> laboratório")
+	Progresso.laboratorio["estrelas"]["c1f1"] = 3
+	Progresso.confeitaria["maquinas"] = {}
+	verificar(Vila.proximo_passo() == "confeitaria", "tutorial: sem máquina -> confeitaria")
+	Progresso.confeitaria["maquinas"] = {"brigadeiro": {"nivel": 1, "progresso": 0.0, "bandeja": 0}}
+	Progresso.estatisticas["match_partidas"] = 0
+	verificar(Vila.proximo_passo() == "fliperama", "tutorial: sem Doce Match -> fliperama")
+	Progresso.estatisticas["match_partidas"] = 1
+	verificar(Vila.proximo_passo() == "", "tutorial: tudo feito, some")
+	Progresso.estatisticas["partidas"] = partidas_antes
+	Progresso.estatisticas["match_partidas"] = match_antes
+	Progresso.confeitaria["maquinas"] = maquinas_antes
+	Progresso.laboratorio = lab_antes
+	vila.set_physics_process(false)  # só o teste controla o doce
+	var inicio := vila.jogador.global_position
+	for i in 20:
+		vila.jogador.andar(Vector3(0, 0, -1), 1.0 / 60.0)
+		await get_tree().physics_frame
+	verificar(vila.jogador.global_position.z < inicio.z - 0.5, "o doce anda para frente")
+	# joystick até o fim corre; meio caminho só anda (num lugar aberto)
+	vila.jogador.global_position = Vector3(-5, 0, 11)
+	for i in 40:
+		vila.jogador.andar(Vector3(1, 0, 0), 1.0 / 60.0)
+		await get_tree().physics_frame
+	var correndo := Vector2(vila.jogador.velocity.x, vila.jogador.velocity.z).length()
+	verificar(correndo > DoceAndante.VELOCIDADE + 1.0, "joystick até o fim: corre")
+	for i in 60:
+		vila.jogador.andar(Vector3(0, 0, 0.6), 1.0 / 60.0)
+		await get_tree().physics_frame
+	var andando := Vector2(vila.jogador.velocity.x, vila.jogador.velocity.z).length()
+	verificar(andando < DoceAndante.VELOCIDADE and andando > 1.0, "joystick pela metade: anda (freia e vira aos poucos)")
+	# pulo: sobe e volta para o chão
+	for i in 30:
+		vila.jogador.andar(Vector3.ZERO, 1.0 / 60.0)
+		await get_tree().physics_frame
+	vila.jogador.pular()
+	var mais_alto := 0.0
+	for i in 90:
+		vila.jogador.andar(Vector3.ZERO, 1.0 / 60.0)
+		await get_tree().physics_frame
+		mais_alto = maxf(mais_alto, vila.jogador.global_position.y)
+	verificar(mais_alto > 0.8, "o doce pula")
+	verificar(vila.jogador.is_on_floor() and vila.jogador.global_position.y < 0.1, "e cai de volta no chão")
+	verificar(vila.find_child("Pular", true, false) is Button, "botão de pular na tela")
+	# andando, o braço do "oi" desce e os braços balançam
+	var aceno: Node3D = vila.jogador.find_child("Aceno", true, false)
+	var balancos := []
+	for i in 40:
+		vila.jogador.andar(Vector3(1, 0, 0), 1.0 / 60.0)
+		await get_tree().physics_frame
+		balancos.append(aceno.rotation.x)
+	verificar(absf(aceno.rotation.z - AnimacaoDoce.BRACO_ABAIXADO) < 0.2, "andando, o braço do aceno fica abaixado")
+	verificar(balancos.max() - balancos.min() > 0.8, "os braços balançam ao andar")
+	# passos: sempre um pé no chão e o outro no ar, alternando
+	var anim: AnimacaoDoce = vila.jogador._animacao
+	var alternou := {}
+	var fisica_antes := vila.is_physics_processing()
+	vila.set_physics_process(false)  # só o teste move o doce
+	for i in 30:
+		vila.jogador.andar(Vector3(1, 0, 0), 1.0 / 60.0)
+		await get_tree().physics_frame
+		await get_tree().process_frame
+		var alturas := []
+		for k in anim._pernas.size():
+			alturas.append(anim._pernas[k].position.y - anim._base_pernas[k].y + anim._corpo.position.y)
+		if alturas.min() < 0.005 and alturas.max() > 0.03:
+			alternou[alturas.find(alturas.max())] = true
+	vila.set_physics_process(fisica_antes)
+	verificar(alternou.size() == 2, "os pés levantam alternados, um de cada vez (%s)" % str(alternou.keys()))
+	# dois dedos: um no joystick e outro girando a visão / apertando PULAR
+	vila.usar_camera(Vila.Camera.PERTO)
+	var toque := InputEventScreenTouch.new()
+	toque.index = 0
+	toque.pressed = true
+	toque.position = vila._joystick.get_global_rect().get_center() + Vector2(60, 0)
+	vila._joystick._input(toque)
+	verificar(vila._joystick.dedo == 0 and vila._joystick.vetor.x > 0.3, "1º dedo no joystick")
+	var giro_antes: float = vila._giro
+	var arrasto := InputEventScreenDrag.new()
+	arrasto.index = 1
+	arrasto.position = Vector2(900, 300)
+	arrasto.relative = Vector2(80, 0)
+	vila._unhandled_input(arrasto)
+	verificar(absf(vila._giro - giro_antes) > 0.3 and vila._joystick.dedo == 0, "2º dedo gira a visão sem soltar o joystick")
+	for i in 5:
+		vila.jogador.andar(Vector3.ZERO, 1.0 / 60.0)
+		await get_tree().physics_frame
+	var pulo := InputEventScreenTouch.new()
+	pulo.index = 1
+	pulo.pressed = true
+	pulo.position = vila._botao_pular.get_global_rect().get_center()
+	vila._input(pulo)
+	verificar(vila.jogador.velocity.y > 1.0, "2º dedo aperta PULAR")
+	toque.pressed = false
+	vila._joystick._input(toque)
+	verificar(vila._joystick.dedo == -1 and vila._joystick.vetor == Vector2.ZERO, "soltar o dedo solta o joystick")
+	vila.usar_camera(Vila.Camera.AEREA)
+	vila.set_physics_process(true)
+	# cada prédio tem o seu jeito; o cenário é realista (sem contorno)
+	var pecas := {}
+	for id in ["escola", "confeitaria", "trofeus", "fliperama"]:
+		var predio: Node3D = vila.find_child("Predio_" + id, true, false)
+		pecas[predio.get_meta("pecas")] = true
+	verificar(pecas.size() == 4, "os quatro prédios são diferentes")
+	var blocos := vila.find_children("Bloco*", "MeshInstance3D", false, false)
+	verificar(not blocos.any(func(b): return b.name.begins_with("BlocoContorno")), "cenário realista, sem contorno de desenho")
+	var jogador_vila: Node = vila.find_child("Jogador", true, false)
+	verificar(not jogador_vila.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.material_overlay != null or m.name.begins_with("BlocoContorno")),
+		"bonecos sem a borda escura de desenho")
+	var com_relevo := vila.find_children("*", "MeshInstance3D", true, false).filter(func(b):
+		var mat := b.material_override as StandardMaterial3D
+		return mat != null and mat.normal_enabled and mat.diffuse_mode == BaseMaterial3D.DIFFUSE_BURLEY)
+	verificar(com_relevo.size() >= 5, "materiais do cenário com relevo e luz realista")
+	# a vila cresceu (terrenos, lago, mirante): os lotes e presentes ficam em
+	# blocos próprios e só são desenhados de perto
+	var pecas_vila := vila.find_children("*", "MeshInstance3D", true, false).filter(func(m): return not vila.ceu.is_ancestor_of(m))
+	# (até ~40 blocos a mais durante um evento da temporada: decoração e objetos)
+	verificar(pecas_vila.size() < 400, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
+	var lote: Node3D = vila.find_child("Lote_lote_1", true, false)
+	verificar(lote.find_children("*", "MeshInstance3D", true, false).all(func(m): return m.visibility_range_end > 0.0),
+		"lotes longe da câmera não são desenhados")
+	# câmeras: troca em ciclo, 1ª pessoa esconde o doce, a escolha fica salva
+	vila.usar_camera(Vila.Camera.AEREA)
+	vila.proxima_camera()
+	verificar(vila.modo_camera == Vila.Camera.PERTO, "botão da câmera: aérea -> perto")
+	vila.proxima_camera()
+	verificar(vila.modo_camera == Vila.Camera.PRIMEIRA_PESSOA, "perto -> 1ª pessoa")
+	verificar(not vila.jogador.get_node("Modelo/Corpo").visible, "em 1ª pessoa o doce fica escondido")
+	verificar(Progresso.config["camera_vila"] == Vila.Camera.PRIMEIRA_PESSOA, "a câmera escolhida fica salva")
+	var antes := vila.jogador.global_position
+	var frente := vila._frente()
+	for i in 20:
+		vila.jogador.andar(frente, 1.0 / 60.0)
+		await get_tree().physics_frame
+	verificar((vila.jogador.global_position - antes).dot(frente) > 0.3, "em 1ª pessoa anda para onde olha")
+	vila.proxima_camera()
+	verificar(vila.modo_camera == Vila.Camera.AEREA and vila.jogador.get_node("Modelo/Corpo").visible, "volta para a aérea e o doce reaparece")
+	# leva o doce até a porta da escola
+	vila.jogador.global_position = vila._portas["escola"]["porta"]
+	for i in 6:
+		await get_tree().physics_frame
+	verificar(vila._porta_atual == "escola", "chegou na porta da escola")
+	verificar(vila._botao_entrar.visible and vila._botao_entrar.text == "JOGAR O QUIZ", "aparece o botão de entrar")
+	verificar(Vila.PREDIOS.filter(func(p): return p["id"] == "fliperama")[0]["cena"] == "doce_match", "o Fliperama abre o Doce Match")
+	# câmera não entra em parede: do lado de fora da escola até o meio dela
+	var fora: Vector3 = vila._portas["escola"]["porta"] + Vector3(0, 1.5, 0)
+	var meio: Vector3 = vila._portas["escola"]["no"].global_position + Vector3(0, 1.5, 0)
+	var parou := CenarioVila.camera_sem_parede(vila.get_world_3d(), fora, meio)
+	verificar(parou.distance_to(meio) > 1.8 and parou.distance_to(fora) < fora.distance_to(meio), "a câmera para antes da parede")
+	vila._botao_entrar.pressed.emit()
+	verificar(vila._entrando and not vila._botao_entrar.visible, "entrar começa a animação")
+	await get_tree().create_timer(0.6).timeout
+	verificar(vila._portas["escola"]["folha"].rotation.y < -1.0, "a porta abre")
+	verificar(get_tree().current_scene == vila, "a tela do prédio espera a animação")
+	verificar(await _esperar_tela("Niveis"), "entrar na escola abre os níveis")
+	await get_tree().create_timer(0.4).timeout
+	get_tree().current_scene.get_node("%Inicio").pressed.emit()
+	verificar(await _esperar_tela("Vila"), "o botão de casa dos níveis volta para a vila")
+	await get_tree().create_timer(0.3).timeout
+	vila = get_tree().current_scene
+	var porta: Vector3 = vila._portas["escola"]["porta"]
+	verificar(vila.jogador.global_position.distance_to(porta) < 1.5, "volta na porta da escola")
+	await get_tree().create_timer(1.2).timeout
+	verificar(is_zero_approx(vila._portas["escola"]["folha"].rotation.y), "a porta fecha atrás do doce")
+	Vila.ultima_porta = ""
+
+
 ## Tela da coleção: comprar pela tela e ver o companheiro no carregamento.
 func _testar_tela_colecao() -> void:
 	Progresso.apagar()
@@ -457,11 +711,419 @@ func _testar_tela_colecao() -> void:
 	await _esperar_tela("Niveis")
 
 
+# --- Minha Confeitaria -----------------------------------------------------------
+
+func _testar_confeitaria() -> void:
+	_secao("minha confeitaria")
+	Progresso.apagar()
+	verificar(Confeitaria.acucar() == 100, "quem começa ganha 100 de açúcar para experimentar os minigames")
+	verificar(Confeitaria.liberada("brigadeiro") and not Confeitaria.liberada("maca"), "panela liberada; maçã só passando no fácil")
+	verificar(not Confeitaria.construir_ou_melhorar("maca"), "não constrói máquina bloqueada")
+	verificar(Confeitaria.construir_ou_melhorar("brigadeiro") and Confeitaria.nivel("brigadeiro") == 1, "constrói a panela de graça")
+	verificar(Confeitaria.acucar() == Confeitaria.ACUCAR_INICIAL + Confeitaria.ACUCAR_PRESENTE, "primeira máquina vem com açúcar de presente")
+	Progresso.confeitaria["acucar"] = 0
+	var t0: float = Progresso.confeitaria["atualizado"]
+	verificar(Confeitaria.atualizar(t0 + 60) == 0 and Confeitaria.parada("brigadeiro") == "SEM AÇÚCAR", "sem açúcar, a máquina para")
+	Progresso.confeitaria["atualizado"] = t0
+	Progresso.confeitaria["acucar"] = 22
+	Confeitaria.atualizar(t0 + 12)  # 6 s já prontos + 12 s = 3 doces de 5 de açúcar
+	verificar(Confeitaria.bandeja("brigadeiro") == 3 and Confeitaria.acucar() == 7, "açúcar vira doce na bandeja")
+	Progresso.confeitaria["acucar"] = 5000
+	Confeitaria.atualizar(t0 + 100000)
+	verificar(Confeitaria.bandeja("brigadeiro") == Confeitaria.capacidade_bandeja("brigadeiro") and Confeitaria.parada("brigadeiro") == "BANDEJA CHEIA", "para com a bandeja cheia")
+	var sobrou := Confeitaria.acucar()
+	Confeitaria.atualizar(t0 + 100000 + 3 * Confeitaria.LIMITE_FORA)
+	verificar(Confeitaria.acucar() == sobrou, "cheia, não gasta açúcar")
+	verificar(Confeitaria.pegar("brigadeiro", 4) == 4 and Confeitaria.bandeja("brigadeiro") == 2, "pega doces da bandeja")
+	verificar(Confeitaria.cobrar("brigadeiro", 3) == 3 * 2 + Confeitaria.GORJETA, "cliente paga o valor mais a gorjeta")
+	Progresso.moedas = 0
+	verificar(Confeitaria.vender_bandeja("brigadeiro") == 4 and Progresso.moedas == 4 and Confeitaria.bandeja("brigadeiro") == 0, "painel simples vende a bandeja")
+	Progresso.moedas = 100
+	verificar(Confeitaria.construir_ou_melhorar("brigadeiro") and Confeitaria.nivel("brigadeiro") == 2 \
+		and Confeitaria.tempo("brigadeiro") < 6.0 and Confeitaria.capacidade_bandeja("brigadeiro") > 6, "melhorar: mais rápida e bandeja maior")
+	verificar(not Confeitaria.construir_ou_melhorar("brigadeiro"), "sem moedas, não melhora")
+	Progresso.moedas = 120
+	verificar(Confeitaria.aumentar_carregar() and Confeitaria.carregar() == 8, "carrega mais doces")
+	Progresso.niveis[0]["aprovado"] = true
+	verificar(Confeitaria.liberada("maca") and not Confeitaria.construir_ou_melhorar("maca"), "passou no fácil: libera a maçã (mas custa moedas)")
+	# o quiz dá açúcar: 10 por acerto
+	Progresso.apagar()
+	Jogo.preparar_partida(0)
+	_jogar(7, 0)
+	# 10 por acerto, +10% do brigadeiro (companheiro inicial)
+	var inicial := Confeitaria.ACUCAR_INICIAL
+	verificar(Jogo.resumo["acucar"] == 77 and Confeitaria.acucar() == inicial + 77, "cada acerto no quiz dá 10 de açúcar (+ bônus)")
+	Jogo.preparar_revisao()
+	_jogar(2, 0)
+	verificar(Confeitaria.acucar() == inicial + 77 + Companheiros.com_bonus("acucar", Jogo.resumo["acertos"] * 10), "a revisão também dá açúcar")
+	Progresso.apagar()
+
+
+## Cozinha 3D: construir no círculo, pegar da bandeja, atender e recolher.
+func _testar_cozinha() -> void:
+	Progresso.apagar()
+	var moedas_antes := 0
+	Telas.ir_para("cozinha")
+	verificar(await _esperar_tela("Cozinha"), "abre a cozinha da confeitaria")
+	var cozinha: Cozinha = get_tree().current_scene
+	cozinha.set_physics_process(false)  # o teste move o doce (e os clientes)
+	cozinha._proximo_cliente = 999.0  # sem clientes chegando sozinhos
+	var jogador := cozinha.jogador
+	verificar(cozinha.find_child("JogarQuiz", true, false) is Button, "botão de ir para o quiz na cozinha")
+	jogador.global_position = cozinha._circulos["brigadeiro"]["no"].global_position
+	await get_tree().create_timer(Cozinha.TEMPO_CIRCULO + 0.4).timeout
+	verificar(Confeitaria.construida("brigadeiro"), "parar no círculo constrói a panela")
+	Progresso.confeitaria["maquinas"]["brigadeiro"]["bandeja"] = 3
+	cozinha._atualizar_bandejas()
+	verificar(cozinha._maquinas["brigadeiro"]["doces"].get_child_count() == 3, "a bandeja mostra os doces")
+	jogador.global_position = cozinha._maquinas["brigadeiro"]["mesa"] + Vector3(0, 0, 1.0)
+	await get_tree().create_timer(0.8).timeout
+	verificar(cozinha.carregando.size() == 3 and Confeitaria.bandeja("brigadeiro") == 0, "pega os doces da bandeja")
+	verificar(jogador.pilha().get_child_count() == 3, "carrega os doces em pilha")
+	var cliente := cozinha.novo_cliente("brigadeiro", 2)
+	cliente["no"].global_position = Cozinha.FILA[0]
+	cliente["estado"] = "esperando"  # já chegou no balcão
+	jogador.global_position = Cozinha.BALCAO + Vector3(0, 0, -1.0)
+	await get_tree().create_timer(1.0).timeout
+	verificar(cliente["estado"] == "saindo" and cozinha.carregando.size() == 1, "entrega no balcão e o cliente vai embora")
+	verificar(cozinha.caixa == 2 * 2 + Confeitaria.GORJETA, "as moedas vão para o caixa")
+	moedas_antes = Progresso.moedas
+	jogador.global_position = Cozinha.CAIXA + Vector3(1.0, 0, 0)
+	await get_tree().create_timer(0.3).timeout
+	verificar(cozinha.caixa == 0 and Progresso.moedas == moedas_antes + 6, "recolhe as moedas do caixa")
+	# câmeras: de cima -> perto -> 1ª pessoa, com paredes altas só nas de perto
+	cozinha.usar_camera(Cozinha.Camera.DE_CIMA)
+	verificar(not cozinha._paredes_altas.visible, "câmera de cima: cozinha aberta")
+	cozinha.proxima_camera()
+	verificar(cozinha.modo_camera == Cozinha.Camera.PERTO and cozinha._paredes_altas.visible, "câmera perto: com paredes altas")
+	cozinha.proxima_camera()
+	verificar(cozinha.modo_camera == Cozinha.Camera.PRIMEIRA_PESSOA and Progresso.config["camera_cozinha"] == Cozinha.Camera.PRIMEIRA_PESSOA, "1ª pessoa, e a escolha fica salva")
+	verificar(jogador.pilha().is_visible_in_tree(), "em 1ª pessoa a pilha de doces continua aparecendo")
+	var antes: float = cozinha._inclinacao
+	var olhar := InputEventScreenDrag.new()
+	olhar.index = 1
+	olhar.relative = Vector2(0, -60)
+	cozinha._unhandled_input(olhar)
+	verificar(cozinha._inclinacao > antes + 0.3, "1ª pessoa: arrastar para cima olha para cima")
+	olhar.relative = Vector2(0, 5000)
+	cozinha._unhandled_input(olhar)
+	verificar(is_equal_approx(cozinha._inclinacao, Cozinha.INCLINACAO_1P.x), "...e para baixo, até um limite")
+	cozinha.usar_camera(Cozinha.Camera.DE_CIMA)
+	jogador.global_position = Cozinha.SAIDA
+	verificar(await _esperar_tela("Inicio"), "o tapete SAIR volta (sem histórico: início)")
+	verificar(Confeitaria.bandeja("brigadeiro") == 1, "o doce que sobrou nas mãos volta para a bandeja")
+	Progresso.apagar()
+
+
+func _testar_tela_confeitaria() -> void:
+	Progresso.apagar()
+	Telas.ir_para("confeitaria")
+	verificar(await _esperar_tela("Confeitaria"), "abre o painel simples da confeitaria")
+	var caixa := await _esperar_confirmacao()
+	verificar(caixa != null, "primeira visita explica como funciona")
+	if caixa:
+		caixa.cancelar()
+	await get_tree().create_timer(0.3).timeout
+	var tela := get_tree().current_scene
+	verificar(tela._cartoes.size() == Confeitaria.MAQUINAS.size(), "um cartão por máquina")
+	var principal: Button = tela._cartoes["brigadeiro"]["principal"]
+	verificar(principal.text == "CONSTRUIR GRÁTIS", "a panela de brigadeiro começa para construir")
+	verificar(tela._cartoes["cupcake"]["principal"].disabled, "máquina bloqueada não constrói")
+	principal.pressed.emit()
+	verificar(Confeitaria.construida("brigadeiro") and principal.text.begins_with("MELHORAR"), "botão constrói a máquina")
+	Progresso.confeitaria["maquinas"]["brigadeiro"]["bandeja"] = 6
+	tela._atualizar_tudo()
+	var vender: Button = tela._cartoes["brigadeiro"]["vender"]
+	verificar(vender.text == "VENDER 6/6 · +12", "botão de vender mostra quanto ganha")
+	vender.pressed.emit()
+	verificar(Progresso.moedas == 12 and Confeitaria.bandeja("brigadeiro") == 0, "vende pela tela")
+	await _testar_cozinha()
+	Progresso.moedas = 12
+	Telas.ir_para("niveis")
+	await _esperar_tela("Niveis")
+	verificar(get_tree().current_scene.find_child("Confeitaria", true, false) is Button, "botão da confeitaria no menu dos níveis")
+
+
+# --- Doce Match ----------------------------------------------------------------------
+
+func _testar_doce_match() -> void:
+	_secao("doce match")
+	var jogo := DoceMatch.new({}, 7)
+	verificar(jogo.filas().is_empty(), "o tabuleiro começa sem filas prontas")
+	verificar(not jogo.jogada_possivel().is_empty(), "e com pelo menos uma jogada")
+	verificar(not jogo.trocar(Vector2i(0, 0), Vector2i(2, 0)), "só troca peças vizinhas")
+	# tabuleiro montado à mão: trocar (2,1) com (2,0) forma uma fila de 3 na linha 0
+	_grade_sem_filas(jogo)
+	jogo.grade[0][0] = 0
+	jogo.grade[0][1] = 0
+	jogo.grade[0][2] = 1
+	jogo.grade[1][2] = 0
+	verificar(jogo.filas().is_empty(), "(montado sem filas)")
+	var antes := jogo.jogadas
+	jogo.grade[7][7] = jogo.grade[7][6]  # duas iguais lado a lado: trocar não muda nada
+	var copia := jogo.grade.duplicate(true)
+	verificar(not jogo.trocar(Vector2i(6, 7), Vector2i(7, 7)) and jogo.grade == copia and jogo.jogadas == antes,
+		"troca que não forma fila é desfeita e não gasta jogada")
+	verificar(jogo.trocar(Vector2i(2, 1), Vector2i(2, 0)) and jogo.jogadas <= antes - 1, "troca que forma fila vale e gasta uma jogada")
+	var passos := jogo.resolver()
+	verificar(passos.size() >= 1 and jogo.pontos >= 3 * DoceMatch.PONTOS_POR_PECA, "a fila some e dá pontos")
+	verificar(jogo.coletados["folha"] >= 3, "as peças que somem contam para o objetivo de juntar")
+	var vazias := 0
+	for linha in jogo.grade:
+		vazias += linha.count(-1)
+	verificar(vazias == 0 and jogo.filas().is_empty(), "as peças caem e o tabuleiro fica cheio, sem filas")
+	verificar(passos.size() < 2 or passos[1]["combo"] == 2, "cascata conta como combo")
+
+	# peças especiais
+	var e := DoceMatch.new(DoceMatch.dados_nivel(1), 3)
+	_grade_sem_filas(e)
+	for x in [0, 1, 3]:
+		e.grade[0][x] = 0
+	e.grade[1][2] = 0
+	e.trocar(Vector2i(2, 1), Vector2i(2, 0))
+	var p := e.passo(1)
+	verificar(p["criadas"].size() == 1 and p["criadas"][0][1] == DoceMatch.Especial.LINHA and p["criadas"][0][0] == Vector2i(2, 0),
+		"fila de 4 deitada vira peça LISTRADA onde a peça foi trocada")
+	verificar(e.especial_em(Vector2i(2, 0)) == DoceMatch.Especial.LINHA, "(a listrada fica no tabuleiro)")
+	# explodir a listrada: some a linha inteira
+	var l := DoceMatch.new(DoceMatch.dados_nivel(1), 4)
+	_grade_sem_filas(l)
+	l.grade[3][0] = 1
+	l.grade[3][1] = 1
+	l.grade[3][2] = 1
+	l.especial[3][1] = DoceMatch.Especial.LINHA
+	p = l.passo(1)
+	verificar(p["somem"].size() == DoceMatch.LARGURA and p["efeitos"].size() == 1 and p["efeitos"][0]["tipo"] == "linha",
+		"a listrada explode a linha toda")
+	var c := DoceMatch.new(DoceMatch.dados_nivel(1), 4)
+	_grade_sem_filas(c)
+	for y in [0, 1, 2]:
+		c.grade[y][4] = 1
+	c.especial[1][4] = DoceMatch.Especial.EMBRULHO
+	p = c.passo(1)
+	verificar(p["somem"].size() == 3 + 6 and p["efeitos"][0]["tipo"] == "embrulho", "a embrulhada explode as casas em volta")
+	# L/T vira embrulhada; fila de 5 vira bomba
+	var t := DoceMatch.new(DoceMatch.dados_nivel(1), 5)
+	_grade_sem_filas(t)
+	for x in [0, 1, 2]:
+		t.grade[0][x] = 1
+	for y in [1, 2]:
+		t.grade[y][0] = 1
+	p = t.passo(1)
+	verificar(p["criadas"].size() == 1 and p["criadas"][0][1] == DoceMatch.Especial.EMBRULHO and p["criadas"][0][0] == Vector2i(0, 0),
+		"fila em L vira peça EMBRULHADA na quina")
+	var b := DoceMatch.new(DoceMatch.dados_nivel(1), 6)
+	_grade_sem_filas(b)
+	for x in 5:
+		b.grade[5][x] = 2
+	p = b.passo(1)
+	verificar(p["criadas"].size() == 1 and p["criadas"][0][1] == DoceMatch.Especial.BOMBA and b.tipo(p["criadas"][0][0]) == DoceMatch.BOMBA,
+		"fila de 5 vira a BOMBA de confeito")
+	# a bomba trocada com uma peça leva todas daquele tipo (sem precisar de fila)
+	var bomba: Vector2i = p["criadas"][0][0]
+	b.resolver()
+	var cai_em := Vector2i(bomba.x, DoceMatch.ALTURA - 1)
+	for y in range(DoceMatch.ALTURA - 1, -1, -1):
+		if b.tipo(Vector2i(bomba.x, y)) == DoceMatch.BOMBA:
+			cai_em = Vector2i(bomba.x, y)
+	var vizinha := cai_em + (Vector2i(0, -1) if cai_em.y > 0 else Vector2i(1, 0))
+	var alvo := b.tipo(vizinha)
+	var quantas := 0
+	for linha in b.grade:
+		quantas += linha.count(alvo)
+	var jogadas_antes := b.jogadas
+	verificar(b.trocar(cai_em, vizinha) and b.jogadas == jogadas_antes - 1, "trocar a bomba sempre vale")
+	p = b.passo(1)
+	verificar(p["efeitos"].any(func(f): return f["tipo"] == "bomba") and p["somem"].size() >= quantas + 1,
+		"a bomba some com todas as peças daquele tipo")
+
+	# gelatina e objetivos
+	var g := DoceMatch.new(DoceMatch.dados_nivel(4), 8)
+	verificar(g.gelatinas_total == 16 and g.gelatinas_restantes() == 16 and not g.venceu(), "nível 4: 16 gelatinas no centro")
+	_grade_sem_filas(g)
+	for x in [2, 3, 4]:
+		g.grade[2][x] = 0
+	p = g.passo(1)
+	verificar(p["gelatinas"].size() == 3 and g.gelatinas_restantes() == 13, "a fila em cima da gelatina limpa a gelatina")
+	verificar(g.progresso_objetivo({"tipo": "gelatina"}) == [3, 16], "o objetivo conta a gelatina limpa")
+	for y in DoceMatch.ALTURA:
+		for x in DoceMatch.LARGURA:
+			g.gelatina[y][x] = false
+	verificar(g.venceu() and g.acabou(), "limpou tudo: venceu e o nível acaba")
+	g.jogadas = 3
+	var pontos_antes := g.pontos
+	verificar(g.bonus_de_jogadas() == 3 * DoceMatch.BONUS_JOGADA and g.pontos == pontos_antes + 3 * DoceMatch.BONUS_JOGADA,
+		"cada jogada que sobrou vira pontos")
+	var perdeu := DoceMatch.new(DoceMatch.dados_nivel(2), 9)
+	perdeu.jogadas = 0
+	var jogada := perdeu.jogada_possivel()
+	verificar(perdeu.acabou() and not perdeu.venceu() and perdeu.estrelas() == 0 and not perdeu.trocar(jogada[0], jogada[1]),
+		"sem jogadas e sem objetivo: perdeu, 0 estrelas")
+	var ganhou := DoceMatch.new(DoceMatch.dados_nivel(1), 9)
+	ganhou.pontos = int(ganhou.nivel["objetivos"][0]["meta"])
+	verificar(ganhou.venceu() and ganhou.estrelas() >= 1, "venceu: pelo menos 1 estrela")
+	ganhou.pontos = int(ganhou.nivel["estrelas"][2])
+	verificar(ganhou.estrelas() == 3, "pontos da 3ª meta: 3 estrelas")
+
+	# os níveis do arquivo fazem sentido
+	var niveis := DoceMatch.niveis()
+	verificar(niveis.size() == 30, "30 níveis no Doce Match")
+	var ok := true
+	for i in niveis.size():
+		var n: Dictionary = niveis[i]
+		var est: Array = n["estrelas"]
+		if int(n["numero"]) != i + 1 or int(n["jogadas"]) < 10 or n["objetivos"].is_empty() \
+				or not (int(est[0]) > 0 and int(est[0]) < int(est[1]) and int(est[1]) < int(est[2])):
+			ok = false
+			print("  nível com problema: ", n["numero"])
+		for o in n["objetivos"]:
+			if o["tipo"] == "gelatina" and _conta_gelatina(n) == 0:
+				ok = false
+			if o["tipo"] == "pontos" and int(o["meta"]) > int(est[0]):
+				ok = false
+				print("  meta de pontos acima da 1ª estrela: ", n["numero"])
+	verificar(ok, "todo nível tem jogadas, objetivo, gelatina desenhada e estrelas crescentes")
+
+	# progresso: liberar níveis, estrelas e prêmios
+	var guardado: Dictionary = Progresso.doce_match.duplicate(true)
+	var moedas := Progresso.moedas
+	var baus_prata := Baus.quantos("prata")
+	Progresso.doce_match = {"estrelas": {}}
+	verificar(DoceMatch.liberado(1) and not DoceMatch.liberado(2) and DoceMatch.proximo_nivel() == 1, "começa só com o nível 1 liberado")
+	var premio := DoceMatch.concluir(1, 2)
+	verificar(premio["primeira"] and DoceMatch.liberado(2) and DoceMatch.estrelas_do_nivel(1) == 2 and DoceMatch.proximo_nivel() == 2,
+		"vencer libera o próximo nível")
+	verificar(Progresso.moedas == moedas + premio["moedas"] and premio["moedas"] >= DoceMatch.MOEDAS_NIVEL + 2 * DoceMatch.MOEDAS_POR_ESTRELA,
+		"a primeira vitória dá moedas pelo nível e pelas estrelas")
+	var de_novo := DoceMatch.concluir(1, 1)
+	verificar(de_novo["moedas"] == 0 and DoceMatch.estrelas_do_nivel(1) == 2, "repetir com menos estrelas não dá nada nem tira estrela")
+	var mais := DoceMatch.concluir(1, 3)
+	verificar(mais["novas"] == 1 and mais["moedas"] > 0 and DoceMatch.total_estrelas() == 3, "estrela nova numa repetição dá moedas")
+	for i in range(2, 6):
+		DoceMatch.concluir(i, 1)
+	verificar(Baus.quantos("prata") == baus_prata + 1, "o nível 5 dá um baú de prata")
+	DoceMatch.concluir(5, 3)
+	verificar(Baus.quantos("prata") == baus_prata + 1, "(só na primeira vez)")
+	verificar(DoceMatch.bau_do_nivel(15) == "ouro" and DoceMatch.bau_do_nivel(10) == "prata" and DoceMatch.bau_do_nivel(7) == "",
+		"baús nos níveis 5, 10, 15... (15 e 30 de ouro)")
+	Progresso.doce_match = guardado
+	Progresso.moedas = moedas
+
+
+## Enche a grade com os tipos 3, 4 e 5 sem nenhuma fila (para montar casos à mão).
+func _grade_sem_filas(jogo: DoceMatch) -> void:
+	for y in DoceMatch.ALTURA:
+		for x in DoceMatch.LARGURA:
+			jogo.grade[y][x] = (x + y * 2) % 3 + 3
+			jogo.especial[y][x] = DoceMatch.Especial.NENHUM
+
+
+func _conta_gelatina(n: Dictionary) -> int:
+	var total := 0
+	for linha in n.get("gelatina", []):
+		total += str(linha).count("g")
+	return total
+
+
+func _testar_tela_doce_match() -> void:
+	var guardado: Dictionary = Progresso.doce_match.duplicate(true)
+	Progresso.doce_match = {"estrelas": {}}
+	# o Fliperama abre o mapa dos níveis
+	Progresso.confeitaria["acucar"] = 10
+	Telas.ir_para("doce_match")
+	verificar(await _esperar_tela("DoceMatch"), "abre o Doce Match")
+	await get_tree().create_timer(0.3).timeout
+	var tela := get_tree().current_scene
+	verificar(tela.find_child("Nivel_1", true, false) is Button and tela.find_child("Nivel_30", true, false) is Button,
+		"o mapa mostra os 30 níveis")
+	verificar(tela.find_child("Nivel_1", true, false).find_child("Jogador", true, false) != null, "o doce do jogador fica no nível atual")
+	tela.find_child("Nivel_2", true, false).pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	verificar(tela.find_child("Jogar", true, false) == null, "nível trancado não abre")
+	tela.find_child("Nivel_1", true, false).pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	verificar(tela.find_child("Jogar", true, false) is Button, "tocar no nível mostra o objetivo e o botão de jogar")
+	# sem açúcar, não joga: aviso com atalho para o quiz
+	tela.find_child("Jogar", true, false).pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	verificar(tela.find_child("JogarQuiz", true, false) is Button and Confeitaria.acucar() == 10, "sem açúcar: aviso e botão para o quiz")
+	Progresso.confeitaria["acucar"] = 2 * DoceMatch.CUSTO_ACUCAR
+	Telas.ir_para("niveis")
+	await _esperar_tela("Niveis")
+	get_tree().current_scene.find_child("DoceMatch", true, false).pressed.emit()
+	verificar(await _esperar_tela("DoceMatch"), "o menu dos níveis abre o Doce Match")
+	tela = get_tree().current_scene
+	await get_tree().create_timer(0.2).timeout
+	tela.abrir_nivel(1)
+	await get_tree().create_timer(0.1).timeout
+	tela.find_child("Jogar", true, false).pressed.emit()
+	await get_tree().create_timer(0.5).timeout
+	var pecas := 0
+	for linha in tela._pecas:
+		for peca in linha:
+			if peca != null:
+				pecas += 1
+	verificar(pecas == 64 and tela.numero_nivel == 1, "64 peças no tabuleiro do nível 1")
+	verificar(Confeitaria.acucar() == DoceMatch.CUSTO_ACUCAR, "a tentativa gastou açúcar")
+	var jogadas: int = tela.jogo.jogadas
+	var jogada: Array = tela.jogo.jogada_possivel()
+	await tela.jogar(jogada[0], jogada[1])
+	verificar(tela.jogo.jogadas == jogadas - 1 and tela.jogo.pontos > 0, "jogada pela tela conta pontos")
+	var cheias := 0
+	for linha in tela._pecas:
+		for peca in linha:
+			if peca != null and is_instance_valid(peca) and not peca.is_queued_for_deletion():
+				cheias += 1
+	verificar(cheias == 64, "depois da cascata, todas as casas têm peça")
+	# uma peça especial na tela: explode com efeito e continua tudo certo
+	tela.jogo.especial[4][4] = DoceMatch.Especial.EMBRULHO
+	tela._criar_pecas()
+	verificar(tela._pecas[4][4].find_child("Especial", false, false) != null, "a peça especial aparece com o embrulho")
+	# perder: acabam as jogadas sem cumprir o objetivo
+	tela.jogo.jogadas = 1
+	tela.jogo.pontos = 0
+	jogada = tela.jogo.jogada_possivel()
+	await tela.jogar(jogada[0], jogada[1])
+	if tela.jogo.venceu():
+		print("  (a última jogada venceu sem querer; o teste da derrota fica para a próxima)")
+	else:
+		verificar(tela.find_child("TentarDeNovo", true, false) is Button and DoceMatch.estrelas_do_nivel(1) == 0,
+			"acabaram as jogadas: aparece a derrota e o nível não conta")
+		tela.find_child("TentarDeNovo", true, false).pressed.emit()
+		await get_tree().create_timer(0.3).timeout
+		verificar(Confeitaria.acucar() == 0 and tela.jogo.jogadas == int(DoceMatch.dados_nivel(1)["jogadas"]),
+			"tentar de novo recomeça (e paga de novo)")
+	# vencer: cumpre o objetivo na próxima jogada
+	var moedas := Progresso.moedas
+	var partidas: int = Progresso.estatisticas.get("match_partidas", 0)
+	tela.jogo.jogadas = 3
+	tela.jogo.pontos = int(tela.jogo.nivel["objetivos"][0]["meta"]) - 10  # a próxima jogada completa
+	jogada = tela.jogo.jogada_possivel()
+	await tela.jogar(jogada[0], jogada[1])
+	verificar(tela.find_child("Proximo", true, false) is Button and DoceMatch.estrelas_do_nivel(1) >= 1, "venceu: estrelas e botão do próximo nível")
+	verificar(Progresso.moedas > moedas and int(Progresso.estatisticas["match_partidas"]) == partidas + 1, "a vitória dá moedas e conta a partida")
+	verificar(tela.jogo.jogadas == 0, "as jogadas que sobraram viraram pontos")
+	tela.find_child("Mapa", true, false).pressed.emit()
+	await get_tree().create_timer(0.8).timeout
+	verificar(tela.find_child("Nivel_2", true, false) is Button and tela.find_child("Nivel_2", true, false).text == "2", "de volta ao mapa, o nível 2 está liberado")
+	Progresso.doce_match = guardado
+
 func _testar_configuracoes() -> void:
 	_secao("configurações")
+	# qualidade dos gráficos: BAIXA tira a grama e as sombras da vila
+	Qualidade.escolher(Qualidade.BAIXA)
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	verificar(vila.find_child("Grama", true, false) == null, "gráficos BAIXA: sem grama com volume")
+	verificar(not vila.find_children("*", "DirectionalLight3D", true, false)[0].shadow_enabled, "gráficos BAIXA: sem sombras")
+	Qualidade.escolher(Qualidade.ALTA)
+	Telas.ir_para("niveis")
+	await _esperar_tela("Niveis")
 	Telas.abrir("configuracoes")
 	verificar(await _esperar_tela("Configuracoes"), "abre as configurações")
 	var tela := get_tree().current_scene
+	verificar(tela.find_child("Qualidade", true, false) != null, "opção de qualidade dos gráficos")
 	var controles := tela.find_children("*", "HSlider", true, false)
 	verificar(controles.size() == 2, "dois controles de volume")
 	if controles.size() == 2:
@@ -508,3 +1170,1196 @@ func _esperar_confirmacao() -> Node:
 		if not caixas.is_empty():
 			return caixas[0]
 	return null
+
+
+# --- Laboratório do Office ------------------------------------------------------
+
+func _testar_formulas() -> void:
+	_secao("fórmulas do laboratório")
+	var c := {"A1": "Doce", "A2": "Brigadeiro", "A3": "Cupcake", "A4": "Brigadeiro",
+		"B1": "Vendas", "B2": 12.0, "B3": 8.0, "B4": 10.0, "C2": 2.5, "C3": 0.0, "D2": "7"}
+	var casos := [
+		["=B2+B3", 20.0], ["=2+3*4", 14.0], ["=(2+3)*4", 20.0], ["=-2^2", 4.0], ["=10/4", 2.5],
+		["=50%", 0.5], ["=2,5*2", 5.0], ["=SOMA(B2:B4)", 30.0], ["=soma(b2:b4)", 30.0],
+		["=SOMA(B1:B4)", 30.0], ["=MÉDIA(B2:B4)", 10.0], ["=MEDIA(B2:B4)", 10.0],
+		["=MÁXIMO(B2:B4)", 12.0], ["=MÍNIMO(B2:B4;5)", 5.0], ["=SOMA(B2;B3;1)", 21.0],
+		["=CONT.NÚM(A1:B4)", 3.0], ["=CONT.VALORES(A1:A5)", 4.0], ["=CONTAR.VAZIO(A1:A5)", 1.0],
+		["=CONT.SE(A2:A4;\"Brigadeiro\")", 2.0], ["=CONT.SE(B2:B4;\">=10\")", 2.0],
+		["=CONT.SE(A2:A4;\"B*\")", 2.0], ["=SOMASE(A2:A4;\"Brigadeiro\";B2:B4)", 22.0],
+		["=MÉDIASE(A2:A4;\"Brigadeiro\";B2:B4)", 11.0],
+		["=SE(B2>10;\"Muito\";\"Pouco\")", "Muito"], ["=SE(B3>10;\"Muito\";\"Pouco\")", "Pouco"],
+		["=SE(B3>10;1)", false], ["=E(B2>5;B3>5)", true], ["=OU(B2>50;B3>5)", true], ["=NÃO(B2>5)", false],
+		["=ARRED(2,345;2)", 2.35], ["=ARRED(-2,5;0)", -3.0], ["=A2&\" \"&B2", "Brigadeiro 12"],
+		["=CONCATENAR(A2;\"!\")", "Brigadeiro!"], ["=MAIÚSCULA(A3)", "CUPCAKE"],
+		["=ESQUERDA(A2;4)", "Brig"], ["=NÚM.CARACT(A1)", 4.0], ["=D2+1", 8.0], ["=$B$2*C2", 30.0],
+		["=B$2+$B3", 20.0], ["=B2>=12", true], ["=A2=\"brigadeiro\"", true], ["=Z9+1", 1.0],
+		["=\"a\"\"b\"", "a\"b"], ["=VERDADEIRO", true],
+		["=PROCV(\"Cupcake\";A2:B4;2;FALSO)", 8.0], ["=PROCV(\"cupcake\";A2:C4;3;FALSO)", 0.0], ["=PROCV(\"Cupcake\";A2:D4;4;FALSO)", 0.0], ["=SEERRO(B2/C3;-1)", -1.0],
+		["=SEERRO(B2/C2;0)", 4.8], ["=SES(B2>20;\"a\";B2>10;\"b\";VERDADEIRO;\"c\")", "b"],
+		["=CONT.SES(A2:A4;\"Brigadeiro\";B2:B4;\">=10\")", 2.0], ["=SOMASES(B2:B4;A2:A4;\"Brigadeiro\";B2:B4;\">10\")", 12.0],
+		["=ÍNDICE(A2:A4;2)", "Cupcake"], ["=INDICE(A1:B4;3;2)", 8.0], ["=CORRESP(10;B2:B4;0)", 3.0],
+		["=ÍNDICE(A2:A4;CORRESP(MÁXIMO(B2:B4);B2:B4;0))", "Brigadeiro"],
+	]
+	for caso in casos:
+		var r: Variant = Formulas.calcular(caso[0], c)
+		verificar(not Formulas.eh_erro(r) and Formulas.iguais(r, caso[1]),
+			"%s = %s (deu %s)" % [caso[0], Formulas.texto(caso[1]), Formulas.texto(r)])
+	var erros := [
+		["=B2/C3", Formulas.DIV0], ["=B2/Z1", Formulas.DIV0], ["=SOMAR(B2:B4)", Formulas.NOME],
+		["=A2+1", Formulas.VALOR], ["=MÉDIA(Z1:Z3)", Formulas.DIV0], ["=SOMA(B2:B4", Formulas.INCOMPLETA],
+		["=SOMA(B2,B3)", Formulas.VIRGULA], ["=SE(B2)", Formulas.ARGUMENTOS], ["=", Formulas.INCOMPLETA],
+		["=B2+", Formulas.INCOMPLETA], ["=\"abc", Formulas.INCOMPLETA], ["=B2:B4", Formulas.VALOR],
+		["=B2 B3", Formulas.INCOMPLETA], ["=SOMA", Formulas.NOME], ["=SE(A2;1;2)", Formulas.VALOR],
+		["=PROCV(\"Sorvete\";A2:B4;2;FALSO)", Formulas.ND], ["=CORRESP(99;B2:B4;0)", Formulas.ND],
+		["=SES(B2>99;1)", Formulas.ND], ["=PROCV(\"Cupcake\";A2:B4;5;FALSO)", Formulas.VALOR],
+	]
+	for caso in erros:
+		var r: Variant = Formulas.calcular(caso[0], c)
+		verificar(Formulas.eh_erro(r) and r.codigo == caso[1], "%s dá %s (deu %s)" % [caso[0], caso[1], Formulas.texto(r)])
+	verificar(Formulas.calcular("=SOMAR(B2:B4)", c).explicacao() != "", "erro tem explicação")
+	verificar(Formulas.texto(2.5) == "2,5" and Formulas.texto(12.0) == "12" and Formulas.texto(1.0 / 3.0) == "0,33", "números aparecem no jeito brasileiro")
+	verificar(Formulas.texto(true) == "VERDADEIRO", "VERDADEIRO por extenso")
+	verificar(Formulas.funcoes_usadas("=SE(MÉDIA(B2:B4)>5;SOMA(B2);0)") == ["SE", "MEDIA", "SOMA"], "lista as funções usadas")
+	verificar(Formulas.usa_celulas("=SOMA(B2:B4)") and not Formulas.usa_celulas("=12+8"), "sabe se a fórmula usa células")
+	verificar(Formulas.posicao("B12") == Vector2i(1, 11) and Formulas.nome_celula(Vector2i(27, 0)) == "AB1", "endereço <-> posição")
+
+
+func _testar_documento_word() -> void:
+	_secao("documento do word")
+	var doc := DocumentoWord.new([{"texto": "Festa do Doce"}, {"texto": "Venha comer brigadeiro, beijinho e bolo."}])
+	verificar(doc.total_palavras() == 9 and doc.onde(4) == Vector2i(1, 1), "conta e acha as palavras")
+	doc.tocar(0)
+	verificar(doc.sel_inicio == 0 and doc.sel_fim == 0, "um toque seleciona a palavra")
+	doc.tocar(0)
+	verificar(doc.sel_inicio == 0 and doc.sel_fim == 2, "outro toque seleciona o parágrafo")
+	doc.fazer("negrito")
+	verificar(doc.ligado("negrito") and not doc.palavra(3)["negrito"], "negrito só na seleção")
+	verificar(doc.faltando([{"paragrafo": 0, "negrito": true}]).is_empty(), "meta de negrito cumprida")
+	doc.fazer("negrito")
+	verificar(not doc.palavra(0)["negrito"], "negrito de novo tira (como no Word)")
+	doc.fazer("desfazer")
+	verificar(doc.palavra(0)["negrito"], "Ctrl+Z desfaz")
+	doc.fazer("tudo")
+	doc.fazer("negrito")
+	verificar(doc.faltando([{"paragrafo": 0, "negrito": true}]).size() == 1, "negrito no texto todo não vale para o título")
+	doc.fazer("desfazer")
+	doc.tocar(5)
+	doc.fazer("centro")
+	verificar(doc.paragrafos[1]["alinhamento"] == "centro" and doc.paragrafos[0]["alinhamento"] == "esquerda", "alinha só o parágrafo da seleção")
+	doc.limpar_selecao()
+	doc.tocar(5)
+	doc.tocar(7, true)
+	verificar(doc.sel_inicio == 5 and doc.sel_fim == 7, "Shift estende a seleção")
+	doc.fazer("maior")
+	verificar(doc.tamanho_atual() == 14, "A+ sobe um degrau da fonte")
+	doc.fazer("cor_vermelho")
+	verificar(doc.palavra(6)["cor"] == "vermelho" and doc.palavra(4)["cor"] == "preto", "pinta só a seleção")
+	verificar(doc.faltando([{"paragrafo": 1, "palavras": ["beijinho"], "cor": "vermelho"}]).size() == 1, "pintar a mais não vale")
+	verificar(DocumentoWord.acao_do_atalho(KEY_N, true, false) == "negrito" and DocumentoWord.acao_do_atalho(KEY_E, true, false) == "centro"
+		and DocumentoWord.acao_do_atalho(KEY_T, true, false) == "tudo" and DocumentoWord.acao_do_atalho(KEY_N, false, false) == "", "atalhos do Word em português")
+	verificar(doc.bbcode(0).begins_with("[p align=left]") and doc.bbcode(0).contains("[url=0]"), "desenha o parágrafo com toque nas palavras")
+	var lista := DocumentoWord.new([{"texto": "Receita"}, {"texto": "Leite"}, {"texto": "Chocolate"}])
+	lista.tocar(1)
+	lista.fazer("marcadores")
+	verificar(lista.paragrafos[1]["lista"] == "marcadores" and lista.bbcode(1).contains("•"), "lista com marcadores")
+	lista.fazer("marcadores")
+	verificar(lista.paragrafos[1]["lista"] == "", "apertar de novo tira a lista")
+	lista.tocar(1)
+	lista.tocar(2, true)
+	lista.fazer("numeros")
+	verificar(lista.bbcode(2).contains("2."), "lista numerada conta 1, 2...")
+	verificar(lista.faltando([{"paragrafos": [1, 2], "lista": "numeros"}]).is_empty(), "meta de lista em vários parágrafos")
+	lista.limpar_selecao()
+	lista.tocar(0)
+	lista.fazer("titulo1")
+	verificar(lista.estilo_atual() == "titulo1" and lista.bbcode(0).contains("[b]"), "estilo Título 1")
+	verificar(lista.faltando([{"paragrafos": [1, 2], "lista": "numeros"}]).size() == 1, "estilo a mais (não pedido) não vale")
+	lista.tocar(1)
+	lista.fazer("realce")
+	verificar(lista.palavra(1)["realce"] and lista.bbcode(1).contains("FFF06A") == false, "marca-texto (a seleção aparece por cima)")
+	lista.limpar_selecao()
+	verificar(lista.bbcode(1).contains("FFF06A"), "marca-texto aparece sem seleção")
+	verificar(DocumentoWord.acao_do_atalho(KEY_L, true, true) == "marcadores" and DocumentoWord.acao_do_atalho(KEY_1, true, false, true) == "titulo1", "atalhos de lista e estilo")
+
+
+## Resolve os passos de Word pelas próprias ações da tela.
+func _resolver_word(doc: DocumentoWord, metas: Array) -> void:
+	for meta in metas:
+		var alvos := []
+		var varios: Array = meta.get("paragrafos", []).map(func(x): return int(x))
+		for i in doc.paragrafos.size():
+			if not varios.is_empty():
+				if not i in varios:
+					continue
+			elif int(meta.get("paragrafo", -1)) >= 0 and i != int(meta["paragrafo"]):
+				continue
+			for j in doc.paragrafos[i]["palavras"].size():
+				var t: String = doc.paragrafos[i]["palavras"][j]["texto"]
+				if not meta.has("palavras") or DocumentoWord._limpa(t) in meta["palavras"].map(func(x): return DocumentoWord._limpa(x)):
+					alvos.append(doc.indice(i, j))
+		var feitos := {}  # parágrafos que já receberam lista/estilo/alinhamento
+		for alvo in alvos:
+			doc.limpar_selecao()
+			doc.tocar(alvo)
+			var par := doc.onde(alvo).x
+			for prop in meta:
+				match prop:
+					"negrito", "italico", "sublinhado", "realce":
+						if doc.ligado(prop) != meta[prop]:
+							doc.fazer(prop)
+					"cor":
+						doc.fazer("cor_" + meta[prop])
+					"alinhamento":
+						doc.fazer(meta[prop])
+					"lista":
+						if not feitos.has([par, prop]) and doc.lista_atual() != meta[prop]:
+							doc.fazer(meta[prop])
+						feitos[[par, prop]] = true
+					"estilo":
+						doc.fazer(meta[prop])
+					"tamanho_min":
+						while doc.tamanho_atual() < int(meta[prop]):
+							doc.fazer("maior")
+
+
+func _testar_laboratorio() -> void:
+	_secao("laboratório do office")
+	var fases := Laboratorio.fases()
+	verificar(Laboratorio.capitulos().size() == 5 and fases.size() == 40, "5 capítulos com 8 fases")
+	var ids := {}
+	for f in fases:
+		ids[f["id"]] = true
+	verificar(ids.size() == fases.size(), "ids das fases não se repetem")
+	for c in Laboratorio.capitulos():
+		verificar(c["fases"][-1].get("chefe", false), "capítulo termina num chefe")
+	# todas as fases têm solução, e começar sem fazer nada não passa
+	for f in fases:
+		if f["tipo"] == "excel":
+			var celulas: Dictionary = f["planilha"]["celulas"].duplicate()
+			for passo in f["passos"]:
+				verificar(not celulas.has(passo["celula"]), "%s: a célula %s começa vazia" % [f["id"], passo["celula"]])
+				var r := Laboratorio.conferir_excel(passo, passo["resposta"], celulas)
+				verificar(r["certo"], "%s: a resposta de %s confere (%s)" % [f["id"], passo["celula"], r["mensagem"]])
+				var posicao := Formulas.posicao(passo["celula"])
+				verificar(posicao.x < int(f["planilha"]["colunas"]) and posicao.y < int(f["planilha"]["linhas"]), "%s: %s cabe na planilha" % [f["id"], passo["celula"]])
+				celulas[passo["celula"]] = r["valor"]
+		else:
+			var doc := DocumentoWord.new(f["documento"])
+			for i in f["passos"].size():
+				var metas := Laboratorio.metas_ate(f, i)
+				verificar(not doc.faltando(metas).is_empty(), "%s: passo %d não começa pronto" % [f["id"], i + 1])
+				_resolver_word(doc, f["passos"][i]["metas"])
+				verificar(doc.faltando(metas).is_empty(), "%s: passo %d tem solução (%s)" % [f["id"], i + 1, doc.faltando(metas)])
+	# conferência das fórmulas
+	var soma: Dictionary = Laboratorio.fase("c1f3")
+	var cel: Dictionary = soma["planilha"]["celulas"]
+	var passo_soma: Dictionary = soma["passos"][0]
+	verificar(not Laboratorio.conferir_excel(passo_soma, "SOMA(B2:B6)", cel)["certo"], "sem = não vale")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=65", cel)["mensagem"].contains("endereços"), "número digitado não vale")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=B2+B3+B4+B5+B6", cel)["mensagem"].contains("SOMA"), "fase pede a função certa")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=SOMA(B2:B5)", cel)["mensagem"].contains("deu 45"), "resultado errado mostra o que deu")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=SOMAR(B2:B6)", cel)["mensagem"].contains("#NOME?"), "erro do Excel é explicado")
+	verificar(Laboratorio.conferir_excel(passo_soma, "=soma(b2:b6)", cel)["certo"], "minúsculas valem")
+	# progresso, estrelas e baús
+	var antes: Dictionary = Progresso.laboratorio.duplicate(true)
+	var baus_lab_antes: Dictionary = Progresso.baus.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.laboratorio = {"estrelas": {}, "baus": {}}
+	verificar(Laboratorio.estrelas_por(0, 0) == 3 and Laboratorio.estrelas_por(2, 0) == 2 and Laboratorio.estrelas_por(0, 1) == 2
+		and Laboratorio.estrelas_por(3, 0) == 1 and Laboratorio.estrelas_por(0, 2) == 1, "estrelas por erros e dicas")
+	verificar(Laboratorio.liberada("c1f1") and not Laboratorio.liberada("c1f2"), "só a primeira fase começa liberada")
+	verificar(Laboratorio.proxima_fase() == "c1f1", "próxima fase é a primeira")
+	Progresso.confeitaria["acucar"] = 0
+	var maquinas_lab: Dictionary = Progresso.confeitaria["maquinas"].duplicate(true)
+	Progresso.confeitaria["maquinas"] = {}
+	var r1 := Laboratorio.concluir("c1f1", 2)
+	verificar(Confeitaria.acucar() == Laboratorio.ACUCAR_FASE, "o açúcar da fase entra no saldo (deu %d)" % Confeitaria.acucar())
+	Progresso.confeitaria["maquinas"] = maquinas_lab
+	verificar(r1["primeira"] and r1["acucar"] == Laboratorio.ACUCAR_FASE and r1["moedas"] == Laboratorio.MOEDAS_FASE + 2 * Laboratorio.MOEDAS_POR_ESTRELA, "recompensa da primeira vez")
+	verificar(Laboratorio.liberada("c1f2") and Laboratorio.proxima_fase() == "c1f2", "passar libera a próxima")
+	var r2 := Laboratorio.concluir("c1f1", 1)
+	verificar(r2["moedas"] == 0 and r2["acucar"] == 0 and Laboratorio.estrelas("c1f1") == 2, "jogar de novo sem melhorar não dá nada")
+	var r3 := Laboratorio.concluir("c1f1", 3)
+	verificar(r3["moedas"] == Laboratorio.MOEDAS_POR_ESTRELA and r3["acucar"] == 0 and Laboratorio.estrelas("c1f1") == 3, "estrela nova dá moedas")
+	verificar(Laboratorio.baus().size() == 10 and Laboratorio.baus_prontos() == 0, "10 baús, nenhum pronto")
+	verificar(Laboratorio.abrir_bau("c1_meio").is_empty(), "baú fechado antes da 4ª fase")
+	for id in ["c1f2", "c1f3", "c1f4"]:
+		Laboratorio.concluir(id, 3)
+	verificar(Laboratorio.bau_pronto("c1_meio") and Laboratorio.baus_prontos() == 1, "baú fica pronto depois da 4ª fase")
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = 7
+	var moedas_bau := Progresso.moedas
+	var conteudo := Laboratorio.abrir_bau("c1_meio", sorteio)
+	verificar(conteudo["moedas"] >= 20 and conteudo["acucar"] >= 20 and Baus.quantos("prata") > 0 and Progresso.moedas == moedas_bau + conteudo["moedas"], "baú dá moedas e açúcar")
+	verificar(Laboratorio.bau_aberto("c1_meio") and Laboratorio.abrir_bau("c1_meio").is_empty(), "baú só abre uma vez")
+	verificar(Laboratorio.total_estrelas() == 12, "soma as estrelas")
+	var chefe := Laboratorio.concluir("c1f8", 1)
+	verificar(chefe["acucar"] == Laboratorio.ACUCAR_CHEFE, "chefe dá mais açúcar")
+	Progresso.laboratorio = antes
+	Progresso.baus = baus_lab_antes
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_tela_laboratorio() -> void:
+	_secao("telas do laboratório")
+	var antes: Dictionary = Progresso.laboratorio.duplicate(true)
+	Progresso.laboratorio = {"estrelas": {}, "baus": {}}
+	Telas.ir_para("laboratorio")
+	verificar(await _esperar_tela("Laboratorio"), "abre o mapa do laboratório")
+	var mapa := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	verificar(mapa.find_child("Fase_c1f1", true, false) is Button and mapa.find_child("Fase_c3f8", true, false) is Button, "mapa com as 24 fases")
+	verificar(mapa.find_child("Bau_c1_meio", true, false) != null, "baús no mapa")
+	verificar(mapa.find_child("Jogador", true, false) != null, "o doce do jogador fica na fase atual")
+	mapa.find_child("Fase_c1f1", true, false).pressed.emit()
+	await get_tree().process_frame
+	var jogar: Button = mapa.find_child("Jogar", true, false)
+	verificar(jogar != null, "tocar na fase abre o resumo com JOGAR")
+	jogar.pressed.emit()
+	verificar(await _esperar_tela("LabFase"), "abre a fase")
+	var fase := get_tree().current_scene
+	await get_tree().process_frame
+	verificar(fase.find_child("Celula_B4", true, false).text == "?", "célula da tarefa marcada com ?")
+	fase.find_child("Formula", true, false).text = "=12+8"
+	fase.conferir()
+	verificar(fase.erros == 1 and fase.find_child("Feedback", true, false).text.contains("endereços"), "número digitado conta erro e explica")
+	fase.find_child("Formula", true, false).text = ""
+	fase.tocar_celula("B2")
+	fase._inserir("+")
+	fase.tocar_celula("B3")
+	verificar(fase.find_child("Formula", true, false).text == "=B2+B3", "tocar nas células escreve a fórmula")
+	fase.conferir()
+	verificar(fase.find_child("Celula_B4", true, false).text == "20", "fórmula certa mostra o resultado na célula")
+	var moedas := Progresso.moedas
+	fase.conferir()  # TERMINAR
+	await get_tree().process_frame
+	verificar(fase.find_child("Fim", true, false) != null and Laboratorio.estrelas("c1f1") == 2, "fim da fase: 1 erro = 2 estrelas")
+	verificar(Progresso.moedas == moedas + Laboratorio.MOEDAS_FASE + 2 * Laboratorio.MOEDAS_POR_ESTRELA, "fim da fase dá as moedas")
+	fase.find_child("DeNovo", true, false).pressed.emit()
+	await get_tree().process_frame
+	fase.find_child("Formula", true, false).text = ""
+	fase.tocar_celula("B2")
+	fase.tocar_celula("B3")
+	verificar(fase.find_child("Formula", true, false).text == "=B2:B3", "tocar duas células seguidas vira intervalo")
+	# fase de Word pelos botões da fita
+	Laboratorio.fase_atual = "c1f2"
+	Telas.ir_para("lab_fase")
+	await get_tree().create_timer(0.5).timeout
+	fase = get_tree().current_scene
+	verificar(fase.doc != null and fase.find_child("Paragrafo0", true, false) is RichTextLabel, "fase de Word mostra a página")
+	fase._tocar_palavra(0)
+	fase._tocar_palavra(0)
+	fase.find_child("Acao_negrito", true, false).pressed.emit()
+	verificar(fase.find_child("Acao_negrito", true, false).theme_type_variation == &"BotaoRoxo", "botão N fica ligado")
+	fase.conferir()
+	verificar(fase.erros == 0 and fase.find_child("Conferir", true, false).text == "TERMINAR", "título em negrito confere")
+	# chefe com várias tarefas
+	Laboratorio.fase_atual = "c1f8"
+	Telas.ir_para("lab_fase")
+	await get_tree().create_timer(0.5).timeout
+	fase = get_tree().current_scene
+	verificar(fase.find_child("VidaChefe", true, false).get_child_count() == 3, "chefe com 3 corações")
+	for p in fase.fase["passos"]:
+		fase.find_child("Formula", true, false).text = p["resposta"]
+		fase.conferir()
+		fase.conferir()
+	verificar(fase.terminou and Laboratorio.estrelas("c1f8") == 3, "chefe derrotado sem erros = 3 estrelas")
+	# baú
+	for id in ["c1f2", "c1f3", "c1f4"]:
+		Laboratorio.concluir(id, 3)
+	Telas.ir_para("laboratorio")
+	await _esperar_tela("Laboratorio")
+	mapa = get_tree().current_scene
+	await get_tree().create_timer(0.2).timeout
+	var moedas_bau := Progresso.moedas
+	mapa.abrir_bau("c1_meio")
+	verificar(Laboratorio.bau_aberto("c1_meio") and Progresso.moedas > moedas_bau, "abrir o baú pelo mapa dá o prêmio")
+	await get_tree().create_timer(1.8).timeout
+	verificar(not mapa.find_child("Pegar", true, false).disabled, "depois da animação dá para pegar o prêmio")
+	Progresso.laboratorio = antes
+
+
+func _testar_companheiros_e_baus() -> void:
+	_secao("companheiros e baús surpresa")
+	var colecao_antes: Dictionary = Progresso.colecao.duplicate(true)
+	var baus_antes: Dictionary = Progresso.baus.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.colecao = {"doces": [], "companheiro": "", "fragmentos": {}, "niveis": {}}
+	Progresso.baus = Baus.padrao()
+	for id in Companheiros.DOCES:
+		verificar(not Colecao.dados(id).is_empty(), "%s existe na coleção" % id)
+	verificar(Companheiros.DOCES.size() == Colecao.LISTA.size(), "todos os doces têm raridade e bônus")
+	verificar(Companheiros.nivel("brigadeiro") == 1 and Companheiros.nivel("pudim") == 0, "nível: tem = 1, não tem = 0")
+	verificar(Companheiros.bonus("acucar") == 10.0, "brigadeiro (inicial) dá +10% de açúcar")
+	verificar(Companheiros.com_bonus("acucar", 100) == 110 and Companheiros.com_bonus("moedas_quiz", 100) == 100, "bônus só do tipo do companheiro")
+	verificar(not Companheiros.receber_fragmentos("pudim", 6) and Companheiros.fragmentos("pudim") == 6, "junta fragmentos")
+	verificar(Companheiros.receber_fragmentos("pudim", 5) and Colecao.tem("pudim") and Companheiros.fragmentos("pudim") == 1, "10 fragmentos = ganha o doce")
+	verificar(Companheiros.valor_bonus("pudim") == 2.0 and Companheiros.valor_bonus("pudim", 5) == 8.0, "épico: gorjeta +2 no nível 1, +8 no 5")
+	Colecao.escolher_companheiro("pudim")
+	verificar(Companheiros.bonus("cozinha") == 2.0 and Companheiros.bonus("acucar") == 0.0, "trocar de companheiro troca o bônus")
+	Progresso.moedas = 1000
+	verificar(not Companheiros.melhorar("pudim"), "sem fragmentos não melhora")
+	Companheiros.receber_fragmentos("pudim", 9)
+	verificar(Companheiros.melhorar("pudim") and Companheiros.nivel("pudim") == 2 and Progresso.moedas == 950, "melhorar gasta fragmentos e moedas")
+	verificar(Companheiros.descrever_bonus("pudim") == "+3 DE GORJETA POR CLIENTE", "descreve o bônus")
+	verificar(Companheiros.valor_bonus("algodao_doce", 1) == 2.0 and Companheiros.valor_bonus("cupcake", 5) == 3.0, "ajudas grátis por raridade e nível")
+	# baús
+	verificar(Baus.abrir("doce").is_empty(), "sem baú não abre")
+	Baus.ganhar("doce", 3)
+	Baus.ganhar("ouro")
+	verificar(Baus.total_fechados() == 4, "conta os baús fechados")
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = 42
+	var itens := Baus.abrir("doce", sorteio)
+	verificar(itens.size() == Baus.ITENS["doce"] and itens[0]["tipo"] == "fragmentos", "baú de doce: 2 itens, o 1º é fragmento")
+	var ouro := Baus.abrir("ouro", sorteio)
+	verificar(ouro.size() == 4 and Baus.quantos("ouro") == 0, "baú de ouro: 4 itens")
+	# garantia de épico
+	Progresso.baus["sem_epico"] = Baus.GARANTIA_EPICO - 1
+	var garantido := Baus.abrir("doce", sorteio)
+	verificar(garantido.any(func(i): return i["tipo"] == "fragmentos" and i["raridade"] >= Companheiros.Raridade.EPICO), "garantia: o 10º baú traz épico ou lendário")
+	verificar(Progresso.baus["sem_epico"] == 0, "garantia zera depois do épico")
+	# muitos baús: raridades aparecem e nada quebra
+	Baus.ganhar("prata", 200)
+	var raridades := {}
+	for i in 200:
+		for item in Baus.abrir("prata", sorteio):
+			if item["tipo"] == "fragmentos":
+				raridades[item["raridade"]] = true
+	verificar(raridades.size() == 4, "200 baús de prata trazem as 4 raridades")
+	verificar(Colecao.quantidade() >= 8, "fragmentos dos baús dão doces novos")
+	# baú do quiz: até 5 por dia
+	Progresso.baus = Baus.padrao()
+	Missoes.dia_fixo = 20000
+	var ganhos := 0
+	for i in 7:
+		if Baus.ganhar_do_quiz():
+			ganhos += 1
+	verificar(ganhos == Baus.QUIZ_POR_DIA and Baus.quantos("doce") == 5, "até 5 baús do quiz por dia")
+	Missoes.dia_fixo = 20001
+	verificar(Baus.ganhar_do_quiz(), "no outro dia volta a dar baú")
+	Missoes.dia_fixo = -1
+	Progresso.colecao = colecao_antes
+	Progresso.baus = baus_antes
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_missoes_e_nivel() -> void:
+	_secao("missões e nível do jogador")
+	var missoes_antes: Dictionary = Progresso.missoes.duplicate(true)
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	var baus_antes: Dictionary = Progresso.baus.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.missoes = Missoes.padrao()
+	Progresso.jogador = {"xp": 0, "nivel": 1}
+	Progresso.baus = Baus.padrao()
+	Missoes.dia_fixo = 20355  # uma segunda-feira
+	var d := Missoes.diarias()
+	verificar(d.size() == 3 and Missoes.semanais().size() == 3, "3 missões do dia e 3 da semana")
+	var tipos := {}
+	for m in d:
+		tipos[m["tipo"]] = true
+	verificar(tipos.size() == 3, "missões do dia de tipos diferentes")
+	verificar(Missoes.diarias() == d, "mesmas missões o dia todo")
+	var primeira: Dictionary = d[0]
+	verificar(Missoes.resgatar("dia", 0).is_empty(), "missão não cumprida não resgata")
+	Missoes.registrar(primeira["tipo"], 999)
+	verificar(Missoes.cumprida(primeira) and int(primeira["progresso"]) == int(primeira["meta"]), "registrar cumpre a missão (sem passar da meta)")
+	var moedas := Progresso.moedas
+	var p := Missoes.resgatar("dia", 0)
+	verificar(p["moedas"] == Missoes.PREMIO_DIA["moedas"] and Progresso.moedas == moedas + p["moedas"] and not p.has("bau"), "resgatar dá moedas e XP")
+	verificar(Missoes.resgatar("dia", 0).is_empty(), "não resgata duas vezes")
+	for i in [1, 2]:
+		Missoes.registrar(d[i]["tipo"], 999)
+	Missoes.resgatar("dia", 1)
+	var ultima := Missoes.resgatar("dia", 2)
+	verificar(ultima.get("bau", "") == "prata" and Baus.quantos("prata") == 1, "as 3 do dia = baú de prata")
+	Missoes.dia_fixo = 20356
+	verificar(not Missoes.diarias().any(func(m): return m["resgatada"]), "outro dia, missões novas")
+	verificar(Missoes.semanais()[0]["tipo"] == Progresso.missoes["semanais"][0]["tipo"] and Progresso.missoes["semana"] == Missoes.semana(), "a semana continua a mesma")
+	Missoes.dia_fixo = 20362
+	verificar(Progresso.missoes["semana"] != Missoes.semana() or Missoes.semana() != floori((20356 + 3) / 7.0), "segunda seguinte troca a semana")
+	# prêmio por entrar
+	Progresso.missoes = Missoes.padrao()
+	Missoes.dia_fixo = 20400
+	verificar(Missoes.entrada_disponivel() and Missoes.dia_da_sequencia() == 1, "prêmio do 1º dia disponível")
+	var e1 := Missoes.resgatar_entrada()
+	verificar(e1["dia"] == 1 and e1.has("moedas") and not Missoes.entrada_disponivel(), "resgata uma vez por dia")
+	for dia in range(20401, 20407):
+		Missoes.dia_fixo = dia
+		var premio := Missoes.resgatar_entrada()
+		if dia == 20406:
+			verificar(premio["dia"] == 7 and premio["bau"] == "ouro", "7º dia seguido = baú de ouro")
+	Missoes.dia_fixo = 20409
+	verificar(Missoes.dia_da_sequencia() == 1, "pulou um dia: volta ao 1º")
+	# nível
+	Progresso.jogador = {"xp": 0, "nivel": 1}
+	Progresso.baus = Baus.padrao()
+	Experiencia.subidas_pendentes.clear()
+	verificar(Experiencia.ganhar(50) == 0 and Experiencia.xp() == 50, "junta XP")
+	verificar(Experiencia.ganhar(60) == 1 and Experiencia.nivel() == 2 and Experiencia.xp() == 10, "sobe de nível e sobra XP")
+	verificar(Baus.quantos("prata") == 1 and Experiencia.subidas_pendentes.size() == 1, "subir de nível dá baú de prata")
+	Experiencia.ganhar(Experiencia.xp_para(2) + Experiencia.xp_para(3) + Experiencia.xp_para(4))
+	verificar(Experiencia.nivel() == 5 and Baus.quantos("ouro") == 1, "nível 5 dá baú de ouro")
+	Experiencia.subidas_pendentes.clear()
+	Missoes.dia_fixo = -1
+	Progresso.missoes = missoes_antes
+	Progresso.jogador = jogador_antes
+	Progresso.baus = baus_antes
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_telas_baus_e_missoes() -> void:
+	_secao("telas de baús, missões e coleção")
+	var baus_antes: Dictionary = Progresso.baus.duplicate(true)
+	var missoes_antes: Dictionary = Progresso.missoes.duplicate(true)
+	var colecao_antes: Dictionary = Progresso.colecao.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.baus = Baus.padrao()
+	Baus.ganhar("prata", 2)
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	verificar(get_tree().current_scene.find_child("BausSurpresa", true, false) == null, "tela inicial só com o JOGAR (sem missões e baús)")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var bolinha: Label = get_tree().current_scene.find_child("BausSurpresa", true, false).get_node("Bolinha")
+	verificar(bolinha.visible and bolinha.text == "2", "a vila mostra os baús fechados")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout  # a troca de tela termina
+	vila.find_child("BausSurpresa", true, false).pressed.emit()
+	await get_tree().process_frame
+	var tela: Node = Telas.tela_por_cima()
+	verificar(tela != null and tela.name == "Baus" and get_tree().current_scene == vila,
+		"na vila, os baús abrem por cima, na hora (sem recarregar a vila)")
+	verificar(vila.process_mode == Node.PROCESS_MODE_DISABLED, "(a vila para enquanto isso)")
+	verificar(tela.find_child("Abrir_doce", true, false).disabled and not tela.find_child("Abrir_prata", true, false).disabled, "só abre o baú que tem")
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = 3
+	tela.abrir_bau("prata", sorteio)
+	await get_tree().create_timer(1.0).timeout
+	verificar(tela.find_child("Raios", true, false) != null, "suspense: raios de luz atrás do baú")
+	await get_tree().create_timer(5.0).timeout  # sem tocar, ele abre sozinho
+	verificar(tela.find_child("Cartas", true, false).get_child_count() == 3 and Baus.quantos("prata") == 1, "baú de prata abre com 3 cartas")
+	verificar(not tela.find_child("Pronto", true, false).disabled, "depois das cartas dá para fechar")
+	tela.find_child("Pronto", true, false).pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	tela.find_child("Voltar", true, false).pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	verificar(Telas.tela_por_cima() == null and get_tree().current_scene == vila and vila.process_mode == Node.PROCESS_MODE_INHERIT,
+		"voltar fecha os baús e a vila continua de onde estava")
+	verificar(vila.find_child("BausSurpresa", true, false).get_node("Bolinha").text == "1", "a bolinha dos baús já atualizou")
+	# missões
+	Progresso.missoes = Missoes.padrao()
+	Missoes.dia_fixo = 20500
+	var d := Missoes.diarias()
+	Missoes.registrar(d[0]["tipo"], 999)
+	Telas.ir_para("missoes")
+	verificar(await _esperar_tela("Missoes"), "abre a tela de missões")
+	tela = get_tree().current_scene
+	await get_tree().process_frame
+	var resgatar: Button = tela.find_child("Resgatar_dia_0", true, false)
+	verificar(resgatar != null and resgatar.text == "RESGATAR", "missão cumprida mostra RESGATAR")
+	verificar(tela.find_child("Resgatar_dia_1", true, false).disabled, "missão não cumprida fica esperando")
+	var moedas := Progresso.moedas
+	resgatar.pressed.emit()
+	await get_tree().process_frame
+	verificar(Progresso.moedas == moedas + Missoes.PREMIO_DIA["moedas"], "resgatar pela tela dá o prêmio")
+	verificar(tela.find_child("Resgatar_dia_0", true, false).text == "FEITO!", "depois fica FEITO!")
+	var dia1: Button = tela.find_child("Dia1", true, false)
+	verificar(dia1 != null and not dia1.disabled, "prêmio por entrar do dia disponível")
+	dia1.pressed.emit()
+	await get_tree().process_frame
+	verificar(not Missoes.entrada_disponivel() and tela.find_child("Dia1", true, false).disabled, "prêmio por entrar pego")
+	Missoes.dia_fixo = -1
+	# coleção: raridade e melhorar
+	Progresso.moedas = 500
+	Companheiros.receber_fragmentos("brigadeiro", 10)
+	Telas.ir_para("colecao")
+	await _esperar_tela("Colecao")
+	tela = get_tree().current_scene
+	tela.selecionar("brigadeiro")
+	verificar(tela.find_child("Raridade", true, false).text.begins_with("COMUM"), "coleção mostra a raridade")
+	verificar(tela.find_child("Bonus", true, false).text.contains("AÇÚCAR"), "coleção mostra o bônus")
+	var melhorar: Button = tela.find_child("Melhorar", true, false)
+	verificar(melhorar.visible and not melhorar.disabled, "com pedaços e moedas, dá para melhorar")
+	melhorar.pressed.emit()
+	verificar(Companheiros.nivel("brigadeiro") == 2 and Companheiros.bonus("acucar") == 15.0, "melhorar pela tela sobe o nível e o bônus")
+	# explicação de primeira vez: aparece uma vez só
+	var vistas: Array = Progresso.config.get("dicas_vistas", []).duplicate()
+	Progresso.config["dicas_vistas"] = []
+	Telas.dica_primeira_vez("teste", "TESTE", "Texto.", true)
+	await get_tree().process_frame
+	var caixa := get_tree().root.find_child("DicaPrimeiraVez", true, false)
+	verificar(caixa != null and not caixa.get_node("%Nao").visible, "explicação de primeira vez aparece (só com ENTENDI)")
+	caixa.get_node("%Sim").pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	Telas.dica_primeira_vez("teste", "TESTE", "Texto.", true)
+	await get_tree().process_frame
+	verificar(get_tree().root.find_child("DicaPrimeiraVez", true, false) == null, "e não aparece de novo")
+	Progresso.config["dicas_vistas"] = vistas
+	Progresso.baus = baus_antes
+	Progresso.missoes = missoes_antes
+	Progresso.colecao = colecao_antes
+	Progresso.moedas = moedas_antes
+
+
+# --- Terrenos da vila -----------------------------------------------------------------
+
+func _testar_terrenos() -> void:
+	_secao("terrenos da vila")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.vila = Terrenos.padrao()
+	Terrenos.agora_fixo = 1000000.0
+	Terrenos.dia_fixo = "2026-10-01"
+	Progresso.moedas = 50
+	verificar(not Terrenos.comprar("lote_1") and not Terrenos.comprado("lote_1"), "sem moedas, não compra o terreno")
+	Progresso.moedas = 1000
+	verificar(Terrenos.comprar("lote_1") and Progresso.moedas == 900 and not Terrenos.comprar("lote_1"), "compra o terreno uma vez só")
+	verificar(not Terrenos.construir("lote_2", "moinho"), "só constrói em terreno comprado")
+	verificar(Terrenos.construir("lote_1", "moinho") and Terrenos.nivel("lote_1") == 1 and Progresso.moedas == 820,
+		"constrói o moinho (e paga)")
+	verificar(not Terrenos.construir("lote_1", "casa"), "um terreno, uma construção")
+	verificar(Terrenos.pronto("lote_1") == 0, "moinho novo começa vazio")
+	Terrenos.agora_fixo += 2 * 3600
+	verificar(Terrenos.pronto("lote_1") == 12, "2 horas depois: 12 de açúcar prontos")
+	Terrenos.agora_fixo += 100 * 3600
+	verificar(Terrenos.pronto("lote_1") == Terrenos.maximo("lote_1"), "enche e para no máximo")
+	var acucar := Confeitaria.acucar()
+	verificar(Terrenos.coletar("lote_1") == 30 and Confeitaria.acucar() == acucar + 30 and Terrenos.pronto("lote_1") == 0,
+		"coletar dá o açúcar e esvazia")
+	verificar(Terrenos.preco_melhoria("lote_1") == 150 and Terrenos.melhorar("lote_1"), "evoluir o moinho começa a obra")
+	verificar(Terrenos.em_obra("lote_1") and Terrenos.nivel("lote_1") == 1 and Terrenos.falta_obra("lote_1") == 180,
+		"a obra leva tempo (3 minutos para o nível 2)")
+	Terrenos.comprar("lote_2")
+	Terrenos.construir("lote_2", "cofre")
+	verificar(Terrenos.obra_em_andamento() == "lote_1" and not Terrenos.melhorar("lote_2"), "um construtor: uma obra por vez")
+	Terrenos.agora_fixo += 181
+	verificar(not Terrenos.em_obra("lote_1") and Terrenos.nivel("lote_1") == 2 and Terrenos.por_hora("lote_1") == 10,
+		"obra pronta: nível 2, produz mais")
+	Progresso.moedas = 5000
+	Terrenos.melhorar("lote_1")
+	var acucar_obra := Confeitaria.acucar()
+	Progresso.confeitaria["acucar"] = 100
+	verificar(Terrenos.preco_acelerar("lote_1") == 15 and Terrenos.acelerar("lote_1") and Confeitaria.acucar() == 85
+		and Terrenos.nivel("lote_1") == 3, "terminar já custa 1 açúcar por minuto que falta")
+	Progresso.confeitaria["acucar"] = acucar_obra
+	for n in 2:
+		Terrenos.melhorar("lote_1")
+		Terrenos._estado()["lotes"]["lote_1"]["obra_ate"] = Terrenos.agora()
+	verificar(Terrenos.nivel("lote_1") == Terrenos.NIVEL_MAXIMO and Terrenos.preco_melhoria("lote_1") == -1
+		and not Terrenos.melhorar("lote_1"), "nível 5 é o máximo")
+	Terrenos._estado()["lotes"]["lote_2"]["desde"] = Terrenos.agora()
+	Terrenos.agora_fixo += 3600
+	var moedas := Progresso.moedas
+	verificar(Terrenos.coletar("lote_2") == 4 and Progresso.moedas == moedas + 4, "o cofre junta moedas")
+	verificar(Terrenos.produz("lote_2") == "moedas" and Terrenos.produz("lote_1") == "acucar", "cada um produz o seu")
+	# presentes do dia
+	verificar(Terrenos.presente_disponivel("lago") and not Terrenos.abrir_presente("lago").is_empty(), "abre o presente do lago")
+	verificar(not Terrenos.presente_disponivel("lago") and Terrenos.abrir_presente("lago").is_empty(), "uma vez por dia")
+	Terrenos.dia_fixo = "2026-10-02"
+	verificar(Terrenos.presente_disponivel("lago"), "no outro dia, tem presente de novo")
+	# lotes não se sobrepõem nem ficam fora do mapa
+	var ok := true
+	for i in Terrenos.LOTES.size():
+		var a: Vector3 = Terrenos.LOTES[i]["posicao"]
+		if absf(a.x) + Terrenos.TAMANHO_LOTE / 2 > 36 or absf(a.z) + Terrenos.TAMANHO_LOTE / 2 > 36:
+			ok = false
+		for j in range(i + 1, Terrenos.LOTES.size()):
+			var b: Vector3 = Terrenos.LOTES[j]["posicao"]
+			if absf(a.x - b.x) < Terrenos.TAMANHO_LOTE and absf(a.z - b.z) < Terrenos.TAMANHO_LOTE:
+				ok = false
+	verificar(ok, "lotes separados e dentro da vila")
+	Terrenos.agora_fixo = -1.0
+	Terrenos.dia_fixo = ""
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_ciclo_dia() -> void:
+	_secao("dia e noite")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var acucar_antes := Confeitaria.acucar()
+	var moedas_antes := Progresso.moedas
+	var sempre: bool = Progresso.config.get("sempre_dia", false)
+	Progresso.config["sempre_dia"] = false
+	verificar(CicloDia.noite(12.0) == 0.0 and CicloDia.noite(23.0) == 1.0 and CicloDia.noite(3.0) == 1.0,
+		"meio-dia é dia; 23h e 3h são noite")
+	verificar(CicloDia.noite(18.0) > 0.0 and CicloDia.noite(18.0) < 1.0 and CicloDia.por_do_sol(18.3) > 0.9,
+		"às 18h está escurecendo, com pôr do sol")
+	verificar(CicloDia.fase(10.0) == "MANHÃ" and CicloDia.fase(22.0) == "NOITE" and CicloDia.fase(18.3) == "PÔR DO SOL",
+		"nome de cada momento do dia")
+	verificar((CicloDia.misturar(CicloDia.CEU_TOPO, 23.0) as Color).v < 0.3, "céu escuro de noite")
+	CicloDia.dia_fixo = "2026-10-05"
+	CicloDia.hora_fixa = 22.0
+	Progresso.vila.erase("estrela")
+	verificar(CicloDia.estrela_disponivel(), "de noite tem estrela cadente")
+	verificar(CicloDia.pegar_estrela()["acucar"] == CicloDia.PREMIO_ESTRELA["acucar"] and not CicloDia.estrela_disponivel(),
+		"pegou a estrela: uma por noite")
+	CicloDia.dia_fixo = "2026-10-06"
+	CicloDia.hora_fixa = 2.0
+	verificar(not CicloDia.estrela_disponivel(), "de madrugada ainda é a mesma noite")
+	CicloDia.hora_fixa = 21.0
+	verificar(CicloDia.estrela_disponivel(), "na noite seguinte, outra estrela")
+	CicloDia.hora_fixa = 13.0
+	verificar(not CicloDia.estrela_disponivel(), "de dia não tem estrela")
+	CicloDia.chuva_fixa = 1
+	var antes := Confeitaria.acucar()
+	verificar(CicloDia.lugares_gotas().size() == CicloDia.GOTAS and CicloDia.pegar_gota(0) == CicloDia.ACUCAR_GOTA
+		and Confeitaria.acucar() == antes + CicloDia.ACUCAR_GOTA, "na chuva de granulado, cada gota dá açúcar")
+	verificar(CicloDia.pegar_gota(0) == 0, "a mesma gota não conta duas vezes")
+	var gotas_livres := true
+	for d in 30:
+		CicloDia.dia_fixo = "2026-11-%02d" % (1 + d % 28)
+		CicloDia.hora_fixa = float(d % 24)
+		Eventos.dia_fixo = CicloDia.dia_fixo
+		for p in CicloDia.lugares_gotas() + Eventos.lugares_itens():
+			if not CicloDia.lugar_livre(p):
+				gotas_livres = false
+	verificar(gotas_livres, "gotas e objetos de evento nunca caem dentro de prédio, terreno ou lago")
+	verificar(not CicloDia.lugar_livre(Vector3(0, 0, -14)) and not CicloDia.lugar_livre(Vector3(-30, 0, 12)),
+		"dentro da escola ou do lago não é lugar livre")
+	Eventos.dia_fixo = ""
+	CicloDia.dia_fixo = "2026-10-06"
+	CicloDia.chuva_fixa = 0
+	verificar(CicloDia.pegar_gota(1) == 0, "sem chuva, sem gotas")
+	CicloDia.chuva_fixa = -1
+	var chuvas := 0
+	for h in 24 * 7:
+		CicloDia.dia_fixo = "2026-10-%02d" % (1 + h / 24)
+		CicloDia.hora_fixa = float(h % 24)
+		chuvas += int(CicloDia.chovendo())
+	verificar(chuvas > 5 and chuvas < 60, "chove de vez em quando (%d horas numa semana)" % chuvas)
+	Progresso.config["sempre_dia"] = true
+	CicloDia.hora_fixa = -1.0
+	verificar(CicloDia.hora() == 12.0 and not CicloDia.chovendo(), "\"sempre dia\": meio-dia e sem chuva")
+	Progresso.config["sempre_dia"] = sempre
+	CicloDia.dia_fixo = ""
+	Progresso.vila = guardado
+	Progresso.confeitaria["acucar"] = acucar_antes
+	Progresso.moedas = moedas_antes
+
+
+func _testar_casa() -> void:
+	_secao("minha casa")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.vila.erase("casa")
+	verificar(Casa.colocados().size() == 4 and Casa.conforto() > 0, "a casa já vem com móveis de presente arrumados")
+	Progresso.vila["casa"] = {"moveis": {}, "colocados": [], "parede": "creme", "piso": "madeira",
+		"paredes": ["creme"], "pisos": ["madeira"], "premio_conforto": 0}
+	Progresso.moedas = 0
+	verificar(not Casa.comprar("sofa_marshmallow"), "sem moedas não compra")
+	Progresso.moedas = 2000
+	verificar(Casa.comprar("sofa_marshmallow") and Progresso.moedas == 1820 and Casa.guardados("sofa_marshmallow") == 1,
+		"comprou o sofá: fica guardado")
+	verificar(not Casa.comprar("trofeu_gigante"), "móvel especial não se compra")
+	verificar(Casa.colocar("sofa_marshmallow", 0, 0) and Casa.guardados("sofa_marshmallow") == 0, "põe o sofá na sala")
+	verificar(not Casa.colocar("sofa_marshmallow", 3, 3), "não põe o que não tem guardado")
+	Casa.comprar("mesa_biscoito")
+	verificar(not Casa.colocar("mesa_biscoito", 1, 0), "não põe um móvel em cima do outro")
+	verificar(not Casa.colocar("mesa_biscoito", 7, 6) and not Casa.colocar("mesa_biscoito", -1, 0), "nem fora da sala")
+	Casa.comprar("tapete_glace")
+	verificar(Casa.colocar("tapete_glace", 0, 0), "tapete pode ficar embaixo de móvel")
+	verificar(Casa.colocar("mesa_biscoito", 0, 1), "a mesa cabe em cima do tapete")
+	verificar(Casa.no_lugar(0, 1) == 2 and Casa.no_lugar(1, 1) == 1, "tocar acha o móvel antes do tapete")
+	verificar(Casa.tamanho("sofa_marshmallow", 1) == Vector2i(1, 2), "girado, o sofá fica em pé")
+	verificar(not Casa.girar(0), "girar só se couber (a mesa atrapalha)")
+	verificar(Casa.mover(0, 4, 3) and Casa.girar(0) and Casa.colocados()[0]["giro"] == 1, "muda de lugar e gira")
+	var conforto := Casa.conforto()
+	Casa.comprar("sofa_marshmallow")
+	Casa.colocar("sofa_marshmallow", 0, 4)
+	verificar(Casa.conforto() == conforto + Casa.MOVEIS["sofa_marshmallow"]["conforto"] / 2, "móvel repetido vale metade")
+	Casa.guardar(3)
+	verificar(Casa.guardados("sofa_marshmallow") == 1 and Casa.conforto() == conforto, "guardar volta para a bandeja")
+	verificar(Casa.usar_parede("chocolate") and Casa.parede() == "chocolate" and Casa.tem_parede("chocolate"), "compra e usa o papel de parede")
+	var moedas := Progresso.moedas
+	verificar(Casa.usar_parede("creme") and Casa.usar_parede("chocolate") and Progresso.moedas == moedas, "trocar de volta não cobra de novo")
+	verificar(Casa.usar_piso("marmore") and Casa.piso() == "marmore", "piso novo")
+	Progresso.vila["casa"]["premio_conforto"] = 0
+	moedas = Progresso.moedas
+	var ganhos := Casa.premiar()
+	verificar(ganhos.size() == Casa.faixa() and Casa.faixa() >= 1 and Progresso.moedas > moedas, "cada faixa de conforto dá prêmio")
+	verificar(Casa.premiar().is_empty(), "o prêmio da faixa é uma vez só")
+	var titulos: Dictionary = Progresso.titulos.duplicate()
+	Progresso.titulos["mestre"] = 1
+	verificar("trofeu_gigante" in Casa.liberar_especiais() and Casa.quantos("trofeu_gigante") == 1, "título de mestre dá o troféu gigante")
+	verificar(Casa.liberar_especiais().is_empty(), "o especial vem uma vez")
+	Progresso.titulos = titulos
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+
+
+func _testar_historia() -> void:
+	_secao("histórias da vila")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.vila.erase("historia")
+	Progresso.jogador["nivel"] = 1
+	verificar(Historia.capitulo() == 0 and Historia.morador_da_vez() == "milho_doce", "a primeira história começa com o Seu Milho")
+	verificar(Historia.chegou(Vector3.ZERO).is_empty(), "passo de falar: chegar num lugar não avança")
+	Historia.avancar()
+	verificar(Historia.lugar_da_vez() == "praca" and Historia.chegou(Vector3(20, 0, 20)).is_empty(), "longe da fonte, nada")
+	verificar(not Historia.chegou(Vector3(1, 0, 1)).is_empty() and Historia.lugar_da_vez() == "lago", "na fonte: pista e o próximo lugar")
+	Historia.chegou(Vector3(-30, 0, 12))
+	var moedas := Progresso.moedas
+	var premio := Historia.avancar()
+	verificar(premio.get("moedas", 0) == 40 and Progresso.moedas == moedas + 40 and Historia.capitulo() == 1,
+		"terminou a primeira história: prêmio e próximo capítulo")
+	verificar(Historia.premio_pendente().get("capitulo", -1) == 0 and Historia.premio_pendente().is_empty(), "o prêmio aparece uma vez")
+	Progresso.jogador = {"xp": 0, "nivel": 1}  # (o XP do prêmio já sobe de nível)
+	verificar(not Historia.liberado() and Historia.passo_atual().is_empty() and Historia.texto_meta().contains("nível 2"),
+		"o capítulo 2 espera o nível 2 do jogador")
+	Progresso.jogador["nivel"] = 9
+	Historia.avancar()
+	Historia.avancar()
+	Historia.avancar()
+	verificar(Historia.passo_atual()["tipo"] == "fazer" and Historia.texto_meta().contains("(0/1)"), "passo de fazer mostra o progresso")
+	Missoes.registrar("match", 1)
+	verificar(Historia.passo_atual()["tipo"] == "fazer", "outro jogo não conta")
+	Missoes.registrar("partidas", 1)
+	verificar(Historia.passo_atual()["tipo"] == "falar" and not Historia.falas_pendentes().is_empty(),
+		"jogar a partida (pelas missões) avança a história e guarda a fala")
+	Historia.avancar()
+	verificar(Historia.capitulo() == 2, "segunda história completa")
+	Historia.avancar()
+	for i in 5:
+		Missoes.registrar("clientes", 1)
+	verificar(Historia.passo_atual()["tipo"] == "entregar", "5 clientes na confeitaria")
+	Progresso.confeitaria["acucar"] = 10
+	verificar(not Historia.entregar() and Historia.passo_atual()["tipo"] == "entregar", "sem açúcar não entrega")
+	Progresso.confeitaria["acucar"] = 100
+	verificar(Historia.entregar() and Confeitaria.acucar() == 50, "entrega 50 de açúcar")
+	Historia.avancar()
+	verificar(Casa.quantos("banco_praca") == 1, "a festa dá o banco da praça para a casa")
+	Historia.avancar()
+	Missoes.registrar("torre", 6)
+	Missoes.registrar("torre", 7)
+	verificar(Historia.passo_atual()["tipo"] == "fazer", "\"max\": 6 e 7 andares não somam 10")
+	Missoes.registrar("torre", 11)
+	verificar(Historia.lugar_da_vez() == "mirante", "11 andares numa torre só: avança")
+	Progresso.vila = guardado
+	Progresso.jogador = jogador_antes
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_eventos() -> void:
+	_secao("eventos da temporada")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var colecao: Dictionary = Progresso.colecao.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Eventos.dia_fixo = "2026-10-20"
+	verificar(Eventos.atual() == "halloween" and Eventos.edicao() == "halloween-2026", "20 de outubro: Noite das Abóboras")
+	Eventos.dia_fixo = "2026-12-25"
+	verificar(Eventos.atual() == "natal" and Eventos.edicao() == "natal-2026", "Natal em dezembro")
+	Eventos.dia_fixo = "2027-01-05"
+	verificar(Eventos.atual() == "natal" and Eventos.edicao() == "natal-2026" and Eventos.dias_restantes() == 6,
+		"5 de janeiro ainda é o Natal de 2026 (faltam 6 dias)")
+	Eventos.dia_fixo = "2026-08-10"
+	verificar(not Eventos.ativo() and Eventos.fichas() == 0, "em agosto não tem evento")
+	Eventos.ganhar_fichas(50)
+	verificar(Eventos.fichas() == 0, "sem evento, não junta fichas")
+	for id in Eventos.EVENTOS:
+		var ev: Dictionary = Eventos.EVENTOS[id]
+		verificar(Colecao.dados(ev["doce"]).get("evento", "") == id and Casa.MOVEIS.has(ev["movel"]),
+			"%s tem doce e móvel exclusivos" % id)
+		verificar(not Colecao.a_venda(ev["doce"]), "o doce de %s não se compra" % id)
+	Eventos.dia_fixo = "2026-10-01"
+	Progresso.vila.erase("evento")
+	verificar(Eventos.atual() == "primavera" and Eventos.fichas() == 0, "Festival das Flores começa com 0 pétalas")
+	Missoes.registrar("partidas", 1)
+	Missoes.registrar("acertos", 7)
+	verificar(Eventos.fichas() == 12, "jogar dá fichas (partida 5 + 7 acertos)")
+	verificar(not Eventos.pode_resgatar(0), "12 fichas: primeiro prêmio (20) ainda não")
+	verificar(Eventos.pegar_item(0) == Eventos.FICHAS_ITEM and Eventos.pegar_item(0) == 0, "pega o objeto da vila uma vez")
+	Eventos.dia_fixo = "2026-10-02"
+	verificar(Eventos.pegar_item(0) == Eventos.FICHAS_ITEM, "no outro dia, objetos novos")
+	Eventos.ganhar_fichas(400)
+	verificar(Eventos.prontos() == Eventos.TRILHA.size(), "com 400+ fichas, a trilha toda para resgatar")
+	var moedas := Progresso.moedas
+	verificar(Eventos.resgatar(0)["moedas"] == 30 and Progresso.moedas == moedas + 30 and Eventos.resgatado(0), "resgata moedas")
+	verificar(Eventos.resgatar(0).is_empty(), "o mesmo prêmio uma vez só")
+	Eventos.resgatar(4)
+	verificar(Casa.quantos("vaso_primavera") == 1, "o móvel do evento vai para a casa")
+	Progresso.colecao["doces"].erase("flor_de_acucar")
+	Eventos.resgatar(6)
+	verificar(Colecao.tem("flor_de_acucar"), "no fim da trilha, o doce exclusivo")
+	Eventos.dia_fixo = "2027-10-01"
+	verificar(Eventos.edicao() == "primavera-2027" and Eventos.fichas() == 0 and not Eventos.resgatado(0),
+		"no ano seguinte o evento volta zerado")
+	Eventos.dia_fixo = ""
+	Progresso.vila = guardado
+	Progresso.colecao = colecao
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+## Casa, histórias, evento, obras e chuva depois de salvar em JSON e carregar
+## (o JSON devolve números inteiros como decimais).
+func _testar_salvar_vila_nova() -> void:
+	_secao("salvar e carregar a vila nova")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.moedas = 5000
+	Progresso.vila = Terrenos.padrao()
+	Terrenos.agora_fixo = 2000000.0
+	Terrenos.comprar("lote_1")
+	Terrenos.construir("lote_1", "moinho")
+	Terrenos.melhorar("lote_1")
+	Casa.comprar("sofa_marshmallow")
+	Casa.colocar("sofa_marshmallow", 0, 4, 1)
+	Progresso.vila["historia"] = {"capitulo": 1, "passo": 2, "progresso": 0}
+	Eventos.dia_fixo = "2026-10-20"
+	Eventos.ganhar_fichas(60)
+	Eventos.resgatar(0)
+	CicloDia.dia_fixo = "2026-10-20"
+	CicloDia.hora_fixa = 15.0
+	CicloDia.chuva_fixa = 1
+	CicloDia.pegar_gota(2)
+	# vai e volta pelo JSON, como no arquivo de salvamento
+	Progresso.vila = JSON.parse_string(JSON.stringify(Progresso.vila))
+	verificar(Terrenos.em_obra("lote_1") and Terrenos.nivel("lote_1") == 1 and Terrenos.falta_obra("lote_1") == 180,
+		"a obra continua depois de carregar")
+	Terrenos.agora_fixo += 200
+	verificar(Terrenos.nivel("lote_1") == 2, "e termina no tempo certo")
+	verificar(Casa.guardados("sofa_marshmallow") == 0 and Casa.no_lugar(0, 5) >= 0 and Casa.tamanho("sofa_marshmallow", int(Casa.colocados().back()["giro"])) == Vector2i(1, 2),
+		"os móveis voltam no lugar, girados")
+	verificar(not Casa.colocar("mesa_biscoito", 0, 4), "a grade continua sabendo o que está ocupado")
+	verificar(Historia.capitulo() == 1 and Historia.passo_atual()["tipo"] == "pergunta", "a história volta no mesmo passo")
+	verificar(Eventos.fichas() == 60 and Eventos.resgatado(0) and not Eventos.pode_resgatar(0), "fichas e prêmios do evento voltam")
+	verificar(CicloDia.gota_pega(2) and CicloDia.pegar_gota(2) == 0, "gota já pega continua pega")
+	Terrenos.agora_fixo = -1.0
+	Eventos.dia_fixo = ""
+	CicloDia.dia_fixo = ""
+	CicloDia.hora_fixa = -1.0
+	CicloDia.chuva_fixa = -1
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+
+
+func _testar_vila_evento() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	Eventos.dia_fixo = "2026-10-20"
+	Progresso.vila.erase("evento")
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	var botao: Button = vila.find_child("BotaoEvento", true, false)
+	verificar(botao != null and botao.text.contains("ABÓBORAS"), "botão do evento no topo")
+	verificar(vila.evento._itens.size() >= Eventos.ITENS_POR_DIA - 1, "objetos do evento espalhados pela vila")
+	var indice: int = vila.evento._itens.keys()[0]
+	var item: Node3D = vila.evento._itens[indice]
+	var fichas := Eventos.fichas()
+	vila.jogador.global_position = Vector3(item.position.x, 0, item.position.z)
+	await get_tree().create_timer(0.15).timeout
+	verificar(Eventos.fichas() >= fichas + Eventos.FICHAS_ITEM and not vila.evento._itens.has(indice), "passar pelo objeto dá fichas")
+	Eventos.ganhar_fichas(30)
+	vila.abrir_evento()
+	await get_tree().process_frame
+	var premio: Button = vila.find_child("Premio0", true, false)
+	verificar(premio != null and premio.text.contains("RESGATAR"), "painel mostra a trilha com o prêmio pronto")
+	premio.pressed.emit()
+	await get_tree().process_frame
+	verificar(Eventos.resgatado(0), "resgata pelo painel")
+	vila._fechar_painel_lote()
+	Eventos.dia_fixo = ""
+	Progresso.vila = guardado
+
+
+func _testar_vila_historia() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	Progresso.vila["historia"] = {"capitulo": 0, "passo": 0, "progresso": 0}
+	Progresso.jogador["nivel"] = 9
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	var milho: Node3D = vila._moradores_historia["milho_doce"]
+	verificar(milho.get_node("Exclamacao").visible and vila.find_child("TextoHistoria", true, false).text.contains("SEU MILHO"),
+		"o Seu Milho tem o \"!\" e o quadro diz o que fazer")
+	vila.jogador.global_position = milho.global_position + Vector3(0, 0, 1.5)
+	await get_tree().create_timer(0.4).timeout
+	verificar(vila._ponto_atual == "morador" and vila._botao_entrar.text == "FALAR COM SEU MILHO", "perto dele: botão FALAR")
+	vila.agir("morador")
+	await get_tree().process_frame
+	verificar(vila.dialogo.aberto and vila.find_child("NomeMorador", true, false).text == "SEU MILHO", "abre a conversa")
+	for i in 3:
+		vila.dialogo.responder(0)
+		await get_tree().process_frame
+	verificar(not vila.dialogo.aberto and Historia.lugar_da_vez() == "praca", "depois da conversa, próximo passo")
+	verificar(vila.find_child("SetaHistoria", true, false).visible and not milho.get_node("Exclamacao").visible,
+		"a seta aponta o lugar e o \"!\" sai")
+	Progresso.vila = guardado
+	Progresso.jogador = jogador_antes
+
+
+func _testar_tela_casa() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.vila.erase("casa")
+	Progresso.moedas = 1000
+	Telas.ir_para("minha_casa")
+	await _esperar_tela("MinhaCasa")
+	await get_tree().create_timer(0.2).timeout
+	var tela := get_tree().current_scene
+	verificar(tela.name == "MinhaCasa" and tela.find_child("Movel0", true, false) != null, "abre a Minha Casa com os móveis")
+	verificar(tela.find_child("Conforto", true, false).text.begins_with("CONFORTO"), "mostra o conforto")
+	tela.abrir_loja()
+	tela.escolher_na_loja("sofa_marshmallow")
+	tela._comprar_escolha()
+	verificar(Casa.quantos("sofa_marshmallow") == 1 and Progresso.moedas == 820, "compra pela loja")
+	tela.fechar_loja()
+	await get_tree().process_frame
+	tela.usar_modo(true)
+	verificar(tela.find_child("Grade", true, false).visible and tela.find_child("Guardado_sofa_marshmallow", true, false) != null,
+		"decorar mostra a grade e a bandeja")
+	tela.find_child("Guardado_sofa_marshmallow", true, false).pressed.emit()
+	tela.tocar_casa(Vector2i(1, 4))
+	verificar(Casa.colocados().any(func(c): return c["id"] == "sofa_marshmallow"), "toca no chão e o sofá vai para a sala")
+	tela.tocar_casa(Vector2i(1, 4))
+	verificar(tela.selecionado >= 0 and tela.find_child("Acoes", true, false).visible, "tocar num móvel mostra as ações")
+	tela.guardar_selecionado()
+	verificar(Casa.guardados("sofa_marshmallow") == 1, "guardar pela tela")
+	tela.ao_voltar()
+	verificar(not tela.decorando, "voltar sai do modo decorar")
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+
+
+func _testar_vila_noite() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	CicloDia.hora_fixa = 22.0
+	CicloDia.chuva_fixa = 1
+	Progresso.vila.erase("estrela")
+	Progresso.vila.erase("granulado")
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	verificar(vila.ceu.noite == 1.0 and vila.find_child("Estrelas", true, false).visible, "de noite, estrelas no céu")
+	var luzes := vila.find_children("LuzDaPorta", "OmniLight3D", true, false)
+	verificar(luzes.size() >= 7 and luzes.all(func(l): return l.visible), "de noite as luzes das portas acendem")
+	verificar(vila.ceu._janelas.size() > 0 and vila.ceu._janelas[0].emission_energy_multiplier > 1.0, "janelas acesas")
+	verificar(vila.find_child("EstrelaCadente", true, false) != null, "a estrela cadente aparece")
+	verificar(vila.ceu._gotas.size() == CicloDia.GOTAS, "a chuva espalha as gotas de granulado")
+	var acucar := Confeitaria.acucar()
+	var gota: Node3D = vila.ceu._gotas[0]
+	vila.jogador.global_position = Vector3(gota.global_position.x, 0, gota.global_position.z)
+	await get_tree().create_timer(0.15).timeout
+	verificar(Confeitaria.acucar() == acucar + CicloDia.ACUCAR_GOTA and not vila.ceu._gotas.has(0), "passar pela gota pega o açúcar")
+	CicloDia.hora_fixa = 12.0
+	vila.ceu.atualizar()
+	verificar(vila.ceu.noite == 0.0 and not vila.find_children("LuzDaPorta", "OmniLight3D", true, false)[0].visible,
+		"de dia as luzes apagam")
+	CicloDia.hora_fixa = -1.0
+	CicloDia.chuva_fixa = -1
+	Progresso.vila = guardado
+
+
+func _testar_vila_terrenos() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	Progresso.vila = Terrenos.padrao()
+	Progresso.moedas = 2000
+	Terrenos.comprar("lote_1")
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	verificar(vila.find_child("Lote_lote_6", true, false) != null and vila.find_child("Presente_lago", true, false) != null,
+		"a vila tem os 6 terrenos e os presentes do lago e do mirante")
+	verificar(vila._texto_ponto("lote_2") == "COMPRAR TERRENO (200)" and vila._texto_ponto("lote_1") == "CONSTRUIR",
+		"botão do terreno: comprar ou construir")
+	vila.agir("lote_1")
+	await get_tree().process_frame
+	var botao: Button = vila.find_child("Construir_casa", true, false)
+	verificar(botao != null, "construir abre a lista de construções")
+	botao.pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	verificar(Terrenos.construcao("lote_1") == "casa" and vila.find_child("Vizinho_lote_1", true, false) != null,
+		"construiu a casa e chegou um vizinho")
+	verificar(vila._lotes["lote_1"].find_child("Obra", true, false) != null, "a casa aparece no terreno")
+	# evoluir a casa: abre o painel, começa a obra (andaime e relógio) e ganha beleza
+	vila.agir("lote_1")
+	await get_tree().process_frame
+	var evoluir: Button = vila.find_child("Melhorar", true, false)
+	verificar(evoluir != null and vila.find_child("Proximo", true, false).text.begins_with("NÍVEL 2"),
+		"painel da casa mostra o que o próximo nível traz")
+	evoluir.pressed.emit()
+	await get_tree().create_timer(0.2).timeout
+	verificar(Terrenos.em_obra("lote_1") and vila._rotulos_producao["lote_1"].text.begins_with("OBRA"),
+		"começou a obra: relógio em cima do terreno")
+	Terrenos._estado()["lotes"]["lote_1"]["obra_ate"] = Terrenos.agora() - 1
+	vila._atualizar_rotulos_producao()
+	await get_tree().process_frame
+	verificar(Terrenos.nivel("lote_1") == 2 and Terrenos.beleza() == 2, "obra pronta: casa nível 2 e a vila mais bonita")
+	var moedas := Progresso.moedas
+	var tinha := Terrenos.presente_disponivel("mirante")
+	vila.agir("presente_mirante")
+	verificar(not tinha or Progresso.moedas == moedas + Terrenos.PRESENTE["moedas"], "o presente do mirante dá moedas")
+	verificar(vila._texto_ponto("presente_mirante") == "PRESENTE: VOLTE AMANHÃ", "depois, só amanhã")
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+
+
+# --- Torre de Doces -------------------------------------------------------------------
+
+func _testar_torre() -> void:
+	_secao("torre de doces")
+	var t := Torre.new(5)
+	verificar(t.altura() == 0 and t.atual["largura"] == Torre.LARGURA_BASE, "começa só com a base")
+	t.avancar(0.1)
+	verificar(absf(t.atual["x"]) < Torre.LIMITE, "o andar anda de um lado para o outro")
+	t.atual["x"] = 0.0
+	var r := t.soltar()
+	verificar(r["ficou"] and r["perfeito"] and r["largura"] == Torre.LARGURA_BASE and t.altura() == 1, "soltar bem em cima: PERFEITO, largura toda")
+	t.atual["x"] = 40.0
+	r = t.soltar()
+	verificar(r["ficou"] and not r["perfeito"] and is_equal_approx(r["largura"], Torre.LARGURA_BASE - 40.0)
+		and is_equal_approx(r["sobra_largura"], 40.0), "soltar torto: a sobra cai e a torre afina")
+	verificar(is_equal_approx(t.atual["largura"], Torre.LARGURA_BASE - 40.0), "o próximo andar vem da largura nova")
+	# 3 perfeitos seguidos alargam
+	for i in 3:
+		t.atual["x"] = t.topo()["x"]
+		r = t.soltar()
+	verificar(r["cresceu"] and t.topo()["largura"] > Torre.LARGURA_BASE - 40.0, "3 perfeitos seguidos: o andar alarga")
+	# pergunta a cada 10 andares
+	while not t.pergunta_pendente:
+		t.atual["x"] = t.topo()["x"]
+		t.soltar()
+	verificar(t.altura() == 10 and t.soltar().is_empty(), "aos 10 andares: pausa para a pergunta")
+	t.topo()["largura"] = 100.0
+	t.responder(true)
+	verificar(not t.pergunta_pendente and t.topo()["largura"] == Torre.LARGURA_BASE, "acertou a pergunta: andar largo de novo")
+	# errar tudo acaba
+	t.atual["x"] = Torre.LIMITE
+	t.topo()["x"] = -Torre.LIMITE
+	r = t.soltar()
+	verificar(not r["ficou"] and t.acabou, "soltou fora da torre: acabou")
+	verificar(not Torre.sortear_pergunta().is_empty(), "sorteia uma pergunta do quiz")
+	# prêmio, recorde e baú
+	var recorde_antes: int = Progresso.estatisticas.get("torre_recorde", 0)
+	var moedas := Progresso.moedas
+	var baus_doce := Baus.quantos("doce")
+	Progresso.estatisticas["torre_recorde"] = 5
+	var premio := Torre.concluir(t)
+	verificar(premio["recorde_novo"] and Torre.recorde() == t.altura(), "novo recorde guardado")
+	verificar(Progresso.moedas == moedas + premio["moedas"] and premio["moedas"] >= t.altura(), "moedas por andar e por perfeito")
+	verificar(premio["bau"] == "doce" and Baus.quantos("doce") == baus_doce + 1, "passou de 10 andares acima do recorde: baú de doce")
+	Progresso.estatisticas["torre_recorde"] = recorde_antes
+
+
+func _testar_tela_torre() -> void:
+	Progresso.confeitaria["acucar"] = Torre.CUSTO_ACUCAR
+	Telas.ir_para("torre")
+	verificar(await _esperar_tela("Torre"), "abre a Torre de Doces")
+	var tela := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	tela.find_child("Jogar", true, false).pressed.emit()
+	await get_tree().process_frame
+	verificar(Confeitaria.acucar() == 0 and tela.jogo != null, "começar gasta o açúcar")
+	tela.jogo.atual["x"] = 0.0
+	tela.soltar()
+	verificar(tela.jogo.altura() == 1 and tela._andares_nos.size() == 2, "tocar solta o andar na torre")
+	tela.jogo.atual["x"] = Torre.LIMITE
+	tela.jogo.topo()["x"] = -Torre.LIMITE
+	tela.soltar()
+	await get_tree().create_timer(1.3).timeout
+	verificar(tela.find_child("DeNovo", true, false) is Button, "a torre caiu: tela de fim com DE NOVO")
+
+
+# --- Fábrica de Chocolate ---------------------------------------------------------------
+
+func _testar_fabrica() -> void:
+	_secao("fábrica de chocolate")
+	var f := Fabrica.new(4)
+	verificar(f.faltam() > 0 and f.tempo == Fabrica.TEMPO_INICIAL, "começa com um pedido e 60 segundos")
+	f.avancar(0.1)
+	verificar(f.esteira.size() == 1, "chocolates entram na esteira")
+	# pega um chocolate que o pedido quer (sem defeito)
+	f.pedido = {"trufa": 2, "bombom": 1}
+	var tipo := "trufa"
+	f.esteira = [{"id": 100, "tipo": tipo, "x": 0.5, "defeito": false}]
+	var antes := f.faltam()
+	var r := f.tocar(100)
+	verificar(r["certo"] and f.faltam() == antes - 1 and f.pontos > 0, "tocar no chocolate do pedido: vai para a caixa")
+	var tempo := f.tempo
+	f.esteira = [{"id": 101, "tipo": tipo, "x": 0.5, "defeito": true}]
+	r = f.tocar(101)
+	verificar(not r["certo"] and r["motivo"] == "defeito" and is_equal_approx(f.tempo, tempo - Fabrica.TEMPO_ERRO), "chocolate queimado: tira tempo")
+	var fora: Array = Fabrica.TIPOS.filter(func(t): return not f.pedido.has(t))
+	f.esteira = [{"id": 102, "tipo": fora[0], "x": 0.5, "defeito": false}]
+	r = f.tocar(102)
+	verificar(not r["certo"] and r["motivo"] == "nao_pediu", "chocolate que o pedido não quer: erro")
+	# completar pedidos até o especial
+	var especial := false
+	f.pedidos_feitos = 0
+	for n in 3:
+		while f.faltam() > 0 and not f.pergunta_pendente:
+			var t: String = f.pedido.keys().filter(func(k): return int(f.pedido[k]) > 0)[0]
+			f.esteira = [{"id": 200, "tipo": t, "x": 0.3, "defeito": false}]
+			r = f.tocar(200)
+		especial = r["especial"]
+	verificar(f.pedidos_feitos == 3 and especial and f.pergunta_pendente, "3 pedidos: vem o pedido especial (pergunta)")
+	var t_antes := f.tempo
+	f.responder(true)
+	verificar(not f.pergunta_pendente and f.tempo > t_antes, "acertou a pergunta: mais tempo")
+	verificar(f.velocidade() > Fabrica.VELOCIDADE_INICIAL, "a esteira acelera a cada pedido")
+	# o que chega ao fim cai
+	f.esteira = [{"id": 300, "tipo": "trufa", "x": 0.99, "defeito": false}]
+	var caidos := f.avancar(0.2)
+	verificar(300 in caidos and f.item(300).is_empty(), "o que chega ao fim da esteira cai")
+	f.tempo = 0.1
+	f.avancar(0.2)
+	verificar(f.acabou, "o tempo acabou: fim do turno")
+	var recorde_antes: int = Progresso.estatisticas.get("fabrica_recorde", 0)
+	Progresso.estatisticas["fabrica_recorde"] = 0
+	f.pedidos_feitos = 6
+	var moedas := Progresso.moedas
+	var premio := Fabrica.concluir(f)
+	verificar(premio["recorde_novo"] and Fabrica.recorde() == 6 and premio["bau"] == "doce" and Progresso.moedas == moedas + premio["moedas"],
+		"fim: moedas, recorde e baú a cada 5 pedidos")
+	Progresso.estatisticas["fabrica_recorde"] = recorde_antes
+
+
+func _testar_tela_fabrica() -> void:
+	Progresso.confeitaria["acucar"] = Fabrica.CUSTO_ACUCAR
+	Telas.ir_para("fabrica")
+	verificar(await _esperar_tela("Fabrica"), "abre a Fábrica de Chocolate")
+	var tela := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	tela.find_child("Jogar", true, false).pressed.emit()
+	await get_tree().create_timer(1.2).timeout
+	verificar(Confeitaria.acucar() == 0 and tela._nos.size() >= 1, "começar gasta o açúcar e os chocolates andam na esteira")
+	var tipo: String = tela.jogo.pedido.keys()[0]
+	var item: Dictionary = tela.jogo.esteira[0]
+	item["tipo"] = tipo
+	item["defeito"] = false
+	var pontos: int = tela.jogo.pontos
+	tela.tocar_em(tela._nos[item["id"]].position)
+	verificar(tela.jogo.pontos > pontos, "tocar no chocolate certo pela tela conta ponto")
+	tela.jogo.tempo = 0.01
+	await get_tree().create_timer(1.2).timeout
+	verificar(tela.find_child("DeNovo", true, false) is Button, "o tempo acabou: tela de fim com DE NOVO")

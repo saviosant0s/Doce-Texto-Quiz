@@ -1,5 +1,9 @@
 #!/bin/bash
-# Gera o APK Android assinado em build/android/doce-texto-quiz.apk
+# Gera os APKs Android assinados:
+#   build/android/doce-texto-quiz.apk        celulares de hoje (64 bits)
+#   build/android/doce-texto-quiz-32bits.apk celulares antigos/baratos (32 bits)
+# Separados, cada um tem mais ou menos metade do tamanho (o GitHub recusa
+# arquivos acima de 100 MB).
 #
 # Precisa de:
 #   - Godot 4.7 com os modelos de exportação (Editor > Gerenciar modelos)
@@ -24,5 +28,6 @@ else
 	echo "Sem KEYSTORE: gerando APK de teste (depuração)."
 	MODO=--export-debug
 fi
-godot --headless --path godot $MODO "Android" ../build/android/doce-texto-quiz.apk
-echo "APK gerado: build/android/doce-texto-quiz.apk"
+ferramentas/godot_exportar.sh $MODO "Android" ../build/android/doce-texto-quiz.apk
+ferramentas/godot_exportar.sh $MODO "Android 32 bits" ../build/android/doce-texto-quiz-32bits.apk
+echo "APKs gerados: build/android/doce-texto-quiz.apk e doce-texto-quiz-32bits.apk"

@@ -35,6 +35,43 @@ const LISTA := [
 		"curiosidade": "O pudim de leite condensado é um dos doces mais queridos do Brasil."},
 	{"id": "algodao_doce", "nome": "ALGODÃO-DOCE", "preco": 600,
 		"curiosidade": "É só açúcar derretido e girado bem rápido até virar fios finíssimos."},
+	{"id": "jujuba", "nome": "JUJUBA", "preco": 120,
+		"curiosidade": "A jujuba leva gelatina ou amido, por isso é molinha e \"borrachuda\"."},
+	{"id": "beijinho", "nome": "BEIJINHO", "preco": 150,
+		"curiosidade": "Primo do brigadeiro, o beijinho troca o chocolate pelo coco e ganha um cravo em cima."},
+	{"id": "marshmallow", "nome": "MARSHMALLOW", "preco": 180,
+		"curiosidade": "O nome vem de uma planta, a malva-do-pântano, que era usada na receita antiga."},
+	{"id": "pacoca", "nome": "PAÇOCA", "preco": 200,
+		"curiosidade": "\"Paçoca\" vem do tupi e quer dizer algo como \"coisa esmigalhada\"."},
+	{"id": "cocada", "nome": "COCADA", "preco": 250,
+		"curiosidade": "A cocada é doce de praia e de feira no Nordeste, feita de coco e açúcar."},
+	{"id": "pe_de_moleque", "nome": "PÉ DE MOLEQUE", "preco": 300,
+		"curiosidade": "Dizem que o nome veio de quem pedia: \"pede, moleque!\" para ganhar um pedaço."},
+	{"id": "sorvete", "nome": "SORVETE", "preco": 350,
+		"curiosidade": "A casquinha de sorvete ficou famosa numa feira nos Estados Unidos, em 1904."},
+	{"id": "pao_de_mel", "nome": "PÃO DE MEL", "preco": 400,
+		"curiosidade": "O pão de mel leva mel, canela e cravo na massa, e é coberto de chocolate."},
+	{"id": "quindim", "nome": "QUINDIM", "preco": 450,
+		"curiosidade": "O quindim tem origem portuguesa, com coco adicionado aqui no Brasil."},
+	{"id": "churros", "nome": "CHURROS", "preco": 500,
+		"curiosidade": "O churros veio da Espanha; no Brasil ganhou recheio de doce de leite."},
+	{"id": "brownie", "nome": "BROWNIE", "preco": 550,
+		"curiosidade": "\"Brown\" é marrom em inglês: o nome vem da cor do chocolate."},
+	{"id": "bolo", "nome": "BOLO DE ANIVERSÁRIO", "preco": 800,
+		"curiosidade": "O costume de pôr velinhas no bolo começou na Alemanha, há mais de 200 anos."},
+	# doces dos eventos da temporada (só se ganha no fim da trilha do evento)
+	{"id": "flor_de_acucar", "nome": "FLOR DE AÇÚCAR", "evento": "primavera",
+		"curiosidade": "As flores de açúcar enfeitam bolos de casamento: são feitas de pasta americana, pétala por pétala."},
+	{"id": "abobora_choco", "nome": "ABÓBORA DE CHOCOLATE", "evento": "halloween",
+		"curiosidade": "No Brasil, o doce de abóbora com coco é tradição antiga, bem antes do Halloween chegar."},
+	{"id": "biscoito_gengibre", "nome": "BISCOITO DE GENGIBRE", "evento": "natal",
+		"curiosidade": "Os bonequinhos de gengibre ficaram famosos na corte da rainha Elizabeth I, na Inglaterra."},
+	{"id": "confete", "nome": "CONFETE", "evento": "carnaval",
+		"curiosidade": "As pastilhas coloridas de chocolate ganharam o nome de confete por parecerem os papeizinhos do Carnaval."},
+	{"id": "ovo_pascoa", "nome": "OVO DE PÁSCOA", "evento": "pascoa",
+		"curiosidade": "Antes do chocolate, as pessoas pintavam ovos de galinha para dar de presente na Páscoa."},
+	{"id": "pipoca_doce", "nome": "PIPOCA DOCE", "evento": "junina",
+		"curiosidade": "A pipoca vem do milho: o vapor dentro do grão faz ele estourar e virar do avesso."},
 ]
 
 const NOMES_TITULOS := {"noob": "NOOB", "pro": "PRO", "mestre": "MESTRE"}
@@ -53,16 +90,16 @@ static func tem(id: String) -> bool:
 	var doce := dados(id)
 	if doce.is_empty():
 		return false
-	if doce.get("inicial", false):
-		return true
+	if doce.get("inicial", false) or id in Progresso.colecao["doces"]:
+		return true  # comprado ou ganho com fragmentos dos baús
 	if doce.has("titulo"):
 		return Progresso.titulos.get(doce["titulo"], 0) > 0
-	return id in Progresso.colecao["doces"]
+	return false
 
 
 static func a_venda(id: String) -> bool:
 	var doce := dados(id)
-	return not doce.is_empty() and not doce.has("titulo") and not doce.get("inicial", false)
+	return not doce.is_empty() and not doce.has("titulo") and not doce.has("evento") and not doce.get("inicial", false)
 
 
 static func quantidade() -> int:
@@ -82,6 +119,28 @@ static func comprar(id: String) -> bool:
 static func companheiro() -> String:
 	var id: String = Progresso.colecao.get("companheiro", "")
 	return id if tem(id) else ""
+
+
+## Pódio dos títulos (tela de Troféus): cada degrau (noob, pro, mestre) mostra
+## um doce. Começa com os doces de 2023 (maçã, cupcake e chocolate, que vêm
+## com os títulos); depois de ganhar o título, o jogador pode pôr ali qualquer
+## doce da coleção. Fica em Progresso.colecao["podio"] = {título: id}.
+const DOCE_DO_TITULO := {"noob": "maca", "pro": "cupcake", "mestre": "chocolate"}
+
+
+static func doce_do_podio(titulo: String) -> String:
+	var id: String = Progresso.colecao.get("podio", {}).get(titulo, "")
+	return id if tem(id) else DOCE_DO_TITULO[titulo]
+
+
+static func escolher_do_podio(titulo: String, id: String) -> bool:
+	if not DOCE_DO_TITULO.has(titulo) or not tem(id) or Progresso.titulos.get(titulo, 0) == 0:
+		return false
+	if not Progresso.colecao.has("podio"):
+		Progresso.colecao["podio"] = {}
+	Progresso.colecao["podio"][titulo] = id
+	Progresso.salvar()
+	return true
 
 
 static func escolher_companheiro(id: String) -> bool:

@@ -13,8 +13,41 @@ extends Node
 ##   --aba=1       aba a mostrar (tela de troféus)
 ##   --tocar_nivel=1  toca no cartão desse nível (tela de níveis)
 ##   --selecionar=pudim  escolhe esse doce na tela da coleção
+##   --camera=1   na Vila dos Doces: 0 = aérea, 1 = perto, 2 = primeira pessoa
+##   --camera_cozinha=1  na cozinha: 0 = de cima, 1 = perto, 2 = primeira pessoa
+##   --porta=escola  na Vila dos Doces, começa na porta desse prédio
+##   --confeitaria  Minha Confeitaria já em andamento (máquinas, bandejas, açúcar)
+##   --entrar=escola  na Vila, começa a animação de entrar nesse prédio (use --espera=0.9)
+##   --andando  na Vila, o doce anda de lado (para ver o balanço dos braços)
+##   --movimento  na cozinha: clientes chegando e o doce carregando uma pilha
+##   --ver_predio=confeitaria  na Vila, câmera de perto olhando a fachada desse prédio
 ##   --sem_decoracao  fundo liso, sem estrelas/confete (para recortes)
 ##   --companheiro=pudim  compra esse doce e o escolhe como companheiro
+##   --match=N  Doce Match: os N primeiros níveis vencidos (3, 2, 3, 1... estrelas)
+##   --match_nivel=N  Doce Match: já começa jogando o nível N
+##   --match_especiais  Doce Match: põe peças especiais no tabuleiro
+##   --match_explodir  Doce Match: troca a bomba (use com --match_especiais)
+##   --match_fim=venceu  Doce Match: mostra o fim do nível (venceu ou perdeu)
+##   --nivel_doce=pudim:5  ganha esse doce já no nível 5 (vários: pudim:5,bala:3)
+##   --titulos  ganha os 3 títulos (Noob, Pro, Mestre)
+##   --podio=mestre:pudim  põe esse doce no degrau do título
+##   --escolher_podio=pro  abre a escolha de doce desse degrau (Troféus)
+##   --cortina=vila  mostra o carregamento de ir para a vila (ou cozinha)
+##   --terrenos  compra lotes e constrói (moinho nv 2, cofre, casa, jardim, fonte; um vazio)
+##   --vila_pos=0,20  na Vila, põe o doce nesse ponto (x,z)
+##   --terrenos=4  terrenos comprados, construções no nível 4 (lote 6 em obra)
+##   --confeitaria_estagio  máquinas suficientes para a Confeitaria crescer (estágio 3)
+##   --animacoes  liga as animações contínuas mesmo sem placa de vídeo (borboletas etc.)
+##   --torre=12  Torre de Doces: já empilha 12 andares (--torre_pergunta para na pergunta)
+##   --fabrica=4  Fábrica de Chocolate: já começa e completa 4 pedidos
+##   --historia=0,0  histórias da vila neste capítulo e passo; --conversar=N abre a
+##                 conversa com o morador da vez e passa N falas
+##   --casa_cheia  Minha Casa decorada; --loja_casa=moveis|paredes|pisos; --decorar
+##   --evento=2026-12-10  data do evento; --fichas=150; --painel_evento abre a trilha
+##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
+##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
+##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
+##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -34,9 +67,123 @@ func _ready() -> void:
 	for i in int(args.get("historico", "0")):
 		_simular_partida(i % (int(args.get("liberar", "0")) + 1), [4, 7, 9, 6, 10, 8][i % 6])
 	Progresso.moedas = int(args.get("moedas", str(Progresso.moedas)))
+	if args.has("camera"):
+		Progresso.config["camera_vila"] = int(args["camera"])
+	if args.has("camera_cozinha"):
+		Progresso.config["camera_cozinha"] = int(args["camera_cozinha"])
+	if args.has("porta"):
+		Vila.ultima_porta = args["porta"]
+	# evento da temporada: --evento=2026-10-20 (data do evento), --fichas=150
+	if args.has("evento"):
+		Eventos.dia_fixo = args["evento"]
+	if args.has("fichas"):
+		Eventos.ganhar_fichas(int(args["fichas"]))
+	if args.has("qualidade"):
+		Progresso.config["qualidade"] = int(args["qualidade"])  # 0 baixa, 1 média, 2 alta
+	# dia e noite: --hora=21 (fixa a hora), --chuva (chuva de granulado)
+	CicloDia.hora_fixa = float(args.get("hora", "14"))
+	CicloDia.chuva_fixa = 1 if args.has("chuva") else 0
 	if args.has("companheiro"):
 		Progresso.colecao["doces"].append(args["companheiro"])
 		Progresso.colecao["companheiro"] = args["companheiro"]
+	if args.has("confeitaria"):
+		Progresso.niveis[0]["aprovado"] = true
+		Progresso.moedas = 400
+		Progresso.config["viu_confeitaria"] = true
+		Confeitaria.construir_ou_melhorar("brigadeiro")
+		Confeitaria.construir_ou_melhorar("maca")
+		Confeitaria.construir_ou_melhorar("brigadeiro")
+		Progresso.confeitaria["acucar"] = 140
+		Progresso.confeitaria["maquinas"]["brigadeiro"]["bandeja"] = 8
+		Progresso.confeitaria["maquinas"]["maca"]["bandeja"] = 4
+		Progresso.confeitaria["atendidos"] = 5
+		Progresso.moedas = 180
+	if args.has("lab"):
+		# --lab=N: as N primeiras fases do laboratório feitas (3, 2, 3, 1... estrelas)
+		var fases := Laboratorio.fases()
+		for i in mini(int(args["lab"]), fases.size()):
+			Progresso.laboratorio["estrelas"][fases[i]["id"]] = [3, 2, 3, 1][i % 4]
+	if args.has("nivel_doce"):
+		for par in args["nivel_doce"].split(","):
+			var partes: PackedStringArray = par.split(":")
+			if not partes[0] in Progresso.colecao["doces"]:
+				Progresso.colecao["doces"].append(partes[0])
+			Companheiros._colecao()["niveis"][partes[0]] = int(partes[1])
+	if args.has("animacoes"):
+		Telas.placa_rapida = true
+	if args.has("titulos"):
+		for t in ["noob", "pro", "mestre"]:
+			Progresso.titulos[t] = 2
+	if args.has("podio"):
+		for par in args["podio"].split(","):
+			Colecao.escolher_do_podio(par.split(":")[0], par.split(":")[1])
+	if args.has("terrenos"):
+		Progresso.moedas = 99999
+		var obras := ["moinho", "cofre", "casa", "jardim", "fonte", ""]
+		for i in Terrenos.LOTES.size():
+			var id: String = Terrenos.LOTES[i]["id"]
+			Terrenos.comprar(id)
+			if obras[i] != "":
+				Terrenos.construir(id, obras[i])
+		# --terrenos=N: todas as construções no nível N (e a do lote 6 em obra)
+		var nivel_todos := int(args["terrenos"]) if args["terrenos"] != "" else 2
+		for i in 5:
+			Progresso.vila["lotes"][Terrenos.LOTES[i]["id"]]["nivel"] = nivel_todos
+		Terrenos.construir("lote_6", "casa")
+		Terrenos.melhorar("lote_6")
+		Progresso.vila["lotes"]["lote_1"]["desde"] = Terrenos.agora() - 3 * 3600
+		Progresso.vila["lotes"]["lote_2"]["desde"] = Terrenos.agora() - 2 * 3600
+		Progresso.moedas = 850
+	if args.has("historia"):
+		# --historia=2,1: capítulo 3, passo 2 (contando do 0)
+		var partes: PackedStringArray = args["historia"].split(",")
+		Progresso.vila["historia"] = {"capitulo": int(partes[0]), "passo": int(partes[1]) if partes.size() > 1 else 0, "progresso": 0}
+		Progresso.jogador["nivel"] = 9
+	if args.has("casa_cheia"):
+		# sala decorada: parede, piso e vários móveis
+		var casa := Casa.padrao()
+		casa["parede"] = "listras_rosa"
+		casa["piso"] = "biscoito"
+		casa["colocados"] = [{"id": "tapete_glace", "x": 3, "z": 2, "giro": 0}, {"id": "sofa_marshmallow", "x": 3, "z": 1, "giro": 0},
+			{"id": "mesa_biscoito", "x": 4, "z": 3, "giro": 0}, {"id": "planta_cupcake", "x": 0, "z": 0, "giro": 0},
+			{"id": "estante_chocolate", "x": 5, "z": 0, "giro": 0}, {"id": "tv_wafer", "x": 0, "z": 2, "giro": 1},
+			{"id": "cama_bolo", "x": 7, "z": 3, "giro": 0}, {"id": "luminaria_bala", "x": 7, "z": 0, "giro": 0},
+			{"id": "piano_chocolate", "x": 1, "z": 0, "giro": 0}, {"id": "aquario_gelatina", "x": 2, "z": 5, "giro": 0},
+			{"id": "cadeira_pirulito", "x": 5, "z": 3, "giro": 3}, {"id": "trofeu_gigante", "x": 6, "z": 5, "giro": 0}]
+		for c in casa["colocados"]:
+			casa["moveis"][c["id"]] = int(casa["moveis"].get(c["id"], 0)) + 1
+		casa["moveis"]["geladeira_sorvete"] = 1
+		casa["moveis"]["relogio_cuco"] = 1
+		Progresso.vila["casa"] = casa
+		Progresso.moedas = 1200
+	if args.has("confeitaria_estagio"):
+		Progresso.moedas = 99999
+		for m in Confeitaria.MAQUINAS:
+			Progresso.niveis[0]["aprovado"] = true
+			Progresso.niveis[1]["aprovado"] = true
+			for k in 3:
+				Confeitaria.construir_ou_melhorar(m["id"])
+		Progresso.moedas = 300
+	if args.has("match"):
+		for i in int(args["match"]):
+			Progresso.doce_match["estrelas"][str(i + 1)] = [3, 2, 3, 1][i % 4]
+	if args.has("baus"):
+		for tipo in Baus.TIPOS:
+			Baus.ganhar(tipo, int(args["baus"]))
+	if args.has("pedacos"):
+		# --pedacos=N: pedaços em vários doces (para a coleção mostrar o progresso)
+		for id in ["bala", "pirulito", "macaron", "pudim", "algodao_doce", "brigadeiro"]:
+			Companheiros.receber_fragmentos(id, int(args["pedacos"]))
+	if args.has("missao"):
+		var d := Missoes.diarias()
+		Missoes.registrar(d[0]["tipo"], 999)
+		Missoes.registrar(d[1]["tipo"], 1)
+		Missoes.registrar(Missoes.semanais()[0]["tipo"], 3)
+	if args.has("xp"):
+		Experiencia.ganhar(int(args["xp"]))
+		Experiencia.subidas_pendentes.clear()
+	if args.has("lab_fase"):
+		Laboratorio.fase_atual = args["lab_fase"]
 	if args.has("acertos"):
 		_simular_partida(int(args.get("nivel", "0")), int(args["acertos"]))
 	if args.has("revisao"):
@@ -56,13 +203,195 @@ func _ready() -> void:
 		var cartoes := get_tree().current_scene.find_children("*", "Button", true, false) \
 			.filter(func(b): return b.has_method("configurar"))
 		cartoes[int(args["tocar_nivel"])].pressed.emit()
+	if args.has("abrir_bau"):
+		await get_tree().create_timer(0.5).timeout
+		var semente := RandomNumberGenerator.new()
+		semente.seed = int(args.get("semente", "5"))
+		get_tree().current_scene.abrir_bau(args["abrir_bau"], semente)
+	if args.has("digitar"):
+		await get_tree().create_timer(0.5).timeout
+		var campo: LineEdit = get_tree().current_scene.find_child("Formula", true, false)
+		campo.text = args["digitar"]
+		campo.text_changed.emit(campo.text)
+	if args.has("fazer"):
+		# --fazer=0,0,negrito,centro: números tocam palavras; o resto são ações da fita
+		await get_tree().create_timer(0.5).timeout
+		for t in args["fazer"].split(","):
+			if t.is_valid_int():
+				get_tree().current_scene._tocar_palavra(int(t))
+			else:
+				get_tree().current_scene.fazer(t)
+	if args.has("match_nivel"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.confeitaria["acucar"] = 200
+		var tela := get_tree().current_scene
+		tela.comecar_nivel(int(args["match_nivel"]))
+		if args.has("match_especiais"):
+			for c in [[2, 3, DoceMatch.Especial.LINHA], [5, 2, DoceMatch.Especial.COLUNA], [3, 6, DoceMatch.Especial.EMBRULHO]]:
+				tela.jogo.especial[c[1]][c[0]] = c[2]
+			tela.jogo.grade[5][6] = DoceMatch.BOMBA
+			tela.jogo.especial[5][6] = DoceMatch.Especial.BOMBA
+			tela._criar_pecas()
+		if args.has("match_explodir"):
+			await get_tree().create_timer(0.6).timeout
+			tela.jogar(Vector2i(6, 5), Vector2i(6, 4))  # troca a bomba: explode tudo de um tipo
+		if args.has("match_fim"):
+			await get_tree().create_timer(0.5).timeout
+			if args["match_fim"] == "venceu":
+				tela.jogo.pontos = int(tela.jogo.nivel["estrelas"][1]) + 200
+				for obj in tela.jogo.nivel["objetivos"]:
+					if obj["tipo"] == "coletar":
+						tela.jogo.coletados[obj["peca"]] = obj["quantidade"]
+				for linha in tela.jogo.gelatina:
+					linha.fill(false)
+				tela.jogo.jogadas = 0
+			else:
+				tela.jogo.jogadas = 0
+				tela.jogo.pontos = 1830
+			tela._terminar()
+	if args.has("escolher_podio"):
+		await get_tree().create_timer(0.5).timeout
+		get_tree().current_scene.escolher_doce(args["escolher_podio"])
+	if args.has("cortina"):
+		await get_tree().create_timer(0.3).timeout
+		Telas._cortina.color.a = 1.0
+		Telas._mostrar_carregando(args["cortina"])
+		Telas._carregando.barra(45.0)
+	if args.has("conversar"):
+		await get_tree().create_timer(0.5).timeout
+		var vila: Node = get_tree().current_scene
+		var id: String = Historia.morador_da_vez()
+		vila.jogador.global_position = vila._moradores_historia[id].global_position + Vector3(0, 0, 2)
+		vila.conversar()
+		for i in int(args["conversar"]):
+			await get_tree().create_timer(0.2).timeout
+			vila.dialogo.responder(0)
+	if args.has("painel_evento"):
+		await get_tree().create_timer(0.4).timeout
+		get_tree().current_scene.abrir_evento()
+	if args.has("loja_casa"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene._aba_loja = args["loja_casa"] if args["loja_casa"] != "" else "moveis"
+		get_tree().current_scene.abrir_loja()
+		get_tree().current_scene.escolher_na_loja(get_tree().current_scene._escolha_loja)
+	if args.has("decorar"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene.usar_modo(true)
+		get_tree().current_scene.selecionar(1)
+	if args.has("vila_pos"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var xz: PackedStringArray = args["vila_pos"].split(",")
+		var vila: Node = get_tree().current_scene
+		vila.jogador.global_position = Vector3(float(xz[0]), 0, float(xz[1]))
+		if xz.size() > 2:
+			vila._giro = deg_to_rad(float(xz[2]))
+	if args.has("torre"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.confeitaria["acucar"] = 200
+		var t: Node = get_tree().current_scene
+		t.comecar()
+		for i in int(args["torre"]):
+			t.jogo.atual["x"] = t.jogo.topo()["x"] + [0.0, 14.0, -10.0, 0.0, 22.0, -6.0, 0.0][i % 7]
+			t.soltar()
+			await get_tree().create_timer(0.1).timeout
+			if t.jogo.pergunta_pendente:
+				await get_tree().create_timer(0.5).timeout
+				if args.has("torre_pergunta"):
+					break
+				t._resultado_pergunta(true)
+	if args.has("fabrica"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.confeitaria["acucar"] = 200
+		var f: Node = get_tree().current_scene
+		f.comecar()
+		f.jogo.pedidos_feitos = int(args["fabrica"])
+		f.jogo._novo_pedido()
+		f._montar_pedido()
+	if args.has("conferir"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene.conferir()
 	if args.has("selecionar"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.selecionar(args["selecionar"])
 	if args.has("aba"):
 		await get_tree().process_frame
 		get_tree().current_scene.mostrar_aba(int(args["aba"]))
+	if args.has("movimento"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var cozinha: Cozinha = get_tree().current_scene
+		for i in 3:
+			var cliente := cozinha.novo_cliente(["brigadeiro", "maca", "brigadeiro"][i], 2 + i)
+			cliente["no"].global_position = Cozinha.FILA[i] + Vector3(0.5, 0, 0.3)
+		for i in 4:
+			cozinha._empilhar("brigadeiro" if i < 3 else "maca", cozinha.jogador.global_position)
+		cozinha.jogador.global_position = Vector3(-2.5, 0, -0.2)
+		cozinha.jogador.olhar_para(Vector3(-2.5, 0, 3))
+		cozinha.usar_camera(cozinha.modo_camera)  # olha para onde o doce olha
+		cozinha.caixa = 18
+		cozinha._atualizar_moedas_visiveis()
+	if args.has("entrar"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var vila_entrada: Vila = get_tree().current_scene
+		vila_entrada.jogador.global_position = vila_entrada._portas[args["entrar"]]["porta"]
+		vila_entrada.entrar(args["entrar"])
+	if args.has("andando"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var vila_andando: Vila = get_tree().current_scene
+		vila_andando.set_physics_process(false)
+		vila_andando.jogador.global_position = Vector3(-4, 0, 9)
+		var fim := Time.get_ticks_msec() + int(float(args.get("espera", "1.2")) * 1000) + 500
+		while Time.get_ticks_msec() < fim:
+			vila_andando.jogador.andar(Vector3(0.6, 0, 0), 1.0 / 60.0)
+			await get_tree().physics_frame
+	if args.has("ver_predio"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var vila: Vila = get_tree().current_scene
+		var porta: Vector3 = vila._portas[args["ver_predio"]]["porta"]
+		var predio: Vector3 = vila._portas[args["ver_predio"]]["no"].global_position
+		vila.jogador.global_position = porta + (porta - predio).normalized() * 3.0
+		vila.jogador.olhar_para(predio)
+		vila.usar_camera(Vila.Camera.PERTO)
 	await get_tree().create_timer(float(args.get("espera", "1.2"))).timeout
+	if args.has("desempenho"):
+		# quanto a tela pesa para desenhar (o FPS aqui não vale: é sem placa de vídeo)
+		print("DESEMPENHO %s: objetos=%d chamadas=%d triangulos=%d nos=%d luzes=%d particulas=%d" % [args["capturar"],
+			Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME),
+			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+			Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+			Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+			get_tree().current_scene.find_children("*", "Light3D", true, false).filter(func(l): return l.is_visible_in_tree()).size(),
+			get_tree().current_scene.find_children("*", "CPUParticles3D", true, false).size()])
+		if args["desempenho"] == "detalhe":
+			# triângulos por parte da cena (filho direto da raiz), dos maiores para os menores
+			var raiz := get_tree().current_scene
+			var somas := {}
+			for no in raiz.find_children("*", "GeometryInstance3D", true, false):
+				if not no.is_visible_in_tree():
+					continue
+				var malha: Mesh = no.mesh if no is MeshInstance3D else (no.multimesh.mesh if no is MultiMeshInstance3D and no.multimesh else null)
+				if malha == null:
+					continue
+				var tri := 0
+				for sup in malha.get_surface_count():
+					var arr := malha.surface_get_arrays(sup)
+					var ind: PackedInt32Array = arr[Mesh.ARRAY_INDEX] if arr[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+					tri += (ind.size() if ind.size() > 0 else (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()) / 3
+				if no is MultiMeshInstance3D:
+					tri *= no.multimesh.visible_instance_count if no.multimesh.visible_instance_count >= 0 else no.multimesh.instance_count
+				var parte: Node = no
+				while parte.get_parent() != raiz:
+					parte = parte.get_parent()
+				var chave := String(parte.name).split("@")[0] + " (" + parte.get_class() + ")"
+				somas[chave] = somas.get(chave, 0) + tri
+			var chaves := somas.keys()
+			chaves.sort_custom(func(a, b): return somas[a] > somas[b])
+			for c in chaves.slice(0, 15):
+				print("  ", c, ": ", somas[c])
 	get_viewport().get_texture().get_image().save_png(args.get("saida", "user://captura.png"))
 	get_tree().quit()
 

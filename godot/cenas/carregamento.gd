@@ -1,5 +1,7 @@
 extends Control
 ## Tela de carregamento antes da partida: um personagem sorteado e uma dica.
+## Também é usada (em "modo cortina") pelo Telas enquanto monta as telas 3D
+## (vila e cozinha), com o nome do lugar no lugar de "QUIZ".
 
 const DURACAO := 3.2
 
@@ -56,16 +58,85 @@ const DICAS := [
 ## Guarda o último sorteio para não repetir em seguida.
 static var _ultima_dica := ""
 
+## Nome grande de cada lugar no modo cortina: [linha de cima, palavra na caixa, tamanho].
+const LUGARES := {
+	"vila": ["VILA DOS", "DOCES", 210],
+	"cozinha": ["COZINHA DA", "CONFEITARIA", 125],
+}
 
-func _ready() -> void:
-	%Personagem.texture = Personagens.textura(PERSONAGEM)
-	_mostrar_companheiro()
+## No modo cortina a tela não vai sozinha para a partida (o Telas cuida).
+var modo_cortina := false
+
+
+## Uma curiosidade ou dica do Office, sem repetir a última: [tipo, texto].
+static func sortear_dica() -> Array:
 	var e_curiosidade := randf() < 0.5
 	var lista: Array = CURIOSIDADES if e_curiosidade else DICAS
 	var dica: String = lista.filter(func(d): return d != _ultima_dica).pick_random()
 	_ultima_dica = dica
-	%Tipo.text = "VOCÊ SABIA?" if e_curiosidade else "DICA"
-	%Texto.text = dica.to_upper()
+	return ["VOCÊ SABIA?" if e_curiosidade else "DICA", dica.to_upper()]
+
+
+## Modo cortina: nome do lugar, doce companheiro (foto) e dica nova.
+func preparar(lugar: String) -> void:
+	var nomes: Array = LUGARES.get(lugar, ["DOCE TEXTO", "QUIZ", 240])
+	%DoceTexto.text = nomes[0]
+	%Quiz.text = nomes[1]
+	_ajustar_fonte(%Quiz, nomes[2], 48.0 / 240.0, 72.0 / 240.0)
+	var caixa: StyleBoxFlat = %Quiz.get_theme_stylebox("normal").duplicate()
+	caixa.content_margin_left = 26.0 * nomes[2] / 240.0 + 8.0
+	caixa.content_margin_right = caixa.content_margin_left
+	caixa.content_margin_top = 24.0 * nomes[2] / 240.0
+	caixa.content_margin_bottom = caixa.content_margin_top
+	%Quiz.add_theme_stylebox_override("normal", caixa)
+	_alinhar_titulo()
+	var id := Colecao.companheiro()
+	%Personagem.texture = Personagens.textura(id if not id.is_empty() else PERSONAGEM)
+	var dica := sortear_dica()
+	%Tipo.text = dica[0]
+	%Texto.text = dica[1]
+	%Barra.value = 0.0
+
+
+func barra(valor: float) -> void:
+	%Barra.value = valor
+
+
+func valor_barra() -> float:
+	return %Barra.value
+
+
+## A linha de cima fica da mesma largura da caixa de baixo (como "DOCE TEXTO"
+## em cima de "QUIZ"): o tamanho da letra é calculado para caber certinho.
+func _alinhar_titulo() -> void:
+	var fonte: Font = %DoceTexto.get_theme_font("font")
+	var largura_caixa: float = %Quiz.get_minimum_size().x
+	var largura_texto := fonte.get_string_size(%DoceTexto.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 100).x
+	if largura_texto <= 0.0:
+		return
+	var tamanho := clampi(int(100.0 * largura_caixa / largura_texto), 60, 190)
+	_ajustar_fonte(%DoceTexto, tamanho, 22.0 / 110.0, 33.0 / 110.0)
+
+
+## A Bebas Neue tem sobra em cima e embaixo; o corte (espaçamento negativo) do
+## .tscn foi feito para um tamanho só. Aqui ele acompanha o tamanho da letra,
+## para o texto ficar centrado na caixa em qualquer tamanho.
+func _ajustar_fonte(rotulo: Label, tamanho: int, corte_cima: float, corte_baixo: float) -> void:
+	var fonte: FontVariation = rotulo.get_theme_font("font").duplicate()
+	fonte.spacing_top = -int(round(tamanho * corte_cima))
+	fonte.spacing_bottom = -int(round(tamanho * corte_baixo))
+	rotulo.add_theme_font_override("font", fonte)
+	rotulo.add_theme_font_size_override("font_size", tamanho)
+
+
+func _ready() -> void:
+	if modo_cortina:
+		return
+	%Personagem.texture = Personagens.textura(PERSONAGEM)
+	_mostrar_companheiro()
+	var dica := sortear_dica()
+	%Tipo.text = dica[0]
+	%Texto.text = dica[1]
 
 	if %Personagem.visible:
 		Animacoes.flutuar(%Personagem)
@@ -88,6 +159,7 @@ func _mostrar_companheiro() -> void:
 	var doce := Doce3D.new()
 	doce.name = "Companheiro"
 	doce.id = id
+	doce.nivel = Companheiros.nivel(id)
 	doce.giravel = false
 	doce.distancia = 4.6  # do tamanho do fantasma
 	doce.custom_minimum_size = %Personagem.custom_minimum_size

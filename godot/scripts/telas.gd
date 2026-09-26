@@ -12,6 +12,17 @@ const CENAS := {
 	"sobre": "res://cenas/sobre.tscn",
 	"titulos": "res://cenas/titulos.tscn",
 	"colecao": "res://cenas/colecao.tscn",
+	"confeitaria": "res://cenas/confeitaria.tscn",
+	"cozinha": "res://cenas/cozinha.tscn",
+	"doce_match": "res://cenas/doce_match.tscn",
+	"laboratorio": "res://cenas/laboratorio.tscn",
+	"lab_fase": "res://cenas/lab_fase.tscn",
+	"baus": "res://cenas/baus.tscn",
+	"missoes": "res://cenas/missoes.tscn",
+	"torre": "res://cenas/torre.tscn",
+	"fabrica": "res://cenas/fabrica.tscn",
+	"minha_casa": "res://cenas/minha_casa.tscn",
+	"vila": "res://cenas/vila.tscn",
 	"carregamento": "res://cenas/carregamento.tscn",
 	"partida": "res://cenas/partida.tscn",
 	"aproveitamento": "res://cenas/aproveitamento.tscn",
@@ -30,32 +41,129 @@ var placa_rapida := true
 
 var _historico: Array[String] = []
 var _cortina: ColorRect
+var _carregando: Control  # cenas/carregamento.tscn em "modo cortina"
+var _destino := ""
+var _pendente := ""
 var _camada_avisos: CanvasLayer
 var _trocando := false
+## Telas leves abertas POR CIMA da atual (ex.: missões na vila), sem trocar a
+## cena: abrem e fecham na hora, sem recarregar a vila em 3D.
+const LEVES := ["missoes", "baus", "colecao"]
+var _por_cima: Array[CanvasLayer] = []
+## Avisa quando fecha uma tela aberta por cima (a vila atualiza o topo).
+signal por_cima_fechou
 
 
 func _ready() -> void:
+	_ajustar_fisica()
 	_detectar_renderizacao()
 	_criar_cortina()
 	_criar_aviso_girar()
 	_tirar_dicas.call_deferred()
 
 
+## A física (o andar dos doces) roda no ritmo da tela do aparelho (60, 90 ou
+## 120 Hz), para o movimento não "dar degraus" em telas mais rápidas.
+func _ajustar_fisica() -> void:
+	var hz := roundi(DisplayServer.screen_get_refresh_rate())
+	if hz >= 60:
+		Engine.physics_ticks_per_second = clampi(hz, 60, 120)
+		Engine.max_physics_steps_per_frame = 4
+
+
 # --- Navegação ---------------------------------------------------------------
 
 ## Troca para a tela `nome` (ver CENAS) com um fade.
 func ir_para(nome: String) -> void:
+	_fechar_todas_por_cima()
 	_historico.clear()
 	_trocar_cena(CENAS[nome])
 
 
-## Abre uma tela lembrando a atual, para `voltar()` retornar a ela.
+## Abre uma tela lembrando a atual, para `voltar()` retornar a ela. Se já há
+## uma tela leve aberta por cima, a próxima leve também abre por cima.
 func abrir(nome: String) -> void:
+	if not _por_cima.is_empty():
+		if nome in LEVES:
+			abrir_por_cima(nome)
+			return
+		_fechar_todas_por_cima()
 	_historico.push_back(get_tree().current_scene.scene_file_path)
 	_trocar_cena(CENAS[nome])
 
 
+## Missões, baús e coleção a partir da vila (ou cozinha): por cima, na hora.
+## Nas outras telas, abre normalmente.
+func abrir_rapido(nome: String) -> void:
+	var cena := get_tree().current_scene
+	if nome in LEVES and cena != null and cena.scene_file_path in [CENAS["vila"], CENAS["cozinha"]] and not _trocando:
+		abrir_por_cima(nome)
+	else:
+		abrir(nome)
+
+
+func abrir_por_cima(nome: String) -> void:
+	var camada := CanvasLayer.new()
+	camada.name = "PorCima_" + nome
+	camada.layer = 50 + _por_cima.size()
+	var tela: Control = load(CENAS[nome]).instantiate()
+	camada.add_child(tela)
+	get_tree().root.add_child(camada)
+	_por_cima.append(camada)
+	var cena := get_tree().current_scene
+	if cena:
+		cena.process_mode = Node.PROCESS_MODE_DISABLED  # a vila para enquanto isso
+	tela.modulate.a = 0.0
+	tela.pivot_offset = get_viewport().get_visible_rect().size / 2
+	tela.scale = Vector2.ONE * 0.96
+	var tween := tela.create_tween().set_parallel()
+	tween.tween_property(tela, "modulate:a", 1.0, 0.12)
+	tween.tween_property(tela, "scale", Vector2.ONE, 0.12)
+
+
+## A tela de cima (ou null), para os testes e o botão voltar.
+func tela_por_cima() -> Control:
+	return _por_cima[-1].get_child(0) if not _por_cima.is_empty() else null
+
+
+func _fechar_por_cima() -> void:
+	var camada: CanvasLayer = _por_cima.pop_back()
+	var tela: Control = camada.get_child(0)
+	tela.mouse_filter = Control.MOUSE_FILTER_STOP
+	var tween := tela.create_tween()
+	tween.tween_property(tela, "modulate:a", 0.0, 0.1)
+	tween.tween_callback(camada.queue_free)
+	if _por_cima.is_empty():
+		var cena := get_tree().current_scene
+		if cena:
+			cena.process_mode = Node.PROCESS_MODE_INHERIT
+	por_cima_fechou.emit()
+
+
+func _fechar_todas_por_cima() -> void:
+	for camada in _por_cima:
+		camada.queue_free()
+	_por_cima.clear()
+	var cena := get_tree().current_scene
+	if cena:
+		cena.process_mode = Node.PROCESS_MODE_INHERIT
+
+
+## "Casa" do jogador: a Vila dos Doces (ou os níveis, em aparelhos sem placa
+## de vídeo, onde a vila em 3D travaria).
+func ir_para_casa() -> void:
+	ir_para("vila" if placa_rapida else "niveis")
+
+
+## Minha Confeitaria: a cozinha 3D ou, sem placa de vídeo, o painel simples.
+func abrir_confeitaria() -> void:
+	abrir("cozinha" if placa_rapida else "confeitaria")
+
+
 func voltar() -> void:
+	if not _por_cima.is_empty():
+		_fechar_por_cima()
+		return
 	if _historico.is_empty():
 		ir_para("inicio")
 	else:
@@ -64,17 +172,88 @@ func voltar() -> void:
 
 func _trocar_cena(caminho: String) -> void:
 	if _trocando:
+		# pedido no meio de uma troca (ex.: o carregamento indo para a partida):
+		# fica na fila; toque repetido para a mesma tela é ignorado
+		if caminho != _destino:
+			_pendente = caminho
 		return
 	_trocando = true
+	_destino = caminho
 	var tween := create_tween()
 	tween.tween_property(_cortina, "color:a", 1.0, DURACAO_TRANSICAO)
 	await tween.finished
-	get_tree().change_scene_to_file(caminho)
+	# telas 3D demoram um pouco para montar: mostra "carregando" com o doce
+	# companheiro (já desenhado antes de a montagem começar)
+	var pesada := caminho in [CENAS["vila"], CENAS["cozinha"]]
+	if pesada:
+		_mostrar_carregando("vila" if caminho == CENAS["vila"] else "cozinha")
+		await quadro_desenhado()
+		await _carregar_com_barra(caminho)
+	else:
+		get_tree().change_scene_to_file(caminho)
 	await get_tree().process_frame
+	# só abre a cortina depois de a tela nova ter sido desenhada (a primeira
+	# imagem de uma cena 3D é a mais demorada)
+	for i in 2:
+		await quadro_desenhado()
+	if _carregando.visible:
+		_carregando.barra(100.0)
+		await quadro_desenhado()
+	_carregando.visible = false
 	_tirar_dicas()
+	_trocando = false
+	if not _pendente.is_empty():
+		var proxima := _pendente
+		_pendente = ""
+		_trocar_cena(proxima)  # a cortina continua fechada
+		return
 	tween = create_tween()
 	tween.tween_property(_cortina, "color:a", 0.0, DURACAO_TRANSICAO)
-	_trocando = false
+
+
+## Espera a tela ser desenhada (sem tela, nos testes, espera um quadro).
+func quadro_desenhado() -> void:
+	if DisplayServer.get_name() == "headless":
+		await get_tree().process_frame
+	else:
+		await RenderingServer.frame_post_draw
+
+
+func _mostrar_carregando(lugar: String) -> void:
+	_carregando.preparar(lugar)
+	_carregando.visible = true
+
+
+## Carrega a cena em segundo plano, enchendo a barra aos poucos (a barra anda
+## a cada quadro, mesmo que o carregamento seja rápido); depois monta a tela
+## (a montagem da vila trava um instante, com a barra quase cheia).
+func _carregar_com_barra(caminho: String) -> void:
+	await _encher_barra(30.0, 0.35)
+	var em_fundo := not OS.has_feature("web") and ResourceLoader.load_threaded_request(caminho) == OK
+	var pacote: PackedScene = null
+	if em_fundo:
+		var progresso := []
+		while ResourceLoader.load_threaded_get_status(caminho, progresso) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			var alvo := 30.0 + 45.0 * float(progresso[0])
+			_carregando.barra(lerpf(_carregando.valor_barra(), alvo, 0.3))
+			await get_tree().process_frame
+		pacote = ResourceLoader.load_threaded_get(caminho) as PackedScene
+	await _encher_barra(85.0, 0.25)
+	await quadro_desenhado()
+	if pacote:
+		get_tree().change_scene_to_packed(pacote)
+	else:
+		get_tree().change_scene_to_file(caminho)
+
+
+## Leva a barra até `valor` em `tempo` segundos, quadro a quadro.
+func _encher_barra(valor: float, tempo: float) -> void:
+	var inicio: float = _carregando.valor_barra()
+	var passado := 0.0
+	while passado < tempo:
+		await get_tree().process_frame
+		passado += get_process_delta_time()
+		_carregando.barra(lerpf(inicio, valor, clampf(passado / tempo, 0.0, 1.0)))
 
 
 ## Botão "voltar" do Android (e Esc no computador). A caixa de confirmação
@@ -85,7 +264,7 @@ func voltar_pelo_botao() -> void:
 	if not caixas.is_empty():
 		caixas[0].cancelar()
 		return
-	var cena := get_tree().current_scene
+	var cena: Node = tela_por_cima() if not _por_cima.is_empty() else get_tree().current_scene
 	if _trocando or cena == null:
 		return
 	if cena.has_method("ao_voltar"):
@@ -143,6 +322,26 @@ func confirmar(titulo: String, texto: String, sim := "SIM", nao := "NÃO") -> bo
 	return resposta
 
 
+## Explicação curta que aparece só na primeira vez que o jogador abre uma
+## tela nova (baús, coleção, missões, laboratório). Fica marcada em
+## Progresso.config["dicas_vistas"]. Nos prints e testes (somente_memoria) não
+## aparece, a não ser com `forcar`.
+func dica_primeira_vez(id: String, titulo: String, texto: String, forcar := false) -> void:
+	var vistas: Array = Progresso.config.get("dicas_vistas", [])
+	if id in vistas or (Progresso.somente_memoria and not forcar):
+		return
+	vistas.append(id)
+	Progresso.config["dicas_vistas"] = vistas
+	Progresso.salvar()
+	var caixa := preload("res://componentes/confirmacao.tscn").instantiate()
+	caixa.name = "DicaPrimeiraVez"
+	_camada_avisos.add_child(caixa)
+	caixa.configurar(titulo, texto, "ENTENDI!", "")
+	caixa.get_node("%Nao").visible = false
+	await caixa.respondido
+	caixa.fechar()
+
+
 # --- Exibição ----------------------------------------------------------------
 
 ## Em tela de toque, as dicas de botão (tooltips) aparecem ao segurar o dedo,
@@ -184,6 +383,14 @@ func _criar_cortina() -> void:
 	_cortina.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cortina.set_anchors_preset(Control.PRESET_FULL_RECT)
 	camada.add_child(_cortina)
+	# a mesma tela de carregamento da partida (dica, doce e barra), com o nome
+	# do lugar que está sendo montado
+	_carregando = load("res://cenas/carregamento.tscn").instantiate()
+	_carregando.modo_cortina = true
+	_carregando.name = "Carregando"
+	_carregando.visible = false
+	_carregando.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cortina.add_child(_carregando)
 	_camada_avisos = CanvasLayer.new()
 	_camada_avisos.layer = 90
 	add_child(_camada_avisos)

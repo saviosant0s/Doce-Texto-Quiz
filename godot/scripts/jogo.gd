@@ -11,6 +11,8 @@ extends Node
 ##   sequências de acertos multiplicam os pontos (combo).
 ## - Revisão: uma partida só com as perguntas que o jogador errou da última vez
 ##   (de qualquer nível). Não conta para os níveis, mas corrige o histórico.
+## - Cada acerto (partida ou revisão) também dá açúcar para a Minha
+##   Confeitaria (Confeitaria.ACUCAR_POR_ACERTO).
 
 const CAMINHO_PERGUNTAS := "res://dados/perguntas.json"
 const TEMPO_POR_PERGUNTA := 30.0
@@ -46,6 +48,8 @@ var tempos: Array[float] = []  # segundos gastos em cada pergunta
 var pontos := 0
 var sequencia := 0  # acertos seguidos até agora
 var ajudas_usadas := 0
+## Ajudas grátis (do companheiro) já usadas nesta partida.
+var gratis_usadas := 0
 ## Pontos ganhos na última resposta e o multiplicador usado (para a tela animar).
 var ultimo_ganho := {"pontos": 0, "multiplicador": 1.0}
 ## Resumo da partida terminada (ver finalizar_partida).
@@ -185,8 +189,19 @@ func _zerar_partida() -> void:
 	pontos = 0
 	sequencia = 0
 	ajudas_usadas = 0
+	gratis_usadas = 0
 	ultimo_ganho = {"pontos": 0, "multiplicador": 1.0}
 	resumo = {}
+
+
+## Segundos para cada pergunta (o companheiro pode dar mais tempo).
+func tempo_por_pergunta() -> float:
+	return TEMPO_POR_PERGUNTA + Companheiros.bonus("tempo")
+
+
+## Ajudas "tirar 2" grátis que o companheiro dá por partida.
+func ajudas_gratis() -> int:
+	return int(Companheiros.bonus("dica_gratis"))
 
 
 ## Registra a resposta da pergunta atual; `escolha` = -1 quando o tempo acaba.
@@ -203,12 +218,21 @@ func registrar_resposta(escolha: int, tempo: float) -> bool:
 	return acertou
 
 
-## Paga e registra uma ajuda. Retorna falso se não houver moedas.
+## Paga e registra uma ajuda. Retorna falso se não houver moedas. A ajuda
+## "tirar 2" sai de graça enquanto houver ajudas grátis do companheiro.
 func usar_ajuda(custo: int) -> bool:
+	if custo == CUSTO_ELIMINAR and gratis_usadas < ajudas_gratis():
+		gratis_usadas += 1
+		ajudas_usadas += 1
+		return true
 	if not Progresso.gastar_moedas(custo):
 		return false
 	ajudas_usadas += 1
 	return true
+
+
+func eliminar_gratis() -> bool:
+	return gratis_usadas < ajudas_gratis()
 
 
 ## Duas alternativas erradas (índices) da pergunta atual, para a ajuda "eliminar".
@@ -271,16 +295,28 @@ func finalizar_partida() -> void:
 		"resultados": resultados.duplicate(),
 	}
 	if revisao:
-		var moedas := acertos * MOEDAS_POR_ACERTO_REVISAO
+		var moedas := Companheiros.com_bonus("moedas_quiz", acertos * MOEDAS_POR_ACERTO_REVISAO)
 		Progresso.registrar_revisao(lista, moedas)
 		resumo.merge({"estrelas": 0, "aprovado": false, "titulo": "", "moedas": moedas,
 			"restantes": perguntas_para_revisar().size()})
 	else:
 		var estrelas := estrelas_para(nota)
-		var moedas: int = acertos * MOEDAS_POR_ACERTO[nivel_atual] + estrelas * MOEDAS_POR_ESTRELA
+		var moedas := Companheiros.com_bonus("moedas_quiz", acertos * MOEDAS_POR_ACERTO[nivel_atual] + estrelas * MOEDAS_POR_ESTRELA)
 		var titulo: String = TITULOS[nivel_atual]
 		resumo.merge({"estrelas": estrelas, "aprovado": estrelas > 0, "titulo": titulo, "moedas": moedas})
 		resumo.merge(Progresso.registrar_partida(nivel_atual, lista, titulo, estrelas, moedas, pontos))
+	resumo["acucar"] = Companheiros.com_bonus("acucar", acertos * Confeitaria.ACUCAR_POR_ACERTO)
+	Confeitaria.ganhar_acucar(resumo["acucar"])
+	# missões, experiência e baú surpresa (partida aprovada)
+	Missoes.registrar("acertos", acertos)
+	if not revisao:
+		Missoes.registrar("partidas", 1)
+		Missoes.registrar("estrelas", resumo["estrelas"])
+	resumo["bau"] = not revisao and resumo["estrelas"] > 0 and Baus.ganhar_do_quiz()
+	var nivel_antes := Experiencia.nivel()
+	resumo["xp"] = Companheiros.com_bonus("xp", acertos * (Experiencia.XP_ACERTO_REVISAO if revisao else Experiencia.XP_ACERTO))
+	Experiencia.ganhar(acertos * (Experiencia.XP_ACERTO_REVISAO if revisao else Experiencia.XP_ACERTO))
+	resumo["subiu_nivel"] = Experiencia.nivel() > nivel_antes
 	resumo["conquistas"] = Conquistas.verificar(resumo)
 
 

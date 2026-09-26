@@ -1,5 +1,10 @@
-; Doce Texto Quiz — projeto Godot 4
-; Abra esta pasta no Godot (Importar → project.godot).
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -7,16 +12,14 @@ config_version=5
 
 config/name="Doce Texto Quiz"
 config/description="Quiz sobre Word e Excel."
-config/version="0.5.0"
+config/version="0.13.0"
 run/main_scene="res://cenas/inicio.tscn"
-config/features=PackedStringArray("4.7", "GL Compatibility")
-boot_splash/bg_color=Color(0.494118, 0.341176, 0.694118, 1)
-boot_splash/show_image=true
-boot_splash/image="res://assets/abertura.png"
-boot_splash/fullsize=false
-boot_splash/use_filter=true
-run/low_processor_mode=true
 config/quit_on_go_back=false
+config/features=PackedStringArray("4.7", "GL Compatibility")
+run/low_processor_mode=true
+boot_splash/bg_color=Color(0.494118, 0.341176, 0.694118, 1)
+boot_splash/stretch_mode=0
+boot_splash/image="res://assets/abertura.png"
 config/icon="res://icone.png"
 
 [autoload]
@@ -46,14 +49,9 @@ texture={
 "svg/scale": 2.0
 }
 
-[input_devices]
-
-pointing/emulate_touch_from_mouse=false
-
 [rendering]
 
-textures/vram_compression/import_etc2_astc=true
 textures/canvas_textures/default_texture_filter=2
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.494118, 0.341176, 0.694118, 1)
