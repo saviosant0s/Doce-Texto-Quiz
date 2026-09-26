@@ -19,6 +19,8 @@ para ganhar sem estudar. Valores no código: `scripts/jogo.gd`,
 | Conquistas (16) | 10 a 150 cada (~600 no total) | — |
 | Presente de começo (e uma vez para quem já jogava) | — | 100 |
 | Primeira máquina da cozinha | — | 50 (presente) |
+| Vila: estrela cadente (uma por noite, pelo relógio) | 25 | 25 |
+| Vila: gotas da chuva de granulado (12 por chuva; ~1 hora em 6) | — | 3 cada |
 | Laboratório: fase feita (1ª vez) | 10 + 5 por estrela | 20 |
 | Laboratório: chefe (1ª vez) | 30 + 5 por estrela | 50 |
 | Laboratório: estrela nova ao repetir | 5 por estrela | — |

@@ -13,6 +13,7 @@ func _ready() -> void:
 	_criar_volume("EFEITOS SONOROS", "volume_efeitos", true)
 	_criar_chave_animacoes()
 	_criar_qualidade()
+	_criar_chave_dia()
 	_atualizar_resumo()
 	Animacoes.entrar(%Coluna, Vector2(0, 30))
 
@@ -36,7 +37,7 @@ func _criar_volume(nome: String, chave: String, tocar_exemplo: bool) -> void:
 	controle.min_value = 0
 	controle.max_value = 100
 	controle.step = 5
-	controle.custom_minimum_size = Vector2(0, 40)
+	controle.custom_minimum_size = Vector2(0, 32)
 	controle.value = roundf(Progresso.config.get(chave, 1.0) * 100)
 	valor.text = "%d%%" % controle.value
 	controle.value_changed.connect(func(v: float):
@@ -99,6 +100,16 @@ func _criar_qualidade() -> void:
 					outro.theme_type_variation = &"BotaoRoxo" if outro == botao else &"Alternativa")
 		linha.add_child(botao)
 	%Linhas.add_child(linha)
+
+
+## Dia e noite na vila: pelo relógio do aparelho ou sempre de dia.
+func _criar_chave_dia() -> void:
+	var chave := CheckButton.new()
+	chave.name = "DiaENoite"
+	chave.text = "Dia e noite na vila (desligado: sempre de dia)"
+	chave.button_pressed = not CicloDia.sempre_dia()
+	chave.toggled.connect(func(ligado: bool): CicloDia.escolher_sempre_dia(not ligado))
+	%Linhas.add_child(chave)
 
 
 func _atualizar_resumo() -> void:

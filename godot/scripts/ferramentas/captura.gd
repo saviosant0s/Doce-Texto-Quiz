@@ -40,6 +40,8 @@ extends Node
 ##   --animacoes  liga as animações contínuas mesmo sem placa de vídeo (borboletas etc.)
 ##   --torre=12  Torre de Doces: já empilha 12 andares (--torre_pergunta para na pergunta)
 ##   --fabrica=4  Fábrica de Chocolate: já começa e completa 4 pedidos
+##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
+##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
 ##   --espera=1.2  segundos até tirar o print
 
 
@@ -65,6 +67,9 @@ func _ready() -> void:
 		Progresso.config["camera_cozinha"] = int(args["camera_cozinha"])
 	if args.has("porta"):
 		Vila.ultima_porta = args["porta"]
+	# dia e noite: --hora=21 (fixa a hora), --chuva (chuva de granulado)
+	CicloDia.hora_fixa = float(args.get("hora", "14"))
+	CicloDia.chuva_fixa = 1 if args.has("chuva") else 0
 	if args.has("companheiro"):
 		Progresso.colecao["doces"].append(args["companheiro"])
 		Progresso.colecao["companheiro"] = args["companheiro"]

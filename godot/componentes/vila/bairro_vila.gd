@@ -203,7 +203,7 @@ static func _moinho(no: Node3D, nivel: int) -> void:
 	if nivel >= 4:
 		for k in 3:
 			var a := -0.6 + k * 0.6
-			Pecas3D.caixa(torre, Vector3(0.3, 0.4, 0.06), Vector3(sin(a) * 1.08, 2.5, cos(a) * 1.08), _m("#8FBCD6", 0.06, 0.35),
+			Pecas3D.caixa(torre, Vector3(0.3, 0.4, 0.06), Vector3(sin(a) * 1.08, 2.5, cos(a) * 1.08), CenarioVila.vidro_janela(),
 				Vector3(-8, rad_to_deg(a), 0))
 	if nivel >= 5:
 		var ouro := _m("#FFC83D", 0.15, 0.8)
@@ -265,12 +265,12 @@ static func _casa(no: Node3D, id: String, nivel := 1) -> void:
 		Pecas3D.caixa(no, Vector3(3.6, 0.15, 3.2), Vector3(0, 2.45, 0), _m("#FFFFFF", 0.4))
 		Pecas3D.caixa(no, Vector3(3.2, 2.0, 2.8), Vector3(0, 3.5, 0), parede)
 		for x in [-0.8, 0.8]:
-			Pecas3D.caixa(no, Vector3(0.6, 0.6, 0.1), Vector3(x, 3.5, 1.42), _m("#8FBCD6", 0.06, 0.35))
+			Pecas3D.caixa(no, Vector3(0.6, 0.6, 0.1), Vector3(x, 3.5, 1.42), CenarioVila.vidro_janela())
 	Pecas3D.cilindro(no, 0.0, 2.6, 1.6, Vector3(0, 3.2 + andar, 0), _m("#FFFFFF", 0.6), Vector3(1, 1, 0.9), Vector3(0, 45, 0))
 	Pecas3D.esfera(no, 0.35, Vector3(0, 4.1 + andar, 0), _m("#E8263F", 0.15))
 	Pecas3D.caixa(no, Vector3(0.9, 1.5, 0.1), Vector3(0, 0.75, 1.52), _m("#7A4322", 0.6))
 	for x in [-1.05, 1.05]:
-		Pecas3D.caixa(no, Vector3(0.7, 0.7, 0.1), Vector3(x, 1.5, 1.52), _m("#8FBCD6", 0.06, 0.35))
+		Pecas3D.caixa(no, Vector3(0.7, 0.7, 0.1), Vector3(x, 1.5, 1.52), CenarioVila.vidro_janela())
 	if nivel >= 2:
 		Pecas3D.caixa(no, Vector3(0.5, 1.4, 0.5), Vector3(1.0, 3.4 + andar, -0.5), Texturas.real("tijolos", "#B8664A", 1.0))
 		var branco := _m("#FFFFFF", 0.4)

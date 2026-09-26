@@ -17,7 +17,7 @@ const ABAS := [
 		{"icone": "confeitaria", "titulo": "COMPRE TERRENOS",
 			"texto": "Atrás da Escola: construa Moinho (açúcar), Cofre (moedas), casas e jardins, e evolua tudo até o nível 5."},
 		{"item": "BAU_DOCE", "titulo": "EXPLORE LONGE",
-			"texto": "O Lago de Chocolate e o Mirante do Sorvete têm um presente por dia para quem anda até lá."},
+			"texto": "Lago e Mirante: um presente por dia. À noite cai uma estrela cadente e, na chuva de granulado, pegue as gotas!"},
 	]},
 	{"nome": "QUIZ", "passos": [
 		{"icone": "camadas", "titulo": "ESCOLHA O NÍVEL",

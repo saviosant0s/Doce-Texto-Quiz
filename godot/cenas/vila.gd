@@ -113,6 +113,10 @@ var _alto := 0.0  # 0 = câmera aérea normal, 1 = de cima (prédio no meio)
 var _borboletas: Array = []  # [{"no": Sprite3D, "centro", "raio", "velocidade", "fase"}]
 var _tempo_vida := 0.0
 var _brilhos_presente := {}  # lugar -> CPUParticles3D
+var _ambiente: Environment
+var _sol: DirectionalLight3D
+## Céu, luzes da noite e clima (dia e noite pelo relógio, ver CicloDia).
+var ceu: CeuVila
 
 
 func _ready() -> void:
@@ -147,10 +151,31 @@ func _ready() -> void:
 		boneco.otimizar()
 	_criar_vida()
 	_criar_camera()
+	_criar_ceu()
 	_criar_interface()
 	_criar_tutorial()
 	_criar_avisos()
 	usar_camera(int(Progresso.config.get("camera_vila", Camera.AEREA)))
+
+
+## Dia e noite e clima: o céu muda com a hora, e avisa das novidades (a
+## estrela cadente da noite e a chuva de granulado).
+func _criar_ceu() -> void:
+	ceu = CeuVila.new()
+	ceu.name = "Ceu"
+	add_child(ceu)
+	ceu.configurar(_ambiente, _sol, self, jogador, _camera)
+	ceu.estrela_pega.connect(func(premio: Dictionary):
+		jogador.comemorar()
+		Telas.mostrar_aviso("ESTRELA CADENTE: +%d AÇÚCAR  +%d MOEDAS" % [premio["acucar"], premio["moedas"]])
+		_atualizar_topo())
+	ceu.gota_pega.connect(func(acucar: int):
+		Telas.mostrar_aviso("GOTA DE GRANULADO: +%d AÇÚCAR" % acucar)
+		_atualizar_topo())
+	if CicloDia.chovendo():
+		Telas.mostrar_aviso.call_deferred("CHUVA DE GRANULADO! PEGUE AS GOTAS COLORIDAS PELO CHÃO")
+	elif CicloDia.estrela_disponivel():
+		Telas.mostrar_aviso.call_deferred("UMA ESTRELA CADENTE CAIU NA VILA! SIGA O FACHO DE LUZ")
 
 
 # --- Controles -----------------------------------------------------------------
@@ -541,7 +566,9 @@ func _criar_ambiente() -> void:
 	ambiente.fog_density = 0.004
 	ambiente.fog_sky_affect = 0.0
 	CenarioVila.acabamento(ambiente)
+	_ambiente = ambiente
 	var sol := DirectionalLight3D.new()
+	_sol = sol
 	sol.rotation_degrees = Vector3(-55, -35, 0)
 	sol.light_color = Color("#FFF0D6")  # sol de fim de tarde, quentinho
 	sol.light_energy = 0.55 if CenarioVila.modo_leve() else 1.1
@@ -1279,7 +1306,9 @@ func _criar_vida() -> void:
 
 func _animar_borboletas(delta: float) -> void:
 	_tempo_vida += delta
+	var de_dia := ceu == null or ceu.noite < 0.5  # à noite dormem (e saem os vaga-lumes)
 	for b in _borboletas:
+		b["no"].visible = de_dia
 		var t: float = _tempo_vida * b["velocidade"] + b["fase"]
 		var no: Sprite3D = b["no"]
 		# voo em "oito", subindo e descendo, batendo as asas

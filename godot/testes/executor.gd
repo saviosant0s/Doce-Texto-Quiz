@@ -24,6 +24,7 @@ func _ready() -> void:
 	_testar_companheiros_e_baus()
 	_testar_missoes_e_nivel()
 	_testar_terrenos()
+	_testar_ciclo_dia()
 	_testar_torre()
 	_testar_fabrica()
 	await _testar_fluxo_completo()
@@ -389,6 +390,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_telas_novas()
 	await _testar_vila()
 	await _testar_vila_terrenos()
+	await _testar_vila_noite()
 	await _testar_tela_torre()
 	await _testar_tela_fabrica()
 	await _testar_tela_colecao()
@@ -1771,6 +1773,89 @@ func _testar_terrenos() -> void:
 	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes
 	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_ciclo_dia() -> void:
+	_secao("dia e noite")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var acucar_antes := Confeitaria.acucar()
+	var moedas_antes := Progresso.moedas
+	var sempre: bool = Progresso.config.get("sempre_dia", false)
+	Progresso.config["sempre_dia"] = false
+	verificar(CicloDia.noite(12.0) == 0.0 and CicloDia.noite(23.0) == 1.0 and CicloDia.noite(3.0) == 1.0,
+		"meio-dia é dia; 23h e 3h são noite")
+	verificar(CicloDia.noite(18.0) > 0.0 and CicloDia.noite(18.0) < 1.0 and CicloDia.por_do_sol(18.3) > 0.9,
+		"às 18h está escurecendo, com pôr do sol")
+	verificar(CicloDia.fase(10.0) == "MANHÃ" and CicloDia.fase(22.0) == "NOITE" and CicloDia.fase(18.3) == "PÔR DO SOL",
+		"nome de cada momento do dia")
+	verificar((CicloDia.misturar(CicloDia.CEU_TOPO, 23.0) as Color).v < 0.3, "céu escuro de noite")
+	CicloDia.dia_fixo = "2026-10-05"
+	CicloDia.hora_fixa = 22.0
+	Progresso.vila.erase("estrela")
+	verificar(CicloDia.estrela_disponivel(), "de noite tem estrela cadente")
+	verificar(CicloDia.pegar_estrela()["acucar"] == CicloDia.PREMIO_ESTRELA["acucar"] and not CicloDia.estrela_disponivel(),
+		"pegou a estrela: uma por noite")
+	CicloDia.dia_fixo = "2026-10-06"
+	CicloDia.hora_fixa = 2.0
+	verificar(not CicloDia.estrela_disponivel(), "de madrugada ainda é a mesma noite")
+	CicloDia.hora_fixa = 21.0
+	verificar(CicloDia.estrela_disponivel(), "na noite seguinte, outra estrela")
+	CicloDia.hora_fixa = 13.0
+	verificar(not CicloDia.estrela_disponivel(), "de dia não tem estrela")
+	CicloDia.chuva_fixa = 1
+	var antes := Confeitaria.acucar()
+	verificar(CicloDia.lugares_gotas().size() == CicloDia.GOTAS and CicloDia.pegar_gota(0) == CicloDia.ACUCAR_GOTA
+		and Confeitaria.acucar() == antes + CicloDia.ACUCAR_GOTA, "na chuva de granulado, cada gota dá açúcar")
+	verificar(CicloDia.pegar_gota(0) == 0, "a mesma gota não conta duas vezes")
+	CicloDia.chuva_fixa = 0
+	verificar(CicloDia.pegar_gota(1) == 0, "sem chuva, sem gotas")
+	CicloDia.chuva_fixa = -1
+	var chuvas := 0
+	for h in 24 * 7:
+		CicloDia.dia_fixo = "2026-10-%02d" % (1 + h / 24)
+		CicloDia.hora_fixa = float(h % 24)
+		chuvas += int(CicloDia.chovendo())
+	verificar(chuvas > 5 and chuvas < 60, "chove de vez em quando (%d horas numa semana)" % chuvas)
+	Progresso.config["sempre_dia"] = true
+	CicloDia.hora_fixa = -1.0
+	verificar(CicloDia.hora() == 12.0 and not CicloDia.chovendo(), "\"sempre dia\": meio-dia e sem chuva")
+	Progresso.config["sempre_dia"] = sempre
+	CicloDia.dia_fixo = ""
+	Progresso.vila = guardado
+	Progresso.confeitaria["acucar"] = acucar_antes
+	Progresso.moedas = moedas_antes
+
+
+func _testar_vila_noite() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	CicloDia.hora_fixa = 22.0
+	CicloDia.chuva_fixa = 1
+	Progresso.vila.erase("estrela")
+	Progresso.vila.erase("granulado")
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	verificar(vila.ceu.noite == 1.0 and vila.find_child("Estrelas", true, false).visible, "de noite, estrelas no céu")
+	var luzes := vila.find_children("LuzDaPorta", "OmniLight3D", true, false)
+	verificar(luzes.size() >= 7 and luzes.all(func(l): return l.visible), "de noite as luzes das portas acendem")
+	verificar(vila.ceu._janelas.size() > 0 and vila.ceu._janelas[0].emission_energy_multiplier > 1.0, "janelas acesas")
+	verificar(vila.find_child("EstrelaCadente", true, false) != null, "a estrela cadente aparece")
+	verificar(vila.ceu._gotas.size() == CicloDia.GOTAS, "a chuva espalha as gotas de granulado")
+	var acucar := Confeitaria.acucar()
+	var gota: Node3D = vila.ceu._gotas[0]
+	vila.jogador.global_position = Vector3(gota.global_position.x, 0, gota.global_position.z)
+	await get_tree().create_timer(0.15).timeout
+	verificar(Confeitaria.acucar() == acucar + CicloDia.ACUCAR_GOTA and not vila.ceu._gotas.has(0), "passar pela gota pega o açúcar")
+	CicloDia.hora_fixa = 12.0
+	vila.ceu.atualizar()
+	verificar(vila.ceu.noite == 0.0 and not vila.find_children("LuzDaPorta", "OmniLight3D", true, false)[0].visible,
+		"de dia as luzes apagam")
+	CicloDia.hora_fixa = -1.0
+	CicloDia.chuva_fixa = -1
+	Progresso.vila = guardado
 
 
 func _testar_vila_terrenos() -> void:

@@ -402,8 +402,9 @@ static func _janela(no: Node3D, posicao: Vector3, moldura := "#FFFFFF") -> void:
 	no.add_child(janela)
 	var madeira := Texturas.real("madeira_pintada", moldura, 1.2)
 	Pecas3D.caixa(janela, Vector3(0.95, 0.95, 0.08), Vector3.ZERO, madeira)
-	# vidro com reflexo (liso e um pouco metálico: pega o brilho do sol)
-	Pecas3D.caixa(janela, Vector3(0.75, 0.75, 0.1), Vector3(0, 0, 0.02), _m("#8FBCD6", 0.06, 0.35))
+	# vidro com reflexo (liso e um pouco metálico: pega o brilho do sol); à
+	# noite acende (CeuVila)
+	Pecas3D.caixa(janela, Vector3(0.75, 0.75, 0.1), Vector3(0, 0, 0.02), vidro_janela())
 	var glace := _m("#FFFFFF", 0.35)
 	Pecas3D.caixa(janela, Vector3(0.75, 0.08, 0.12), Vector3(0, 0, 0.04), glace)
 	Pecas3D.caixa(janela, Vector3(0.08, 0.75, 0.12), Vector3(0, 0, 0.04), glace)
@@ -418,6 +419,17 @@ static func _janela(no: Node3D, posicao: Vector3, moldura := "#FFFFFF") -> void:
 		Pecas3D.caixa(janela, Vector3(0.28, 0.93, 0.05), Vector3(lado * 0.63, 0, 0.03), veneziana)
 		for k in 4:
 			Pecas3D.caixa(janela, Vector3(0.24, 0.04, 0.03), Vector3(lado * 0.63, -0.33 + k * 0.22, 0.065), veneziana)
+
+
+## Vidro de janela: reflete de dia e acende amarelinho à noite (CeuVila
+## procura o "janela" e muda o brilho conforme a hora).
+static func vidro_janela() -> StandardMaterial3D:
+	var vidro := _m("#8FBCD6", 0.06, 0.35)
+	vidro.emission_enabled = true
+	vidro.emission = Color("#FFC870")
+	vidro.emission_energy_multiplier = 0.0
+	vidro.set_meta("janela", true)
+	return vidro
 
 
 ## Entrada de verdade para todos os prédios: dois degraus de pedra, um
