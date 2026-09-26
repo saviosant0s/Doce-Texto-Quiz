@@ -127,6 +127,8 @@ var _quadro_historia: PanelContainer
 var _texto_historia: Label
 var _marca_lugar: Node3D
 var _tempo_historia := 0.0
+## Evento da temporada (decoração, objetos para pegar; ver Eventos).
+var evento: EventoVila
 
 
 func _ready() -> void:
@@ -159,6 +161,7 @@ func _ready() -> void:
 		_so_de_perto(no)
 	for boneco in find_children("*", "DoceAndante", true, false):
 		boneco.otimizar()
+	_criar_evento()
 	_criar_vida()
 	_criar_camera()
 	_criar_ceu()
@@ -808,6 +811,16 @@ func _criar_interface() -> void:
 	progresso.name = "Progresso"
 	progresso.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	topo.add_child(progresso)
+	if Eventos.ativo():
+		var botao_evento := Button.new()
+		botao_evento.name = "BotaoEvento"
+		botao_evento.theme_type_variation = &"BotaoRoxo"
+		botao_evento.custom_minimum_size = Vector2(0, 54)
+		botao_evento.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		botao_evento.add_theme_font_size_override("font_size", 22)
+		botao_evento.focus_mode = Control.FOCUS_NONE
+		botao_evento.pressed.connect(abrir_evento)
+		topo.add_child(botao_evento)
 	var espaco := Control.new()
 	espaco.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	espaco.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -923,6 +936,9 @@ func _olhar_suave(alvo: Vector3, delta: float) -> Vector3:
 
 ## Nível, missões, baús, açúcar e moedas do topo (depois de missões/baús).
 func _atualizar_topo() -> void:
+	var botao_evento := find_child("BotaoEvento", true, false) as Button
+	if botao_evento:
+		botao_evento.text = "EVENTO · %d %s%s" % [Eventos.fichas(), Eventos.dados()["ficha"], "  !" if Eventos.prontos() > 0 else ""]
 	var progresso := find_child("Progresso", true, false) as BotoesProgresso
 	if progresso:
 		progresso.atualizar()
@@ -932,6 +948,83 @@ func _atualizar_topo() -> void:
 	var moedas := find_child("Moedas", true, false) as Label
 	if moedas:
 		moedas.text = Jogo.formatar(Progresso.moedas)
+
+
+# --- Evento da temporada (ver Eventos e EventoVila) -----------------------------------
+
+func _criar_evento() -> void:
+	evento = EventoVila.new()
+	evento.name = "Evento"
+	add_child(evento)
+	evento.configurar(jogador)
+	if evento.id == "":
+		return
+	CenarioVila.estilo_desenho(evento)
+	JuntarMalhas.simplificar(evento)
+	JuntarMalhas.juntar(evento, ["ItemEvento", "ParticulasEvento"])  # os objetos somem ao pegar
+	evento.item_pego.connect(func(fichas: int):
+		Telas.mostrar_aviso("+%d %s DO EVENTO" % [fichas, Eventos.dados()["ficha"]])
+		_atualizar_topo())
+	Telas.dica_primeira_vez("evento_" + Eventos.edicao(), Eventos.dados()["nome"],
+		"%s Junte %s jogando e pegando as que estão espalhadas pela vila (8 por dia). Toque em EVENTO no topo para ver os prêmios: tem móvel e doce exclusivos!" % [
+			Eventos.dados()["texto"], Eventos.dados()["ficha"]])
+
+
+## Painel do evento: quanto falta, como ganhar fichas e a trilha de prêmios.
+func abrir_evento() -> void:
+	var dados := Eventos.dados()
+	var coluna := _abrir_painel_lote(dados["nome"])
+	var info := Label.new()
+	info.theme_type_variation = &"SubtituloClaro"
+	info.add_theme_font_size_override("font_size", 22)
+	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size.x = 900
+	info.text = "VOCÊ TEM %d %s · FALTAM %d DIAS\nGANHE JOGANDO QUALQUER JOGO E PEGANDO AS %s PELA VILA (%d POR DIA)." % [
+		Eventos.fichas(), dados["ficha"], Eventos.dias_restantes(), dados["ficha"], Eventos.ITENS_POR_DIA]
+	coluna.add_child(info)
+	var grade := GridContainer.new()
+	grade.name = "Trilha"
+	grade.columns = 4
+	grade.add_theme_constant_override("h_separation", 10)
+	grade.add_theme_constant_override("v_separation", 10)
+	coluna.add_child(grade)
+	for i in Eventos.TRILHA.size():
+		var premio := Eventos.premio(i)
+		var texto := ""
+		if premio.has("moedas"):
+			texto = "%d MOEDAS" % premio["moedas"]
+		elif premio.has("acucar"):
+			texto = "%d AÇÚCAR" % premio["acucar"]
+		elif premio.has("bau"):
+			texto = "BAÚ DE DOCE"
+		elif premio.has("movel"):
+			texto = "MÓVEL: " + Casa.MOVEIS[premio["movel"]]["nome"]
+		elif premio.has("doce"):
+			texto = "DOCE: " + Colecao.dados(premio["doce"])["nome"]
+		var b := Button.new()
+		b.name = "Premio%d" % i
+		b.custom_minimum_size = Vector2(215, 92)
+		b.add_theme_font_size_override("font_size", 18)
+		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		b.focus_mode = Control.FOCUS_NONE
+		var meta := int(Eventos.TRILHA[i][0])
+		if Eventos.resgatado(i):
+			b.text = "%d · %s\nRESGATADO ✓" % [meta, texto]
+			b.disabled = true
+		elif Eventos.pode_resgatar(i):
+			b.text = "%d · %s\nRESGATAR!" % [meta, texto]
+			b.pressed.connect(func():
+				if not Eventos.resgatar(i).is_empty():
+					Audio.tocar("vitoria")
+					jogador.comemorar()
+					Telas.mostrar_aviso("PRÊMIO DO EVENTO: " + texto)
+					_atualizar_topo()
+					abrir_evento())
+		else:
+			b.text = "%d · %s\nFALTAM %d" % [meta, texto, meta - Eventos.fichas()]
+			b.theme_type_variation = &"Alternativa"
+		grade.add_child(b)
 
 
 # --- Histórias da vila (ver Historia e Dialogo) ------------------------------------
@@ -964,6 +1057,7 @@ func _criar_historia() -> void:
 	dialogo.name = "Dialogo"
 	_interface.add_child(dialogo)
 	_atualizar_historia()
+	_atualizar_topo()
 	_mostrar_pendentes.call_deferred()
 
 

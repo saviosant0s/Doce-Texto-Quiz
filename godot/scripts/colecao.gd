@@ -59,6 +59,19 @@ const LISTA := [
 		"curiosidade": "\"Brown\" é marrom em inglês: o nome vem da cor do chocolate."},
 	{"id": "bolo", "nome": "BOLO DE ANIVERSÁRIO", "preco": 800,
 		"curiosidade": "O costume de pôr velinhas no bolo começou na Alemanha, há mais de 200 anos."},
+	# doces dos eventos da temporada (só se ganha no fim da trilha do evento)
+	{"id": "flor_de_acucar", "nome": "FLOR DE AÇÚCAR", "evento": "primavera",
+		"curiosidade": "As flores de açúcar enfeitam bolos de casamento: são feitas de pasta americana, pétala por pétala."},
+	{"id": "abobora_choco", "nome": "ABÓBORA DE CHOCOLATE", "evento": "halloween",
+		"curiosidade": "No Brasil, o doce de abóbora com coco é tradição antiga, bem antes do Halloween chegar."},
+	{"id": "biscoito_gengibre", "nome": "BISCOITO DE GENGIBRE", "evento": "natal",
+		"curiosidade": "Os bonequinhos de gengibre ficaram famosos na corte da rainha Elizabeth I, na Inglaterra."},
+	{"id": "confete", "nome": "CONFETE", "evento": "carnaval",
+		"curiosidade": "As pastilhas coloridas de chocolate ganharam o nome de confete por parecerem os papeizinhos do Carnaval."},
+	{"id": "ovo_pascoa", "nome": "OVO DE PÁSCOA", "evento": "pascoa",
+		"curiosidade": "Antes do chocolate, as pessoas pintavam ovos de galinha para dar de presente na Páscoa."},
+	{"id": "pipoca_doce", "nome": "PIPOCA DOCE", "evento": "junina",
+		"curiosidade": "A pipoca vem do milho: o vapor dentro do grão faz ele estourar e virar do avesso."},
 ]
 
 const NOMES_TITULOS := {"noob": "NOOB", "pro": "PRO", "mestre": "MESTRE"}
@@ -86,7 +99,7 @@ static func tem(id: String) -> bool:
 
 static func a_venda(id: String) -> bool:
 	var doce := dados(id)
-	return not doce.is_empty() and not doce.has("titulo") and not doce.get("inicial", false)
+	return not doce.is_empty() and not doce.has("titulo") and not doce.has("evento") and not doce.get("inicial", false)
 
 
 static func quantidade() -> int:

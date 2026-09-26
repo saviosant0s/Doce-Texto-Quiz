@@ -166,6 +166,66 @@ static func montar(id: String, pai: Node3D) -> void:
 			for x in [-0.15, 0.1, 0.25]:
 				Pecas3D.esfera(pai, 0.05, Vector3(x, 0.97, 0.32), _m(["#E8364F", "#FFD23F", "#7BE07B"][[-0.15, 0.1, 0.25].find(x)], 0.2))
 			Pecas3D.caixa(pai, Vector3(0.72, 0.18, 0.62), Vector3(0, 1.65, -0.1), _luz("#FF6FAE", 0.8))
+		"vaso_primavera":
+			Pecas3D.cilindro(pai, 0.3, 0.22, 0.5, Vector3(0, 0.25, 0), _m("#6FD3FF", 0.3))
+			for i in 7:
+				var a := i * TAU / 7.0
+				var topo := Vector3(cos(a) * 0.25, 1.0 + (i % 3) * 0.15, sin(a) * 0.25)
+				Pecas3D.cano(pai, Vector3(0, 0.45, 0), topo, 0.02, _m("#3FA34D", 0.6))
+				Pecas3D.esfera(pai, 0.12, topo, _m(["#FF8FB8", "#FFD23F", "#FFFFFF", "#B07CFF"][i % 4], 0.4), Vector3(1, 0.6, 1))
+		"abobora_luminosa":
+			var laranja := _luz("#FF8A1F", 0.8)
+			for i in 5:
+				var a := i * TAU / 5.0
+				Pecas3D.esfera(pai, 0.3, Vector3(cos(a) * 0.18, 0.32, sin(a) * 0.18), laranja, Vector3(0.9, 1, 0.9))
+			Pecas3D.cilindro(pai, 0.05, 0.07, 0.2, Vector3(0, 0.66, 0), _m("#3FA34D", 0.6))
+			for x in [-0.1, 0.1]:
+				Pecas3D.cilindro(pai, 0.0, 0.07, 0.05, Vector3(x, 0.4, 0.33), _luz("#FFE27A", 2.5), Vector3.ONE, Vector3(90, 0, 0))
+			var luz := OmniLight3D.new()
+			luz.light_color = Color("#FFB347")
+			luz.omni_range = 2.5
+			luz.position = Vector3(0, 0.5, 0.3)
+			pai.add_child(luz)
+		"arvore_natal":
+			Pecas3D.cilindro(pai, 0.08, 0.1, 0.3, Vector3(0, 0.15, 0), _m("#6B3A1F", 0.6))
+			for i in 3:
+				Pecas3D.cilindro(pai, 0.05, 0.45 - i * 0.12, 0.6, Vector3(0, 0.55 + i * 0.4, 0), _m("#2E7D32", 0.7))
+			for i in 10:
+				var a := i * 2.3
+				var y := 0.45 + (i % 5) * 0.25
+				var r := 0.42 - (i % 5) * 0.07
+				Pecas3D.esfera(pai, 0.06, Vector3(cos(a) * r, y, sin(a) * r), _luz(["#E8364F", "#FFD23F", "#6FD3FF"][i % 3], 1.2))
+			Pecas3D.esfera(pai, 0.1, Vector3(0, 1.6, 0), _luz("#FFE27A", 2.0))
+		"mascara_carnaval":
+			Pecas3D.cilindro(pai, 0.2, 0.25, 0.1, Vector3(0, 0.05, 0), _m("#6B3A1F", 0.5))
+			Pecas3D.cano(pai, Vector3(0, 0.1, 0), Vector3(0, 0.9, 0), 0.03, _m("#FFC83D", 0.2, 0.7))
+			var mascara := _m("#B07CFF", 0.2, 0.4)
+			for x in [-0.18, 0.18]:
+				Pecas3D.esfera(pai, 0.2, Vector3(x, 1.05, 0.05), mascara, Vector3(1, 0.6, 0.3))
+			for i in 5:
+				Pecas3D.cano(pai, Vector3(-0.1 + i * 0.05, 1.15, 0), Vector3(-0.35 + i * 0.17, 1.55, -0.05), 0.02,
+					_m(["#FF6FAE", "#FFD23F", "#6FD3FF", "#7BE07B", "#FF8A5B"][i], 0.4))
+		"cesta_pascoa":
+			Pecas3D.cilindro(pai, 0.35, 0.28, 0.35, Vector3(0, 0.18, 0), _m("#D9A05B", 0.9))
+			Pecas3D.rosquinha(pai, 0.32, 0.38, Vector3(0, 0.55, 0), _m("#D9A05B", 0.9), Vector3(1, 1, 0.6), Vector3(90, 0, 0))
+			for i in 5:
+				var a := i * TAU / 5.0
+				Pecas3D.esfera(pai, 0.12, Vector3(cos(a) * 0.15, 0.4, sin(a) * 0.15),
+					_m(["#6B3A1F", "#FF8FB8", "#6FD3FF", "#FFD23F", "#7BE07B"][i], 0.3), Vector3(0.8, 1.1, 0.8))
+		"fogueira_junina":
+			for i in 5:
+				var a := i * TAU / 5.0
+				Pecas3D.cano(pai, Vector3(cos(a) * 0.35, 0.05, sin(a) * 0.35), Vector3(cos(a) * 0.05, 0.6, sin(a) * 0.05), 0.06, _m("#8A5A2B", 0.8))
+			Pecas3D.esfera(pai, 0.2, Vector3(0, 0.35, 0), _luz("#FF8A1F", 2.2), Vector3(1, 1.5, 1))
+			Pecas3D.esfera(pai, 0.12, Vector3(0, 0.55, 0), _luz("#FFD23F", 2.5), Vector3(1, 1.6, 1))
+			for i in 8:
+				var a := i * TAU / 8.0
+				Pecas3D.esfera(pai, 0.1, Vector3(cos(a) * 0.45, 0.06, sin(a) * 0.45), _m("#8C8C8C", 0.9), Vector3(1, 0.6, 1))
+			var fogo := OmniLight3D.new()
+			fogo.light_color = Color("#FF9A3C")
+			fogo.omni_range = 3.0
+			fogo.position = Vector3(0, 0.6, 0)
+			pai.add_child(fogo)
 		"banco_praca":
 			var madeira := _m("#B5773F", 0.7)
 			var ferro := _m("#2B2B30", 0.4, 0.6)

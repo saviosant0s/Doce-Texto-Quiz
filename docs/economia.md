@@ -124,3 +124,20 @@ Conforto = soma dos móveis na sala (repetido vale metade) + parede + piso.
 Prêmio uma vez por faixa: ACONCHEGANTE (60) 50 moedas, CHARMOSA (150) 100
 moedas, LINDA (280) baú de doce, DOS SONHOS (450) 250 moedas, DE REVISTA (700)
 baú de ouro.
+
+## Eventos da temporada (desde a 0.13.0)
+
+Seis eventos por ano (Festival das Flores 20/09–14/10, Noite das Abóboras
+15/10–10/11, Natal Doce 01/12–10/01, Carnaval de Confeitos 05/02–05/03, Caça
+aos Ovos 20/03–25/04, Arraiá Doce 01/06–20/07). Fichas do evento: partida 5,
+acerto 1, estrela 2, andar da torre 0,5, pedido da fábrica 2, partida do match
+4, cliente 2, fase do laboratório 5, baú aberto 2, e 3 por objeto pego na vila
+(8 por dia). Trilha: 20 → 30 moedas, 50 → 40 açúcar, 90 → baú de doce, 140 →
+80 moedas, 200 → móvel exclusivo, 270 → 80 açúcar, 350 → doce exclusivo
+(épico; não vem em baú antes de ser ganho). As fichas zeram a cada edição.
+
+## Histórias da vila (desde a 0.13.0)
+
+Cinco capítulos (níveis 1 a 5 do jogador). Prêmios: 40 moedas; 50 moedas + 40
+açúcar; 80 moedas + banco da praça (móvel); 100 moedas + baú de doce; 150
+moedas + 60 açúcar + retrato da vila (móvel). Um passo pede 50 de açúcar.

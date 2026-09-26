@@ -76,6 +76,10 @@ func _atualizar_acao() -> void:
 		_acao.text = "PASSE NO NÍVEL %s" % Colecao.NIVEL_DO_TITULO[doce["titulo"]]
 		_acao.icon = ICONE_CADEADO
 		_acao.disabled = true
+	elif doce.has("evento"):
+		_acao.text = "SÓ NO EVENTO: " + Eventos.EVENTOS[doce["evento"]]["nome"]
+		_acao.icon = ICONE_CADEADO
+		_acao.disabled = true
 	else:
 		var preco: int = doce["preco"]
 		_acao.icon = ICONE_MOEDA
@@ -337,6 +341,9 @@ func _atualizar_cartao(id: String) -> void:
 	elif doce.has("titulo"):
 		icone.texture = ICONE_CADEADO
 		texto.text = "NÍVEL " + Colecao.NIVEL_DO_TITULO[doce["titulo"]]
+	elif doce.has("evento"):
+		icone.texture = ICONE_CADEADO
+		texto.text = "EVENTO"
 	else:
 		icone.texture = ICONE_MOEDA
 		icone.modulate = Color.WHITE  # a moeda tem as cores dela

@@ -111,6 +111,7 @@ static func registrar(evento: String, quantidade := 1) -> void:
 	if quantidade <= 0:
 		return
 	Historia.registrar(evento, quantidade)  # passos "fazer" das histórias da vila
+	Eventos.registrar(evento, quantidade)  # fichas do evento da temporada
 	var e := _atualizar()
 	for lista in [e["diarias"], e["semanais"]]:
 		for m in lista:

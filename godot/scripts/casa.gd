@@ -45,6 +45,19 @@ const MOVEIS := {
 		"libera": "historia", "como": "Termine o capítulo FESTA NA PRAÇA das histórias da vila."},
 	"retrato_vila": {"nome": "RETRATO DA VILA", "preco": 0, "tam": [1, 1], "conforto": 55,
 		"libera": "historia", "como": "Termine o capítulo O SEGREDO DA FÁBRICA das histórias da vila."},
+	# móveis dos eventos da temporada (prêmio da trilha do evento)
+	"vaso_primavera": {"nome": "VASO DA PRIMAVERA", "preco": 0, "tam": [1, 1], "conforto": 40,
+		"libera": "evento", "como": "Prêmio do evento FESTIVAL DAS FLORES."},
+	"abobora_luminosa": {"nome": "ABÓBORA LUMINOSA", "preco": 0, "tam": [1, 1], "conforto": 40,
+		"libera": "evento", "como": "Prêmio do evento NOITE DAS ABÓBORAS."},
+	"arvore_natal": {"nome": "ÁRVORE DE NATAL", "preco": 0, "tam": [1, 1], "conforto": 45,
+		"libera": "evento", "como": "Prêmio do evento NATAL DOCE."},
+	"mascara_carnaval": {"nome": "MÁSCARA DE CARNAVAL", "preco": 0, "tam": [1, 1], "conforto": 40,
+		"libera": "evento", "como": "Prêmio do evento CARNAVAL DE CONFEITOS."},
+	"cesta_pascoa": {"nome": "CESTA DE PÁSCOA", "preco": 0, "tam": [1, 1], "conforto": 40,
+		"libera": "evento", "como": "Prêmio do evento CAÇA AOS OVOS."},
+	"fogueira_junina": {"nome": "FOGUEIRA JUNINA", "preco": 0, "tam": [1, 1], "conforto": 40,
+		"libera": "evento", "como": "Prêmio do evento ARRAIÁ DOCE."},
 }
 
 ## Papéis de parede e pisos: {id: {"nome", "preco", "conforto"}}; o primeiro

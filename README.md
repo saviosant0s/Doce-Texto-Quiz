@@ -65,6 +65,17 @@ personagens, fontes) é a mesma da versão original.
   lotes para comprar e construir (moinho de açúcar, cofre de moedas, casa,
   jardim, fonte), que evoluem até o nível 5 com obras que levam tempo, e
   presentes diários (`scripts/terrenos.gd`).
+- Dia e noite na vila pelo relógio do aparelho (céu, lua, estrelas, janelas e
+  luzes acesas), estrela cadente para pegar à noite e chuva de granulado com
+  gotas que dão açúcar (`scripts/ciclo_dia.gd`, `componentes/vila/ceu_vila.gd`).
+- Minha Casa: casa do jogador na vila com a sala para decorar (móveis, papel
+  de parede, piso, conforto com prêmios; `scripts/casa.gd`, `cenas/minha_casa.*`).
+- Histórias da vila: missões dos moradores em capítulos, com conversas,
+  pistas pela vila e perguntas do quiz (`scripts/historia.gd`,
+  `componentes/vila/dialogo.gd`).
+- Eventos da temporada (Flores, Abóboras, Natal, Carnaval, Páscoa, Junina):
+  vila decorada, fichas, trilha de prêmios com móvel e doce exclusivos
+  (`scripts/eventos.gd`, `componentes/vila/evento_vila.gd`).
 - Torre de Doces (prédio de bolo na vila): empilhar andares, com pergunta
   bônus do quiz a cada 10 (`scripts/torre.gd`, `cenas/torre.*`).
 - Fábrica de Chocolate (galpão na vila): tocar nos chocolates do pedido

@@ -122,6 +122,37 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+- 29/09 (pedido do Sávio: "os 4, começando pelo 2 depois o 1"), **ainda sem APK**:
+  1. **Dia e noite + clima** (`CicloDia`, `CeuVila`): hora real do aparelho;
+     céu, sol/lua, névoa e luz ambiente mudam (amanhecer 5–7h, pôr do sol
+     17–19h30); à noite janelas (`CenarioVila.vidro_janela`), luminárias e
+     luzes das portas acendem, estrelas, lua e vaga-lumes; borboletas dormem.
+     ESTRELA CADENTE uma por noite (25 açúcar + 25 moedas, com facho de luz).
+     CHUVA DE GRANULADO ~1 hora em 6: 12 gotas pelo chão, 3 de açúcar cada.
+     Configurações: "Dia e noite na vila" (desligado = sempre de dia).
+     Prints: `capturar.sh vila --hora=21`, `--chuva`.
+  2. **Minha Casa** (`Casa`, `Moveis3D`, `cenas/minha_casa.*`): chalé ao sul da
+     praça; sala 8x6 estilo casinha de bonecas, o doce passeia; LOJA com
+     prévia 3D (19 móveis à venda + especiais, 6 paredes, 5 pisos); DECORAR
+     com grade, prévia verde/vermelha, girar/mudar/guardar, tapetes embaixo
+     de móveis; CONFORTO com 6 faixas e prêmios; vem com 4 móveis de presente.
+     Prints: `capturar.sh minha_casa --casa_cheia`, `--decorar`, `--loja_casa=pisos`.
+  3. **Histórias da vila** (`Historia`, `Dialogo`): 5 capítulos (níveis 1 a 5)
+     com Seu Milho e Dona Bala; passos falar/ir/pergunta/fazer/entregar;
+     "!" no morador, seta no lugar, quadro do objetivo no canto; passos
+     "fazer" avançam pelos jogos (gancho em `Missoes.registrar`); prêmios com
+     móveis exclusivos (banco da praça, retrato da vila).
+     Prints: `capturar.sh vila --historia=1,1 --conversar=1`.
+  4. **Eventos da temporada** (`Eventos`, `EventoVila`): 6 eventos no ano
+     (hoje, 26/09, é o Festival das Flores); varais e enfeites do tema na
+     praça, partículas, 8 objetos por dia para pegar; fichas jogando qualquer
+     jogo; trilha de 7 prêmios com móvel e DOCE exclusivos (6 doces novos:
+     flor de açúcar, abóbora de chocolate, biscoito de gengibre, confete, ovo
+     de Páscoa, pipoca doce; fotos geradas). Botão EVENTO no topo da vila.
+     Prints: `capturar.sh vila --evento=2026-12-12`, `--fichas=95 --painel_evento`.
+  - Testes: 1875 verificações passando. Limite de blocos da vila no teste
+    subiu para 400 (casa nova e decoração de evento).
+
 - 29/09 (pedidos do Sávio depois de jogar a 0.12.0), **ainda sem APK**:
   - Sem a borda escura em volta dos personagens (o contorno de desenho saiu
     também dos bonecos; `CenarioVila.estilo_desenho` só aplica o realismo).

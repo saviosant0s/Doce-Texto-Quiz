@@ -43,6 +43,7 @@ extends Node
 ##   --historia=0,0  histórias da vila neste capítulo e passo; --conversar=N abre a
 ##                 conversa com o morador da vez e passa N falas
 ##   --casa_cheia  Minha Casa decorada; --loja_casa=moveis|paredes|pisos; --decorar
+##   --evento=2026-12-10  data do evento; --fichas=150; --painel_evento abre a trilha
 ##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
 ##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
 ##   --espera=1.2  segundos até tirar o print
@@ -70,6 +71,11 @@ func _ready() -> void:
 		Progresso.config["camera_cozinha"] = int(args["camera_cozinha"])
 	if args.has("porta"):
 		Vila.ultima_porta = args["porta"]
+	# evento da temporada: --evento=2026-10-20 (data do evento), --fichas=150
+	if args.has("evento"):
+		Eventos.dia_fixo = args["evento"]
+	if args.has("fichas"):
+		Eventos.ganhar_fichas(int(args["fichas"]))
 	# dia e noite: --hora=21 (fixa a hora), --chuva (chuva de granulado)
 	CicloDia.hora_fixa = float(args.get("hora", "14"))
 	CicloDia.chuva_fixa = 1 if args.has("chuva") else 0
@@ -256,6 +262,9 @@ func _ready() -> void:
 		for i in int(args["conversar"]):
 			await get_tree().create_timer(0.2).timeout
 			vila.dialogo.responder(0)
+	if args.has("painel_evento"):
+		await get_tree().create_timer(0.4).timeout
+		get_tree().current_scene.abrir_evento()
 	if args.has("loja_casa"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene._aba_loja = args["loja_casa"] if args["loja_casa"] != "" else "moveis"

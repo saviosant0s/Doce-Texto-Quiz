@@ -49,6 +49,12 @@ const DOCES := {
 	"churros": {"raridade": Raridade.EPICO, "bonus": "tempo"},
 	"brownie": {"raridade": Raridade.EPICO, "bonus": "match"},
 	"bolo": {"raridade": Raridade.LENDARIO, "bonus": "xp"},
+	"flor_de_acucar": {"raridade": Raridade.EPICO, "bonus": "acucar"},
+	"abobora_choco": {"raridade": Raridade.EPICO, "bonus": "match"},
+	"biscoito_gengibre": {"raridade": Raridade.EPICO, "bonus": "moedas_quiz"},
+	"confete": {"raridade": Raridade.EPICO, "bonus": "xp"},
+	"ovo_pascoa": {"raridade": Raridade.EPICO, "bonus": "acucar"},
+	"pipoca_doce": {"raridade": Raridade.EPICO, "bonus": "moedas_quiz"},
 }
 
 
@@ -64,8 +70,11 @@ static func cor(id: String) -> Color:
 	return CORES_RARIDADE[raridade(id)]
 
 
+## Doces dessa raridade que podem vir nos baús (os dos eventos só depois de
+## ganhos no evento, para subir de nível).
 static func de_raridade(r: int) -> Array:
-	return DOCES.keys().filter(func(id): return int(DOCES[id]["raridade"]) == r)
+	return DOCES.keys().filter(func(id): return int(DOCES[id]["raridade"]) == r \
+		and (not Colecao.dados(id).has("evento") or Colecao.tem(id)))
 
 
 static func _colecao() -> Dictionary:

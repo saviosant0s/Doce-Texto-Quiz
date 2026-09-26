@@ -27,6 +27,7 @@ func _ready() -> void:
 	_testar_ciclo_dia()
 	_testar_casa()
 	_testar_historia()
+	_testar_eventos()
 	_testar_torre()
 	_testar_fabrica()
 	await _testar_fluxo_completo()
@@ -395,6 +396,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_vila_noite()
 	await _testar_tela_casa()
 	await _testar_vila_historia()
+	await _testar_vila_evento()
 	await _testar_tela_torre()
 	await _testar_tela_fabrica()
 	await _testar_tela_colecao()
@@ -610,7 +612,8 @@ func _testar_vila() -> void:
 	# a vila cresceu (terrenos, lago, mirante): os lotes e presentes ficam em
 	# blocos próprios e só são desenhados de perto
 	var pecas_vila := vila.find_children("*", "MeshInstance3D", true, false).filter(func(m): return not vila.ceu.is_ancestor_of(m))
-	verificar(pecas_vila.size() < 360, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
+	# (até ~40 blocos a mais durante um evento da temporada: decoração e objetos)
+	verificar(pecas_vila.size() < 400, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
 	var lote: Node3D = vila.find_child("Lote_lote_1", true, false)
 	verificar(lote.find_children("*", "MeshInstance3D", true, false).all(func(m): return m.visibility_range_end > 0.0),
 		"lotes longe da câmera não são desenhados")
@@ -1935,6 +1938,90 @@ func _testar_historia() -> void:
 	Progresso.jogador = jogador_antes
 	Progresso.moedas = moedas_antes
 	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_eventos() -> void:
+	_secao("eventos da temporada")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var colecao: Dictionary = Progresso.colecao.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Eventos.dia_fixo = "2026-10-20"
+	verificar(Eventos.atual() == "halloween" and Eventos.edicao() == "halloween-2026", "20 de outubro: Noite das Abóboras")
+	Eventos.dia_fixo = "2026-12-25"
+	verificar(Eventos.atual() == "natal" and Eventos.edicao() == "natal-2026", "Natal em dezembro")
+	Eventos.dia_fixo = "2027-01-05"
+	verificar(Eventos.atual() == "natal" and Eventos.edicao() == "natal-2026" and Eventos.dias_restantes() == 6,
+		"5 de janeiro ainda é o Natal de 2026 (faltam 6 dias)")
+	Eventos.dia_fixo = "2026-08-10"
+	verificar(not Eventos.ativo() and Eventos.fichas() == 0, "em agosto não tem evento")
+	Eventos.ganhar_fichas(50)
+	verificar(Eventos.fichas() == 0, "sem evento, não junta fichas")
+	for id in Eventos.EVENTOS:
+		var ev: Dictionary = Eventos.EVENTOS[id]
+		verificar(Colecao.dados(ev["doce"]).get("evento", "") == id and Casa.MOVEIS.has(ev["movel"]),
+			"%s tem doce e móvel exclusivos" % id)
+		verificar(not Colecao.a_venda(ev["doce"]), "o doce de %s não se compra" % id)
+	Eventos.dia_fixo = "2026-10-01"
+	Progresso.vila.erase("evento")
+	verificar(Eventos.atual() == "primavera" and Eventos.fichas() == 0, "Festival das Flores começa com 0 pétalas")
+	Missoes.registrar("partidas", 1)
+	Missoes.registrar("acertos", 7)
+	verificar(Eventos.fichas() == 12, "jogar dá fichas (partida 5 + 7 acertos)")
+	verificar(not Eventos.pode_resgatar(0), "12 fichas: primeiro prêmio (20) ainda não")
+	verificar(Eventos.pegar_item(0) == Eventos.FICHAS_ITEM and Eventos.pegar_item(0) == 0, "pega o objeto da vila uma vez")
+	Eventos.dia_fixo = "2026-10-02"
+	verificar(Eventos.pegar_item(0) == Eventos.FICHAS_ITEM, "no outro dia, objetos novos")
+	Eventos.ganhar_fichas(400)
+	verificar(Eventos.prontos() == Eventos.TRILHA.size(), "com 400+ fichas, a trilha toda para resgatar")
+	var moedas := Progresso.moedas
+	verificar(Eventos.resgatar(0)["moedas"] == 30 and Progresso.moedas == moedas + 30 and Eventos.resgatado(0), "resgata moedas")
+	verificar(Eventos.resgatar(0).is_empty(), "o mesmo prêmio uma vez só")
+	Eventos.resgatar(4)
+	verificar(Casa.quantos("vaso_primavera") == 1, "o móvel do evento vai para a casa")
+	Progresso.colecao["doces"].erase("flor_de_acucar")
+	Eventos.resgatar(6)
+	verificar(Colecao.tem("flor_de_acucar"), "no fim da trilha, o doce exclusivo")
+	Eventos.dia_fixo = "2027-10-01"
+	verificar(Eventos.edicao() == "primavera-2027" and Eventos.fichas() == 0 and not Eventos.resgatado(0),
+		"no ano seguinte o evento volta zerado")
+	Eventos.dia_fixo = ""
+	Progresso.vila = guardado
+	Progresso.colecao = colecao
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_vila_evento() -> void:
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	Eventos.dia_fixo = "2026-10-20"
+	Progresso.vila.erase("evento")
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	var botao: Button = vila.find_child("BotaoEvento", true, false)
+	verificar(botao != null and botao.text.contains("ABÓBORAS"), "botão do evento no topo")
+	verificar(vila.evento._itens.size() >= Eventos.ITENS_POR_DIA - 1, "objetos do evento espalhados pela vila")
+	var indice: int = vila.evento._itens.keys()[0]
+	var item: Node3D = vila.evento._itens[indice]
+	var fichas := Eventos.fichas()
+	vila.jogador.global_position = Vector3(item.position.x, 0, item.position.z)
+	await get_tree().create_timer(0.15).timeout
+	verificar(Eventos.fichas() >= fichas + Eventos.FICHAS_ITEM and not vila.evento._itens.has(indice), "passar pelo objeto dá fichas")
+	Eventos.ganhar_fichas(30)
+	vila.abrir_evento()
+	await get_tree().process_frame
+	var premio: Button = vila.find_child("Premio0", true, false)
+	verificar(premio != null and premio.text.contains("RESGATAR"), "painel mostra a trilha com o prêmio pronto")
+	premio.pressed.emit()
+	await get_tree().process_frame
+	verificar(Eventos.resgatado(0), "resgata pelo painel")
+	vila._fechar_painel_lote()
+	Eventos.dia_fixo = ""
+	Progresso.vila = guardado
 
 
 func _testar_vila_historia() -> void:
