@@ -7,7 +7,7 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.12.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
+- Versão atual: 0.13.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
@@ -123,7 +123,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 ## Onde parou
 
 - 29/09 (pedido do Sávio antes de "fechar o sistema por enquanto"): **botões
-  diferenciados + verificação geral**, ainda sem APK:
+  diferenciados + verificação geral**, **publicado na 0.13.0**:
   - Botões "de bala" (`ferramentas/gerar_botoes.py` gera as texturas com brilho
     e listrinhas; o tema usa StyleBoxTexture). Cor por função: amarelo ação
     principal, roxo escolhido, creme voltar/fechar/não e abas, menta
@@ -147,7 +147,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     1884 verificações passando. Conquista "coleção completa" não conta os
     doces de evento (só saem em certas épocas do ano).
 
-- 29/09 (pedido do Sávio: "os 4, começando pelo 2 depois o 1"), **ainda sem APK**:
+- 29/09 (pedido do Sávio: "os 4, começando pelo 2 depois o 1"), **publicado na 0.13.0**:
   1. **Dia e noite + clima** (`CicloDia`, `CeuVila`): hora real do aparelho;
      céu, sol/lua, névoa e luz ambiente mudam (amanhecer 5–7h, pôr do sol
      17–19h30); à noite janelas (`CenarioVila.vidro_janela`), luminárias e
@@ -178,7 +178,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   - Testes: 1875 verificações passando. Limite de blocos da vila no teste
     subiu para 400 (casa nova e decoração de evento).
 
-- 29/09 (pedidos do Sávio depois de jogar a 0.12.0), **ainda sem APK**:
+- 29/09 (pedidos do Sávio depois de jogar a 0.12.0), **publicado na 0.13.0**:
   - Sem a borda escura em volta dos personagens (o contorno de desenho saiu
     também dos bonecos; `CenarioVila.estilo_desenho` só aplica o realismo).
   - Câmera aérea gira: arrastar o dedo gira em volta do doce (só para os lados).
