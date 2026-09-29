@@ -202,6 +202,61 @@ func _criar_ceu() -> void:
 func _physics_process(delta: float) -> void:
 	_mover(delta)
 	_guardar_posicao()
+	_fonte_de_chocolate(delta)
+
+
+## Dentro da bacia da fonte o doce fica com as pernas no chocolate e sai
+## sujo (DoceAndante.sujar). A sujeira seca em SECAR segundos; na chuva, 4x
+## mais rápido. Perto da mureta aparece a dica de pular.
+const SECAR := 120.0
+var _na_fonte := false
+var _dica_fonte: Label3D
+
+
+func _fonte_de_chocolate(delta: float) -> void:
+	var p := jogador.global_position
+	var raio := Vector2(p.x, p.z).length()
+	var dentro := raio < CenarioVila.RAIO_FONTE and p.y < 0.4
+	if dentro:
+		# afundou até a borda da bacia (o chocolate fica no alto dela)
+		jogador.sujar(jogador.altura_no_modelo(CenarioVila.ALTURA_FONTE))
+		if not _na_fonte:
+			Audio.tocar("chape", randf_range(0.9, 1.1))
+			_chape(p)
+	elif jogador.sujeira > 0.0:
+		jogador.limpar(delta / SECAR * (4.0 if CicloDia.chovendo() else 1.0))
+	_na_fonte = dentro
+	if _dica_fonte:
+		_dica_fonte.visible = not dentro and raio < 3.6 and jogador.sujeira < 0.5
+
+
+## Respingo de chocolate ao cair na fonte.
+func _chape(onde: Vector3) -> void:
+	var gotas := CPUParticles3D.new()
+	gotas.name = "Chape"
+	gotas.one_shot = true
+	gotas.explosiveness = 0.95
+	gotas.amount = 24
+	gotas.lifetime = 0.7
+	gotas.position = Vector3(onde.x, CenarioVila.ALTURA_FONTE, onde.z)
+	gotas.direction = Vector3.UP
+	gotas.spread = 55.0
+	gotas.initial_velocity_min = 2.0
+	gotas.initial_velocity_max = 3.6
+	gotas.gravity = Vector3(0, -12.0, 0)
+	var gota := SphereMesh.new()
+	gota.radius = 0.06
+	gota.height = 0.12
+	gota.radial_segments = 6
+	gota.rings = 3
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color("#4A2412")
+	mat.roughness = 0.15
+	gota.material = mat
+	gotas.mesh = gota
+	add_child(gotas)
+	gotas.emitting = true
+	gotas.finished.connect(gotas.queue_free)
 
 
 func _mover(delta: float) -> void:
@@ -312,7 +367,7 @@ const DICAS := {
 	"escola": "COMECE PELA ESCOLA: JOGUE O QUIZ PARA GANHAR MOEDAS E AÇÚCAR!",
 	"laboratorio": "NO LABORATÓRIO VOCÊ USA O WORD E O EXCEL DE VERDADE. VAMOS?",
 	"confeitaria": "AGORA VÁ À CONFEITARIA E MONTE SUA PANELA DE BRIGADEIRO!",
-	"fliperama": "NO FLIPERAMA TEM O DOCE MATCH: TROQUE AÇÚCAR POR PONTOS!",
+	"fliperama": "NO FLIPERAMA TEM O DOCE MATCH: JOGUE E GANHE AÇÚCAR E MOEDAS!",
 }
 
 
@@ -1667,6 +1722,20 @@ func _animar_borboletas(delta: float) -> void:
 
 ## Pingos de chocolate caindo do pratinho de cima da fonte da praça.
 func _respingos_da_fonte() -> void:
+	_dica_fonte = Label3D.new()
+	_dica_fonte.name = "DicaFonte"
+	_dica_fonte.text = "PULE NA FONTE!"
+	_dica_fonte.font = CenarioVila.FONTE
+	_dica_fonte.font_size = 90
+	_dica_fonte.pixel_size = 0.008
+	_dica_fonte.modulate = Color("#F4E038")
+	_dica_fonte.outline_modulate = Color("#5E3D8E")
+	_dica_fonte.outline_size = 24
+	_dica_fonte.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_dica_fonte.no_depth_test = true
+	_dica_fonte.position = Vector3(0, 3.6, 0)
+	_dica_fonte.visible = false
+	add_child(_dica_fonte)
 	var gotas := CPUParticles3D.new()
 	gotas.name = "RespingosFonte"
 	gotas.position = Vector3(0, 2.35, 0)

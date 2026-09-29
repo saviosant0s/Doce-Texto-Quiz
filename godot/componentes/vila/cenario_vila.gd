@@ -175,6 +175,12 @@ static func caminho(pai: Node3D, de: Vector3, ate: Vector3, largura := 2.4) -> v
 			Pecas3D.esfera(pai, 0.1, de.lerp(ate, t) + lateral * lado * (largura / 2.0 + 0.1) + Vector3(0, 0.06, 0), acucar)
 
 
+## Fonte da praça: raio de dentro da bacia (onde o doce se suja) e altura da mureta.
+const RAIO_FONTE := 1.9
+const ALTURA_FONTE := 0.72
+const PARTES_MURETA := 16
+
+
 ## Praça redonda com a fonte de chocolate no meio.
 static func praca(pai: Node3D, raio: float) -> void:
 	Pecas3D.cilindro(pai, raio, raio, 0.08, Vector3(0, 0.04, 0), Texturas.real("calcamento", "#FFF3E0", 0.45))
@@ -198,7 +204,21 @@ static func praca(pai: Node3D, raio: float) -> void:
 	for i in 16:
 		var angulo := i * TAU / 16.0
 		Pecas3D.esfera(pai, 0.13, Vector3(cos(angulo) * 2.05, 0.72, sin(angulo) * 2.05), _m(cores[i % cores.size()], 0.25))
-	_poste(pai, 2.2, 1.2, Vector3.ZERO)
+	# colisão: a coluna do meio e a mureta da bacia (baixa: dá para PULAR
+	# dentro da fonte e sair sujo de chocolate; ver DoceAndante.sujar)
+	_poste(pai, 0.45, 3.2, Vector3.ZERO)
+	for i in PARTES_MURETA:
+		var angulo := i * TAU / PARTES_MURETA
+		var mureta := StaticBody3D.new()
+		mureta.name = "MuretaFonte%d" % i
+		mureta.position = Vector3(cos(angulo) * 2.1, ALTURA_FONTE / 2.0, sin(angulo) * 2.1)
+		mureta.rotation.y = -angulo
+		var forma := CollisionShape3D.new()
+		var caixa := BoxShape3D.new()
+		caixa.size = Vector3(0.28, ALTURA_FONTE, TAU * 2.1 / PARTES_MURETA + 0.12)
+		forma.shape = caixa
+		mureta.add_child(forma)
+		pai.add_child(mureta)
 	sombra_contato(pai, Vector3.ZERO, 3.0, 0.45)
 
 

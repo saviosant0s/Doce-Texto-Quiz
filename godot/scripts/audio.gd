@@ -19,6 +19,7 @@ const EFEITOS := {
 	"explosao": preload("res://assets/sons/explosao.wav"),
 	"especial": preload("res://assets/sons/especial.wav"),
 	"vitoria": preload("res://assets/sons/vitoria.wav"),
+	"chape": preload("res://assets/sons/chape.wav"),
 }
 ## Quantos efeitos podem tocar ao mesmo tempo (passos + moedas + estouros...).
 const CANAIS_EFEITOS := 8

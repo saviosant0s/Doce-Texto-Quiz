@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Gera os efeitos sonoros do jogo por síntese (originais, sem direitos de
-terceiros): moeda, estouro, porta, passo, pulo, construir e caixa.
+terceiros): moeda, estouro, porta, passo, pulo, construir, caixa, explosão,
+especial, vitória e chape.
 Uso: ferramentas/gerar_sons.py  ->  godot/assets/sons/<nome>.wav"""
 import os, wave
 import numpy as np
@@ -90,3 +91,6 @@ salvar("explosao", mistura(tom(70, 0.45, 7, (1.0, 0.6, 0.3)), ruido(0.35, 9, 6) 
 salvar("especial", mistura(varredura(700, 2100, 0.28, 5) * 0.6, junta(*[tom(f, 0.06, 20, (1.0, 0.2)) for f in [1319, 1568, 1976, 2637]]) * 0.5), 0.55)
 # vitoria: fanfarra curta (sol, dó, mi, sol, dó agudo segurado)
 salvar("vitoria", junta(*[tom(f, 0.1 if i < 4 else 0.6, 12 if i < 4 else 3, (1.0, 0.45, 0.2)) for i, f in enumerate([392, 523, 659, 784, 1047])]), 0.65)
+# chape: pulo na fonte de chocolate (ruído grosso abafado + bolhas descendo)
+salvar("chape", mistura(ruido(0.35, 9, 40) * 1.2, varredura(420, 140, 0.18, 10) * 0.5,
+    junta(np.zeros(int(TAXA * 0.12)), tom(300, 0.08, 30, (1.0,)), tom(380, 0.08, 30, (1.0,)), espaco=0.04) * 0.3), 0.7)

@@ -43,9 +43,10 @@ extends Node
 ##   --historia=0,0  histórias da vila neste capítulo e passo; --conversar=N abre a
 ##                 conversa com o morador da vez e passa N falas
 ##   --casa_cheia  Minha Casa decorada; --loja_casa=moveis|paredes|pisos; --decorar
-##   --evento=2026-12-10  data do evento; --fichas=150; --painel_evento abre a trilha
+##   --evento=natal  tema do evento (dia do jogo no meio dele); --fichas=150; --painel_evento abre a trilha
 ##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
 ##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
+##   --sujo        Vila: o doce sujo de chocolate (como ao sair da fonte da praça)
 ##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
 ##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
 ##   --espera=1.2  segundos até tirar o print
@@ -287,6 +288,12 @@ func _ready() -> void:
 		vila.jogador.global_position = Vector3(float(xz[0]), 0, float(xz[1]))
 		if xz.size() > 2:
 			vila._giro = deg_to_rad(float(xz[2]))
+	if args.has("sujo"):
+		await get_tree().process_frame
+		var vila: Node = get_tree().current_scene
+		vila.jogador.sujar(vila.jogador.altura_no_modelo(CenarioVila.ALTURA_FONTE))
+		await get_tree().process_frame
+		vila.jogador.olhar_para(vila._camera.global_position)  # de frente para ver a sujeira
 	if args.has("torre"):
 		await get_tree().create_timer(0.3).timeout
 		Progresso.confeitaria["acucar"] = 200

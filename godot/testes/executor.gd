@@ -412,6 +412,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_vila()
 	await _testar_vila_terrenos()
 	await _testar_vila_noite()
+	await _testar_fonte_chocolate()
 	await _testar_tela_casa()
 	await _testar_vila_historia()
 	await _testar_vila_evento()
@@ -1120,19 +1121,17 @@ func _testar_tela_doce_match() -> void:
 	tela._criar_pecas()
 	verificar(tela._pecas[4][4].find_child("Especial", false, false) != null, "a peça especial aparece com o embrulho")
 	# perder: acabam as jogadas sem cumprir o objetivo
+	# (pontos bem negativos: nenhuma cascata da última jogada vence sem querer)
 	tela.jogo.jogadas = 1
-	tela.jogo.pontos = 0
+	tela.jogo.pontos = -100000
 	jogada = tela.jogo.jogada_possivel()
 	await tela.jogar(jogada[0], jogada[1])
-	if tela.jogo.venceu():
-		print("  (a última jogada venceu sem querer; o teste da derrota fica para a próxima)")
-	else:
-		verificar(tela.find_child("TentarDeNovo", true, false) is Button and DoceMatch.estrelas_do_nivel(1) == 0,
-			"acabaram as jogadas: aparece a derrota e o nível não conta")
-		tela.find_child("TentarDeNovo", true, false).pressed.emit()
-		await get_tree().create_timer(0.3).timeout
-		verificar(Confeitaria.acucar() == DoceMatch.ACUCAR_DERROTA and tela.jogo.jogadas == int(DoceMatch.dados_nivel(1)["jogadas"]),
-			"perder dá o açúcar do esforço e tentar de novo recomeça de graça")
+	verificar(tela.find_child("TentarDeNovo", true, false) is Button and DoceMatch.estrelas_do_nivel(1) == 0,
+		"acabaram as jogadas: aparece a derrota e o nível não conta")
+	tela.find_child("TentarDeNovo", true, false).pressed.emit()
+	await get_tree().create_timer(0.3).timeout
+	verificar(Confeitaria.acucar() == DoceMatch.ACUCAR_DERROTA and tela.jogo.jogadas == int(DoceMatch.dados_nivel(1)["jogadas"]),
+		"perder dá o açúcar do esforço e tentar de novo recomeça de graça")
 	# vencer: cumpre o objetivo na próxima jogada
 	var moedas := Progresso.moedas
 	var partidas: int = Progresso.estatisticas.get("match_partidas", 0)
@@ -2233,6 +2232,44 @@ func _testar_vila_noite() -> void:
 	CicloDia.hora_fixa = -1.0
 	CicloDia.chuva_fixa = -1
 	Progresso.vila = guardado
+
+
+func _testar_fonte_chocolate() -> void:
+	_secao("fonte de chocolate da praça")
+	CicloDia.chuva_fixa = 0
+	Telas.ir_para("inicio")
+	await _esperar_tela("Inicio")
+	Telas.ir_para("vila")
+	await _esperar_tela("Vila")
+	var vila := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	var jogador: DoceAndante = vila.jogador
+	verificar(vila.find_children("MuretaFonte*", "StaticBody3D", true, false).size() == CenarioVila.PARTES_MURETA,
+		"a bacia da fonte tem mureta baixa (dá para pular dentro)")
+	jogador.global_position = Vector3(0, 0, 3.0)
+	await get_tree().create_timer(0.1).timeout
+	verificar(vila._dica_fonte.visible and jogador.sujeira == 0.0, "perto da fonte aparece a dica de pular; o doce está limpo")
+	jogador.global_position = Vector3(1.0, 0, 1.0)
+	await get_tree().create_timer(0.1).timeout
+	verificar(jogador.global_position.distance_to(Vector3(1.0, 0, 1.0)) < 0.2, "dentro da bacia o doce fica em pé no chão (o chocolate cobre as pernas)")
+	verificar(jogador.sujeira == 1.0 and vila.find_child("Chape", true, false) != null, "entrou na fonte: chape de chocolate e o doce se suja")
+	var malhas := jogador.find_children("*", "MeshInstance3D", true, false)
+	var sujas := malhas.filter(func(m): return m.material_overlay != null)
+	var olhos := malhas.filter(func(m): return m.get_parent().name == "Olhos")
+	verificar(sujas.size() > 3 and olhos.all(func(m): return m.material_overlay == null),
+		"o chocolate gruda no doce, mas os olhos continuam limpos")
+	verificar(jogador.find_child("PingosChocolate", true, false) != null, "o doce sujo pinga chocolate")
+	jogador.global_position = Vector3(0, 0, 5.0)
+	await get_tree().create_timer(0.1).timeout
+	vila._fonte_de_chocolate(Vila.SECAR * 0.5)
+	verificar(absf(jogador.sujeira - 0.5) < 0.01, "fora da fonte, a sujeira seca aos poucos")
+	CicloDia.chuva_fixa = 1
+	vila._fonte_de_chocolate(Vila.SECAR * 0.1)
+	verificar(jogador.sujeira < 0.15, "a chuva lava o chocolate mais rápido")
+	vila._fonte_de_chocolate(Vila.SECAR)
+	verificar(jogador.sujeira == 0.0 and not malhas.any(func(m): return is_instance_valid(m) and m.material_overlay != null),
+		"seco de tudo: o doce fica limpo de novo")
+	CicloDia.chuva_fixa = -1
 
 
 func _testar_vila_terrenos() -> void:

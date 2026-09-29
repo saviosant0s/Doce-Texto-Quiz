@@ -13,6 +13,8 @@ const FORCA_PULO := 7.5
 const GRAVIDADE := 22.0
 const ESCALA := 0.72  # os modelos têm ~2,4 de altura; na vila ficam com ~1,7
 const GIRO := 10.0
+const SUJEIRA := preload("res://tema/sujeira_chocolate.gdshader")
+const ROSTO := [Pecas3D.COR_PUPILA, Pecas3D.COR_BOCA, Pecas3D.COR_LINGUA, Pecas3D.COR_BOCHECHA]
 
 ## Id do doce (ver Colecao.LISTA).
 var id := "brigadeiro"
@@ -46,6 +48,10 @@ var _fisica_agora := Vector3.ZERO
 var _quadro_fisica := -10  # Engine.get_physics_frames() do último andar()
 var _base_modelo := 0.0
 var _base_sombra := 0.0
+## Chocolate grudado (1 = acabou de sair da fonte da praça; 0 = limpo). Ver sujar().
+var sujeira := 0.0
+var _mat_sujeira: ShaderMaterial
+var _pingos: CPUParticles3D
 
 
 func _ready() -> void:
@@ -210,6 +216,81 @@ func comemorar() -> void:
 	_animacao.comemorar()
 
 
+## Saiu da fonte de chocolate: fica coberto de chocolate até a altura em que
+## afundou (`nivel`, no espaço do Modelo), pingando. Seca aos poucos (limpar).
+func sujar(nivel := -0.3) -> void:
+	sujeira = 1.0
+	if _mat_sujeira == null:
+		_mat_sujeira = ShaderMaterial.new()
+		_mat_sujeira.shader = SUJEIRA
+		_pingos = _criar_pingos()
+		for malha: MeshInstance3D in _modelo.find_children("*", "MeshInstance3D", true, false):
+			if _suja(malha):
+				malha.material_overlay = _mat_sujeira
+	_mat_sujeira.set_shader_parameter("nivel", nivel)
+	_mat_sujeira.set_shader_parameter("quanto", 1.0)
+	_pingos.emitting = true
+
+
+## Peças que o chocolate cobre: não o rosto (olhos, boca, bochechas: o doce
+## continua com cara de doce), nem os brilhos e a luz dos enfeites.
+func _suja(malha: MeshInstance3D) -> bool:
+	if malha.name == "Luz" or malha.get_parent().name in ["Orbita", "Pilha", "Olhos"]:
+		return false
+	var mat := malha.material_override as StandardMaterial3D
+	return mat == null or not mat.albedo_color in ROSTO
+
+
+## Altura do mundo (y) no espaço do Modelo, com o doce parado no chão.
+func altura_no_modelo(y: float) -> float:
+	return (y - global_position.y - _base_modelo) / ESCALA
+
+
+## Vai limpando (quanto por segundo; a chuva lava mais rápido). Sem sujeira,
+## tira o chocolate das peças.
+func limpar(quanto: float) -> void:
+	if _mat_sujeira == null:
+		return
+	sujeira = maxf(0.0, sujeira - quanto)
+	_mat_sujeira.set_shader_parameter("quanto", sujeira)
+	_pingos.emitting = sujeira > 0.5
+	if sujeira <= 0.0:
+		for malha: MeshInstance3D in _modelo.find_children("*", "MeshInstance3D", true, false):
+			if malha.material_overlay == _mat_sujeira:
+				malha.material_overlay = null
+		_pingos.queue_free()
+		_mat_sujeira = null
+
+
+## Pingos de chocolate caindo do doce sujo.
+func _criar_pingos() -> CPUParticles3D:
+	var pingos := CPUParticles3D.new()
+	pingos.name = "PingosChocolate"
+	pingos.amount = 10
+	pingos.lifetime = 0.5
+	pingos.local_coords = false
+	pingos.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE_SURFACE
+	pingos.emission_sphere_radius = 0.42
+	pingos.position.y = 0.6
+	pingos.direction = Vector3.DOWN
+	pingos.spread = 5.0
+	pingos.initial_velocity_min = 0.1
+	pingos.initial_velocity_max = 0.3
+	pingos.gravity = Vector3(0, -9.0, 0)
+	var gota := SphereMesh.new()
+	gota.radius = 0.035
+	gota.height = 0.1
+	gota.radial_segments = 6
+	gota.rings = 3
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color("#4A2412")
+	mat.roughness = 0.15
+	gota.material = mat
+	pingos.mesh = gota
+	add_child(pingos)
+	return pingos
+
+
 func _process(_delta: float) -> void:
 	# desenha o modelo entre as duas últimas posições da física (ver _fisica_*)
 	var desvio := Vector3.ZERO
@@ -219,6 +300,8 @@ func _process(_delta: float) -> void:
 		desvio = _fisica_antes.lerp(_fisica_agora, Engine.get_physics_interpolation_fraction()) - _fisica_agora
 	_modelo.position = Vector3(desvio.x, _base_modelo + desvio.y, desvio.z)
 	_sombra.position = Vector3(desvio.x, _base_sombra, desvio.z)
+	if _mat_sujeira:
+		_mat_sujeira.set_shader_parameter("para_modelo", Projection(_modelo.global_transform.affine_inverse()))
 
 
 func _physics_process(delta: float) -> void:
