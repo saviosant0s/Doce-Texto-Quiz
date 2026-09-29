@@ -197,6 +197,11 @@ func _trocar_cena(caminho: String) -> void:
 	# imagem de uma cena 3D é a mais demorada)
 	for i in 2:
 		await quadro_desenhado()
+	# telas 3D grandes (vila) "aquecem" atrás da cortina: desenham tudo uma vez
+	# para o celular preparar os materiais antes (senão trava ao aparecerem)
+	var cena := get_tree().current_scene
+	if cena and cena.has_method("aquecer"):
+		await cena.aquecer()
 	if _carregando.visible:
 		_carregando.barra(100.0)
 		await quadro_desenhado()

@@ -35,7 +35,7 @@ func _ready() -> void:
 	titulo.theme_type_variation = &"TituloClaro"
 	titulo.add_theme_font_size_override("font_size", 40)
 	titulo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	titulo.text = "ÁLBUM DE FOTOS · PONTOS %d/%d" % [PontosFoto.pontos_com_foto(), PontosFoto.PONTOS.size()]
+	titulo.text = "ÁLBUM DE FOTOS · VISTAS BONITAS %d/%d" % [PontosFoto.pontos_com_foto(), PontosFoto.PONTOS.size()]
 	topo.add_child(titulo)
 	var fechar := Button.new()
 	fechar.name = "FecharAlbum"
@@ -79,7 +79,7 @@ func _ready() -> void:
 		vazio.add_theme_font_size_override("font_size", 26)
 		vazio.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		vazio.custom_minimum_size = Vector2(600, 0)
-		vazio.text = "NENHUMA FOTO AINDA. PROCURE AS MARCAS COM CÂMERA PELA VILA E TOQUE EM TIRAR FOTO!"
+		vazio.text = "NENHUMA FOTO AINDA. TOQUE NO BOTÃO DE FOTO NA VILA! PERTO DE UMA VISTA BONITA ELE PULSA."
 		_grade.add_child(vazio)
 	# foto grande (por cima da grade)
 	_grande = PanelContainer.new()

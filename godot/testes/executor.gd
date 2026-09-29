@@ -2469,6 +2469,32 @@ func _testar_fonte_chocolate() -> void:
 	verificar(jogador.sujeira == 0.0 and not malhas.any(func(m): return is_instance_valid(m) and m.material_overlay != null),
 		"seco de tudo: o doce fica limpo de novo")
 	CicloDia.chuva_fixa = -1
+	# botão de foto: foto de qualquer lugar; nas vistas bonitas, o botão pulsa
+	_secao("botão de foto da vila")
+	var guardado_fotos: Dictionary = Progresso.vila.get("fotos", {}).duplicate()
+	Progresso.vila.erase("fotos")
+	verificar(vila.find_child("Foto", true, false) is Button and vila.find_child("PontoFoto*", true, false) == null,
+		"a vila tem o botão de foto e nenhuma marca flutuante de foto no mapa")
+	jogador.global_position = Vector3(8, 0, 2)
+	vila._atualizar_botao_foto()
+	verificar(vila._brilho_foto == null, "longe das vistas bonitas, o botão fica parado")
+	var antes := PontosFoto.album().size()
+	vila.find_child("Foto", true, false).pressed.emit()
+	var limite := Time.get_ticks_msec() + 3000
+	while not is_instance_valid(vila._camada_foto) and Time.get_ticks_msec() < limite:
+		await get_tree().process_frame
+	verificar(is_instance_valid(vila._camada_foto) and not vila._interface.visible and PontosFoto.pontos_com_foto() == 0,
+		"foto livre: esconde a interface e mostra a foto (sem contar vista)")
+	verificar(PontosFoto.album().size() == antes + 1 and PontosFoto.nome_da_foto(PontosFoto.album()[0]) == "VILA DOS DOCES",
+		"a foto livre vai para o álbum")
+	DirAccess.remove_absolute(PontosFoto.album()[0])
+	vila.sair_da_foto()
+	verificar(vila._interface.visible and vila.fotografando == "", "PRONTO volta a interface")
+	var vista: Dictionary = PontosFoto.PONTOS[0]
+	jogador.global_position = vista["pe"] + Vector3(1, 0, 0)
+	vila._atualizar_botao_foto()
+	verificar(vila._brilho_foto != null, "perto de uma vista bonita, o botão de foto pulsa")
+	Progresso.vila["fotos"] = guardado_fotos
 
 
 func _testar_vila_terrenos() -> void:

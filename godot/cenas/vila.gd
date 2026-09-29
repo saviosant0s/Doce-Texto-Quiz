@@ -19,7 +19,8 @@ const CAMERA_DISTANCIA := Vector3(0, 7.5, 8.5)
 const CAMERA_SUAVIDADE := 5.0
 const CAMERA_DE_CIMA := Vector3(0, 13.0, 3.0)  # quando um prédio tapa a visão
 const ICONE_CASA := preload("res://assets/icones/casa.svg")
-const ICONE_CAMERA := preload("res://assets/icones/camera.svg")
+const ICONE_CAMERA := preload("res://assets/icones/filmadora.svg")  # trocar a câmera
+const ICONE_FOTO := preload("res://assets/icones/foto.svg")  # tirar foto
 const ICONE_PULAR := preload("res://assets/icones/pular.svg")
 
 enum Camera { AEREA, PERTO, PRIMEIRA_PESSOA }
@@ -154,7 +155,6 @@ func _ready() -> void:
 	for c in CAMINHOS_EXTRA:
 		CenarioVila.caminho(self, c[0], c[1])
 	_criar_bairro()
-	_criar_pontos_foto()
 	_enfeitar()
 	Telas.por_cima_fechou.connect(_atualizar_topo)  # voltou das missões/baús abertos por cima
 	_criar_jogador()
@@ -163,11 +163,10 @@ func _ready() -> void:
 	# leve para o celular: menos faces nas peças pequenas e o cenário parado
 	# juntado em poucos blocos (portas e nuvens se mexem, ficam de fora)
 	JuntarMalhas.simplificar(self)
-	JuntarMalhas.juntar(self, ["Folha", "Nuvem", "Lote", "Presente", "PontosFoto"])  # lotes e presentes mudam
+	JuntarMalhas.juntar(self, ["Folha", "Nuvem", "Lote", "Presente"])  # lotes e presentes mudam
 	for no in _lotes.values() + _presentes.values():
 		JuntarMalhas.juntar(no, ["Pas", "Tampa"])  # cada um no seu bloco (dá para remontar)
 		_so_de_perto(no)
-	JuntarMalhas.juntar(_marcas_foto, [])  # as marcas num bloco só (somem na hora da foto)
 	for boneco in find_children("*", "DoceAndante", true, false):
 		boneco.otimizar()
 	_criar_evento()
@@ -179,6 +178,35 @@ func _ready() -> void:
 	_criar_tutorial()
 	_criar_avisos()
 	usar_camera(int(Progresso.config.get("camera_vila_v2", Camera.PERTO)))
+
+
+## Chamado pelo Telas com a cortina ainda fechada: a câmera olha a vila
+## inteira de cima e dá uma volta no doce, com tudo visível (até o que só
+## aparece de perto), para o celular preparar cada material agora. Sem isso,
+## os primeiros segundos travavam: cada coisa nova na tela montava o seu
+## "shader" na hora.
+func aquecer() -> void:
+	var guardado := _camera.global_transform
+	var alcances := {}
+	for peca: GeometryInstance3D in find_children("*", "GeometryInstance3D", true, false):
+		if peca.visibility_range_end > 0.0:
+			alcances[peca] = peca.visibility_range_end
+			peca.visibility_range_end = 0.0
+	var vistas := [[Vector3(0, 55, 48), Vector3.ZERO]]
+	var pos := jogador.global_position
+	for i in 6:
+		var a := i * TAU / 6.0
+		vistas.append([pos + Vector3(sin(a) * 5.0, 2.4, cos(a) * 5.0), pos + Vector3(0, 1.2, 0)])
+	set_process(false)
+	for vista in vistas:
+		_camera.global_transform = Transform3D(Basis.looking_at(vista[1] - vista[0]), vista[0])
+		await Telas.quadro_desenhado()
+	for peca in alcances:
+		if is_instance_valid(peca):
+			peca.visibility_range_end = alcances[peca]
+	_camera.global_transform = guardado
+	set_process(true)
+	await Telas.quadro_desenhado()
 
 
 ## Dia e noite e clima: o céu muda com a hora, e avisa das novidades (a
@@ -316,6 +344,7 @@ func _process(delta: float) -> void:
 		_tempo_rotulos = 0.0
 		_atualizar_rotulos_producao()
 		_atualizar_relogio()
+		_atualizar_botao_foto()
 	if fotografando != "":
 		return  # a câmera está no enquadramento do ponto de foto (tirar_foto)
 	var pos := _pos_visual()
@@ -538,6 +567,9 @@ func _unhandled_input(evento: InputEvent) -> void:
 		return
 	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_C:
 		proxima_camera()
+		return
+	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_F:
+		tirar_foto()
 		return
 	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_SPACE:
 		get_viewport().set_input_as_handled()
@@ -967,6 +999,18 @@ func _criar_interface() -> void:
 			espaco_saldo.custom_minimum_size = Vector2(8, 0)
 			linha.add_child(espaco_saldo)
 	topo.add_child(saldos)
+	var foto := Button.new()
+	foto.name = "Foto"
+	foto.theme_type_variation = &"BotaoIconeAmarelo"
+	foto.custom_minimum_size = Vector2(54, 54)
+	foto.icon = ICONE_FOTO
+	foto.expand_icon = true
+	foto.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	foto.tooltip_text = "Tirar foto (F)"
+	foto.focus_mode = Control.FOCUS_NONE
+	foto.pressed.connect(tirar_foto)
+	_botao_foto = foto
+	topo.add_child(foto)
 	var camera := Button.new()
 	camera.name = "Camera"
 	camera.theme_type_variation = &"BotaoIconeAmarelo"
@@ -1428,8 +1472,6 @@ func _texto_ponto(id: String) -> String:
 	if id == "morador":
 		var vez := Historia.morador_da_vez()
 		return "FALAR COM " + str(Historia.MORADORES.get(vez, "MORADOR"))
-	if id.begins_with("foto_"):
-		return "TIRAR FOTO"
 	if id.begins_with("presente_"):
 		return "ABRIR PRESENTE" if Terrenos.presente_disponivel(id.trim_prefix("presente_")) else "PRESENTE: VOLTE AMANHÃ"
 	if not Terrenos.comprado(id):
@@ -1451,9 +1493,6 @@ func _texto_ponto(id: String) -> String:
 func agir(id: String) -> void:
 	if id == "morador":
 		conversar()
-		return
-	if id.begins_with("foto_"):
-		tirar_foto(id.trim_prefix("foto_"))
 		return
 	if id.begins_with("presente_"):
 		var lugar := id.trim_prefix("presente_")
@@ -1707,89 +1746,66 @@ func _so_de_perto(no: Node3D) -> void:
 
 # --- Pontos de foto ------------------------------------------------------------------
 
-## Id do ponto de foto enquanto tira a foto ("" = não está tirando).
+## Enquanto tira a foto: id da vista bonita ("livre" = foto de qualquer lugar).
 var fotografando := ""
 var _camada_foto: CanvasLayer
-var _icones_foto := {}  # id do ponto -> Sprite3D da câmera flutuando
-var _marcas_foto: Node3D  # as marcas (anéis e tripés) de todos os pontos
 var _letreiros_escondidos: Array = []
+var _botao_foto: Button
+var _brilho_foto: Tween
 
 
-## Marca de cada ponto de foto: anel no chão, tripé com câmera e o ícone da
-## câmera flutuando em cima. Chegar nela mostra TIRAR FOTO.
-func _criar_pontos_foto() -> void:
-	var anel := CenarioVila._m("#FFD23F", 0.3)
-	anel.emission_enabled = true
-	anel.emission = Color("#FFD23F")
-	anel.emission_energy_multiplier = 0.6
-	var preto := CenarioVila._m("#3B2A5C", 0.4)
-	_marcas_foto = Node3D.new()
-	_marcas_foto.name = "PontosFoto"
-	add_child(_marcas_foto)
-	for p in PontosFoto.PONTOS:
-		var no := Node3D.new()
-		no.name = "PontoFoto_" + p["id"]
-		no.position = p["pe"]
-		_marcas_foto.add_child(no)
-		Pecas3D.rosquinha(no, 0.75, 0.95, Vector3(0, 0.07, 0), anel, Vector3(1, 0.25, 1))
-		# tripé com a câmera, do lado da marca, virado para a vista
-		var tripe := Node3D.new()
-		tripe.position = Vector3(1.25, 0, 0)
-		no.add_child(tripe)
-		for i in 3:
-			var a := i * TAU / 3.0
-			Pecas3D.cano(tripe, Vector3(cos(a) * 0.3, 0, sin(a) * 0.3), Vector3(0, 1.0, 0), 0.03, preto)
-		Pecas3D.caixa(tripe, Vector3(0.42, 0.28, 0.24), Vector3(0, 1.15, 0), CenarioVila._m("#E8364F", 0.35))
-		Pecas3D.cilindro(tripe, 0.09, 0.1, 0.16, Vector3(0, 1.15, 0.18), preto, Vector3.ONE, Vector3(90, 0, 0))
-		tripe.look_at(Vector3(p["camera"].x, no.position.y, p["camera"].z), Vector3.UP, true)
-		var icone := Sprite3D.new()
-		icone.name = "IconeFoto"
-		icone.texture = ICONE_CAMERA
-		icone.pixel_size = 0.012
-		icone.modulate = Color("#FFD23F")
-		icone.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		icone.no_depth_test = true
-		icone.position = Vector3(0, 2.6, 0)
-		no.add_child(icone)
-		var tween := icone.create_tween().set_loops()
-		tween.tween_property(icone, "position:y", 3.0, 0.6).set_trans(Tween.TRANS_SINE)
-		tween.tween_property(icone, "position:y", 2.6, 0.6).set_trans(Tween.TRANS_SINE)
-		_icones_foto[p["id"]] = icone
-		var area := BairroVila.area(no, "Area", Vector3.ZERO, Vector3(2.0, 2, 2.0))
-		area.body_entered.connect(_chegou_no_ponto.bind("foto_" + p["id"]))
-		area.body_exited.connect(_saiu_do_ponto.bind("foto_" + p["id"]))
-
-
-## Tira a foto no ponto: a câmera voa até o enquadramento, o doce faz pose,
-## flash, e a foto vai para o álbum. Depois mostra a foto (PRONTO/ÁLBUM).
-func tirar_foto(id: String) -> void:
-	var p := PontosFoto.ponto(id)
-	if p.is_empty() or fotografando != "" or _entrando:
+## Botão FOTO: tira foto da vista de agora (sem a interface), com o doce
+## fazendo pose. Perto de uma VISTA BONITA (PontosFoto, sem marca no mapa: é
+## para descobrir), a câmera vai para o enquadramento dela e a primeira foto
+## de cada vista dá prêmio; o botão pulsa quando tem uma perto.
+func tirar_foto(id := "") -> void:
+	if fotografando != "" or _entrando or (dialogo and dialogo.aberto):
 		return
-	fotografando = id
+	if id == "":
+		id = PontosFoto.perto(jogador.global_position)
+	var p := PontosFoto.ponto(id)
+	fotografando = id if not p.is_empty() else "livre"
 	_interface.visible = false
-	_mostrar_marcas_foto(false)  # a foto sai só com a vista e o doce
-	# letreiros 3D colados na câmera (nome do lugar...) tapariam a foto
-	_letreiros_escondidos = find_children("*", "Label3D", true, false).filter(func(l):
-		return l.visible and l.global_position.distance_to(p["camera"]) < 7.0)
-	for letreiro in _letreiros_escondidos:
-		letreiro.visible = false
-	jogador.global_position = Vector3(p["pe"].x, jogador.global_position.y, p["pe"].z)
-	jogador.olhar_para(p["camera"])
-	var ate := Transform3D(Basis.looking_at(p["olhar"] - p["camera"]), p["camera"])
-	var voo := create_tween()
-	voo.tween_method(func(t: float): _camera.global_transform = _camera.global_transform.interpolate_with(ate, t),
-		0.0, 1.0, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await voo.finished
-	_camera.global_transform = ate
+	if not p.is_empty():
+		# letreiros 3D colados na câmera (nome do lugar...) tapariam a foto
+		_letreiros_escondidos = find_children("*", "Label3D", true, false).filter(func(l):
+			return l.visible and l.global_position.distance_to(p["camera"]) < 7.0)
+		for letreiro in _letreiros_escondidos:
+			letreiro.visible = false
+		jogador.global_position = Vector3(p["pe"].x, jogador.global_position.y, p["pe"].z)
+		jogador.olhar_para(p["camera"])
+		var ate := Transform3D(Basis.looking_at(p["olhar"] - p["camera"]), p["camera"])
+		var voo := create_tween()
+		voo.tween_method(func(t: float): _camera.global_transform = _camera.global_transform.interpolate_with(ate, t),
+			0.0, 1.0, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		await voo.finished
+		_camera.global_transform = ate
+	elif modo_camera != Camera.PRIMEIRA_PESSOA:
+		jogador.olhar_para(_camera.global_position)  # olha para a foto
 	jogador.comemorar()
 	await get_tree().create_timer(0.45).timeout
-	await RenderingServer.frame_post_draw
+	await Telas.quadro_desenhado()
 	var imagem := get_viewport().get_texture().get_image()
+	if imagem == null or imagem.is_empty():  # sem tela (testes)
+		imagem = Image.create(16, 9, false, Image.FORMAT_RGBA8)
 	Audio.tocar("foto")
-	var caminho := PontosFoto.salvar(imagem, id)
-	var premio := PontosFoto.registrar(id)
-	_mostrar_foto(imagem, p, premio, caminho != "")
+	var caminho := PontosFoto.salvar(imagem, id if not p.is_empty() else "vila")
+	var premio := PontosFoto.registrar(id) if not p.is_empty() else {}
+	_mostrar_foto(imagem, p if not p.is_empty() else {"nome": "VILA DOS DOCES"}, premio, caminho != "")
+
+
+## O botão de foto pulsa quando o doce está numa vista bonita.
+func _atualizar_botao_foto() -> void:
+	var perto := PontosFoto.perto(jogador.global_position) != ""
+	if perto and _brilho_foto == null:
+		_botao_foto.pivot_offset = _botao_foto.size / 2.0
+		_brilho_foto = _botao_foto.create_tween().set_loops()
+		_brilho_foto.tween_property(_botao_foto, "scale", Vector2.ONE * 1.18, 0.4).set_trans(Tween.TRANS_SINE)
+		_brilho_foto.tween_property(_botao_foto, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_SINE)
+	elif not perto and _brilho_foto != null:
+		_brilho_foto.kill()
+		_brilho_foto = null
+		_botao_foto.scale = Vector2.ONE
 
 
 func _mostrar_foto(imagem: Image, p: Dictionary, premio: Dictionary, salvou: bool) -> void:
@@ -1845,7 +1861,7 @@ func _mostrar_foto(imagem: Image, p: Dictionary, premio: Dictionary, salvou: boo
 	info.add_theme_font_size_override("font_size", 20)
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info.text = ("FOTO SALVA NO ÁLBUM!" if salvou else "NÃO DEU PARA SALVAR A FOTO") \
-		+ "  PONTOS DE FOTO: %d/%d" % [PontosFoto.pontos_com_foto(), PontosFoto.PONTOS.size()]
+		+ "  VISTAS BONITAS: %d/%d" % [PontosFoto.pontos_com_foto(), PontosFoto.PONTOS.size()]
 	if not premio.is_empty():
 		info.text += "\nPRIMEIRA FOTO AQUI: +%d MOEDAS  +%d AÇÚCAR" % [premio["moedas"], premio["acucar"]]
 	coluna.add_child(info)
@@ -1882,7 +1898,6 @@ func _mostrar_foto(imagem: Image, p: Dictionary, premio: Dictionary, salvou: boo
 func sair_da_foto() -> void:
 	if is_instance_valid(_camada_foto):
 		_camada_foto.queue_free()
-	_mostrar_marcas_foto(true)
 	for letreiro in _letreiros_escondidos:
 		if is_instance_valid(letreiro):
 			letreiro.visible = true
@@ -1890,11 +1905,6 @@ func sair_da_foto() -> void:
 	fotografando = ""
 	_interface.visible = true
 	_foco_aereo = _pos_visual()
-
-
-func _mostrar_marcas_foto(sim: bool) -> void:
-	for peca in _marcas_foto.find_children("*", "VisualInstance3D", true, false):
-		peca.visible = sim
 
 
 func abrir_album() -> void:

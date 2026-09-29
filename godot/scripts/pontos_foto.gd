@@ -1,9 +1,9 @@
 class_name PontosFoto
-## PONTOS DE FOTO da vila: lugares com vista bonita. No chão de cada um há
-## uma marca com uma câmera; o doce para em cima e toca em TIRAR FOTO: a
-## câmera vai para o enquadramento do ponto, o doce faz pose e a foto vai
-## para o ÁLBUM (user://fotos; no computador, também para a pasta Imagens).
-## A primeira foto de cada ponto dá prêmio.
+## FOTOS: o botão de foto da vila tira foto de qualquer lugar e guarda no
+## ÁLBUM (user://fotos; no computador, também na pasta Imagens). Pela vila há
+## VISTAS BONITAS escondidas (sem marca: é para descobrir; o botão pulsa perto
+## delas): lá a câmera vai para o enquadramento da vista e a primeira foto de
+## cada uma dá prêmio.
 ##
 ## Estado em Progresso.vila["fotos"] = {id do ponto: quantas fotos tirou}.
 
@@ -26,6 +26,7 @@ const PONTOS := [
 ## Prêmio da primeira foto em cada ponto.
 const PREMIO := {"moedas": 20, "acucar": 15}
 const PASTA := "user://fotos"
+const RAIO := 4.5  # distância da vista para valer
 ## Fotos guardadas no álbum (as mais antigas saem).
 const MAXIMO_ALBUM := 40
 
@@ -35,6 +36,14 @@ static func ponto(id: String) -> Dictionary:
 		if p["id"] == id:
 			return p
 	return {}
+
+
+## Id da vista bonita perto desse ponto ("" = nenhuma).
+static func perto(posicao: Vector3) -> String:
+	for p in PONTOS:
+		if Vector2(posicao.x - p["pe"].x, posicao.z - p["pe"].z).length() < RAIO:
+			return p["id"]
+	return ""
 
 
 static func _estado() -> Dictionary:
@@ -105,4 +114,4 @@ static func _quando(caminho: String) -> int:
 ## Nome do ponto de uma foto do álbum (pelo nome do arquivo).
 static func nome_da_foto(caminho: String) -> String:
 	var partes := caminho.get_file().get_basename().split("_")
-	return str(ponto("_".join(partes.slice(1, partes.size() - 1))).get("nome", "FOTO"))
+	return str(ponto("_".join(partes.slice(1, partes.size() - 1))).get("nome", "VILA DOS DOCES"))
