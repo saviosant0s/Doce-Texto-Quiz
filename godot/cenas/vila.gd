@@ -253,6 +253,7 @@ func _process(delta: float) -> void:
 	if _tempo_rotulos > 1.0:
 		_tempo_rotulos = 0.0
 		_atualizar_rotulos_producao()
+		_atualizar_relogio()
 	var pos := _pos_visual()
 	var cabeca := pos + Vector3(0, ALTURA_OLHOS, 0)
 	match modo_camera:
@@ -846,6 +847,18 @@ func _criar_interface() -> void:
 	espaco.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	topo.add_child(espaco)
 	# açúcar e moedas (o açúcar vai para as máquinas da confeitaria)
+	# relógio do jogo (um dia do jogo = 40 min: a manhã vira noite jogando)
+	var relogio := PanelContainer.new()
+	relogio.name = "Relogio"
+	relogio.theme_type_variation = &"Etiqueta"
+	relogio.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	relogio.visible = not CicloDia.sempre_dia()
+	var texto_relogio := Label.new()
+	texto_relogio.name = "TextoRelogio"
+	texto_relogio.theme_type_variation = &"SubtituloClaro"
+	texto_relogio.add_theme_font_size_override("font_size", 22)
+	relogio.add_child(texto_relogio)
+	topo.add_child(relogio)
 	var saldos := PanelContainer.new()
 	saldos.name = "Saldos"
 	saldos.theme_type_variation = &"Etiqueta"
@@ -955,6 +968,12 @@ func _olhar_suave(alvo: Vector3, delta: float) -> Vector3:
 
 
 ## Nível, missões, baús, açúcar e moedas do topo (depois de missões/baús).
+func _atualizar_relogio() -> void:
+	var rotulo := find_child("TextoRelogio", true, false) as Label
+	if rotulo:
+		rotulo.text = "%s · %s" % [CicloDia.fase(), CicloDia.relogio()]
+
+
 func _atualizar_topo() -> void:
 	var botao_evento := find_child("BotaoEvento", true, false) as Button
 	if botao_evento:
@@ -1000,8 +1019,8 @@ func abrir_evento() -> void:
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.custom_minimum_size.x = 900
-	info.text = "VOCÊ TEM %d %s · FALTAM %d DIAS\nGANHE JOGANDO QUALQUER JOGO E PEGANDO AS %s PELA VILA (%d POR DIA)." % [
-		Eventos.fichas(), dados["ficha"], Eventos.dias_restantes(), dados["ficha"], Eventos.ITENS_POR_DIA]
+	info.text = "VOCÊ TEM %d %s · O TEMA MUDA SOZINHO EM %d DIAS DO JOGO (~%d H)\nGANHE JOGANDO QUALQUER JOGO E PEGANDO AS %s PELA VILA (%d POR DIA DO JOGO)." % [
+		Eventos.fichas(), dados["ficha"], Eventos.dias_restantes(), Eventos.horas_restantes(), dados["ficha"], Eventos.ITENS_POR_DIA]
 	coluna.add_child(info)
 	var grade := GridContainer.new()
 	grade.name = "Trilha"
@@ -1079,6 +1098,7 @@ func _criar_historia() -> void:
 	_interface.add_child(dialogo)
 	_atualizar_historia()
 	_atualizar_topo()
+	_atualizar_relogio()
 	_mostrar_pendentes.call_deferred()
 
 

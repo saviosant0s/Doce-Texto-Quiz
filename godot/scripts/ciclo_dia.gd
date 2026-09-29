@@ -1,30 +1,42 @@
 class_name CicloDia
-## Dia e noite da Vila dos Doces pelo relógio de verdade, e o clima.
+## Dia e noite da Vila dos Doces e o clima, num RELÓGIO DO JOGO: um dia do
+## jogo dura DURACAO_DIA (40 minutos de verdade), então jogando dá para ver a
+## manhã virar tarde, pôr do sol e noite. O relógio anda mesmo com o jogo
+## fechado (é calculado da hora de verdade). Os eventos da temporada trocam
+## sozinhos a cada Eventos.DIAS_POR_EVENTO dias do jogo.
 ##
 ## - O céu, o sol (de noite, a lua), a luz ambiente e a névoa mudam com a
-##   hora do celular: manhã (5h–7h clareia), dia, pôr do sol (17h–19h30) e
+##   hora do jogo: manhã (5h–7h clareia), dia, pôr do sol (17h–19h30) e
 ##   noite. À noite as janelas e luminárias acendem e aparecem estrelas e
 ##   vaga-lumes.
 ## - ESTRELA CADENTE: de noite, uma estrela cai em algum canto da vila; quem
 ##   chega até ela ganha açúcar e moedas (uma por noite).
-## - CHUVA DE GRANULADO: em algumas horas do dia chove granulado colorido e
-##   aparecem GOTAS DE GRANULADO pelo chão; cada uma dá açúcar.
-## - Configurações > "Dia e noite": RELÓGIO (padrão) ou SEMPRE DIA.
+## - CHUVA DE GRANULADO: de vez em quando (blocos de 3 horas do jogo, ~5
+##   minutos) chove granulado colorido e aparecem GOTAS DE GRANULADO pelo
+##   chão; cada uma dá açúcar.
+## - Configurações > "Dia e noite": ligado (padrão) ou SEMPRE DIA.
 ##
-## Estado em Progresso.vila: "estrela": noite em que já pegou ("AAAA-MM-DD"),
-## "granulado": {"chuva": "AAAA-MM-DD-HH", "pegas": [índices]}.
+## Estado em Progresso.vila: "estrela": noite em que já pegou ("noite-N"),
+## "granulado": {"chuva": "N-B" (dia e bloco), "pegas": [índices]}.
 
-## Para testes e prints: hora fixa (0 a 24) e dia fixo ("" = de verdade).
+## Segundos de verdade por dia do jogo (40 min: 1 hora do jogo = 100 s).
+const DURACAO_DIA := 2400.0
+## Hora do jogo no "começo dos tempos" (só para o relógio não começar à meia-noite).
+const HORA_INICIAL := 8.0
+
+## Para testes e prints: momento fixo (segundos Unix), hora fixa (0 a 24) e
+## dia do jogo fixo (-1 = de verdade).
+static var agora_fixo := -1.0
 static var hora_fixa := -1.0
-static var dia_fixo := ""
+static var dia_fixo := -1
 ## Para testes e prints: força chuva (1), sem chuva (0) ou de verdade (-1).
 static var chuva_fixa := -1
 
 const PREMIO_ESTRELA := {"acucar": 25, "moedas": 25}
 const ACUCAR_GOTA := 3
 const GOTAS := 12
-## Uma hora em CHANCE_CHUVA tem chuva (sorteio fixo pela data e hora).
-const CHANCE_CHUVA := 6
+## Um bloco de 3 horas do jogo em CHANCE_CHUVA tem chuva (sorteio fixo).
+const CHANCE_CHUVA := 4
 ## Onde a estrela cadente pode cair (uma por noite, sorteada pela data).
 const LUGARES_ESTRELA := [Vector3(-6, 0, 5), Vector3(7, 0, 9), Vector3(-17, 0, 11), Vector3(20, 0, 3),
 	Vector3(-4, 0, -21), Vector3(16, 0, -19)]
@@ -48,18 +60,33 @@ static func escolher_sempre_dia(sim: bool) -> void:
 	Progresso.salvar()
 
 
-## Hora agora (0 a 24, com os minutos); meio-dia se "sempre dia".
+static func agora() -> float:
+	return agora_fixo if agora_fixo >= 0.0 else Time.get_unix_time_from_system()
+
+
+## Horas do jogo desde o começo dos tempos.
+static func horas_jogo() -> float:
+	return agora() / DURACAO_DIA * 24.0 + HORA_INICIAL
+
+
+## Hora do jogo agora (0 a 24, com os minutos); meio-dia se "sempre dia".
 static func hora() -> float:
 	if hora_fixa >= 0.0:
 		return hora_fixa
 	if sempre_dia():
 		return 12.0
-	var t := Time.get_time_dict_from_system()
-	return t["hour"] + t["minute"] / 60.0
+	return fposmod(horas_jogo(), 24.0)
 
 
-static func hoje() -> String:
-	return dia_fixo if not dia_fixo.is_empty() else Time.get_date_string_from_system()
+## Número do dia do jogo (conta sempre, mesmo com "sempre dia").
+static func dia_jogo() -> int:
+	return dia_fixo if dia_fixo >= 0 else floori(horas_jogo() / 24.0)
+
+
+## "14:30" (a hora do jogo, para o relógio da vila).
+static func relogio() -> String:
+	var h := hora()
+	return "%02d:%02d" % [int(h), int(fmod(h, 1.0) * 60.0)]
 
 
 ## 0 = dia claro, 1 = noite fechada (vai e volta aos poucos).
@@ -104,11 +131,7 @@ static func misturar(valores: Array, h := -1.0) -> Variant:
 
 ## A noite "de hoje": depois da meia-noite ainda conta a da véspera.
 static func id_noite() -> String:
-	var dia := hoje()
-	if hora() < 12.0:
-		var unix := Time.get_unix_time_from_datetime_string(dia + "T12:00:00") - 86400
-		dia = Time.get_date_string_from_unix_time(unix)
-	return dia
+	return "noite-%d" % (dia_jogo() - (1 if hora() < 12.0 else 0))
 
 
 # --- Estrela cadente --------------------------------------------------------------
@@ -133,9 +156,9 @@ static func pegar_estrela() -> Dictionary:
 
 # --- Chuva de granulado -----------------------------------------------------------
 
-## Identificador da hora de agora ("AAAA-MM-DD-HH").
+## Identificador do bloco de 3 horas do jogo de agora ("dia-bloco").
 static func id_hora() -> String:
-	return "%s-%02d" % [hoje(), int(hora())]
+	return "%d-%d" % [dia_jogo(), int(hora()) / 3]
 
 
 static func chovendo() -> bool:

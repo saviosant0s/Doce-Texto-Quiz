@@ -33,6 +33,7 @@ var _chuva: CPUParticles3D
 var _estrela_cadente: Node3D
 var _gotas := {}  # índice -> Node3D
 var _chovia := false
+var _id_chuva := ""
 var _tempo := 0.0
 var _relogio := 99.0  # segundos desde a última vez que aplicou a hora
 ## Noite agora (0 a 1), para a vila e os testes.
@@ -91,8 +92,10 @@ func atualizar(ja := false) -> void:
 	_lua.visible = noite > 0.5
 	if _vagalumes:
 		_vagalumes.emitting = noite > 0.6
-	if chuva != _chovia or ja:
+	# chuva nova (ou outra chuva logo em seguida, com gotas novas)
+	if chuva != _chovia or ja or (chuva and CicloDia.id_hora() != _id_chuva):
 		_chovia = chuva
+		_id_chuva = CicloDia.id_hora()
 		_mudar_chuva(chuva)
 	_conferir_estrela()
 

@@ -75,7 +75,8 @@ func _ready() -> void:
 		Vila.ultima_porta = args["porta"]
 	# evento da temporada: --evento=2026-10-20 (data do evento), --fichas=150
 	if args.has("evento"):
-		Eventos.dia_fixo = args["evento"]
+		# --evento=natal: o dia do jogo em que esse tema está no meio
+		CicloDia.dia_fixo = 24870 * Eventos.DIAS_POR_EVENTO + Eventos.ORDEM.find(args["evento"]) * Eventos.DIAS_POR_EVENTO + 10
 	if args.has("fichas"):
 		Eventos.ganhar_fichas(int(args["fichas"]))
 	if args.has("qualidade"):

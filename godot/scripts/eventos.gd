@@ -1,35 +1,39 @@
 class_name Eventos
-## EVENTOS DA TEMPORADA: em algumas épocas do ano a vila fica decorada e tem
-## um evento com FICHAS próprias (pétalas, abóboras, estrelas...).
+## EVENTOS DA TEMPORADA: a vila fica decorada com um tema e tem um evento com
+## FICHAS próprias (pétalas, abóboras, estrelas...). Os temas trocam SOZINHOS
+## a cada DIAS_POR_EVENTO dias do jogo (ver CicloDia: um dia do jogo = 40 min,
+## então cada tema fica ~20 horas de verdade), na ordem de ORDEM, em roda.
 ## - Ganha fichas jogando qualquer coisa (quiz, torre, fábrica, match,
 ##   confeitaria, laboratório, baús: ver FICHAS_POR_EVENTO) e pegando os
 ##   objetos do evento espalhados pela vila (ITENS_POR_DIA por dia).
 ## - A TRILHA de prêmios vai liberando conforme junta fichas: moedas, açúcar,
 ##   baú, um MÓVEL exclusivo para a Minha Casa e, no fim, um DOCE exclusivo
 ##   para a coleção (só dá para ter pegando no evento).
-## Cada evento volta todo ano (as fichas zeram a cada edição).
+## Cada evento volta na próxima volta da roda (as fichas zeram a cada edição).
 ##
-## Estado em Progresso.vila["evento"] = {"edicao": "halloween-2026", "fichas",
-## "resgatados": [índices da trilha], "dia": "AAAA-MM-DD", "pegos": [índices]}.
+## Estado em Progresso.vila["evento"] = {"edicao": "halloween-24871", "fichas",
+## "resgatados": [índices da trilha], "dia": dia do jogo, "pegos": [índices]}.
 
-## inicio/fim: [mês, dia] (o Natal passa da virada do ano).
+const ORDEM := ["primavera", "halloween", "natal", "carnaval", "pascoa", "junina"]
+const DIAS_POR_EVENTO := 30
+
 const EVENTOS := {
-	"primavera": {"nome": "FESTIVAL DAS FLORES", "inicio": [9, 20], "fim": [10, 14], "ficha": "PÉTALAS",
+	"primavera": {"nome": "FESTIVAL DAS FLORES", "ficha": "PÉTALAS",
 		"cor": "#FF8FB8", "movel": "vaso_primavera", "doce": "flor_de_acucar",
 		"texto": "A primavera chegou e a vila está florida!"},
-	"halloween": {"nome": "NOITE DAS ABÓBORAS", "inicio": [10, 15], "fim": [11, 10], "ficha": "ABÓBORAS",
+	"halloween": {"nome": "NOITE DAS ABÓBORAS", "ficha": "ABÓBORAS",
 		"cor": "#FF8A1F", "movel": "abobora_luminosa", "doce": "abobora_choco",
 		"texto": "Abóboras de chocolate apareceram por toda a vila. Gostosuras ou travessuras!"},
-	"natal": {"nome": "NATAL DOCE", "inicio": [12, 1], "fim": [1, 10], "ficha": "ESTRELINHAS",
+	"natal": {"nome": "NATAL DOCE", "ficha": "ESTRELINHAS",
 		"cor": "#E8364F", "movel": "arvore_natal", "doce": "biscoito_gengibre",
 		"texto": "A vila ganhou luzes, presentes e uma árvore de Natal na praça!"},
-	"carnaval": {"nome": "CARNAVAL DE CONFEITOS", "inicio": [2, 5], "fim": [3, 5], "ficha": "CONFETES",
+	"carnaval": {"nome": "CARNAVAL DE CONFEITOS", "ficha": "CONFETES",
 		"cor": "#B07CFF", "movel": "mascara_carnaval", "doce": "confete",
 		"texto": "Serpentinas, máscaras e confete colorido por toda parte!"},
-	"pascoa": {"nome": "CAÇA AOS OVOS", "inicio": [3, 20], "fim": [4, 25], "ficha": "OVINHOS",
+	"pascoa": {"nome": "CAÇA AOS OVOS", "ficha": "OVINHOS",
 		"cor": "#6FD3FF", "movel": "cesta_pascoa", "doce": "ovo_pascoa",
 		"texto": "Ovinhos de chocolate estão escondidos pela vila. Ache todos!"},
-	"junina": {"nome": "ARRAIÁ DOCE", "inicio": [6, 1], "fim": [7, 20], "ficha": "BANDEIRINHAS",
+	"junina": {"nome": "ARRAIÁ DOCE", "ficha": "BANDEIRINHAS",
 		"cor": "#FFD23F", "movel": "fogueira_junina", "doce": "pipoca_doce",
 		"texto": "Tem bandeirinha, fogueira e quentão... de chocolate!"},
 }
@@ -48,27 +52,17 @@ const TRILHA := [
 ## Fichas por evento dos jogos (quantidade vezes o valor; ver Missoes.registrar).
 const FICHAS_POR_EVENTO := {"partidas": 5.0, "acertos": 1.0, "estrelas": 2.0, "torre": 0.5, "fabrica": 2.0,
 	"match": 4.0, "clientes": 2.0, "lab_fases": 5.0, "baus": 2.0}
-const ITENS_POR_DIA := 8
+const ITENS_POR_DIA := 6  # por dia do jogo (40 min)
 const FICHAS_ITEM := 3
 
-## Para testes e prints: data fixa ("" = de verdade).
-static var dia_fixo := ""
+## Dia do jogo (CicloDia; nos testes, CicloDia.dia_fixo).
+static func dia() -> int:
+	return CicloDia.dia_jogo()
 
 
-static func hoje() -> String:
-	return dia_fixo if not dia_fixo.is_empty() else Time.get_date_string_from_system()
-
-
-## Id do evento de hoje ("" = nenhum).
+## Id do evento de agora (sempre tem um: os temas vão trocando em roda).
 static func atual() -> String:
-	var partes := hoje().split("-")
-	var md := int(partes[1]) * 100 + int(partes[2])
-	for id in EVENTOS:
-		var ini := int(EVENTOS[id]["inicio"][0]) * 100 + int(EVENTOS[id]["inicio"][1])
-		var fim := int(EVENTOS[id]["fim"][0]) * 100 + int(EVENTOS[id]["fim"][1])
-		if (ini <= fim and md >= ini and md <= fim) or (ini > fim and (md >= ini or md <= fim)):
-			return id
-	return ""
+	return ORDEM[posmod(floori(dia() / float(DIAS_POR_EVENTO)), ORDEM.size())]
 
 
 static func ativo() -> bool:
@@ -79,39 +73,35 @@ static func dados() -> Dictionary:
 	return EVENTOS.get(atual(), {})
 
 
-## "halloween-2026" (o Natal de dezembro e o de janeiro são a mesma edição).
+## "halloween-24871": o evento e a volta da roda (cada volta é uma edição nova).
 static func edicao() -> String:
-	var id := atual()
-	if id == "":
-		return ""
-	var partes := hoje().split("-")
-	var ano := int(partes[0])
-	var ini: Array = EVENTOS[id]["inicio"]
-	if int(partes[1]) < int(ini[0]):
-		ano -= 1
-	return "%s-%d" % [id, ano]
+	return "%s-%d" % [atual(), floori(dia() / float(DIAS_POR_EVENTO))]
 
 
-## Dias até o fim do evento (contando hoje).
+## Dias do jogo até o tema trocar (contando hoje).
 static func dias_restantes() -> int:
-	var id := atual()
-	if id == "":
-		return 0
-	var partes := hoje().split("-")
-	var ano := int(partes[0])
-	var fim: Array = EVENTOS[id]["fim"]
-	if int(fim[0]) < int(partes[1]):
-		ano += 1  # termina no ano que vem (Natal)
-	var hoje_unix := Time.get_unix_time_from_datetime_string(hoje() + "T12:00:00")
-	var fim_unix := Time.get_unix_time_from_datetime_string("%d-%02d-%02dT12:00:00" % [ano, fim[0], fim[1]])
-	return int((fim_unix - hoje_unix) / 86400) + 1
+	return DIAS_POR_EVENTO - posmod(dia(), DIAS_POR_EVENTO)
+
+
+## Horas de verdade (aproximadas) até o tema trocar.
+static func horas_restantes() -> int:
+	var fim := (floori(dia() / float(DIAS_POR_EVENTO)) + 1) * DIAS_POR_EVENTO
+	var falta := (fim * 24.0 - CicloDia.horas_jogo()) / 24.0 * CicloDia.DURACAO_DIA / 3600.0
+	return maxi(1, ceili(falta))
 
 
 static func _estado() -> Dictionary:
 	var e: Dictionary = Progresso.vila.get("evento", {})
 	if str(e.get("edicao", "")) != edicao():
-		e = {"edicao": edicao(), "fichas": 0, "resgatados": [], "dia": "", "pegos": []}
-		Progresso.vila["evento"] = e
+		var antiga := str(e.get("edicao", ""))
+		var partes := antiga.split("-")
+		if partes.size() == 2 and partes[0] == atual() and int(partes[1]) >= 2000 and int(partes[1]) < 2100:
+			# edição do tempo em que os eventos seguiam o calendário ("primavera-2026"):
+			# o mesmo tema continua, então as fichas e prêmios continuam também
+			e["edicao"] = edicao()
+		else:
+			e = {"edicao": edicao(), "fichas": 0, "resgatados": [], "dia": -1, "pegos": []}
+			Progresso.vila["evento"] = e
 	return e
 
 
@@ -184,7 +174,7 @@ static func prontos() -> int:
 ## Onde ficam os objetos de hoje (sorteio fixo pela data).
 static func lugares_itens() -> Array:
 	var sorteio := RandomNumberGenerator.new()
-	sorteio.seed = hash("evento" + hoje())
+	sorteio.seed = hash("evento%d" % dia())
 	var lista := []
 	while lista.size() < ITENS_POR_DIA:
 		var angulo := sorteio.randf() * TAU
@@ -197,8 +187,8 @@ static func lugares_itens() -> Array:
 
 static func _pegos_hoje() -> Array:
 	var e := _estado()
-	if str(e["dia"]) != hoje():
-		e["dia"] = hoje()
+	if int(e.get("dia", -1)) != dia():
+		e["dia"] = dia()
 		e["pegos"] = []
 	return e["pegos"]
 

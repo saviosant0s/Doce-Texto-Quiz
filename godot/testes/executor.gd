@@ -1821,13 +1821,24 @@ func _testar_ciclo_dia() -> void:
 	verificar(CicloDia.fase(10.0) == "MANHÃ" and CicloDia.fase(22.0) == "NOITE" and CicloDia.fase(18.3) == "PÔR DO SOL",
 		"nome de cada momento do dia")
 	verificar((CicloDia.misturar(CicloDia.CEU_TOPO, 23.0) as Color).v < 0.3, "céu escuro de noite")
-	CicloDia.dia_fixo = "2026-10-05"
+	# relógio do jogo: um dia do jogo = 40 min de verdade, andando sozinho
+	CicloDia.agora_fixo = 1000000.0
+	var hora_a := CicloDia.hora()
+	CicloDia.agora_fixo += CicloDia.DURACAO_DIA / 4.0
+	verificar(is_equal_approx(fposmod(CicloDia.hora() - hora_a, 24.0), 6.0), "10 minutos de verdade = 6 horas do jogo")
+	CicloDia.agora_fixo += CicloDia.DURACAO_DIA * 3.0 / 4.0
+	verificar(is_equal_approx(CicloDia.hora(), hora_a), "40 minutos depois, a mesma hora do dia seguinte")
+	var dia_a := CicloDia.dia_jogo()
+	CicloDia.agora_fixo += CicloDia.DURACAO_DIA
+	verificar(CicloDia.dia_jogo() == dia_a + 1, "e os dias do jogo vão contando")
+	CicloDia.agora_fixo = -1.0
+	CicloDia.dia_fixo = 500
 	CicloDia.hora_fixa = 22.0
 	Progresso.vila.erase("estrela")
 	verificar(CicloDia.estrela_disponivel(), "de noite tem estrela cadente")
 	verificar(CicloDia.pegar_estrela()["acucar"] == CicloDia.PREMIO_ESTRELA["acucar"] and not CicloDia.estrela_disponivel(),
 		"pegou a estrela: uma por noite")
-	CicloDia.dia_fixo = "2026-10-06"
+	CicloDia.dia_fixo = 501
 	CicloDia.hora_fixa = 2.0
 	verificar(not CicloDia.estrela_disponivel(), "de madrugada ainda é a mesma noite")
 	CicloDia.hora_fixa = 21.0
@@ -1841,31 +1852,29 @@ func _testar_ciclo_dia() -> void:
 	verificar(CicloDia.pegar_gota(0) == 0, "a mesma gota não conta duas vezes")
 	var gotas_livres := true
 	for d in 30:
-		CicloDia.dia_fixo = "2026-11-%02d" % (1 + d % 28)
+		CicloDia.dia_fixo = 600 + d
 		CicloDia.hora_fixa = float(d % 24)
-		Eventos.dia_fixo = CicloDia.dia_fixo
 		for p in CicloDia.lugares_gotas() + Eventos.lugares_itens():
 			if not CicloDia.lugar_livre(p):
 				gotas_livres = false
 	verificar(gotas_livres, "gotas e objetos de evento nunca caem dentro de prédio, terreno ou lago")
 	verificar(not CicloDia.lugar_livre(Vector3(0, 0, -14)) and not CicloDia.lugar_livre(Vector3(-30, 0, 12)),
 		"dentro da escola ou do lago não é lugar livre")
-	Eventos.dia_fixo = ""
-	CicloDia.dia_fixo = "2026-10-06"
+	CicloDia.dia_fixo = 501
 	CicloDia.chuva_fixa = 0
 	verificar(CicloDia.pegar_gota(1) == 0, "sem chuva, sem gotas")
 	CicloDia.chuva_fixa = -1
 	var chuvas := 0
-	for h in 24 * 7:
-		CicloDia.dia_fixo = "2026-10-%02d" % (1 + h / 24)
-		CicloDia.hora_fixa = float(h % 24)
+	for b in 8 * 20:
+		CicloDia.dia_fixo = 700 + b / 8
+		CicloDia.hora_fixa = float((b % 8) * 3)
 		chuvas += int(CicloDia.chovendo())
-	verificar(chuvas > 5 and chuvas < 60, "chove de vez em quando (%d horas numa semana)" % chuvas)
+	verificar(chuvas > 15 and chuvas < 70, "chove de vez em quando (%d de 160 períodos de 3 horas)" % chuvas)
 	Progresso.config["sempre_dia"] = true
 	CicloDia.hora_fixa = -1.0
 	verificar(CicloDia.hora() == 12.0 and not CicloDia.chovendo(), "\"sempre dia\": meio-dia e sem chuva")
 	Progresso.config["sempre_dia"] = sempre
-	CicloDia.dia_fixo = ""
+	CicloDia.dia_fixo = -1
 	Progresso.vila = guardado
 	Progresso.confeitaria["acucar"] = acucar_antes
 	Progresso.moedas = moedas_antes
@@ -1983,23 +1992,29 @@ func _testar_eventos() -> void:
 	var colecao: Dictionary = Progresso.colecao.duplicate(true)
 	var moedas_antes := Progresso.moedas
 	var acucar_antes := Confeitaria.acucar()
-	Eventos.dia_fixo = "2026-10-20"
-	verificar(Eventos.atual() == "halloween" and Eventos.edicao() == "halloween-2026", "20 de outubro: Noite das Abóboras")
-	Eventos.dia_fixo = "2026-12-25"
-	verificar(Eventos.atual() == "natal" and Eventos.edicao() == "natal-2026", "Natal em dezembro")
-	Eventos.dia_fixo = "2027-01-05"
-	verificar(Eventos.atual() == "natal" and Eventos.edicao() == "natal-2026" and Eventos.dias_restantes() == 6,
-		"5 de janeiro ainda é o Natal de 2026 (faltam 6 dias)")
-	Eventos.dia_fixo = "2026-08-10"
-	verificar(not Eventos.ativo() and Eventos.fichas() == 0, "em agosto não tem evento")
-	Eventos.ganhar_fichas(50)
-	verificar(Eventos.fichas() == 0, "sem evento, não junta fichas")
+	# os temas trocam sozinhos a cada DIAS_POR_EVENTO dias do jogo, em roda
+	var d := Eventos.DIAS_POR_EVENTO
+	CicloDia.dia_fixo = 5
+	verificar(Eventos.atual() == "primavera" and Eventos.edicao() == "primavera-0" and Eventos.dias_restantes() == d - 5,
+		"começa no Festival das Flores")
+	CicloDia.dia_fixo = d + 1
+	verificar(Eventos.atual() == "halloween" and Eventos.edicao() == "halloween-1", "30 dias do jogo depois: Noite das Abóboras")
+	CicloDia.dia_fixo = 2 * d
+	verificar(Eventos.atual() == "natal", "depois o Natal")
+	CicloDia.dia_fixo = 6 * d + 3
+	verificar(Eventos.atual() == "primavera" and Eventos.edicao() == "primavera-6", "e a roda volta ao começo (edição nova)")
+	CicloDia.agora_fixo = 1000000.0
+	CicloDia.dia_fixo = -1
+	verificar(Eventos.horas_restantes() >= 1 and Eventos.horas_restantes() <= ceili(d * CicloDia.DURACAO_DIA / 3600.0),
+		"tempo de verdade até trocar o tema (%d h)" % Eventos.horas_restantes())
+	CicloDia.agora_fixo = -1.0
+	verificar(Eventos.ativo(), "sempre tem um tema na vila")
 	for id in Eventos.EVENTOS:
 		var ev: Dictionary = Eventos.EVENTOS[id]
 		verificar(Colecao.dados(ev["doce"]).get("evento", "") == id and Casa.MOVEIS.has(ev["movel"]),
 			"%s tem doce e móvel exclusivos" % id)
 		verificar(not Colecao.a_venda(ev["doce"]), "o doce de %s não se compra" % id)
-	Eventos.dia_fixo = "2026-10-01"
+	CicloDia.dia_fixo = 6 * d
 	Progresso.vila.erase("evento")
 	verificar(Eventos.atual() == "primavera" and Eventos.fichas() == 0, "Festival das Flores começa com 0 pétalas")
 	Missoes.registrar("partidas", 1)
@@ -2007,8 +2022,8 @@ func _testar_eventos() -> void:
 	verificar(Eventos.fichas() == 12, "jogar dá fichas (partida 5 + 7 acertos)")
 	verificar(not Eventos.pode_resgatar(0), "12 fichas: primeiro prêmio (20) ainda não")
 	verificar(Eventos.pegar_item(0) == Eventos.FICHAS_ITEM and Eventos.pegar_item(0) == 0, "pega o objeto da vila uma vez")
-	Eventos.dia_fixo = "2026-10-02"
-	verificar(Eventos.pegar_item(0) == Eventos.FICHAS_ITEM, "no outro dia, objetos novos")
+	CicloDia.dia_fixo = 6 * d + 1
+	verificar(Eventos.pegar_item(0) == Eventos.FICHAS_ITEM, "no outro dia do jogo, objetos novos")
 	Eventos.ganhar_fichas(400)
 	verificar(Eventos.prontos() == Eventos.TRILHA.size(), "com 400+ fichas, a trilha toda para resgatar")
 	var moedas := Progresso.moedas
@@ -2019,10 +2034,13 @@ func _testar_eventos() -> void:
 	Progresso.colecao["doces"].erase("flor_de_acucar")
 	Eventos.resgatar(6)
 	verificar(Colecao.tem("flor_de_acucar"), "no fim da trilha, o doce exclusivo")
-	Eventos.dia_fixo = "2027-10-01"
-	verificar(Eventos.edicao() == "primavera-2027" and Eventos.fichas() == 0 and not Eventos.resgatado(0),
-		"no ano seguinte o evento volta zerado")
-	Eventos.dia_fixo = ""
+	CicloDia.dia_fixo = 12 * d
+	verificar(Eventos.edicao() == "primavera-12" and Eventos.fichas() == 0 and not Eventos.resgatado(0),
+		"na próxima volta da roda o evento volta zerado")
+	# save antigo (eventos pelo calendário): o mesmo tema continua com as fichas
+	Progresso.vila["evento"] = {"edicao": "primavera-2026", "fichas": 77, "resgatados": [0], "dia": "2026-10-01", "pegos": []}
+	verificar(Eventos.fichas() == 77 and Eventos.resgatado(0) and not Eventos.item_pego(0), "fichas do evento antigo continuam")
+	CicloDia.dia_fixo = -1
 	Progresso.vila = guardado
 	Progresso.colecao = colecao
 	Progresso.moedas = moedas_antes
@@ -2044,11 +2062,11 @@ func _testar_salvar_vila_nova() -> void:
 	Casa.comprar("sofa_marshmallow")
 	Casa.colocar("sofa_marshmallow", 0, 4, 1)
 	Progresso.vila["historia"] = {"capitulo": 1, "passo": 2, "progresso": 0}
-	Eventos.dia_fixo = "2026-10-20"
+	CicloDia.dia_fixo = 40
+	CicloDia.hora_fixa = 15.0
+	Progresso.vila.erase("evento")
 	Eventos.ganhar_fichas(60)
 	Eventos.resgatar(0)
-	CicloDia.dia_fixo = "2026-10-20"
-	CicloDia.hora_fixa = 15.0
 	CicloDia.chuva_fixa = 1
 	CicloDia.pegar_gota(2)
 	# vai e volta pelo JSON, como no arquivo de salvamento
@@ -2064,8 +2082,7 @@ func _testar_salvar_vila_nova() -> void:
 	verificar(Eventos.fichas() == 60 and Eventos.resgatado(0) and not Eventos.pode_resgatar(0), "fichas e prêmios do evento voltam")
 	verificar(CicloDia.gota_pega(2) and CicloDia.pegar_gota(2) == 0, "gota já pega continua pega")
 	Terrenos.agora_fixo = -1.0
-	Eventos.dia_fixo = ""
-	CicloDia.dia_fixo = ""
+	CicloDia.dia_fixo = -1
 	CicloDia.hora_fixa = -1.0
 	CicloDia.chuva_fixa = -1
 	Progresso.vila = guardado
@@ -2074,7 +2091,7 @@ func _testar_salvar_vila_nova() -> void:
 
 func _testar_vila_evento() -> void:
 	var guardado: Dictionary = Progresso.vila.duplicate(true)
-	Eventos.dia_fixo = "2026-10-20"
+	CicloDia.dia_fixo = Eventos.DIAS_POR_EVENTO + 5  # Noite das Abóboras
 	Progresso.vila.erase("evento")
 	Telas.ir_para("inicio")
 	await _esperar_tela("Inicio")
@@ -2100,7 +2117,7 @@ func _testar_vila_evento() -> void:
 	await get_tree().process_frame
 	verificar(Eventos.resgatado(0), "resgata pelo painel")
 	vila._fechar_painel_lote()
-	Eventos.dia_fixo = ""
+	CicloDia.dia_fixo = -1
 	Progresso.vila = guardado
 
 
