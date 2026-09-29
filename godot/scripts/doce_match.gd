@@ -19,7 +19,8 @@ extends RefCounted
 ##   Quando uma especial some junto com uma fila, ela explode também (e pode
 ##   acionar outras: é a reação em cadeia).
 ## - Cascata: as peças caem, novas entram por cima; filas novas valem combo.
-## - Cada tentativa custa CUSTO_ACUCAR (açúcar vem dos acertos no quiz).
+## - Jogar é de graça: toda vitória dá moedas e açúcar (mais na primeira
+##   vez e por estrela nova); perder dá um pouquinho de açúcar.
 ##
 ## A tela (cenas/doce_match.*) só desenha e anima; tudo o que acontece fica
 ## aqui, para ser testado sem tela.
@@ -31,7 +32,6 @@ const ALTURA := 8
 const TIPOS := ["folha", "planilha", "grafico", "celula", "tecla", "disquete"]
 const NOMES_TIPOS := {"folha": "FOLHAS DO WORD", "planilha": "PLANILHAS", "grafico": "GRÁFICOS",
 	"celula": "CÉLULAS", "tecla": "TECLAS CTRL", "disquete": "DISQUETES"}
-const CUSTO_ACUCAR := 30
 const PONTOS_POR_PECA := 20
 const BONUS_FILA_GRANDE := 60  # por peça além da 3ª numa fila
 const BONUS_ESPECIAL := 100  # cada especial que explode
@@ -518,8 +518,13 @@ static func descrever(obj: Dictionary) -> String:
 # --- Progresso dos níveis ---------------------------------------------------------------
 ## Progresso.doce_match = {"estrelas": {"1": 3, ...}}
 
-const MOEDAS_NIVEL := 10
-const MOEDAS_POR_ESTRELA := 5
+const MOEDAS_VITORIA := 15  # toda vitória
+const MOEDAS_POR_ESTRELA_GANHA := 5  # por estrela da partida
+const MOEDAS_NIVEL := 20  # primeira vez que vence o nível
+const MOEDAS_POR_ESTRELA := 10  # cada estrela nova no nível
+const ACUCAR_VITORIA := 10
+const ACUCAR_POR_ESTRELA := 10
+const ACUCAR_DERROTA := 5
 
 
 static func estrelas_do_nivel(numero: int) -> int:
@@ -551,12 +556,16 @@ static func bau_do_nivel(numero: int) -> String:
 	return "ouro" if numero % 15 == 0 else "prata"
 
 
-## Registra a vitória e dá o prêmio. Retorna {"moedas", "bau", "primeira", "novas"}.
+## Registra a vitória e dá o prêmio (toda vitória paga; a primeira vez e as
+## estrelas novas pagam mais). Retorna {"moedas", "acucar", "bau", "primeira", "novas"}.
 static func concluir(numero: int, n_estrelas: int) -> Dictionary:
 	var antes := estrelas_do_nivel(numero)
 	var primeira := antes == 0
 	var novas := maxi(0, n_estrelas - antes)
-	var moedas := novas * MOEDAS_POR_ESTRELA + (MOEDAS_NIVEL if primeira else 0)
+	var moedas := MOEDAS_VITORIA + n_estrelas * MOEDAS_POR_ESTRELA_GANHA + novas * MOEDAS_POR_ESTRELA \
+		+ (MOEDAS_NIVEL if primeira else 0)
+	var acucar := Companheiros.com_bonus("acucar", ACUCAR_VITORIA + n_estrelas * ACUCAR_POR_ESTRELA)
+	Confeitaria.ganhar_acucar(acucar)
 	moedas = Companheiros.com_bonus("match", moedas)
 	if not Progresso.doce_match.has("estrelas"):
 		Progresso.doce_match["estrelas"] = {}
@@ -568,4 +577,10 @@ static func concluir(numero: int, n_estrelas: int) -> Dictionary:
 	if moedas > 0:
 		Progresso.ganhar_moedas(moedas)  # também salva
 	Progresso.salvar()
-	return {"moedas": moedas, "bau": bau, "primeira": primeira, "novas": novas}
+	return {"moedas": moedas, "acucar": acucar, "bau": bau, "primeira": primeira, "novas": novas}
+
+
+## Perdeu (acabaram as jogadas): um pouquinho de açúcar pelo esforço.
+static func consolar() -> int:
+	Confeitaria.ganhar_acucar(ACUCAR_DERROTA)
+	return ACUCAR_DERROTA

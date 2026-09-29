@@ -21,8 +21,8 @@ const NOTA_PARA_PASSAR := 60
 const NOTAS_ESTRELAS := [60, 80, 100]
 ## Título ganho ao passar em cada nível (fácil, médio, difícil).
 const TITULOS := ["noob", "pro", "mestre"]
-const MOEDAS_POR_ACERTO := [5, 8, 12]
-const MOEDAS_POR_ESTRELA := 10
+const MOEDAS_POR_ACERTO := [8, 12, 16]
+const MOEDAS_POR_ESTRELA := 15
 const PONTOS_BASE := 100
 const PONTOS_RAPIDEZ := 100
 ## Multiplicador de pontos por sequência de acertos: [acertos seguidos, multiplicador].
@@ -31,7 +31,7 @@ const COMBOS := [[5, 2.0], [3, 1.5]]
 const CUSTO_ELIMINAR := 30  # tira duas alternativas erradas
 const CUSTO_MAIS_TEMPO := 20  # +SEGUNDOS_EXTRAS no cronômetro
 const SEGUNDOS_EXTRAS := 10.0
-const MOEDAS_POR_ACERTO_REVISAO := 3
+const MOEDAS_POR_ACERTO_REVISAO := 5
 
 ## Níveis e perguntas, lidos de dados/perguntas.json.
 var niveis: Array = []

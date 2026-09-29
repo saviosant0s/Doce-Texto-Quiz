@@ -1,9 +1,9 @@
 # Economia do jogo (moedas e açúcar)
 
-Regra de ouro: **tudo começa no quiz**. O quiz dá moedas e açúcar; a
-confeitaria e o Doce Match transformam açúcar em moedas, mais ou menos na
-mesma taxa (0,4 a 1,4 moeda por açúcar), então nenhum minijogo vira atalho
-para ganhar sem estudar. Valores no código: `scripts/jogo.gd`,
+Regra de ouro (revista em 29/09, pedido do Sávio: "ganhar está difícil"):
+**jogar dá recursos**. O quiz, o laboratório e os minigames (Doce Match,
+Torre, Fábrica) DÃO moedas e açúcar, e são de graça; os gastos ficam na
+vila (terrenos, construções, casa e expansões, móveis, coleção, máquinas). Valores no código: `scripts/jogo.gd`,
 `scripts/confeitaria.gd`, `scripts/doce_match.gd`, `scripts/laboratorio.gd`, `scripts/colecao.gd`,
 `scripts/conquistas.gd`.
 
@@ -11,11 +11,16 @@ para ganhar sem estudar. Valores no código: `scripts/jogo.gd`,
 
 | De onde | Moedas | Açúcar |
 |---|---|---|
-| Quiz fácil (por acerto) | 5 | 10 |
-| Quiz médio (por acerto) | 8 | 10 |
-| Quiz difícil (por acerto) | 12 | 10 |
-| Quiz: por estrela | 10 | — |
-| Revisão dos erros (por acerto) | 3 | 10 |
+| Quiz fácil (por acerto) | 8 | 15 |
+| Quiz médio (por acerto) | 12 | 15 |
+| Quiz difícil (por acerto) | 16 | 15 |
+| Quiz: por estrela | 15 | — |
+| Revisão dos erros (por acerto) | 5 | 15 |
+| Doce Match: toda vitória | 15 + 5 por estrela | 10 + 10 por estrela |
+| Doce Match: 1ª vitória no nível / estrela nova | +20 / +10 cada | — |
+| Doce Match: derrota | — | 5 |
+| Torre de Doces (por andar) | 2 (+1 por perfeito) | 3 |
+| Fábrica de Chocolate (por pedido) | 4 (+ pontos/30) | 5 |
 | Conquistas (16) | 10 a 150 cada (~600 no total) | — |
 | Presente de começo (e uma vez para quem já jogava) | — | 100 |
 | Primeira máquina da cozinha | — | 50 (presente) |
@@ -33,8 +38,11 @@ uma vez: ele também é estudo (fórmulas e formatação na prática). Revisão 
 27/09: os baús do laboratório dão menos moedas (cerca de 1.050 no total) e
 trazem um baú surpresa (pedaços de doces).
 
-Partidas típicas: fácil 7/10 com 1 estrela = 45 moedas + 70 de açúcar; médio
-8/10 com 2 estrelas = 84 + 80; difícil 9/10 com 2 estrelas = 128 + 90.
+Partidas típicas: fácil 7/10 com 1 estrela = 71 moedas + 105 de açúcar; médio
+8/10 com 2 estrelas = 126 + 120; difícil 9/10 com 2 estrelas = 174 + 135.
+Minigames: Doce Match vencido com 2 estrelas = 25 moedas + 30 açúcar; torre de
+15 andares = ~35 moedas + 45 açúcar; turno de 8 pedidos na fábrica = ~40
+moedas + 40 açúcar. Nenhum minigame custa açúcar.
 
 ## Baús surpresa, missões e nível (tudo sem compra)
 

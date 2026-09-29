@@ -563,7 +563,7 @@ func _mostrar_dica() -> void:
 		if alvo == Vector3.INF and carregando.is_empty():
 			var tem_acucar := Confeitaria.MAQUINAS.any(func(m): return Confeitaria.construida(m["id"]) and Confeitaria.acucar() >= m["acucar"])
 			if not tem_acucar:
-				texto = "SEM AÇÚCAR! TOQUE EM \"JOGAR O QUIZ\": CADA ACERTO DÁ %d" % Confeitaria.ACUCAR_POR_ACERTO
+				texto = "SEM AÇÚCAR! JOGUE O QUIZ (CADA ACERTO DÁ %d) OU OS MINIGAMES DA VILA" % Confeitaria.ACUCAR_POR_ACERTO
 	# sem açúcar: o botão do quiz pulsa, chamando para jogar
 	var falta_acucar := texto.begins_with("SEM AÇÚCAR")
 	_botao_quiz.pivot_offset = _botao_quiz.size / 2

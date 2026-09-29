@@ -8,8 +8,8 @@ extends RefCounted
 ## andar de novo. Errou tudo (nada em cima da torre): acabou.
 ## A cada ANDARES_PERGUNTA andares vem uma pergunta rápida do quiz: acertou,
 ## ganha pontos e o andar volta à largura toda.
-## Cada partida custa CUSTO_ACUCAR; o prêmio sai em moedas (e um baú de doce
-## ao passar do recorde de 10 em 10 andares).
+## Jogar é de graça; cada andar dá moedas e açúcar (e um baú de doce ao
+## passar do recorde de 10 em 10 andares).
 ##
 ## Coordenadas: x = centro do andar (0 = meio da tela), em "pixels do jogo".
 
@@ -25,8 +25,8 @@ const ANDARES_PERGUNTA := 10
 const PONTOS_ANDAR := 10
 const PONTOS_PERFEITO := 15
 const PONTOS_PERGUNTA := 100
-const CUSTO_ACUCAR := 20
-const MOEDAS_POR_ANDAR := 1
+const MOEDAS_POR_ANDAR := 2
+const ACUCAR_POR_ANDAR := 3
 
 ## Andares já colocados: [{"x", "largura"}]; o 0 é a base.
 var andares: Array = []
@@ -155,13 +155,16 @@ static func recorde() -> int:
 	return int(Progresso.estatisticas.get("torre_recorde", 0))
 
 
-## Fim da partida: moedas (1 por andar + 1 por perfeito), recorde, missão e
-## XP. Um baú de doce a cada nova dezena de andares acima do recorde.
-## Retorna {"moedas", "bau", "recorde_novo"}.
+## Fim da partida: moedas (2 por andar + 1 por perfeito), açúcar (3 por
+## andar), recorde, missão e XP. Um baú de doce a cada nova dezena de andares
+## acima do recorde. Retorna {"moedas", "acucar", "bau", "recorde_novo"}.
 static func concluir(jogo: Torre) -> Dictionary:
 	var antes := recorde()
 	var altura := jogo.altura()
 	var moedas := altura * MOEDAS_POR_ANDAR + jogo.perfeitos
+	var acucar := Companheiros.com_bonus("acucar", altura * ACUCAR_POR_ANDAR)
+	if acucar > 0:
+		Confeitaria.ganhar_acucar(acucar)
 	var bau := ""
 	if altura / 10 > antes / 10 and altura >= 10:
 		bau = "doce"
@@ -175,4 +178,4 @@ static func concluir(jogo: Torre) -> Dictionary:
 		Progresso.ganhar_moedas(moedas)  # também salva
 	else:
 		Progresso.salvar()
-	return {"moedas": moedas, "bau": bau, "recorde_novo": altura > antes}
+	return {"moedas": moedas, "acucar": acucar, "bau": bau, "recorde_novo": altura > antes}

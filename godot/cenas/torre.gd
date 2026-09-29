@@ -191,9 +191,6 @@ func _y_do_andar(i: int) -> float:
 
 func comecar() -> void:
 	_fechar_painel()
-	if not Confeitaria.gastar_acucar(Torre.CUSTO_ACUCAR):
-		_sem_acucar()
-		return
 	for no in _andares_nos:
 		no.queue_free()
 	_andares_nos.clear()
@@ -461,7 +458,7 @@ func mostrar_inicio() -> void:
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
 	botoes.add_child(_botao("Sair", "VOLTAR", &"BotaoSecundario", Telas.voltar))
-	botoes.add_child(_botao("Jogar", "JOGAR (%d AÇÚCAR)" % Torre.CUSTO_ACUCAR, &"", comecar))
+	botoes.add_child(_botao("Jogar", "JOGAR", &"", comecar))
 
 
 func _terminar() -> void:
@@ -472,28 +469,16 @@ func _terminar() -> void:
 	_texto_painel(coluna, "%d ANDARES" % jogo.altura(), 56)
 	if premio["recorde_novo"]:
 		_texto_painel(coluna, "NOVO RECORDE!", 32).add_theme_color_override("font_color", Cores.AMARELO)
-	_texto_painel(coluna, "+%d MOEDAS · %d PERFEITOS%s" % [premio["moedas"], jogo.perfeitos,
+	_texto_painel(coluna, "+%d MOEDAS · +%d AÇÚCAR · %d PERFEITOS%s" % [premio["moedas"], premio["acucar"], jogo.perfeitos,
 		"  ·  +1 BAÚ DE DOCE!" if premio["bau"] != "" else ""], 26)
 	var botoes := HBoxContainer.new()
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
 	botoes.add_child(_botao("Sair", "VOLTAR", &"BotaoSecundario", Telas.voltar))
-	botoes.add_child(_botao("DeNovo", "DE NOVO (%d AÇÚCAR)" % Torre.CUSTO_ACUCAR, &"", comecar))
+	botoes.add_child(_botao("DeNovo", "DE NOVO", &"", comecar))
 	if premio["recorde_novo"] or premio["bau"] != "":
 		Audio.tocar("vitoria")
-
-
-func _sem_acucar() -> void:
-	var coluna := _abrir_painel("SEM AÇÚCAR!")
-	_texto_painel(coluna, "Cada torre custa %d de açúcar. Você tem %d.\nCada acerto no quiz dá %d!" % [
-		Torre.CUSTO_ACUCAR, Confeitaria.acucar(), Confeitaria.ACUCAR_POR_ACERTO], 24)
-	var botoes := HBoxContainer.new()
-	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
-	botoes.add_theme_constant_override("separation", 16)
-	coluna.add_child(botoes)
-	botoes.add_child(_botao("Sair", "VOLTAR", &"BotaoSecundario", Telas.voltar))
-	botoes.add_child(_botao("JogarQuiz", "JOGAR O QUIZ", &"", Telas.abrir.bind("niveis")))
 
 
 func _abrir_painel(titulo: String) -> VBoxContainer:
@@ -546,5 +531,5 @@ func _botao(nome: String, texto: String, estilo: StringName, acao: Callable) -> 
 	botao.focus_mode = Control.FOCUS_NONE
 	botao.pressed.connect(acao)
 	if estilo == &"":
-		botao.theme_type_variation = &"BotaoComprar"  # o JOGAR (gasta açúcar) em menta
+		botao.theme_type_variation = &"BotaoComprar"  # o JOGAR em menta (ação principal da tela)
 	return botao

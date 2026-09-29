@@ -338,7 +338,8 @@ func abrir_nivel(n: int) -> void:
 		coluna.add_child(_linha_objetivo(obj, dados))
 	_rotulo(coluna, "%d JOGADAS" % int(dados["jogadas"]), 24)
 	if DoceMatch.estrelas_do_nivel(n) == 0:
-		var premio := "PRÊMIO: %d MOEDAS" % (DoceMatch.MOEDAS_NIVEL + DoceMatch.MOEDAS_POR_ESTRELA)
+		var premio := "PRÊMIO: %d+ MOEDAS E %d+ AÇÚCAR" % [DoceMatch.MOEDAS_VITORIA + DoceMatch.MOEDAS_NIVEL + DoceMatch.MOEDAS_POR_ESTRELA,
+			DoceMatch.ACUCAR_VITORIA + DoceMatch.ACUCAR_POR_ESTRELA]
 		var bau := DoceMatch.bau_do_nivel(n)
 		if bau != "":
 			premio += " + " + Baus.NOMES[bau]
@@ -348,7 +349,7 @@ func abrir_nivel(n: int) -> void:
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
 	botoes.add_child(_botao("Fechar", "VOLTAR", &"BotaoSecundario", 200, _fechar_painel))
-	botoes.add_child(_botao("Jogar", "JOGAR (%d AÇÚCAR)" % DoceMatch.CUSTO_ACUCAR, &"", 330, comecar_nivel.bind(n)))
+	botoes.add_child(_botao("Jogar", "JOGAR", &"", 330, comecar_nivel.bind(n)))
 	_abrir_painel(painel)
 
 
@@ -399,12 +400,9 @@ func _icone_objetivo(obj: Dictionary, lado: float) -> Control:
 
 # === PARTIDA ====================================================================
 
-## Paga o açúcar e começa o nível `n`; sem açúcar, mostra o aviso.
+## Começa o nível `n` (jogar é de graça; ganhar dá açúcar e moedas).
 func comecar_nivel(n: int) -> void:
 	_fechar_painel()
-	if not Confeitaria.gastar_acucar(DoceMatch.CUSTO_ACUCAR):
-		_mostrar_sem_acucar()
-		return
 	numero_nivel = n
 	jogo = DoceMatch.new(DoceMatch.dados_nivel(n))
 	_fim_registrado = false
@@ -955,7 +953,7 @@ func _terminar() -> void:
 		recem_vencido = numero_nivel if premio["primeira"] else 0
 		_mostrar_vitoria(estrelas, premio)
 	else:
-		Progresso.salvar()
+		DoceMatch.consolar()  # também salva
 		_mostrar_derrota()
 
 
@@ -993,6 +991,8 @@ func _mostrar_vitoria(estrelas: int, premio: Dictionary) -> void:
 	_rotulo(coluna, "%s PONTOS" % Jogo.formatar(jogo.pontos), 34)
 	if premio["moedas"] > 0:
 		coluna.add_child(_linha_premio(Itens.MOEDA, "+%d MOEDAS" % premio["moedas"]))
+	if premio.get("acucar", 0) > 0:
+		coluna.add_child(_linha_premio(Itens.ACUCAR, "+%d AÇÚCAR" % premio["acucar"]))
 	if premio["bau"] != "":
 		coluna.add_child(_linha_premio(Itens.bau(premio["bau"]), "+1 %s!" % Baus.NOMES[premio["bau"]]))
 	var botoes := HBoxContainer.new()
@@ -1001,7 +1001,7 @@ func _mostrar_vitoria(estrelas: int, premio: Dictionary) -> void:
 	coluna.add_child(botoes)
 	botoes.add_child(_botao("Mapa", "MAPA", &"BotaoAzul", 180, _voltar_ao_mapa))
 	if numero_nivel < DoceMatch.niveis().size():
-		botoes.add_child(_botao("Proximo", "PRÓXIMO (%d AÇÚCAR)" % DoceMatch.CUSTO_ACUCAR, &"", 340,
+		botoes.add_child(_botao("Proximo", "PRÓXIMO NÍVEL", &"", 340,
 			comecar_nivel.bind(numero_nivel + 1)))
 	await _abrir_painel(painel)
 	# as estrelas acendem uma por uma
@@ -1036,12 +1036,13 @@ func _mostrar_derrota() -> void:
 		linha.add_child(rotulo)
 		coluna.add_child(linha)
 	_rotulo(coluna, "Quase! Tente de novo: as peças caem diferente a cada vez.", 22)
+	coluna.add_child(_linha_premio(Itens.ACUCAR, "+%d AÇÚCAR PELO ESFORÇO" % DoceMatch.ACUCAR_DERROTA))
 	var botoes := HBoxContainer.new()
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
 	botoes.add_child(_botao("Mapa", "MAPA", &"BotaoAzul", 180, _voltar_ao_mapa))
-	botoes.add_child(_botao("TentarDeNovo", "DE NOVO (%d AÇÚCAR)" % DoceMatch.CUSTO_ACUCAR, &"", 340,
+	botoes.add_child(_botao("TentarDeNovo", "DE NOVO", &"", 340,
 		comecar_nivel.bind(numero_nivel)))
 	_abrir_painel(painel)
 
@@ -1060,29 +1061,13 @@ func _perguntar_sair() -> void:
 	var painel := _painel_central()
 	var coluna: VBoxContainer = painel.get_child(0)
 	_rotulo(coluna, "SAIR DO NÍVEL?", 52)
-	_rotulo(coluna, "O açúcar desta tentativa não volta.", 24)
+	_rotulo(coluna, "Saindo agora, esta partida não vale prêmio.", 24)
 	var botoes := HBoxContainer.new()
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)
 	coluna.add_child(botoes)
 	botoes.add_child(_botao("Sair", "SAIR", &"BotaoSecundario", 200, _voltar_ao_mapa))
 	botoes.add_child(_botao("Continuar", "CONTINUAR", &"", 260, _fechar_painel))
-	_abrir_painel(painel)
-
-
-## Sem açúcar para jogar: explica e leva ao quiz.
-func _mostrar_sem_acucar() -> void:
-	var painel := _painel_central()
-	var coluna: VBoxContainer = painel.get_child(0)
-	_rotulo(coluna, "SEM AÇÚCAR!", 60)
-	_rotulo(coluna, "Cada tentativa custa %d de açúcar. Você tem %d.\nCada acerto no quiz dá %d, e o Laboratório também dá açúcar!" % [
-		DoceMatch.CUSTO_ACUCAR, Confeitaria.acucar(), Confeitaria.ACUCAR_POR_ACERTO], 24)
-	var botoes := HBoxContainer.new()
-	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
-	botoes.add_theme_constant_override("separation", 16)
-	coluna.add_child(botoes)
-	botoes.add_child(_botao("Sair", "MAPA", &"BotaoAzul", 200, _voltar_ao_mapa))
-	botoes.add_child(_botao("JogarQuiz", "JOGAR O QUIZ", &"", 300, Telas.abrir.bind("niveis")))
 	_abrir_painel(painel)
 
 

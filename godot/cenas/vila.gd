@@ -1324,6 +1324,9 @@ func _saiu_do_ponto(corpo: Node3D, id: String) -> void:
 
 ## Texto do botão perto de um lote ou presente.
 func _texto_ponto(id: String) -> String:
+	if id == "morador":
+		var vez := Historia.morador_da_vez()
+		return "FALAR COM " + str(Historia.MORADORES.get(vez, "MORADOR"))
 	if id.begins_with("presente_"):
 		return "ABRIR PRESENTE" if Terrenos.presente_disponivel(id.trim_prefix("presente_")) else "PRESENTE: VOLTE AMANHÃ"
 	if not Terrenos.comprado(id):

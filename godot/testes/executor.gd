@@ -772,10 +772,13 @@ func _testar_confeitaria() -> void:
 	_jogar(7, 0)
 	# 10 por acerto, +10% do brigadeiro (companheiro inicial)
 	var inicial := Confeitaria.ACUCAR_INICIAL
-	verificar(Jogo.resumo["acucar"] == 77 and Confeitaria.acucar() == inicial + 77, "cada acerto no quiz dá 10 de açúcar (+ bônus)")
+	var do_quiz := Companheiros.com_bonus("acucar", 7 * Confeitaria.ACUCAR_POR_ACERTO)
+	verificar(Confeitaria.ACUCAR_POR_ACERTO == 15 and Jogo.resumo["acucar"] == do_quiz and Confeitaria.acucar() == inicial + do_quiz,
+		"cada acerto no quiz dá 15 de açúcar (+ bônus)")
 	Jogo.preparar_revisao()
 	_jogar(2, 0)
-	verificar(Confeitaria.acucar() == inicial + 77 + Companheiros.com_bonus("acucar", Jogo.resumo["acertos"] * 10), "a revisão também dá açúcar")
+	verificar(Confeitaria.acucar() == inicial + do_quiz + Companheiros.com_bonus("acucar", Jogo.resumo["acertos"] * Confeitaria.ACUCAR_POR_ACERTO),
+		"a revisão também dá açúcar")
 	Progresso.apagar()
 
 
@@ -1013,12 +1016,16 @@ func _testar_doce_match() -> void:
 	var premio := DoceMatch.concluir(1, 2)
 	verificar(premio["primeira"] and DoceMatch.liberado(2) and DoceMatch.estrelas_do_nivel(1) == 2 and DoceMatch.proximo_nivel() == 2,
 		"vencer libera o próximo nível")
-	verificar(Progresso.moedas == moedas + premio["moedas"] and premio["moedas"] >= DoceMatch.MOEDAS_NIVEL + 2 * DoceMatch.MOEDAS_POR_ESTRELA,
-		"a primeira vitória dá moedas pelo nível e pelas estrelas")
+	verificar(Progresso.moedas == moedas + premio["moedas"] and premio["moedas"] >= DoceMatch.MOEDAS_NIVEL + 2 * DoceMatch.MOEDAS_POR_ESTRELA
+		and premio["acucar"] >= DoceMatch.ACUCAR_VITORIA + 2 * DoceMatch.ACUCAR_POR_ESTRELA,
+		"a primeira vitória dá moedas e açúcar pelo nível e pelas estrelas")
+	var acucar_match := Confeitaria.acucar()
 	var de_novo := DoceMatch.concluir(1, 1)
-	verificar(de_novo["moedas"] == 0 and DoceMatch.estrelas_do_nivel(1) == 2, "repetir com menos estrelas não dá nada nem tira estrela")
+	verificar(de_novo["moedas"] == DoceMatch.MOEDAS_VITORIA + DoceMatch.MOEDAS_POR_ESTRELA_GANHA and Confeitaria.acucar() > acucar_match
+		and DoceMatch.estrelas_do_nivel(1) == 2, "repetir também paga (menos), sem tirar estrela")
+	verificar(DoceMatch.consolar() == DoceMatch.ACUCAR_DERROTA, "perder dá um pouquinho de açúcar")
 	var mais := DoceMatch.concluir(1, 3)
-	verificar(mais["novas"] == 1 and mais["moedas"] > 0 and DoceMatch.total_estrelas() == 3, "estrela nova numa repetição dá moedas")
+	verificar(mais["novas"] == 1 and mais["moedas"] > de_novo["moedas"] and DoceMatch.total_estrelas() == 3, "estrela nova numa repetição dá mais moedas")
 	for i in range(2, 6):
 		DoceMatch.concluir(i, 1)
 	verificar(Baus.quantos("prata") == baus_prata + 1, "o nível 5 dá um baú de prata")
@@ -1063,11 +1070,7 @@ func _testar_tela_doce_match() -> void:
 	tela.find_child("Nivel_1", true, false).pressed.emit()
 	await get_tree().create_timer(0.2).timeout
 	verificar(tela.find_child("Jogar", true, false) is Button, "tocar no nível mostra o objetivo e o botão de jogar")
-	# sem açúcar, não joga: aviso com atalho para o quiz
-	tela.find_child("Jogar", true, false).pressed.emit()
-	await get_tree().create_timer(0.3).timeout
-	verificar(tela.find_child("JogarQuiz", true, false) is Button and Confeitaria.acucar() == 10, "sem açúcar: aviso e botão para o quiz")
-	Progresso.confeitaria["acucar"] = 2 * DoceMatch.CUSTO_ACUCAR
+	Progresso.confeitaria["acucar"] = 0
 	Telas.ir_para("niveis")
 	await _esperar_tela("Niveis")
 	get_tree().current_scene.find_child("DoceMatch", true, false).pressed.emit()
@@ -1084,7 +1087,7 @@ func _testar_tela_doce_match() -> void:
 			if peca != null:
 				pecas += 1
 	verificar(pecas == 64 and tela.numero_nivel == 1, "64 peças no tabuleiro do nível 1")
-	verificar(Confeitaria.acucar() == DoceMatch.CUSTO_ACUCAR, "a tentativa gastou açúcar")
+	verificar(Confeitaria.acucar() == 0, "jogar o Doce Match é de graça (mesmo sem açúcar)")
 	var jogadas: int = tela.jogo.jogadas
 	var jogada: Array = tela.jogo.jogada_possivel()
 	await tela.jogar(jogada[0], jogada[1])
@@ -1111,8 +1114,8 @@ func _testar_tela_doce_match() -> void:
 			"acabaram as jogadas: aparece a derrota e o nível não conta")
 		tela.find_child("TentarDeNovo", true, false).pressed.emit()
 		await get_tree().create_timer(0.3).timeout
-		verificar(Confeitaria.acucar() == 0 and tela.jogo.jogadas == int(DoceMatch.dados_nivel(1)["jogadas"]),
-			"tentar de novo recomeça (e paga de novo)")
+		verificar(Confeitaria.acucar() == DoceMatch.ACUCAR_DERROTA and tela.jogo.jogadas == int(DoceMatch.dados_nivel(1)["jogadas"]),
+			"perder dá o açúcar do esforço e tentar de novo recomeça de graça")
 	# vencer: cumpre o objetivo na próxima jogada
 	var moedas := Progresso.moedas
 	var partidas: int = Progresso.estatisticas.get("match_partidas", 0)
@@ -2118,6 +2121,8 @@ func _testar_vila_historia() -> void:
 	vila.jogador.global_position = milho.global_position + Vector3(0, 0, 1.5)
 	await get_tree().create_timer(0.4).timeout
 	verificar(vila._ponto_atual == "morador" and vila._botao_entrar.text == "FALAR COM SEU MILHO", "perto dele: botão FALAR")
+	vila._atualizar_rotulos_producao()  # (a atualização de 1 em 1 segundo não pode estragar o texto)
+	verificar(vila._botao_entrar.text == "FALAR COM SEU MILHO", "o botão FALAR continua certo parado perto do morador")
 	vila.agir("morador")
 	await get_tree().process_frame
 	verificar(vila.dialogo.aberto and vila.find_child("NomeMorador", true, false).text == "SEU MILHO", "abre a conversa")
@@ -2286,20 +2291,21 @@ func _testar_torre() -> void:
 	Progresso.estatisticas["torre_recorde"] = 5
 	var premio := Torre.concluir(t)
 	verificar(premio["recorde_novo"] and Torre.recorde() == t.altura(), "novo recorde guardado")
-	verificar(Progresso.moedas == moedas + premio["moedas"] and premio["moedas"] >= t.altura(), "moedas por andar e por perfeito")
+	verificar(Progresso.moedas == moedas + premio["moedas"] and premio["moedas"] >= t.altura() * Torre.MOEDAS_POR_ANDAR
+		and premio["acucar"] >= t.altura() * Torre.ACUCAR_POR_ANDAR, "moedas e açúcar por andar")
 	verificar(premio["bau"] == "doce" and Baus.quantos("doce") == baus_doce + 1, "passou de 10 andares acima do recorde: baú de doce")
 	Progresso.estatisticas["torre_recorde"] = recorde_antes
 
 
 func _testar_tela_torre() -> void:
-	Progresso.confeitaria["acucar"] = Torre.CUSTO_ACUCAR
+	Progresso.confeitaria["acucar"] = 0
 	Telas.ir_para("torre")
 	verificar(await _esperar_tela("Torre"), "abre a Torre de Doces")
 	var tela := get_tree().current_scene
 	await get_tree().create_timer(0.3).timeout
 	tela.find_child("Jogar", true, false).pressed.emit()
 	await get_tree().process_frame
-	verificar(Confeitaria.acucar() == 0 and tela.jogo != null, "começar gasta o açúcar")
+	verificar(Confeitaria.acucar() == 0 and tela.jogo != null, "a torre é de graça (joga mesmo sem açúcar)")
 	tela.jogo.atual["x"] = 0.0
 	tela.soltar()
 	verificar(tela.jogo.altura() == 1 and tela._andares_nos.size() == 2, "tocar solta o andar na torre")
@@ -2359,20 +2365,20 @@ func _testar_fabrica() -> void:
 	f.pedidos_feitos = 6
 	var moedas := Progresso.moedas
 	var premio := Fabrica.concluir(f)
-	verificar(premio["recorde_novo"] and Fabrica.recorde() == 6 and premio["bau"] == "doce" and Progresso.moedas == moedas + premio["moedas"],
-		"fim: moedas, recorde e baú a cada 5 pedidos")
+	verificar(premio["recorde_novo"] and Fabrica.recorde() == 6 and premio["bau"] == "doce" and Progresso.moedas == moedas + premio["moedas"]
+		and premio["acucar"] >= 6 * Fabrica.ACUCAR_POR_PEDIDO, "fim: moedas, açúcar, recorde e baú a cada 5 pedidos")
 	Progresso.estatisticas["fabrica_recorde"] = recorde_antes
 
 
 func _testar_tela_fabrica() -> void:
-	Progresso.confeitaria["acucar"] = Fabrica.CUSTO_ACUCAR
+	Progresso.confeitaria["acucar"] = 0
 	Telas.ir_para("fabrica")
 	verificar(await _esperar_tela("Fabrica"), "abre a Fábrica de Chocolate")
 	var tela := get_tree().current_scene
 	await get_tree().create_timer(0.3).timeout
 	tela.find_child("Jogar", true, false).pressed.emit()
 	await get_tree().create_timer(1.2).timeout
-	verificar(Confeitaria.acucar() == 0 and tela._nos.size() >= 1, "começar gasta o açúcar e os chocolates andam na esteira")
+	verificar(Confeitaria.acucar() == 0 and tela._nos.size() >= 1, "a fábrica é de graça e os chocolates andam na esteira")
 	var tipo: String = tela.jogo.pedido.keys()[0]
 	var item: Dictionary = tela.jogo.esteira[0]
 	item["tipo"] = tipo

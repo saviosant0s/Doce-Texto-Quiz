@@ -41,7 +41,7 @@ const ABAS := [
 	]},
 	{"nome": "CONFEITARIA", "passos": [
 		{"item": "ACUCAR", "titulo": "AÇÚCAR",
-			"texto": "Cada acerto no quiz e cada fase nova do laboratório dá açúcar para a sua confeitaria."},
+			"texto": "O quiz, os minigames (Match, Torre, Fábrica) e o laboratório dão açúcar para a sua confeitaria."},
 		{"icone": "confeitaria", "titulo": "MÁQUINAS",
 			"texto": "As máquinas transformam o açúcar em doces sozinhas. Construa e melhore nos círculos do chão."},
 		{"icone": "pessoas", "titulo": "ATENDA",
@@ -57,7 +57,7 @@ const ABAS := [
 		{"item": "ESTRELA", "titulo": "ESTRELAS E BAÚS",
 			"texto": "Jogadas que sobram viram pontos. Mais pontos, mais estrelas; a cada 5 níveis, um baú."},
 		{"item": "ACUCAR", "titulo": "CUSTA AÇÚCAR",
-			"texto": "Cada tentativa custa 30 de açúcar. Faltou? Jogue o quiz ou o Laboratório."},
+			"texto": "Jogar é de graça! Cada vitória dá moedas e açúcar; perder dá um pouquinho de açúcar."},
 	]},
 	{"nome": "TORRE", "passos": [
 		{"icone": "controle", "titulo": "EMPILHE O BOLO",
@@ -67,7 +67,7 @@ const ABAS := [
 		{"icone": "lampada", "titulo": "PERGUNTA BÔNUS",
 			"texto": "A cada 10 andares vem uma pergunta do quiz: acertou, ganha pontos e o andar volta a ficar largo."},
 		{"item": "ACUCAR", "titulo": "CUSTA AÇÚCAR",
-			"texto": "Cada torre custa 20 de açúcar e dá moedas por andar. Bateu o recorde de 10 em 10? Baú!"},
+			"texto": "É de graça: cada andar dá moedas e açúcar. Bateu o recorde de 10 em 10? Baú!"},
 	]},
 	{"nome": "FÁBRICA", "passos": [
 		{"icone": "controle", "titulo": "OLHE O PEDIDO",
@@ -77,7 +77,7 @@ const ABAS := [
 		{"icone": "lampada", "titulo": "PEDIDO ESPECIAL",
 			"texto": "Pedido pronto dá mais tempo e a esteira acelera. A cada 3, uma pergunta do quiz vale bônus."},
 		{"item": "ACUCAR", "titulo": "CUSTA AÇÚCAR",
-			"texto": "Cada turno custa 20 de açúcar e dá moedas por pedido. Recorde de 5 em 5 pedidos? Baú!"},
+			"texto": "É de graça: cada pedido dá moedas e açúcar. Recorde de 5 em 5 pedidos? Baú!"},
 	]},
 	{"nome": "BAÚS E DOCES", "passos": [
 		{"item": "BAU_DOCE", "titulo": "BAÚS SURPRESA",

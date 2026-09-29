@@ -29,7 +29,8 @@ const PONTOS_CHOCOLATE := 10
 const PONTOS_PEDIDO := 50
 const PONTOS_PERGUNTA := 80
 const PEDIDOS_POR_ESPECIAL := 3
-const CUSTO_ACUCAR := 20
+const MOEDAS_POR_PEDIDO := 4
+const ACUCAR_POR_PEDIDO := 5
 
 ## Chocolates na esteira: [{"id", "tipo", "x", "defeito": bool}]
 var esteira: Array = []
@@ -174,12 +175,16 @@ static func recorde() -> int:
 	return int(Progresso.estatisticas.get("fabrica_recorde", 0))
 
 
-## Fim: moedas (3 por pedido + pontos/40), recorde de pedidos, missão e XP.
+## Fim: moedas (4 por pedido + pontos/30), açúcar (5 por pedido), recorde de
+## pedidos, missão e XP (jogar é de graça).
 ## Um baú de doce a cada nova marca de 5 pedidos acima do recorde.
 static func concluir(jogo: Fabrica) -> Dictionary:
 	var antes := recorde()
 	var feitos := jogo.pedidos_feitos
-	var moedas := feitos * 3 + jogo.pontos / 40
+	var moedas := feitos * MOEDAS_POR_PEDIDO + jogo.pontos / 30
+	var acucar := Companheiros.com_bonus("acucar", feitos * ACUCAR_POR_PEDIDO)
+	if acucar > 0:
+		Confeitaria.ganhar_acucar(acucar)
 	var bau := ""
 	if feitos / 5 > antes / 5 and feitos >= 5:
 		bau = "doce"
@@ -193,4 +198,4 @@ static func concluir(jogo: Fabrica) -> Dictionary:
 		Progresso.ganhar_moedas(moedas)  # também salva
 	else:
 		Progresso.salvar()
-	return {"moedas": moedas, "bau": bau, "recorde_novo": feitos > antes}
+	return {"moedas": moedas, "acucar": acucar, "bau": bau, "recorde_novo": feitos > antes}

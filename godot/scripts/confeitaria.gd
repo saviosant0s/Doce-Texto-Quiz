@@ -18,7 +18,7 @@ class_name Confeitaria
 ##
 ## O estado fica em Progresso.confeitaria (ver padrao()).
 
-const ACUCAR_POR_ACERTO := 10
+const ACUCAR_POR_ACERTO := 15
 const LIMITE_FORA := 2 * 60 * 60.0  # segundos de produção contados de uma vez
 ## Presente de inauguração: açúcar ao construir a primeira máquina.
 const ACUCAR_PRESENTE := 50
@@ -44,7 +44,7 @@ const PRECO_CARREGAR := [120, 300]
 ## Gorjeta de cada cliente atendido (além do valor dos doces).
 const GORJETA := 2
 ## Açúcar de presente para quem começa: dá para experimentar os minigames
-## (cada partida custa 20 a 30) antes de jogar o quiz. Quem já jogava ganha
+## antes de jogar o quiz. Quem já jogava ganha
 ## o mesmo presente uma vez (ver Progresso.carregar).
 const ACUCAR_INICIAL := 100
 
