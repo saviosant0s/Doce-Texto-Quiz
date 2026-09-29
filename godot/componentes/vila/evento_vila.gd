@@ -90,13 +90,13 @@ static func abobora(pai: Node3D, pe: Vector3, raio: float, rosto := false, giro 
 	# cabinho torto, gavinha enrolada e uma folha
 	var verde := _m("#4E7A2A", 0.8)
 	var topo := centro + Vector3(0, raio * 0.95, 0)
-	Pecas3D.cano(no, topo - Vector3(0, raio * 0.15, 0), topo + Vector3(raio * 0.12, raio * 0.35, 0), raio * 0.09, _m("#6B5A2A", 0.9))
+	Pecas3D.cano(no, topo - Vector3(0, raio * 0.15, 0), topo + Vector3(raio * 0.12, raio * 0.35, 0), raio * 0.09, verde)
 	var anterior := topo + Vector3(0.02, 0.02, 0)
 	for k in range(1, 7):
 		var ponto := topo + Vector3(cos(k * 1.3) * raio * 0.28, raio * 0.05 + k * 0.012, sin(k * 1.3) * raio * 0.28)
 		Pecas3D.cano(no, anterior, ponto, raio * 0.025, verde)
 		anterior = ponto
-	var folha := Pecas3D.esfera(no, raio * 0.3, topo + Vector3(-raio * 0.3, 0, raio * 0.1), _m("#3FA34D", 0.7), Vector3(1, 0.12, 0.7))
+	var folha := Pecas3D.esfera(no, raio * 0.3, topo + Vector3(-raio * 0.3, 0, raio * 0.1), verde, Vector3(1, 0.12, 0.7))
 	folha.rotation.z = 0.35
 	if rosto:
 		var luz := _luz("#FFC83D", 2.0)
