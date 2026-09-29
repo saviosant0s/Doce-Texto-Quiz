@@ -255,6 +255,8 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 			forma = _fabrica_chocolate(no)
 		"casa":
 			forma = _minha_casa(no)
+		"arena":
+			forma = _arena(no)
 		_:
 			forma = _casa_simples(no, dados)
 	no.set_meta("pecas", no.find_children("*", "MeshInstance3D", true, false).size())
@@ -432,6 +434,47 @@ static func _casa_maior(no: Node3D, tamanho: int, largura: float, fundo: float) 
 			Pecas3D.esfera(no, 0.22, torre + Vector3(cos(a) * 1.15, 5.35, sin(a) * 1.15), _m("#FF9FC4", 0.45), Vector3(1, 1.4, 1))
 		_janela(no, torre + Vector3(0, 3.6, 1.0), "#FFFFFF")
 		_poste(no, 1.05, 6.0, torre)
+
+
+## ARENA DOS DOCES: estádio redondo de biscoito listrado com arquibancada de
+## jujubas no alto, bandeirinhas, a entrada em arco e uma taça de ouro
+## gigante no meio (as batalhas de doces, cenas/batalha.gd).
+static func _arena(no: Node3D) -> Dictionary:
+	var raio := 3.3
+	var altura := 2.9
+	var parede := Pecas3D.material_textura(Pecas3D.listras([Color("#FFB3D1"), Color("#FFF1F5")], 16), 0.55)
+	Pecas3D.cilindro(no, raio, raio + 0.1, altura, Vector3(0, altura / 2.0, 0), parede)
+	Pecas3D.cilindro(no, raio + 0.2, raio + 0.2, 0.35, Vector3(0, 0.17, 0), Texturas.real("madeira_pintada", "#8B4A2B", 1.0))
+	Pecas3D.rosquinha(no, raio - 0.1, raio + 0.25, Vector3(0, altura, 0), _m("#7A4322", 0.3), Vector3(1, 0.5, 1))
+	# ameias de jujuba coloridas em volta do alto
+	var cores := ["#FF6FAE", "#6FD3FF", "#FFD23F", "#7BE07B", "#B07CFF"]
+	for i in 16:
+		var a := i * TAU / 16.0
+		Pecas3D.esfera(no, 0.28, Vector3(cos(a) * raio, altura + 0.3, sin(a) * raio), _m(cores[i % cores.size()], 0.2), Vector3(1, 1.2, 1))
+	# mastros com bandeirinhas
+	for i in 4:
+		var a := i * TAU / 4.0 + TAU / 8.0
+		var pe := Vector3(cos(a) * (raio - 0.2), altura, sin(a) * (raio - 0.2))
+		Pecas3D.cilindro(no, 0.05, 0.05, 1.6, pe + Vector3(0, 0.8, 0), _m("#FFFFFF", 0.4))
+		Pecas3D.caixa(no, Vector3(0.05, 0.4, 0.6), pe + Vector3(0, 1.35, 0.3), _m(cores[i], 0.5))
+	# taça de ouro gigante lá dentro, aparecendo por cima da parede
+	var ouro := _m("#FFC83D", 0.15, 0.8)
+	Pecas3D.cilindro(no, 0.3, 0.55, 1.2, Vector3(0, altura + 0.4, 0), ouro)
+	Pecas3D.cilindro(no, 1.1, 0.35, 1.2, Vector3(0, altura + 1.5, 0), ouro)
+	for lado in [-1, 1]:
+		Pecas3D.rosquinha(no, 0.25, 0.38, Vector3(lado * 1.05, altura + 1.6, 0), ouro, Vector3.ONE, Vector3(90, 0, 0))
+	Pecas3D.esfera(no, 0.32, Vector3(0, altura + 2.25, 0), _m("#E8364F", 0.15))
+	# entrada: arco de biscoito saindo da parede, com duas colunas de bengala
+	var biscoito := Texturas.real("madeira_pintada", "#E0A95E", 1.0)
+	Pecas3D.caixa(no, Vector3(2.4, 2.7, 0.7), Vector3(0, 1.35, raio - 0.05), biscoito)
+	for lado in [-1, 1]:
+		Pecas3D.cilindro(no, 0.16, 0.16, 2.7, Vector3(lado * 1.2, 1.35, raio + 0.32), _m("#FFFFFF", 0.35))
+		for k in 5:
+			Pecas3D.cilindro(no, 0.17, 0.17, 0.14, Vector3(lado * 1.2, 0.35 + k * 0.5, raio + 0.32), _m("#E8364F", 0.35))
+		Pecas3D.esfera(no, 0.22, Vector3(lado * 1.2, 2.8, raio + 0.32), _m("#FFD23F", 0.3))
+	_poste(no, raio + 0.1, altura + 1.0, Vector3.ZERO)
+	_parede(no, Vector3(2.4, 2.7, 0.7), Vector3(0, 1.35, raio - 0.05))
+	return {"frente": raio + 0.31, "placa": 2.35}
 
 
 ## FÁBRICA DE CHOCOLATE: galpão de tijolos com telhado em serra, duas

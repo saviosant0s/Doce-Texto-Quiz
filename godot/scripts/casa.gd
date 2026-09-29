@@ -17,15 +17,16 @@ class_name Casa
 
 ## Tamanhos da casa: "grade" = [largura, fundo] da sala em casas; preço para
 ## chegar nele (moedas e açúcar); conforto que o tamanho dá; "fora": o que
-## muda na casa lá na vila.
+## muda na casa lá na vila; "titulo": título do quiz que precisa ter (o
+## quiz continua sendo o caminho: cada tamanho pede passar num nível dele).
 const TAMANHOS := [
 	{"nome": "CASINHA", "grade": [8, 6], "moedas": 0, "acucar": 0, "conforto": 0,
 		"fora": "Casinha de enxaimel com telhado de morango."},
-	{"nome": "CASA COM VARANDA", "grade": [10, 7], "moedas": 400, "acucar": 150, "conforto": 20,
+	{"nome": "CASA COM VARANDA", "grade": [10, 7], "moedas": 400, "acucar": 150, "conforto": 20, "titulo": "noob",
 		"fora": "Ganha uma varanda de biscoito e uma ala nova do lado."},
-	{"nome": "CASA GRANDE", "grade": [12, 8], "moedas": 900, "acucar": 300, "conforto": 45,
+	{"nome": "CASA GRANDE", "grade": [12, 8], "moedas": 900, "acucar": 300, "conforto": 45, "titulo": "pro",
 		"fora": "Ganha a ala do outro lado e mais janelas na sala."},
-	{"nome": "CASARÃO", "grade": [14, 9], "moedas": 1800, "acucar": 600, "conforto": 80,
+	{"nome": "CASARÃO", "grade": [14, 9], "moedas": 1800, "acucar": 600, "conforto": 80, "titulo": "mestre",
 		"fora": "Ganha uma TORRE DE SORVETE com cereja no alto!"},
 ]
 
@@ -60,6 +61,8 @@ const MOVEIS := {
 		"libera": "historia", "como": "Termine o capítulo FESTA NA PRAÇA das histórias da vila."},
 	"retrato_vila": {"nome": "RETRATO DA VILA", "preco": 0, "tam": [1, 1], "conforto": 55,
 		"libera": "historia", "como": "Termine o capítulo O SEGREDO DA FÁBRICA das histórias da vila."},
+	"trofeu_arena": {"nome": "TROFÉU DA ARENA", "preco": 0, "tam": [1, 1], "conforto": 60,
+		"libera": "arena", "como": "Vença o REI DO CHOCOLATE na ARENA DOS DOCES."},
 	# móveis dos eventos da temporada (prêmio da trilha do evento)
 	"vaso_primavera": {"nome": "VASO DA PRIMAVERA", "preco": 0, "tam": [1, 1], "conforto": 40,
 		"libera": "evento", "como": "Prêmio do evento FESTIVAL DAS FLORES."},
@@ -150,7 +153,7 @@ static func proximo_tamanho() -> Dictionary:
 ## nova (no x; no z ficam onde estão, encostados na parede do fundo).
 static func aumentar() -> bool:
 	var novo := proximo_tamanho()
-	if novo.is_empty() or Progresso.moedas < int(novo["moedas"]) or Confeitaria.acucar() < int(novo["acucar"]):
+	if novo.is_empty() or not Quiz.tem_titulo(str(novo.get("titulo", ""))) or Progresso.moedas < int(novo["moedas"]) or Confeitaria.acucar() < int(novo["acucar"]):
 		return false
 	var antes := largura()
 	Confeitaria.gastar_acucar(int(novo["acucar"]))

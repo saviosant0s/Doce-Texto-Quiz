@@ -53,6 +53,8 @@ const PREDIOS := [
 		"telhado": "#E8364F", "cena": "torre", "acao": "SUBIR NA TORRE"},
 	{"id": "fabrica", "nome": "FÁBRICA DE CHOCOLATE", "posicao": Vector3(-13, 0, 7), "parede": "#B06A45",
 		"telhado": "#8B4A2B", "cena": "fabrica", "acao": "ENTRAR NA FÁBRICA"},
+	{"id": "arena", "nome": "ARENA DOS DOCES", "posicao": Vector3(12, 0, 19), "parede": "#FFB3D1",
+		"telhado": "#E8364F", "cena": "batalha", "acao": "ENTRAR NA ARENA"},
 ]
 ## Moradores que sempre passeiam (os mascotes dos níveis).
 const MORADORES := ["bala_verde", "milho_doce"]
@@ -152,6 +154,7 @@ func _ready() -> void:
 	for c in CAMINHOS_EXTRA:
 		CenarioVila.caminho(self, c[0], c[1])
 	_criar_bairro()
+	_criar_pontos_foto()
 	_enfeitar()
 	Telas.por_cima_fechou.connect(_atualizar_topo)  # voltou das missões/baús abertos por cima
 	_criar_jogador()
@@ -160,10 +163,11 @@ func _ready() -> void:
 	# leve para o celular: menos faces nas peças pequenas e o cenário parado
 	# juntado em poucos blocos (portas e nuvens se mexem, ficam de fora)
 	JuntarMalhas.simplificar(self)
-	JuntarMalhas.juntar(self, ["Folha", "Nuvem", "Lote", "Presente"])  # lotes e presentes mudam
+	JuntarMalhas.juntar(self, ["Folha", "Nuvem", "Lote", "Presente", "PontosFoto"])  # lotes e presentes mudam
 	for no in _lotes.values() + _presentes.values():
 		JuntarMalhas.juntar(no, ["Pas", "Tampa"])  # cada um no seu bloco (dá para remontar)
 		_so_de_perto(no)
+	JuntarMalhas.juntar(_marcas_foto, [])  # as marcas num bloco só (somem na hora da foto)
 	for boneco in find_children("*", "DoceAndante", true, false):
 		boneco.otimizar()
 	_criar_evento()
@@ -260,6 +264,9 @@ func _chape(onde: Vector3) -> void:
 
 
 func _mover(delta: float) -> void:
+	if fotografando != "":
+		jogador.andar(Vector3.ZERO, delta)  # parado fazendo pose
+		return
 	if dialogo and dialogo.aberto:
 		jogador.andar(Vector3.ZERO, delta)  # parado enquanto conversa
 		return
@@ -309,6 +316,8 @@ func _process(delta: float) -> void:
 		_tempo_rotulos = 0.0
 		_atualizar_rotulos_producao()
 		_atualizar_relogio()
+	if fotografando != "":
+		return  # a câmera está no enquadramento do ponto de foto (tirar_foto)
 	var pos := _pos_visual()
 	var cabeca := pos + Vector3(0, ALTURA_OLHOS, 0)
 	match modo_camera:
@@ -503,7 +512,7 @@ func _input(evento: InputEvent) -> void:
 				if botao == _botao_pular:
 					jogador.pular()
 				elif botao == _botao_entrar:
-					entrar(_porta_atual)
+					_acao()
 				else:
 					proxima_camera()
 			return
@@ -551,6 +560,15 @@ func _girar_visao(pixels: Vector2) -> void:
 
 
 ## Entra no prédio (abre a tela dele; o "voltar" de lá traz de volta à vila).
+## Botão de ação: agir no ponto perto (lote, presente, morador, foto) ou
+## entrar pela porta.
+func _acao() -> void:
+	if _ponto_atual != "":
+		agir(_ponto_atual)
+	elif _porta_atual != "":
+		entrar(_porta_atual)
+
+
 func entrar(id: String) -> void:
 	var dados: Dictionary = PREDIOS.filter(func(p): return p["id"] == id)[0]
 	if String(dados["cena"]).is_empty():
@@ -631,6 +649,14 @@ func ao_voltar() -> void:
 	if is_instance_valid(_painel_lote):
 		_fechar_painel_lote()
 		return
+	var album := find_child("Album", true, false)
+	if album:
+		album.fechar_album()
+		return
+	if fotografando != "":
+		if is_instance_valid(_camada_foto):
+			sair_da_foto()
+		return  # (a câmera ainda está indo tirar a foto)
 	Telas.ir_para("inicio")
 
 
@@ -976,7 +1002,7 @@ func _criar_interface() -> void:
 	_botao_entrar.size_flags_vertical = Control.SIZE_SHRINK_END
 	_botao_entrar.visible = false
 	_botao_entrar.focus_mode = Control.FOCUS_NONE
-	_botao_entrar.pressed.connect(func(): agir(_ponto_atual) if _ponto_atual != "" else entrar(_porta_atual))
+	_botao_entrar.pressed.connect(_acao)
 	baixo.add_child(_botao_entrar)
 	var pular := Button.new()
 	pular.name = "Pular"
@@ -1366,7 +1392,7 @@ func _pintar_botao_acao() -> void:
 		_botao_entrar.theme_type_variation = &"BotaoPremio"
 	elif t.begins_with("COMPRAR") or t.begins_with("CONSTRUIR") or t.begins_with("EVOLUIR"):
 		_botao_entrar.theme_type_variation = &"BotaoComprar"
-	elif t.begins_with("FALAR"):
+	elif t.begins_with("FALAR") or t.begins_with("TIRAR FOTO"):
 		_botao_entrar.theme_type_variation = &"BotaoAzul"
 	elif t.begins_with("OBRA") or t.begins_with("PRESENTE:"):
 		_botao_entrar.theme_type_variation = &"BotaoSecundario"
@@ -1402,6 +1428,8 @@ func _texto_ponto(id: String) -> String:
 	if id == "morador":
 		var vez := Historia.morador_da_vez()
 		return "FALAR COM " + str(Historia.MORADORES.get(vez, "MORADOR"))
+	if id.begins_with("foto_"):
+		return "TIRAR FOTO"
 	if id.begins_with("presente_"):
 		return "ABRIR PRESENTE" if Terrenos.presente_disponivel(id.trim_prefix("presente_")) else "PRESENTE: VOLTE AMANHÃ"
 	if not Terrenos.comprado(id):
@@ -1423,6 +1451,9 @@ func _texto_ponto(id: String) -> String:
 func agir(id: String) -> void:
 	if id == "morador":
 		conversar()
+		return
+	if id.begins_with("foto_"):
+		tirar_foto(id.trim_prefix("foto_"))
 		return
 	if id.begins_with("presente_"):
 		var lugar := id.trim_prefix("presente_")
@@ -1673,6 +1704,206 @@ func _so_de_perto(no: Node3D) -> void:
 
 
 # --- Vida na vila: borboletas, respingos da fonte, brilho dos presentes -------------
+
+# --- Pontos de foto ------------------------------------------------------------------
+
+## Id do ponto de foto enquanto tira a foto ("" = não está tirando).
+var fotografando := ""
+var _camada_foto: CanvasLayer
+var _icones_foto := {}  # id do ponto -> Sprite3D da câmera flutuando
+var _marcas_foto: Node3D  # as marcas (anéis e tripés) de todos os pontos
+var _letreiros_escondidos: Array = []
+
+
+## Marca de cada ponto de foto: anel no chão, tripé com câmera e o ícone da
+## câmera flutuando em cima. Chegar nela mostra TIRAR FOTO.
+func _criar_pontos_foto() -> void:
+	var anel := CenarioVila._m("#FFD23F", 0.3)
+	anel.emission_enabled = true
+	anel.emission = Color("#FFD23F")
+	anel.emission_energy_multiplier = 0.6
+	var preto := CenarioVila._m("#3B2A5C", 0.4)
+	_marcas_foto = Node3D.new()
+	_marcas_foto.name = "PontosFoto"
+	add_child(_marcas_foto)
+	for p in PontosFoto.PONTOS:
+		var no := Node3D.new()
+		no.name = "PontoFoto_" + p["id"]
+		no.position = p["pe"]
+		_marcas_foto.add_child(no)
+		Pecas3D.rosquinha(no, 0.75, 0.95, Vector3(0, 0.07, 0), anel, Vector3(1, 0.25, 1))
+		# tripé com a câmera, do lado da marca, virado para a vista
+		var tripe := Node3D.new()
+		tripe.position = Vector3(1.25, 0, 0)
+		no.add_child(tripe)
+		for i in 3:
+			var a := i * TAU / 3.0
+			Pecas3D.cano(tripe, Vector3(cos(a) * 0.3, 0, sin(a) * 0.3), Vector3(0, 1.0, 0), 0.03, preto)
+		Pecas3D.caixa(tripe, Vector3(0.42, 0.28, 0.24), Vector3(0, 1.15, 0), CenarioVila._m("#E8364F", 0.35))
+		Pecas3D.cilindro(tripe, 0.09, 0.1, 0.16, Vector3(0, 1.15, 0.18), preto, Vector3.ONE, Vector3(90, 0, 0))
+		tripe.look_at(Vector3(p["camera"].x, no.position.y, p["camera"].z), Vector3.UP, true)
+		var icone := Sprite3D.new()
+		icone.name = "IconeFoto"
+		icone.texture = ICONE_CAMERA
+		icone.pixel_size = 0.012
+		icone.modulate = Color("#FFD23F")
+		icone.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		icone.no_depth_test = true
+		icone.position = Vector3(0, 2.6, 0)
+		no.add_child(icone)
+		var tween := icone.create_tween().set_loops()
+		tween.tween_property(icone, "position:y", 3.0, 0.6).set_trans(Tween.TRANS_SINE)
+		tween.tween_property(icone, "position:y", 2.6, 0.6).set_trans(Tween.TRANS_SINE)
+		_icones_foto[p["id"]] = icone
+		var area := BairroVila.area(no, "Area", Vector3.ZERO, Vector3(2.0, 2, 2.0))
+		area.body_entered.connect(_chegou_no_ponto.bind("foto_" + p["id"]))
+		area.body_exited.connect(_saiu_do_ponto.bind("foto_" + p["id"]))
+
+
+## Tira a foto no ponto: a câmera voa até o enquadramento, o doce faz pose,
+## flash, e a foto vai para o álbum. Depois mostra a foto (PRONTO/ÁLBUM).
+func tirar_foto(id: String) -> void:
+	var p := PontosFoto.ponto(id)
+	if p.is_empty() or fotografando != "" or _entrando:
+		return
+	fotografando = id
+	_interface.visible = false
+	_mostrar_marcas_foto(false)  # a foto sai só com a vista e o doce
+	# letreiros 3D colados na câmera (nome do lugar...) tapariam a foto
+	_letreiros_escondidos = find_children("*", "Label3D", true, false).filter(func(l):
+		return l.visible and l.global_position.distance_to(p["camera"]) < 7.0)
+	for letreiro in _letreiros_escondidos:
+		letreiro.visible = false
+	jogador.global_position = Vector3(p["pe"].x, jogador.global_position.y, p["pe"].z)
+	jogador.olhar_para(p["camera"])
+	var ate := Transform3D(Basis.looking_at(p["olhar"] - p["camera"]), p["camera"])
+	var voo := create_tween()
+	voo.tween_method(func(t: float): _camera.global_transform = _camera.global_transform.interpolate_with(ate, t),
+		0.0, 1.0, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await voo.finished
+	_camera.global_transform = ate
+	jogador.comemorar()
+	await get_tree().create_timer(0.45).timeout
+	await RenderingServer.frame_post_draw
+	var imagem := get_viewport().get_texture().get_image()
+	Audio.tocar("foto")
+	var caminho := PontosFoto.salvar(imagem, id)
+	var premio := PontosFoto.registrar(id)
+	_mostrar_foto(imagem, p, premio, caminho != "")
+
+
+func _mostrar_foto(imagem: Image, p: Dictionary, premio: Dictionary, salvou: bool) -> void:
+	_camada_foto = CanvasLayer.new()
+	_camada_foto.name = "CamadaFoto"
+	add_child(_camada_foto)
+	var raiz := Control.new()
+	raiz.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_camada_foto.add_child(raiz)
+	var escuro := ColorRect.new()
+	escuro.color = Color(0.1, 0.05, 0.2, 0.55)
+	escuro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	raiz.add_child(escuro)
+	var centro_tela := CenterContainer.new()
+	centro_tela.set_anchors_preset(Control.PRESET_FULL_RECT)
+	raiz.add_child(centro_tela)
+	# a foto numa moldura branca de revelação instantânea
+	var moldura := PanelContainer.new()
+	moldura.name = "Polaroide"
+	var fundo := StyleBoxFlat.new()
+	fundo.bg_color = Color("#FFFDF7")
+	fundo.set_corner_radius_all(8)
+	fundo.content_margin_left = 18
+	fundo.content_margin_right = 18
+	fundo.content_margin_top = 18
+	fundo.content_margin_bottom = 14
+	fundo.shadow_color = Color(0, 0, 0, 0.35)
+	fundo.shadow_size = 14
+	moldura.add_theme_stylebox_override("panel", fundo)
+	moldura.rotation_degrees = -2.0
+	centro_tela.add_child(moldura)
+	var coluna := VBoxContainer.new()
+	coluna.add_theme_constant_override("separation", 10)
+	moldura.add_child(coluna)
+	var foto := TextureRect.new()
+	foto.name = "Foto"
+	foto.texture = ImageTexture.create_from_image(imagem)
+	foto.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	foto.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	var largura := minf(720.0, get_viewport().get_visible_rect().size.x * 0.62)
+	foto.custom_minimum_size = Vector2(largura, largura * imagem.get_height() / maxf(1.0, imagem.get_width()))
+	coluna.add_child(foto)
+	var legenda := Label.new()
+	legenda.name = "Legenda"
+	legenda.theme_type_variation = &"Titulo"
+	legenda.add_theme_font_size_override("font_size", 30)
+	legenda.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	legenda.text = "%s · %s" % [p["nome"], CicloDia.fase()]
+	coluna.add_child(legenda)
+	var info := Label.new()
+	info.name = "InfoFoto"
+	info.theme_type_variation = &"Subtitulo"
+	info.add_theme_font_size_override("font_size", 20)
+	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info.text = ("FOTO SALVA NO ÁLBUM!" if salvou else "NÃO DEU PARA SALVAR A FOTO") \
+		+ "  PONTOS DE FOTO: %d/%d" % [PontosFoto.pontos_com_foto(), PontosFoto.PONTOS.size()]
+	if not premio.is_empty():
+		info.text += "\nPRIMEIRA FOTO AQUI: +%d MOEDAS  +%d AÇÚCAR" % [premio["moedas"], premio["acucar"]]
+	coluna.add_child(info)
+	var botoes := HBoxContainer.new()
+	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
+	botoes.add_theme_constant_override("separation", 14)
+	coluna.add_child(botoes)
+	for par in [["ÁLBUM", abrir_album, &"BotaoAzul"], ["PRONTO", sair_da_foto, &"BotaoComprar"]]:
+		var b := Button.new()
+		b.name = "Botao" + par[0].replace("Á", "A")
+		b.text = par[0]
+		b.theme_type_variation = par[2]
+		b.custom_minimum_size = Vector2(200, 64)
+		b.add_theme_font_size_override("font_size", 26)
+		b.focus_mode = Control.FOCUS_NONE
+		b.pressed.connect(par[1])
+		botoes.add_child(b)
+	# flash da câmera por cima de tudo, e a foto "cai" na tela
+	var flash := ColorRect.new()
+	flash.color = Color.WHITE
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	raiz.add_child(flash)
+	var tween := create_tween()
+	tween.tween_property(flash, "color:a", 0.0, 0.4)
+	tween.tween_callback(flash.queue_free)
+	moldura.pivot_offset = moldura.get_combined_minimum_size() / 2.0
+	moldura.scale = Vector2.ONE * 1.15
+	create_tween().tween_property(moldura, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_atualizar_topo()
+
+
+## Fecha a foto: a interface volta e a câmera volta para o doce.
+func sair_da_foto() -> void:
+	if is_instance_valid(_camada_foto):
+		_camada_foto.queue_free()
+	_mostrar_marcas_foto(true)
+	for letreiro in _letreiros_escondidos:
+		if is_instance_valid(letreiro):
+			letreiro.visible = true
+	_letreiros_escondidos.clear()
+	fotografando = ""
+	_interface.visible = true
+	_foco_aereo = _pos_visual()
+
+
+func _mostrar_marcas_foto(sim: bool) -> void:
+	for peca in _marcas_foto.find_children("*", "VisualInstance3D", true, false):
+		peca.visible = sim
+
+
+func abrir_album() -> void:
+	var album := AlbumFotos.new()
+	if is_instance_valid(_camada_foto):
+		_camada_foto.add_child(album)
+	else:
+		_interface.add_child(album)
+
 
 const BORBOLETA := preload("res://assets/icones/borboleta.svg")
 const BRILHO := preload("res://assets/doce_match/brilho.svg")

@@ -1,0 +1,108 @@
+class_name PontosFoto
+## PONTOS DE FOTO da vila: lugares com vista bonita. No chão de cada um há
+## uma marca com uma câmera; o doce para em cima e toca em TIRAR FOTO: a
+## câmera vai para o enquadramento do ponto, o doce faz pose e a foto vai
+## para o ÁLBUM (user://fotos; no computador, também para a pasta Imagens).
+## A primeira foto de cada ponto dá prêmio.
+##
+## Estado em Progresso.vila["fotos"] = {id do ponto: quantas fotos tirou}.
+
+## "pe": onde o doce fica (a marca no chão); "camera" e "olhar": o
+## enquadramento da foto (o doce aparece na frente da vista).
+const PONTOS := [
+	{"id": "praca", "nome": "PRAÇA DA FONTE", "pe": Vector3(1.6, 0, 6.2),
+		"camera": Vector3(4.2, 2.6, 10.6), "olhar": Vector3(-0.6, 1.9, -3.0)},
+	{"id": "casa", "nome": "MINHA CASA", "pe": Vector3(1.8, 0, 16.0),
+		"camera": Vector3(5.2, 2.3, 11.2), "olhar": Vector3(-0.6, 2.2, 21.0)},
+	{"id": "lago", "nome": "LAGO DE CHOCOLATE", "pe": Vector3(-23.6, 0, 12.0),
+		"camera": Vector3(-19.4, 2.6, 14.8), "olhar": Vector3(-30.5, 0.8, 10.4)},
+	{"id": "mirante", "nome": "MIRANTE DO SORVETE", "pe": Vector3(26.4, 0, 12.6),
+		"camera": Vector3(31.6, 2.8, 13.5), "olhar": Vector3(8.0, 0.8, 10.0)},
+	{"id": "terrenos", "nome": "BAIRRO DOS TERRENOS", "pe": Vector3(0.6, 0, -22.6),
+		"camera": Vector3(3.0, 4.6, -18.4), "olhar": Vector3(-0.5, 0.6, -29.5)},
+	{"id": "vista", "nome": "VISTA DA VILA", "pe": Vector3(-6.0, 0, -19.5),
+		"camera": Vector3(-3.0, 11.0, -30.0), "olhar": Vector3(1.0, 0.0, 0.0)},  # (abaixo das nuvens)
+]
+## Prêmio da primeira foto em cada ponto.
+const PREMIO := {"moedas": 20, "acucar": 15}
+const PASTA := "user://fotos"
+## Fotos guardadas no álbum (as mais antigas saem).
+const MAXIMO_ALBUM := 40
+
+
+static func ponto(id: String) -> Dictionary:
+	for p in PONTOS:
+		if p["id"] == id:
+			return p
+	return {}
+
+
+static func _estado() -> Dictionary:
+	if not Progresso.vila.has("fotos"):
+		Progresso.vila["fotos"] = {}
+	return Progresso.vila["fotos"]
+
+
+static func fotos_em(id: String) -> int:
+	return int(_estado().get(id, 0))
+
+
+## Quantos pontos já têm foto.
+static func pontos_com_foto() -> int:
+	return PONTOS.filter(func(p): return fotos_em(p["id"]) > 0).size()
+
+
+## Conta a foto; a primeira do ponto dá o PREMIO (retorna ele; {} se não).
+static func registrar(id: String) -> Dictionary:
+	if ponto(id).is_empty():
+		return {}
+	var primeira := fotos_em(id) == 0
+	_estado()[id] = fotos_em(id) + 1
+	if not primeira:
+		Progresso.salvar()
+		return {}
+	Confeitaria.ganhar_acucar(int(PREMIO["acucar"]))
+	Progresso.ganhar_moedas(int(PREMIO["moedas"]))  # também salva
+	return PREMIO.duplicate()
+
+
+## Guarda a foto no álbum (e, no computador, uma cópia na pasta Imagens).
+## Retorna o caminho no álbum ("" se não deu para salvar).
+static func salvar(imagem: Image, id: String) -> String:
+	DirAccess.make_dir_recursive_absolute(PASTA)
+	var nome := "foto_%s_%d.png" % [id, int(Time.get_unix_time_from_system() * 1000.0)]
+	var caminho := PASTA + "/" + nome
+	if imagem.save_png(caminho) != OK:
+		return ""
+	if OS.has_feature("pc"):
+		var imagens := OS.get_system_dir(OS.SYSTEM_DIR_PICTURES)
+		if imagens != "" and DirAccess.dir_exists_absolute(imagens):
+			DirAccess.make_dir_recursive_absolute(imagens.path_join("Doce Texto Quiz"))
+			imagem.save_png(imagens.path_join("Doce Texto Quiz").path_join(nome))
+	var todas := album()
+	for i in range(MAXIMO_ALBUM, todas.size()):
+		DirAccess.remove_absolute(todas[i])
+	return caminho
+
+
+## Fotos do álbum (caminhos), da mais nova para a mais antiga.
+static func album() -> Array:
+	var lista := []
+	var pasta := DirAccess.open(PASTA)
+	if pasta == null:
+		return lista
+	for arquivo in pasta.get_files():
+		if arquivo.begins_with("foto_") and arquivo.ends_with(".png"):
+			lista.append(PASTA + "/" + arquivo)
+	lista.sort_custom(func(a, b): return _quando(a) > _quando(b))
+	return lista
+
+
+static func _quando(caminho: String) -> int:
+	return int(caminho.get_file().get_basename().get_slice("_", caminho.get_file().get_basename().get_slice_count("_") - 1))
+
+
+## Nome do ponto de uma foto do álbum (pelo nome do arquivo).
+static func nome_da_foto(caminho: String) -> String:
+	var partes := caminho.get_file().get_basename().split("_")
+	return str(ponto("_".join(partes.slice(1, partes.size() - 1))).get("nome", "FOTO"))

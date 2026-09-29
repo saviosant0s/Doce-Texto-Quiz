@@ -150,6 +150,19 @@ static func montar(id: String, pai: Node3D) -> void:
 			for x in [-0.42, 0.42]:
 				Pecas3D.rosquinha(pai, 0.1, 0.16, Vector3(x, 1.15, 0), ouro, Vector3.ONE, Vector3(90, 0, 0))
 			Pecas3D.esfera(pai, 0.12, Vector3(0, 1.5, 0), _luz("#FFE27A", 1.0))
+		"trofeu_arena":
+			# taça de chocolate com duas espadinhas de pirulito cruzadas atrás
+			var chocolate := _m("#6B3A1F", 0.25)
+			Pecas3D.cilindro(pai, 0.34, 0.38, 0.22, Vector3(0, 0.11, 0), _m("#3B2A5C", 0.4))
+			Pecas3D.cilindro(pai, 0.07, 0.13, 0.45, Vector3(0, 0.45, 0), chocolate)
+			Pecas3D.cilindro(pai, 0.36, 0.12, 0.55, Vector3(0, 0.95, 0), chocolate)
+			Pecas3D.rosquinha(pai, 0.3, 0.38, Vector3(0, 1.22, 0), _m("#FFC83D", 0.15, 0.85), Vector3(1, 0.5, 1))
+			for lado in [-1, 1]:
+				var pe := Vector3(lado * 0.28, 0.25, -0.2)
+				var topo := Vector3(-lado * 0.22, 1.55, -0.2)
+				Pecas3D.cano(pai, pe, topo, 0.035, _m("#FFFFFF", 0.4))
+				Pecas3D.esfera(pai, 0.14, topo, _m("#E8364F" if lado < 0 else "#6FD3FF", 0.2), Vector3(1, 1, 0.45))
+			Pecas3D.esfera(pai, 0.1, Vector3(0, 1.35, 0), _luz("#FFE27A", 1.0))
 		"bolo_torre":
 			var y := 0.0
 			for i in 5:

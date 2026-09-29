@@ -48,6 +48,10 @@ extends Node
 ##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
 ##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
 ##   --sujo        Vila: o doce sujo de chocolate (como ao sair da fonte da praça)
+##   --foto=praca  Vila: tira a foto nesse ponto de foto (--foto_vista: só a vista, sem o painel)
+##   --album       Vila: abre o álbum de fotos
+##   --batalha=0,ccec  Arena: luta contra o desafiante 0 e responde (c = certa, e = errada)
+##   --batalha_time    Arena: abre a escolha do time; --arena_vencidos=3 já venceu os 3 primeiros
 ##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
 ##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
 ##   --espera=1.2  segundos até tirar o print
@@ -159,6 +163,8 @@ func _ready() -> void:
 		casa["moveis"]["relogio_cuco"] = 1
 		Progresso.vila["casa"] = casa
 		Progresso.moedas = 1200
+	if args.has("arena_vencidos"):
+		Progresso.vila["arena"] = {"vencidos": range(int(args["arena_vencidos"])), "time": [], "vitorias": int(args["arena_vencidos"])}
 	if args.has("casa_tamanho"):
 		if not Progresso.vila.has("casa"):
 			Progresso.vila["casa"] = Casa.padrao()
@@ -302,6 +308,36 @@ func _ready() -> void:
 		vila.jogador.global_position = Vector3(float(xz[0]), 0, float(xz[1]))
 		if xz.size() > 2:
 			vila._giro = deg_to_rad(float(xz[2]))
+	if args.has("foto"):
+		await get_tree().create_timer(0.3).timeout
+		var vila: Node = get_tree().current_scene
+		vila.tirar_foto(args["foto"])
+		if args.has("foto_vista"):
+			while not is_instance_valid(vila._camada_foto):
+				await get_tree().process_frame
+			vila._camada_foto.visible = false
+	if args.has("batalha"):
+		await get_tree().create_timer(0.3).timeout
+		var arena: Node = get_tree().current_scene
+		var partes: PackedStringArray = args["batalha"].split(",")
+		arena.lutar(int(partes[0]))
+		for letra in (partes[1] if partes.size() > 1 else ""):
+			while arena.luta != null and not arena.respondendo and not arena.luta.acabou():
+				await get_tree().process_frame
+			if arena.luta == null or arena.luta.acabou():
+				break
+			var certa := int(arena.luta.pergunta["resposta"])
+			arena.responder(certa if letra == "c" else (certa + 1) % arena.luta.pergunta["alternativas"].size())
+			await get_tree().process_frame
+		if partes.size() > 1 and arena.luta != null and not arena.luta.acabou():
+			while not arena.respondendo:
+				await get_tree().process_frame
+	if args.has("batalha_time"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene.mostrar_time()
+	if args.has("album"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene.abrir_album()
 	if args.has("sujo"):
 		await get_tree().process_frame
 		var vila: Node = get_tree().current_scene

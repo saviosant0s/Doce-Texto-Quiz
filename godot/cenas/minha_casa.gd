@@ -656,6 +656,7 @@ func abrir_loja() -> void:
 	titulo.text = "LOJA DE MÓVEIS"
 	titulo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	topo.add_child(titulo)
+	topo.add_child(_saldo(false))  # quanto tem, para saber o que dá para comprar
 	for par in [["moveis", "MÓVEIS"], ["paredes", "PAREDES"], ["pisos", "PISOS"]]:
 		var aba := Button.new()
 		aba.name = "Aba_" + par[0]
@@ -856,6 +857,9 @@ func abrir_aumentar() -> void:
 	titulo.text = "AUMENTAR A CASA"
 	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	coluna.add_child(titulo)
+	var linha_saldo := _saldo(true)
+	linha_saldo.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	coluna.add_child(linha_saldo)
 	var corpo := HBoxContainer.new()
 	corpo.add_theme_constant_override("separation", 18)
 	coluna.add_child(corpo)
@@ -919,6 +923,11 @@ func abrir_aumentar() -> void:
 	if proximo.is_empty():
 		botao.text = "JÁ ESTÁ NO MÁXIMO"
 		botao.disabled = true
+	elif not Quiz.tem_titulo(str(proximo.get("titulo", ""))):
+		info.text += "\n\nPARA AUMENTAR: " + Quiz.como_ganhar(str(proximo["titulo"]))
+		botao.text = "JOGUE O QUIZ PARA LIBERAR"
+		botao.theme_type_variation = &"BotaoSecundario"
+		botao.disabled = true
 	else:
 		botao.text = "AUMENTAR (%d MOEDAS + %d AÇÚCAR)" % [proximo["moedas"], proximo["acucar"]]
 		botao.pressed.connect(aumentar_casa)
@@ -939,7 +948,9 @@ func aumentar_casa() -> void:
 	if proximo.is_empty():
 		return
 	if not Casa.aumentar():
-		if Progresso.moedas < int(proximo["moedas"]):
+		if not Quiz.tem_titulo(str(proximo.get("titulo", ""))):
+			Telas.mostrar_aviso(Quiz.como_ganhar(str(proximo["titulo"])))
+		elif Progresso.moedas < int(proximo["moedas"]):
 			Telas.mostrar_aviso("FALTAM MOEDAS")
 		else:
 			Telas.mostrar_aviso("FALTA AÇÚCAR: JOGUE NO FLIPERAMA, NA TORRE OU NA FÁBRICA!")
@@ -956,8 +967,37 @@ func aumentar_casa() -> void:
 	Telas.mostrar_aviso("SUA CASA CRESCEU! AGORA É: " + str(proximo["nome"]))
 
 
+## Etiqueta com as moedas (e o açúcar) que o jogador tem agora.
+func _saldo(com_acucar: bool) -> PanelContainer:
+	var saldo := PanelContainer.new()
+	saldo.name = "Saldo"
+	saldo.theme_type_variation = &"EtiquetaAmarela"
+	saldo.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var linha := HBoxContainer.new()
+	linha.add_theme_constant_override("separation", 6)
+	saldo.add_child(linha)
+	var itens := [[Itens.MOEDA, Jogo.formatar(Progresso.moedas) + " MOEDAS"]]
+	if com_acucar:
+		itens.append([Itens.ACUCAR, Jogo.formatar(Confeitaria.acucar()) + " AÇÚCAR"])
+	for item in itens:
+		var icone := TextureRect.new()
+		icone.texture = item[0]
+		icone.custom_minimum_size = Vector2(28, 28)
+		icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		linha.add_child(icone)
+		var texto := Label.new()
+		texto.name = "SaldoTexto"
+		texto.theme_type_variation = &"Titulo"
+		texto.add_theme_font_size_override("font_size", 26)
+		texto.text = item[1] + "  "
+		linha.add_child(texto)
+	return saldo
+
+
 func fechar_loja() -> void:
 	if is_instance_valid(_loja):
+		_loja.get_parent().remove_child(_loja)  # sai já (o painel novo usa o mesmo nome)
 		_loja.queue_free()
 	_loja = null
 

@@ -26,6 +26,8 @@ func _ready() -> void:
 	_testar_terrenos()
 	_testar_ciclo_dia()
 	_testar_casa()
+	_testar_pontos_foto()
+	_testar_batalha()
 	_testar_historia()
 	_testar_eventos()
 	_testar_salvar_vila_nova()
@@ -1953,6 +1955,11 @@ func _testar_casa() -> void:
 	Progresso.moedas = 100
 	verificar(not Casa.aumentar() and Casa.tamanho_casa() == 0, "sem moedas não aumenta")
 	Progresso.moedas = 5000
+	var titulos_casa: Dictionary = Progresso.titulos.duplicate()
+	Progresso.titulos = {}
+	verificar(not Casa.aumentar() and Casa.tamanho_casa() == 0 and Progresso.moedas == 5000,
+		"sem o título do quiz (NOOB) não aumenta: o quiz continua sendo o caminho")
+	Progresso.titulos = {"noob": 1, "pro": 1, "mestre": 1}
 	var x_antes := int(Casa.colocados()[0]["x"])
 	conforto = Casa.conforto()
 	verificar(Casa.aumentar() and Casa.tamanho_casa() == 1 and Casa.largura() == 10 and Casa.fundo() == 7,
@@ -1966,6 +1973,7 @@ func _testar_casa() -> void:
 	verificar(Casa.aumentar() and Casa.aumentar() and Casa.tamanho_casa() == Casa.TAMANHOS.size() - 1 and Casa.largura() == 14,
 		"cresce até o CASARÃO")
 	verificar(not Casa.aumentar() and Casa.proximo_tamanho().is_empty(), "o CASARÃO é o maior")
+	Progresso.titulos = titulos_casa
 	var casinha := Node3D.new()
 	var casarao := Node3D.new()
 	CenarioVila._minha_casa(casinha, 0)
@@ -1977,6 +1985,137 @@ func _testar_casa() -> void:
 	Progresso.confeitaria["acucar"] = acucar_antes
 	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes
+
+
+func _testar_pontos_foto() -> void:
+	_secao("pontos de foto")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.vila.erase("fotos")
+	var ids := {}
+	for p in PontosFoto.PONTOS:
+		ids[p["id"]] = true
+		verificar(p["camera"].distance_to(p["pe"]) > 3.0 and p["camera"].y > 1.5, "ponto %s: câmera longe do doce e acima do chão" % p["id"])
+	verificar(ids.size() == PontosFoto.PONTOS.size() and PontosFoto.PONTOS.size() >= 5, "pelo menos 5 pontos de foto, cada um com id próprio")
+	verificar(PontosFoto.pontos_com_foto() == 0, "começa sem fotos")
+	var moedas := Progresso.moedas
+	var premio := PontosFoto.registrar("praca")
+	verificar(premio.get("moedas", 0) == PontosFoto.PREMIO["moedas"] and Progresso.moedas == moedas + PontosFoto.PREMIO["moedas"]
+		and Confeitaria.acucar() == acucar_antes + PontosFoto.PREMIO["acucar"], "a primeira foto do ponto dá prêmio")
+	verificar(PontosFoto.registrar("praca").is_empty() and PontosFoto.fotos_em("praca") == 2 and PontosFoto.pontos_com_foto() == 1,
+		"a segunda foto no mesmo ponto não dá prêmio de novo")
+	verificar(PontosFoto.registrar("lugar_que_nao_existe").is_empty(), "ponto que não existe não conta")
+	var imagem := Image.create(64, 36, false, Image.FORMAT_RGBA8)
+	imagem.fill(Color("#FF8FB8"))
+	var caminho := PontosFoto.salvar(imagem, "praca")
+	verificar(caminho != "" and FileAccess.file_exists(caminho) and PontosFoto.album()[0] == caminho,
+		"a foto vai para o álbum (a mais nova primeiro)")
+	verificar(PontosFoto.nome_da_foto(caminho) == "PRAÇA DA FONTE", "o álbum sabe o nome do ponto da foto")
+	DirAccess.remove_absolute(caminho)
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
+func _testar_batalha() -> void:
+	_secao("batalha de doces")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var colecao: Dictionary = Progresso.colecao.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.vila.erase("arena")
+	# todo doce da escada existe em 3D e tem foto
+	var modelos_ok := true
+	for d in Batalha.DESAFIANTES:
+		for par in d["time"]:
+			var pivo := Node3D.new()
+			if not Doces3D.montar(par[0], pivo) or not ResourceLoader.exists("res://assets/doces_3d/fotos/%s.png" % par[0]):
+				modelos_ok = false
+				print("  sem modelo/foto: ", par[0])
+			pivo.free()
+	verificar(modelos_ok, "todos os doces dos desafiantes existem em 3D e têm foto")
+	verificar(Batalha.DESAFIANTES.size() == 10 and Batalha.DESAFIANTES[-1]["premio"].get("movel", "") == "trofeu_arena"
+		and Casa.MOVEIS.has("trofeu_arena"), "10 desafiantes; o último dá o TROFÉU DA ARENA")
+	verificar(Batalha.liberado(0) and not Batalha.liberado(1), "começa só com o primeiro desafiante liberado")
+	var titulos_arena: Dictionary = Progresso.titulos.duplicate()
+	Progresso.titulos = {}
+	Progresso.vila["arena"] = {"vencidos": [0, 1, 2], "time": [], "vitorias": 3}
+	verificar(not Batalha.liberado(3), "a DONA PAÇOCA pede o título NOOB do quiz")
+	Progresso.titulos["noob"] = 1
+	verificar(Batalha.liberado(3), "com o título NOOB, libera")
+	Progresso.titulos = titulos_arena
+	Progresso.vila.erase("arena")
+	verificar(Batalha.vida("chocolate", 1) > Batalha.vida("brigadeiro", 1) and Batalha.ataque("brigadeiro", 3) > Batalha.ataque("brigadeiro", 1),
+		"raridade e nível deixam o doce mais forte")
+	# time: só doces que tem; padrão = companheiro e os mais fortes
+	verificar(Batalha.time().size() >= 1 and Batalha.time().all(func(id): return Colecao.tem(id)), "o time padrão usa doces da coleção")
+	verificar(not Batalha.escolher_time([]) and not Batalha.escolher_time(["chocolate_que_nao_tenho"]), "time vazio ou com doce que não tem não vale")
+	# luta vencida respondendo tudo certo
+	var luta := Batalha.new(0, ["brigadeiro"], 7)
+	verificar(luta.meu()["id"] == "brigadeiro" and luta.deles()["id"] == "milho_doce", "luta: brigadeiro contra o Seu Milho")
+	var p := luta.proxima_pergunta()
+	verificar(p["alternativas"].size() >= 2 and int(p["resposta"]) >= 0 and int(p["resposta"]) < p["alternativas"].size(),
+		"a pergunta da luta vem do quiz, com a resposta certa marcada")
+	var vida_deles := int(luta.deles()["vida"])
+	var r := luta.responder(int(p["resposta"]), 10.0)
+	verificar(r["acertou"] and r["atacante"] == "meu" and int(luta.deles()["vida"]) == vida_deles - int(r["dano"]) and not r["rapido"],
+		"acertou: o seu doce ataca")
+	p = luta.proxima_pergunta()
+	var minha_vida := int(luta.meu()["vida"])
+	r = luta.responder(-1, Batalha.TEMPO)
+	verificar(not r["acertou"] and r["atacante"] == "deles" and int(luta.meu()["vida"]) == minha_vida - int(r["dano"]) and luta.sequencia == 0,
+		"acabou o tempo: o doce do desafiante ataca e zera a sequência")
+	# rápido e super
+	for i in Batalha.SUPER_COM:
+		if luta.acabou():
+			break
+		p = luta.proxima_pergunta()
+		r = luta.responder(int(p["resposta"]), 1.0)
+	verificar(r["rapido"] and (r["super"] or luta.acabou()), "resposta rápida bate mais forte; 3 acertos seguidos = SUPER")
+	var repetidas := {}
+	var repetiu := false
+	while not luta.acabou():
+		p = luta.proxima_pergunta()
+		repetiu = repetiu or repetidas.has(p["id"])
+		repetidas[p["id"]] = true
+		luta.responder(int(p["resposta"]), 3.0)
+	verificar(luta.venceu() and not luta.perdeu() and not repetiu, "acertando tudo, vence a luta (sem repetir pergunta)")
+	var moedas := Progresso.moedas
+	var ganho := luta.concluir()
+	verificar(ganho["primeira"] and Progresso.moedas == moedas + int(Batalha.DESAFIANTES[0]["premio"]["moedas"])
+		and Batalha.vencido(0) and Batalha.liberado(1), "a primeira vitória dá o prêmio e libera o próximo desafiante")
+	var revanche := Batalha.premio(0)
+	verificar(revanche["moedas"] < int(Batalha.DESAFIANTES[0]["premio"]["moedas"]) and not revanche.has("bau"), "revanche dá um prêmio menor")
+	# luta perdida errando tudo (com 2 doces no time: o segundo entra)
+	Progresso.colecao["doces"].append("bala")
+	var derrota := Batalha.new(1, ["brigadeiro", "bala"], 3)
+	var entrou := ""
+	while not derrota.acabou():
+		derrota.proxima_pergunta()
+		var rr := derrota.responder(-1, Batalha.TEMPO)
+		if rr["nocaute"] and rr["entrou"] != "":
+			entrou = rr["entrou"]
+	verificar(entrou == "bala" and derrota.perdeu(), "doce nocauteado sai e entra o próximo do time; sem doces, perdeu")
+	var acucar := Confeitaria.acucar()
+	var consolo := derrota.concluir()
+	verificar(consolo["moedas"] == 0 and Confeitaria.acucar() == acucar + Batalha.ACUCAR_DERROTA and not Batalha.vencido(1),
+		"perder dá só o açúcar do esforço")
+	verificar(Batalha.escolher_time(["bala", "brigadeiro"]) and Batalha.time() == ["bala", "brigadeiro"], "escolhe e guarda o time")
+	# o Rei do Chocolate dá o troféu para a casa
+	Progresso.vila["arena"]["vencidos"] = range(9)
+	var rei := Batalha.new(9, ["brigadeiro"], 1)
+	while not rei.acabou():
+		var pr := rei.proxima_pergunta()
+		rei.responder(int(pr["resposta"]), 2.0)
+	var baus_antes := Baus.quantos("ouro")
+	var ganho_rei := rei.concluir()
+	verificar(rei.venceu() and ganho_rei.get("movel", "") == "trofeu_arena" and Casa.quantos("trofeu_arena") == 1
+		and Baus.quantos("ouro") == baus_antes + 1, "vencer o Rei do Chocolate dá baú de ouro e o TROFÉU DA ARENA para a Minha Casa")
+	Progresso.vila = guardado
+	Progresso.colecao = colecao
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
 
 
 func _testar_historia() -> void:
@@ -2235,6 +2374,15 @@ func _testar_tela_casa() -> void:
 	var acucar_antes := Confeitaria.acucar()
 	Progresso.moedas = 1000
 	Progresso.confeitaria["acucar"] = 500
+	var titulos_tela: Dictionary = Progresso.titulos.duplicate()
+	Progresso.titulos = {}
+	tela.abrir_loja()
+	verificar(tela.find_child("SaldoTexto", true, false).text.begins_with("1.000"), "a loja mostra quantas moedas o jogador tem")
+	tela.abrir_aumentar()
+	verificar(tela.find_child("BotaoAumentarCasa", true, false).disabled and tela.find_child("InfoAumentar", true, false).text.contains("QUIZ"),
+		"sem o título, o painel pede para jogar o quiz")
+	Progresso.titulos["noob"] = 1
+	tela.fechar_loja()
 	tela.find_child("BotaoAUMENTAR", true, false).pressed.emit()
 	var painel: Node = tela.find_child("Aumentar", true, false)
 	verificar(painel != null and tela.find_child("InfoAumentar", true, false).text.contains("CASA COM VARANDA")
@@ -2247,6 +2395,7 @@ func _testar_tela_casa() -> void:
 	verificar(tela._camera.position.z > 8.0 and tela.find_children("Sala*", "Node3D", false, false).size() == 1,
 		"a câmera se afasta para caber a sala; a sala velha sai")
 	tela.ao_voltar()
+	Progresso.titulos = titulos_tela
 	Progresso.confeitaria["acucar"] = acucar_antes
 	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes
