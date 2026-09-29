@@ -687,7 +687,10 @@ static func enfeitar(modelo: Node3D, id: String, nivel: int) -> void:
 	var corpo := modelo.get_node_or_null("Corpo") as Node3D
 	if corpo == null:
 		return
+	# os enfeites seguem a altura do doce antes de evoluir (o palito da maçã
+	# do amor não empurra a coroa lá para cima)
 	var limites := _limites(corpo)
+	evoluir(corpo, id, nivel)
 	var topo := limites.end.y
 	var chao := limites.position.y
 	var cor := Companheiros.cor(id)
@@ -713,6 +716,80 @@ static func enfeitar(modelo: Node3D, id: String, nivel: int) -> void:
 	if maximo:
 		var luz := Pecas3D.rosquinha(modelo, 0.62, 0.78, Vector3(0, chao + 0.02, 0), _brilhante(ouro, 0.85), Vector3(1, 0.08, 1))
 		luz.name = "Luz"
+
+
+## Alguns doces mudam de cara ao subir de nível (além dos enfeites). A MAÇÃ
+## vira maçã do amor: nível 2 ganha o palito e a calda começa a escorrer; 3,
+## coberta de calda brilhante; 4, com a parte de baixo no chocolate; 5, com
+## chocolate, granulado colorido e fio de chocolate branco.
+static func evoluir(corpo: Node3D, id: String, nivel: int) -> void:
+	if id != "maca" or nivel < 2:
+		return
+	var calda := _m("#E0101E", 0.08)
+	calda.clearcoat_enabled = true
+	calda.clearcoat = 0.8
+	calda.clearcoat_roughness = 0.1
+	# o cabinho vira o palito de madeira da maçã do amor
+	for peca in corpo.get_children():
+		if peca is MeshInstance3D and (peca as MeshInstance3D).mesh is CapsuleMesh and peca.position.y > 0.6:
+			peca.visible = false
+	Pecas3D.cilindro(corpo, 0.045, 0.045, 0.6, Vector3(0, 0.9, 0), _m("#D9A35E", 0.7)).name = "Palito"
+	if nivel == 2:
+		# calda vermelha começando: pingos brilhantes na parte de cima
+		for i in 7:
+			var a := i * TAU / 7.0 + 0.3
+			var p := Vector3(cos(a) * 0.46, 0.46 - (i % 3) * 0.05, sin(a) * 0.46)
+			Pecas3D.esfera(corpo, 0.11, p, calda, Vector3(0.8, 1.5, 0.8))
+		Pecas3D.esfera(corpo, 0.4, Vector3(0, 0.55, 0), calda, Vector3(1.3, 0.35, 1.3))
+		return
+	# nível 3+: a maçã inteira na calda (casca lisa e brilhante), sem a folha
+	for peca in corpo.get_children():
+		if peca is MeshInstance3D and peca.position.distance_to(Vector3(0.3, 0.9, 0.02)) < 0.05:
+			peca.visible = false
+	for peca in corpo.get_children():
+		if peca is MeshInstance3D and (peca as MeshInstance3D).mesh is SphereMesh and peca.position.distance_to(Vector3(0, 0.1, 0)) < 0.05:
+			(peca as MeshInstance3D).material_override = calda
+	if nivel >= 4:
+		# a parte de baixo mergulhada no chocolate, com pingos escorrendo
+		var chocolate := _m("#4A2412", 0.22)
+		var banho := MeshInstance3D.new()
+		var meia := SphereMesh.new()
+		meia.radius = 0.6
+		meia.height = 0.6
+		meia.is_hemisphere = true
+		banho.name = "Chocolate"
+		banho.mesh = meia
+		banho.material_override = chocolate
+		# a borda fica colada na maçã (na altura -0,14) e a curva acompanha o fundo dela
+		banho.position = Vector3(0, -0.14, 0)
+		banho.rotation_degrees = Vector3(180, 0, 0)
+		banho.scale = Vector3(1.06, 0.63, 1.02)
+		corpo.add_child(banho)
+		for i in 9:
+			var a := i * TAU / 9.0
+			Pecas3D.esfera(corpo, 0.07, Vector3(cos(a) * 0.61, -0.19 - (i % 2) * 0.05, sin(a) * 0.59), chocolate, Vector3(0.9, 1.6, 0.9))
+	if nivel >= 5:
+		# granulado colorido só no chocolate (parte de baixo)
+		var cores := ["#FFD23F", "#6FD3FF", "#FF6FAE", "#7BE07B", "#FFFFFF"].map(func(c): return _m(c, 0.35))
+		var sorteio := RandomNumberGenerator.new()
+		sorteio.seed = 31
+		for i in 70:
+			var a := sorteio.randf() * TAU
+			var t := sorteio.randf_range(0.03, 0.3)  # profundidade abaixo da borda do chocolate
+			var r := 0.6 * sqrt(maxf(0.0, 1.0 - pow(t / 0.378, 2.0))) + 0.012
+			var ponto := Vector3(cos(a) * r * 1.06, -0.14 - t, sin(a) * r * 1.02)
+			var lado := Vector3(-sin(a), sorteio.randf_range(-0.6, 0.6), cos(a)).normalized() * 0.045
+			Pecas3D.cano(corpo, ponto - lado, ponto + lado, 0.017, cores[i % cores.size()])
+		# fio de chocolate branco em zigue-zague na frente do chocolate
+		var branco := _m("#F3E3B5", 0.3)
+		var anterior := Vector3(-0.42, -0.2, 0.46)
+		for i in range(1, 8):
+			var x := -0.42 + i * 0.12
+			var y := -0.2 - (0.08 if i % 2 == 1 else 0.0)
+			var z := sqrt(maxf(0.0, 0.62 * 0.62 - x * x)) * 0.98 - (0.04 if i % 2 == 1 else 0.0)
+			var ponto := Vector3(x, y, z)
+			Pecas3D.cano(corpo, anterior, ponto, 0.022, branco)
+			anterior = ponto
 
 
 ## Tamanho do doce (sem os braços, que se mexem), em coordenadas do Corpo.

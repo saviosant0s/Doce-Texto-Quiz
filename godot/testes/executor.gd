@@ -300,6 +300,23 @@ func _testar_colecao() -> void:
 				print("  coroa baixa demais: ", doce["id"])
 			pivo.free()
 	verificar(enfeites_ok, "cada nível do doce tem seu visual (brilhos, laço, coroa, luz), com a coroa no alto")
+	# a maçã vira maçã do amor: palito a partir do nível 2, chocolate a partir do 4
+	var maca_ok := true
+	for n in [1, 2, 3, 4, 5]:
+		var pivo := Node3D.new()
+		Doces3D.montar("maca", pivo)
+		Doces3D.enfeitar(pivo, "maca", n)
+		var corpo: Node3D = pivo.get_node("Corpo")
+		if (corpo.find_child("Palito", false, false) != null) != (n >= 2) \
+				or (corpo.find_child("Chocolate", false, false) != null) != (n >= 4):
+			maca_ok = false
+		pivo.free()
+	var outro := Node3D.new()
+	Doces3D.montar("cupcake", outro)
+	Doces3D.enfeitar(outro, "cupcake", 5)
+	verificar(maca_ok and outro.get_node("Corpo").find_child("Palito", false, false) == null,
+		"a maçã evolui até maçã do amor (palito no 2, chocolate no 4); os outros doces não mudam")
+	outro.free()
 	# pódio: doces de 2023 por padrão; troca só com o título e com doce que tem
 	verificar(Colecao.doce_do_podio("mestre") == "chocolate" and Colecao.doce_do_podio("noob") == "maca", "pódio começa com os doces de 2023")
 	verificar(not Colecao.escolher_do_podio("mestre", "brigadeiro"), "sem o título, não troca o doce do degrau")
