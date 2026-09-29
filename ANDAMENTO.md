@@ -122,6 +122,20 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+### Rodada de 29/09/2026 (depois de jogar a 0.13.0) — no código, falta publicar a 0.14.0
+
+- Câmera padrão de perto; giro da aérea parado corrigido.
+- Minigames não custam mais açúcar: dão açúcar e moedas (`docs/economia.md`).
+- Relógio do jogo: 1 dia = 40 min; dia/noite e chuva sozinhos; o tema do evento
+  troca a cada 30 dias do jogo.
+- Maçã evolui até maçã do amor com chocolate (nível 2 a 5).
+- Fonte de chocolate: pular na bacia deixa o doce sujo (seca em 2 min; chuva lava).
+- Minha Casa: AUMENTAR (4 tamanhos, por dentro e por fora na vila); loja mostra o saldo.
+- Pontos de foto (6) com álbum.
+- Arena dos Doces: batalha por turnos com perguntas do quiz, 10 desafiantes.
+- O quiz continua central: casa maior e desafiantes fortes pedem os títulos.
+- Próximo: publicar a 0.14.0 quando o Sávio pedir.
+
 - 29/09 (pedido do Sávio antes de "fechar o sistema por enquanto"): **botões
   diferenciados + verificação geral**, **publicado na 0.13.0**:
   - Botões "de bala" (`ferramentas/gerar_botoes.py` gera as texturas com brilho

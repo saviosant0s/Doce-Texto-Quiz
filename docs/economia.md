@@ -133,6 +133,35 @@ Prêmio uma vez por faixa: ACONCHEGANTE (60) 50 moedas, CHARMOSA (150) 100
 moedas, LINDA (280) baú de doce, DOS SONHOS (450) 250 moedas, DE REVISTA (700)
 baú de ouro.
 
+### Aumentar a casa (desde a 0.14.0)
+
+| Tamanho | Sala | Preço | Conforto | Precisa do quiz |
+|---|---|---|---|---|
+| CASINHA | 8 × 6 | — | — | — |
+| CASA COM VARANDA | 10 × 7 | 400 moedas + 150 açúcar | +20 | título NOOB (fácil) |
+| CASA GRANDE | 12 × 8 | 900 moedas + 300 açúcar | +45 | título PRO (médio) |
+| CASARÃO | 14 × 9 | 1.800 moedas + 600 açúcar | +80 | título MESTRE (difícil) |
+
+## O quiz continua sendo o caminho (desde a 0.14.0)
+
+Os minigames dão açúcar e algumas moedas, mas o quiz segue no centro:
+- é a maior fonte de moedas (uma partida boa rende 125 a 200);
+- os tamanhos da casa e os desafiantes 4, 7 e 10 da Arena pedem os títulos do
+  quiz (NOOB, PRO, MESTRE);
+- a própria Arena é quiz: cada golpe é uma pergunta.
+
+## Arena dos Doces (desde a 0.14.0)
+
+Time de até 3 doces (vida e ataque pela raridade e +12% por nível). Acertou
+= seu doce ataca; errou/tempo = apanha; em até 6 s = +25%; 3 acertos seguidos
+= SUPER (dobro). Prêmio da primeira vitória: de 30 moedas + 20 açúcar (Seu
+Milho) até 200 moedas + 100 açúcar + baú de ouro + Troféu da Arena (Rei do
+Chocolate); revanche = 30% (mínimo 10); derrota = 5 açúcar.
+
+## Pontos de foto (desde a 0.14.0)
+
+6 pontos; a primeira foto em cada um dá 20 moedas + 15 açúcar.
+
 ## Eventos da temporada (desde a 0.13.0)
 
 Seis eventos por ano (Festival das Flores 20/09–14/10, Noite das Abóboras
