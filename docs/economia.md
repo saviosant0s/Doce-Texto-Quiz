@@ -158,9 +158,24 @@ Time de até 3 doces (vida e ataque pela raridade e +12% por nível). Acertou
 Milho) até 200 moedas + 100 açúcar + baú de ouro + Troféu da Arena (Rei do
 Chocolate); revanche = 30% (mínimo 10); derrota = 5 açúcar.
 
-## Pontos de foto (desde a 0.14.0)
+## Regiões do mapa (desde a 0.15.0)
 
-6 pontos; a primeira foto em cada um dá 20 moedas + 15 açúcar.
+| Região | Portão abre com | Descobrir | Coisinhas por dia |
+|---|---|---|---|
+| Ilha do Algodão-Doce (oeste, lago e ponte) | nível 2 do jogador | 40 moedas + 30 açúcar | 5 conchas |
+| Bosque de Pirulitos (sul, rio e ponte) | título NOOB (quiz fácil) | 40 moedas + 30 açúcar | 5 morangos |
+| Montanha de Sorvete (leste) | título PRO (quiz médio) | 40 moedas + 30 açúcar | 5 cristais |
+
+Cada coisinha dá 6 açúcar + 3 moedas (voltam a cada dia do jogo = 40 min).
+
+## Batalha: força dos doces (desde a 0.15.0)
+
+Vida +20% e ataque +12% por nível acima do 1 (antes +12% nos dois).
+
+## Fotos e vistas bonitas (desde a 0.14.0; botão de foto na 0.15.0)
+
+Botão de foto em qualquer lugar. 9 vistas bonitas escondidas (o botão pulsa
+perto); a primeira foto em cada uma dá 20 moedas + 15 açúcar.
 
 ## Eventos da temporada (desde a 0.13.0)
 

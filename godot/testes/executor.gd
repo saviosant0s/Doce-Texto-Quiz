@@ -27,6 +27,7 @@ func _ready() -> void:
 	_testar_ciclo_dia()
 	_testar_casa()
 	_testar_pontos_foto()
+	_testar_regioes()
 	_testar_batalha()
 	_testar_historia()
 	_testar_eventos()
@@ -633,9 +634,20 @@ func _testar_vila() -> void:
 	verificar(com_relevo.size() >= 5, "materiais do cenário com relevo e luz realista")
 	# a vila cresceu (terrenos, lago, mirante): os lotes e presentes ficam em
 	# blocos próprios e só são desenhados de perto
-	var pecas_vila := vila.find_children("*", "MeshInstance3D", true, false).filter(func(m): return not vila.ceu.is_ancestor_of(m))
+	# as regiões em volta (ilha, bosque, montanha) ficam nos blocos delas e só
+	# são desenhadas de perto: contam à parte
+	var regioes: Array = vila.get_children().filter(func(n): return String(n.name).begins_with("Regiao_"))
+	var pecas_vila := []
+	for m in vila.find_children("*", "MeshInstance3D", true, false):
+		if not vila.ceu.is_ancestor_of(m) and not regioes.any(func(r): return r.is_ancestor_of(m)):
+			pecas_vila.append(m)
 	# (até ~40 blocos a mais durante um evento da temporada: decoração e objetos)
-	verificar(pecas_vila.size() < 400, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
+	verificar(pecas_vila.size() < 430, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
+	var regioes_leves := regioes.size() == 3
+	for r in regioes:
+		var blocos_regiao: Array = r.find_children("*", "MeshInstance3D", true, false)
+		regioes_leves = regioes_leves and blocos_regiao.size() < 200 and blocos_regiao.all(func(m): return m.visibility_range_end > 0.0)
+	verificar(regioes_leves, "cada região em poucos blocos, desenhados só de perto")
 	var lote: Node3D = vila.find_child("Lote_lote_1", true, false)
 	verificar(lote.find_children("*", "MeshInstance3D", true, false).all(func(m): return m.visibility_range_end > 0.0),
 		"lotes longe da câmera não são desenhados")
@@ -2019,6 +2031,56 @@ func _testar_pontos_foto() -> void:
 	Progresso.confeitaria["acucar"] = acucar_antes
 
 
+## Clique de mouse solto (o toque do celular vira isso).
+func _clique() -> InputEventMouseButton:
+	var clique := InputEventMouseButton.new()
+	clique.button_index = MOUSE_BUTTON_LEFT
+	clique.pressed = false
+	return clique
+
+
+func _testar_regioes() -> void:
+	_secao("regiões do mapa")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	var titulos: Dictionary = Progresso.titulos.duplicate()
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.vila.erase("regioes")
+	Progresso.jogador = {"xp": 0, "nivel": 1}
+	Progresso.titulos = {}
+	verificar(Regioes.LISTA.size() == 3 and Regioes.LISTA.all(func(r): return not Regioes.liberada(r["id"])),
+		"começa com as 3 regiões fechadas")
+	verificar(Regioes.texto_requisito("bosque").contains("QUIZ") and Regioes.texto_requisito("ilha").contains("NÍVEL 2"),
+		"cada portão diz o que falta (nível do jogador ou quiz)")
+	verificar(Regioes.regiao_em(Vector3(0, 0, 0)) == "" and Regioes.regiao_em(Vector3(-70, 0, 2)) == "ilha"
+		and Regioes.regiao_em(Vector3(0, 0, 70)) == "bosque" and Regioes.regiao_em(Vector3(70, 0, 0)) == "montanha",
+		"sabe em que região um ponto fica")
+	verificar(Regioes.descobrir("ilha").is_empty() and not Regioes.explorada("ilha"), "região fechada não se descobre")
+	Progresso.jogador["nivel"] = 2
+	Progresso.titulos["noob"] = 1
+	verificar(Regioes.liberada("ilha") and Regioes.liberada("bosque") and not Regioes.liberada("montanha"),
+		"nível 2 abre a ilha; o título NOOB abre o bosque; a montanha pede o PRO")
+	var moedas := Progresso.moedas
+	var premio := Regioes.descobrir("ilha")
+	verificar(premio.get("moedas", 0) == Regioes.PREMIO_DESCOBRIR["moedas"] and Progresso.moedas == moedas + int(premio["moedas"])
+		and Regioes.explorada("ilha") and Regioes.descobrir("ilha").is_empty(), "descobrir dá prêmio uma vez")
+	var itens := Regioes.itens_de_hoje("bosque")
+	verificar(itens.size() == Regioes.ITENS_POR_DIA and itens.all(func(i): return Regioes.regiao_em(i["posicao"]) == "bosque"),
+		"cada região tem %d coisinhas por dia, dentro dela" % Regioes.ITENS_POR_DIA)
+	var chave: String = itens[0]["id"]
+	verificar(not Regioes.pegar(chave).is_empty() and Regioes.pegar(chave).is_empty() and Regioes.itens_de_hoje("bosque").size() == Regioes.ITENS_POR_DIA - 1,
+		"pegar a coisinha dá prêmio uma vez por dia")
+	CicloDia.dia_fixo = CicloDia.dia_jogo() + 1
+	verificar(Regioes.itens_de_hoje("bosque").size() == Regioes.ITENS_POR_DIA, "no outro dia do jogo, as coisinhas voltam")
+	CicloDia.dia_fixo = -1
+	Progresso.vila = guardado
+	Progresso.jogador = jogador_antes
+	Progresso.titulos = titulos
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+
+
 func _testar_batalha() -> void:
 	_secao("batalha de doces")
 	var guardado: Dictionary = Progresso.vila.duplicate(true)
@@ -2526,6 +2588,48 @@ func _testar_fonte_chocolate() -> void:
 	vila._atualizar_botao_foto()
 	verificar(vila._brilho_foto != null, "perto de uma vista bonita, o botão de foto pulsa")
 	Progresso.vila["fotos"] = guardado_fotos
+	# regiões na vila: portão fechado segura, abre com o requisito; mapa
+	_secao("regiões na vila")
+	var guardado_regioes: Dictionary = Progresso.vila.get("regioes", {}).duplicate(true)
+	var titulos_vila: Dictionary = Progresso.titulos.duplicate()
+	var jogador_vila: Dictionary = Progresso.jogador.duplicate(true)
+	Progresso.vila.erase("regioes")
+	Progresso.titulos = {}
+	Progresso.jogador["nivel"] = 1
+	vila._atualizar_regioes()
+	var portao: Node3D = vila.find_child("Portao_bosque", true, false)
+	verificar(portao != null and portao.get_node("Fechado").visible and portao.get_node("Fechado/Parede").collision_layer == 1,
+		"portão do bosque fechado (com parede)")
+	jogador.global_position = Vector3(-8, 0, 35)
+	for i in 40:
+		jogador.andar(Vector3(0, 0, 1), 1.0 / 60.0)
+		await get_tree().physics_frame
+	verificar(jogador.global_position.z < 38.0, "o portão fechado não deixa passar")
+	Progresso.titulos["noob"] = 1
+	vila._atualizar_regioes()
+	verificar(not portao.get_node("Fechado").visible and portao.get_node("Fechado/Parede").collision_layer == 0,
+		"com o título NOOB o portão do bosque abre")
+	verificar(vila.find_children("ItemRegiao_bosque*", "Node3D", true, false).size() == Regioes.ITENS_POR_DIA,
+		"as coisinhas do bosque aparecem")
+	jogador.global_position = Vector3(0, 0, 62)
+	vila._atualizar_regioes()
+	verificar(Regioes.explorada("bosque"), "entrar no bosque descobre a região")
+	var item: Node3D = vila.find_children("ItemRegiao_bosque*", "Node3D", true, false)[0]
+	var acucar_item := Confeitaria.acucar()
+	jogador.global_position = item.global_position
+	await get_tree().create_timer(0.2).timeout
+	verificar(Confeitaria.acucar() == acucar_item + Regioes.PREMIO_ITEM["acucar"] and not is_instance_valid(item),
+		"passar pela coisinha pega (açúcar e moedas)")
+	verificar(vila.find_child("Minimapa", true, false) != null, "minimapa no canto")
+	vila.find_child("Minimapa", true, false).gui_input.emit(_clique())
+	verificar(is_instance_valid(vila._mapa_cheio) and vila._mapa_cheio.find_child("Mapa", true, false) is MapaVila,
+		"tocar no minimapa abre o mapa inteiro")
+	vila.ao_voltar()
+	await get_tree().process_frame
+	verificar(not is_instance_valid(vila._mapa_cheio), "voltar fecha o mapa")
+	Progresso.vila["regioes"] = guardado_regioes
+	Progresso.titulos = titulos_vila
+	Progresso.jogador = jogador_vila
 
 
 func _testar_vila_terrenos() -> void:

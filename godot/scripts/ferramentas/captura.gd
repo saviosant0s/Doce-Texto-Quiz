@@ -50,6 +50,7 @@ extends Node
 ##   --sujo        Vila: o doce sujo de chocolate (como ao sair da fonte da praça)
 ##   --foto=praca  Vila: tira a foto nesse ponto de foto (--foto_vista: só a vista, sem o painel)
 ##   --album       Vila: abre o álbum de fotos
+##   --mapa        Vila: abre o mapa cheio; --regioes=ilha,bosque exploradas (e liberadas: nível 9 e títulos)
 ##   --batalha=0,ccec  Arena: luta contra o desafiante 0 e responde (c = certa, e = errada)
 ##   --batalha_time    Arena: abre a escolha do time; --arena_vencidos=3 já venceu os 3 primeiros
 ##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
@@ -163,6 +164,10 @@ func _ready() -> void:
 		casa["moveis"]["relogio_cuco"] = 1
 		Progresso.vila["casa"] = casa
 		Progresso.moedas = 1200
+	if args.has("regioes"):
+		Progresso.jogador["nivel"] = 9
+		Progresso.titulos = {"noob": 1, "pro": 1, "mestre": 1}
+		Progresso.vila["regioes"] = {"exploradas": Array(args["regioes"].split(",", false)), "coletados": {"dia": -1, "ids": []}}
 	if args.has("arena_vencidos"):
 		Progresso.vila["arena"] = {"vencidos": range(int(args["arena_vencidos"])), "time": [], "vitorias": int(args["arena_vencidos"])}
 	if args.has("casa_tamanho"):
@@ -335,6 +340,9 @@ func _ready() -> void:
 	if args.has("batalha_time"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.mostrar_time()
+	if args.has("mapa"):
+		await get_tree().create_timer(0.3).timeout
+		get_tree().current_scene.abrir_mapa()
 	if args.has("album"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.abrir_album()

@@ -22,6 +22,12 @@ const PONTOS := [
 		"camera": Vector3(3.0, 4.6, -18.4), "olhar": Vector3(-0.5, 0.6, -29.5)},
 	{"id": "vista", "nome": "VISTA DA VILA", "pe": Vector3(-6.0, 0, -19.5),
 		"camera": Vector3(-3.0, 11.0, -30.0), "olhar": Vector3(1.0, 0.0, 0.0)},  # (abaixo das nuvens)
+	{"id": "ilha", "nome": "PONTE DA ILHA", "pe": Vector3(-50, 0, 2),
+		"camera": Vector3(-44, 3.2, 7.5), "olhar": Vector3(-72, 3.0, -2.0)},
+	{"id": "bosque", "nome": "CASA NA ÁRVORE", "pe": Vector3(1.5, 0, 62),
+		"camera": Vector3(6.5, 3.0, 56.5), "olhar": Vector3(0, 5.0, 72.0)},
+	{"id": "montanha", "nome": "VALE DO SORVETE", "pe": Vector3(62, 0, 6),
+		"camera": Vector3(54.0, 3.5, 1.0), "olhar": Vector3(80, 6.0, 14.0)},
 ]
 ## Prêmio da primeira foto em cada ponto.
 const PREMIO := {"moedas": 20, "acucar": 15}

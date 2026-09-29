@@ -122,6 +122,20 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+### Rodada de 29/09/2026 (depois de jogar a 0.14.0 no celular) — no código, falta publicar a 0.15.0
+
+- Travada ao abrir: a vila "aquece" atrás do carregamento (câmera olha tudo
+  antes). O minimapa desenha o mapa uma vez numa imagem (redesenhar custava
+  ~200 chamadas de desenho).
+- Foto: botão FOTO no topo (a troca de câmera virou filmadora); sem marcas
+  flutuantes; as vistas bonitas são para descobrir (o botão pulsa perto).
+- Abóboras do evento com gomos, casca listrada e relevo.
+- Batalha: +20% de vida por nível; cartões de time, plaquinhas, animações.
+- Mapa maior (scripts/regioes.gd, componentes/vila/regioes_vila.gd e
+  mapa_vila.gd): Ilha do Algodão-Doce (lago e ponte), Bosque de Pirulitos
+  (rio e ponte), Montanha de Sorvete; portões com requisito; descobrir dá
+  prêmio; coisinhas diárias; minimapa e mapa cheio com névoa.
+
 ### Rodada de 29/09/2026 (depois de jogar a 0.13.0) — publicado na 0.14.0
 
 - Câmera padrão de perto; giro da aérea parado corrigido.

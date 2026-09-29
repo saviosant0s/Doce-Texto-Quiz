@@ -58,7 +58,7 @@ static func _poste(pai: Node3D, raio: float, altura: float, posicao: Vector3) ->
 
 # --- Chão, caminhos e limites --------------------------------------------------
 
-static func chao(pai: Node3D, metade: float) -> void:
+static func chao(pai: Node3D, metade: float, com_cerca := true) -> void:
 	var plano := PlaneMesh.new()
 	plano.size = Vector2(metade * 4.0, metade * 4.0)
 	var no := MeshInstance3D.new()
@@ -69,6 +69,8 @@ static func chao(pai: Node3D, metade: float) -> void:
 	no.material_override = gramado()
 	pai.add_child(no)
 	_parede(pai, Vector3(metade * 4, 1, metade * 4), Vector3(0, -0.5, 0))  # piso
+	if not com_cerca:
+		return  # (a vila grande tem cerca e limites próprios: RegioesVila)
 	# cerca invisível em volta
 	for lado in [-1, 1]:
 		_parede(pai, Vector3(metade * 2, 4, 1), Vector3(0, 2, lado * metade))

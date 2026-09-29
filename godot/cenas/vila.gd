@@ -14,7 +14,7 @@ extends Node3D
 ## - 1ª PESSOA: pelos olhos do doce; joystick para cima/baixo anda e para os
 ##   lados vira; arrastar o dedo também vira.
 
-const METADE_MAPA := 38.0  # a vila vai até o Bairro dos Terrenos, o Lago e o Mirante
+const METADE_MAPA := 38.0  # a vila vai até o Bairro dos Terrenos, o Lago e o Mirante (depois, as regiões)
 const CAMERA_DISTANCIA := Vector3(0, 7.5, 8.5)
 const CAMERA_SUAVIDADE := 5.0
 const CAMERA_DE_CIMA := Vector3(0, 13.0, 3.0)  # quando um prédio tapa a visão
@@ -105,6 +105,12 @@ const CAMINHOS_EXTRA := [
 	[Vector3(-19, 0, -19.5), Vector3(19, 0, -19.5)],
 	[Vector3(0, 0, -19.5), Vector3(0, 0, -35)],
 ]
+## Caminhos até as entradas das regiões (oeste, sul e leste; ver Regioes).
+const CAMINHOS_REGIOES := [
+	[Vector3(-22.6, 0, 12), Vector3(-22.6, 0, 2)], [Vector3(-22.6, 0, 2), Vector3(-38, 0, 2)],
+	[Vector3(-8, 0, 12), Vector3(-8, 0, 38)],
+	[Vector3(22, 0, 12), Vector3(22, 0, 2)], [Vector3(22, 0, 2), Vector3(38, 0, 2)],
+]
 ## Onde ficam os presentes do dia (perto do lugar, do lado da vila).
 const PRESENTES := {"lago": Vector3(-27.0, 0.13, 12), "mirante": Vector3(27.5, 0.1, 10.5)}
 var _ponto_atual := ""  # lote ou presente perto do doce ("" = nenhum)
@@ -141,7 +147,12 @@ var evento: EventoVila
 
 func _ready() -> void:
 	_criar_ambiente()
-	CenarioVila.chao(self, METADE_MAPA)
+	CenarioVila.chao(self, 130.0, false)
+	var regioes := RegioesVila.montar(self)
+	_portoes = regioes["portoes"]
+	_regioes_nos = regioes["regioes"]
+	for c in CAMINHOS_REGIOES:
+		CenarioVila.caminho(self, c[0], c[1])
 	CenarioVila.praca(self, 4.2)
 	for dados in PREDIOS:
 		var predio := CenarioVila.predio(self, dados)
@@ -163,7 +174,14 @@ func _ready() -> void:
 	# leve para o celular: menos faces nas peças pequenas e o cenário parado
 	# juntado em poucos blocos (portas e nuvens se mexem, ficam de fora)
 	JuntarMalhas.simplificar(self)
-	JuntarMalhas.juntar(self, ["Folha", "Nuvem", "Lote", "Presente"])  # lotes e presentes mudam
+	JuntarMalhas.juntar(self, ["Folha", "Nuvem", "Lote", "Presente", "Regiao", "Portao", "ItemRegiao"])  # lotes e presentes mudam
+	# regiões: cada uma nos seus blocos, desenhadas só de perto; os portões
+	# (a parte "fechada" some quando a região libera)
+	for no in _regioes_nos.values():
+		_dividir_em_celulas(no, 24.0)
+	for no in _portoes.values():
+		JuntarMalhas.juntar(no, ["Fechado"])
+		JuntarMalhas.juntar(no.get_node("Fechado"), [])
 	for no in _lotes.values() + _presentes.values():
 		JuntarMalhas.juntar(no, ["Pas", "Tampa"])  # cada um no seu bloco (dá para remontar)
 		_so_de_perto(no)
@@ -171,9 +189,11 @@ func _ready() -> void:
 		boneco.otimizar()
 	_criar_evento()
 	_criar_vida()
+	_criar_itens_regioes()
 	_criar_camera()
 	_criar_ceu()
 	_criar_interface()
+	_criar_minimapa()
 	_criar_historia()
 	_criar_tutorial()
 	_criar_avisos()
@@ -192,7 +212,7 @@ func aquecer() -> void:
 		if peca.visibility_range_end > 0.0:
 			alcances[peca] = peca.visibility_range_end
 			peca.visibility_range_end = 0.0
-	var vistas := [[Vector3(0, 55, 48), Vector3.ZERO]]
+	var vistas := [[Vector3(0, 55, 48), Vector3.ZERO], [Vector3(0, 120, 150), Vector3(0, 0, 24)]]
 	var pos := jogador.global_position
 	for i in 6:
 		var a := i * TAU / 6.0
@@ -335,6 +355,13 @@ func _process(delta: float) -> void:
 		if is_instance_valid(pas):
 			pas.rotation.z += delta * 0.8
 	_animar_borboletas(delta)
+	_animar_itens(delta)
+	if is_instance_valid(_mapa_imagem):
+		# a imagem do mapa anda embaixo; o doce fica no meio do círculo
+		var no_mundo := Vector2(jogador.global_position.x, jogador.global_position.z)
+		var moldura: Control = _mapa_imagem.get_parent()
+		_mapa_imagem.position = moldura.size / 2.0 - (no_mundo - _mapa_origem) * ESCALA_MINIMAPA
+		_seta_minimapa.queue_redraw()
 	_tempo_historia += delta
 	if _tempo_historia > 0.25:
 		_tempo_historia = 0.0
@@ -345,6 +372,7 @@ func _process(delta: float) -> void:
 		_atualizar_rotulos_producao()
 		_atualizar_relogio()
 		_atualizar_botao_foto()
+		_atualizar_regioes()
 	if fotografando != "":
 		return  # a câmera está no enquadramento do ponto de foto (tirar_foto)
 	var pos := _pos_visual()
@@ -571,6 +599,9 @@ func _unhandled_input(evento: InputEvent) -> void:
 	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_F:
 		tirar_foto()
 		return
+	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_M:
+		fechar_mapa() if is_instance_valid(_mapa_cheio) else abrir_mapa()
+		return
 	if evento is InputEventKey and evento.pressed and not evento.echo and evento.keycode == KEY_SPACE:
 		get_viewport().set_input_as_handled()
 		jogador.pular()
@@ -681,6 +712,9 @@ func ao_voltar() -> void:
 	if is_instance_valid(_painel_lote):
 		_fechar_painel_lote()
 		return
+	if is_instance_valid(_mapa_cheio):
+		fechar_mapa()
+		return
 	var album := find_child("Album", true, false)
 	if album:
 		album.fechar_album()
@@ -787,7 +821,6 @@ func _enfeitar() -> void:
 			tufos.append(ponto)
 	if not tufos.is_empty():
 		CenarioVila.grama(self, tufos, 23)
-	CenarioVila.morros(self, METADE_MAPA + 8.0)
 	_nuvens = CenarioVila.nuvens(self)
 	# jujubas enfeitando a praça
 	for i in 8:
@@ -827,7 +860,7 @@ func _longe_dos_predios(ponto: Vector3, folga: float) -> bool:
 
 
 func _longe_dos_caminhos(ponto: Vector3, folga: float) -> bool:
-	for c in CAMINHOS_EXTRA:
+	for c in CAMINHOS_EXTRA + CAMINHOS_REGIOES:
 		var perto := Geometry3D.get_closest_point_to_segment(ponto, c[0], c[1])
 		if ponto.distance_to(perto) < folga + 1.2:
 			return false
@@ -1743,6 +1776,242 @@ func _so_de_perto(no: Node3D) -> void:
 
 
 # --- Vida na vila: borboletas, respingos da fonte, brilho dos presentes -------------
+
+# --- Regiões: portões, descobrir, coisinhas e mapa ------------------------------------
+
+var _portoes := {}  # id da região -> Node3D do portão
+var _regioes_nos := {}  # id da região -> Node3D com o 3D dela
+var _itens_regioes := {}  # "ilha-3" -> Node3D da coisinha
+var _mapa_visor: SubViewport  # o mapa desenhado uma vez (sem a seta)
+var _mapa_imagem: TextureRect
+var _mapa_origem := Vector2.ZERO  # ponto do mundo no canto da imagem
+var _seta_minimapa: Control
+var _mapa_cheio: CanvasLayer
+const ESCALA_MINIMAPA := 1.7  # pixels por metro no minimapa
+const ESCALA_IMAGEM_MAPA := 3.0  # pixels por metro na imagem do mapa
+
+
+## Portões abrem quando a região libera; entrar numa região nova = descobrir.
+func _atualizar_regioes() -> void:
+	for id in _portoes:
+		var estava_fechado: bool = _portoes[id].get_node("Fechado").visible
+		RegioesVila.atualizar_portao(_portoes[id], id)
+		if estava_fechado and Regioes.liberada(id):
+			_criar_itens_regioes()
+			_redesenhar_mapa()
+	var aqui := Regioes.regiao_em(jogador.global_position)
+	if aqui != "" and not Regioes.explorada(aqui):
+		var premio := Regioes.descobrir(aqui)
+		if not premio.is_empty():
+			Audio.tocar("vitoria")
+			jogador.comemorar()
+			Telas.mostrar_aviso("VOCÊ DESCOBRIU: %s!  +%d MOEDAS  +%d AÇÚCAR" % [Regioes.regiao(aqui)["nome"], premio["moedas"], premio["acucar"]])
+			_atualizar_topo()
+			_redesenhar_mapa()
+
+
+## Divide a região em quadrados (células) de `tamanho` metros, cada um com
+## os seus blocos, desenhados só de perto: a câmera só desenha as células
+## perto do doce (um bloco só da região inteira era sempre desenhado).
+func _dividir_em_celulas(regiao: Node3D, tamanho: float) -> void:
+	var celulas := {}
+	for filho in regiao.get_children():
+		if not filho is Node3D:
+			continue
+		var p: Vector3 = filho.global_position
+		var chave := Vector2i(floori(p.x / tamanho), floori(p.z / tamanho))
+		if not celulas.has(chave):
+			var celula := Node3D.new()
+			celula.name = "Celula_%d_%d" % [chave.x, chave.y]
+			celula.position = Vector3((chave.x + 0.5) * tamanho, 0, (chave.y + 0.5) * tamanho)
+			regiao.add_child(celula)
+			celulas[chave] = celula
+		filho.reparent(celulas[chave], true)
+	for celula in celulas.values():
+		JuntarMalhas.juntar(celula, [])
+		for peca: GeometryInstance3D in celula.find_children("*", "GeometryInstance3D", true, false):
+			peca.visibility_range_end = 60.0
+			peca.visibility_range_end_margin = 6.0
+
+
+## As coisinhas de hoje nas regiões liberadas (conchas, morangos, cristais).
+func _criar_itens_regioes() -> void:
+	for r in Regioes.LISTA:
+		if not Regioes.liberada(r["id"]):
+			continue
+		for item in Regioes.itens_de_hoje(r["id"]):
+			if _itens_regioes.has(item["id"]):
+				continue
+			var no := RegioesVila.item(self, r["id"], item["posicao"])
+			no.name = "ItemRegiao_" + item["id"]
+			var area := BairroVila.area(no, "Area", Vector3(0, 1, 0), Vector3(1.8, 2, 1.8))
+			area.body_entered.connect(_pegar_item.bind(item["id"]))
+			_itens_regioes[item["id"]] = no
+
+
+func _pegar_item(corpo: Node3D, chave: String) -> void:
+	if corpo != jogador or not _itens_regioes.has(chave):
+		return
+	var premio := Regioes.pegar(chave)
+	var no: Node3D = _itens_regioes[chave]
+	_itens_regioes.erase(chave)
+	no.queue_free()
+	if premio.is_empty():
+		return
+	Audio.tocar("moeda", 1.2)
+	var nome: String = Regioes.regiao(chave.get_slice("-", 0))["item"]
+	Telas.mostrar_aviso("%s!  +%d AÇÚCAR  +%d MOEDAS" % [nome, premio["acucar"], premio["moedas"]])
+	_atualizar_topo()
+
+
+func _animar_itens(delta: float) -> void:
+	for no: Node3D in _itens_regioes.values():
+		var desenho: Node3D = no.get_node("Desenho")
+		desenho.rotation.y += delta * 2.0
+		desenho.position.y = 0.6 + sin(_tempo_vida * 3.0 + no.position.x) * 0.12
+
+
+## Minimapa redondo no canto de cima (segue o doce); tocar abre o mapa cheio.
+func _criar_minimapa() -> void:
+	var moldura := Panel.new()
+	moldura.name = "Minimapa"
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = Color.WHITE
+	estilo.set_corner_radius_all(999)
+	moldura.add_theme_stylebox_override("panel", estilo)
+	moldura.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+	moldura.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	moldura.offset_left = -172
+	moldura.offset_right = -18
+	moldura.offset_top = 84
+	moldura.offset_bottom = 238
+	moldura.tooltip_text = "Abrir o mapa (M)"
+	moldura.gui_input.connect(func(evento: InputEvent):
+		if evento is InputEventMouseButton and evento.button_index == MOUSE_BUTTON_LEFT and not evento.pressed:
+			abrir_mapa())
+	_interface.add_child(moldura)
+	# o mapa é desenhado uma vez numa imagem (redesenhar o mapa todo a cada
+	# quadro pesava ~200 chamadas de desenho); o minimapa só a arrasta
+	var area := Regioes.MUNDO.grow(6)
+	_mapa_origem = area.position
+	_mapa_visor = SubViewport.new()
+	_mapa_visor.name = "MapaVisor"
+	_mapa_visor.size = Vector2i(area.size * ESCALA_IMAGEM_MAPA)
+	_mapa_visor.disable_3d = true
+	_mapa_visor.render_target_update_mode = SubViewport.UPDATE_ONCE
+	add_child(_mapa_visor)
+	var desenho := MapaVila.new()
+	desenho.mostrar_jogador = false
+	desenho.size = Vector2(_mapa_visor.size)
+	desenho.centro = area.get_center()
+	desenho.escala = ESCALA_IMAGEM_MAPA
+	_mapa_visor.add_child(desenho)
+	_mapa_imagem = TextureRect.new()
+	_mapa_imagem.name = "MapaImagem"
+	_mapa_imagem.texture = _mapa_visor.get_texture()
+	_mapa_imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_mapa_imagem.size = area.size * ESCALA_MINIMAPA
+	_mapa_imagem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	moldura.add_child(_mapa_imagem)
+	_seta_minimapa = Control.new()
+	_seta_minimapa.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_seta_minimapa.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_seta_minimapa.draw.connect(func():
+		var frente := jogador.frente()
+		MapaVila.desenhar_seta(_seta_minimapa, _seta_minimapa.size / 2.0, atan2(frente.x, frente.z), 9.0))
+	moldura.add_child(_seta_minimapa)
+	var aro := Panel.new()
+	aro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var estilo_aro := StyleBoxFlat.new()
+	estilo_aro.draw_center = false
+	estilo_aro.set_corner_radius_all(999)
+	estilo_aro.set_border_width_all(5)
+	estilo_aro.border_color = Color("#5E3D8E")
+	aro.add_theme_stylebox_override("panel", estilo_aro)
+	aro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	moldura.add_child(aro)
+	var rotulo := Label.new()
+	rotulo.theme_type_variation = &"TituloClaro"
+	rotulo.add_theme_font_size_override("font_size", 18)
+	rotulo.add_theme_constant_override("outline_size", 6)
+	rotulo.add_theme_color_override("font_outline_color", Color("#3B2A5C"))
+	rotulo.text = "MAPA"
+	rotulo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rotulo.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	rotulo.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	rotulo.offset_top = -30
+	rotulo.offset_bottom = -6
+	moldura.add_child(rotulo)
+
+
+## O mapa inteiro, com as regiões exploradas, as não exploradas (névoa) e as
+## trancadas (o que falta).
+func abrir_mapa() -> void:
+	if is_instance_valid(_mapa_cheio) or fotografando != "":
+		return
+	_mapa_cheio = CanvasLayer.new()
+	_mapa_cheio.name = "MapaCheio"
+	add_child(_mapa_cheio)
+	var raiz := Control.new()
+	raiz.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_mapa_cheio.add_child(raiz)
+	var escuro := ColorRect.new()
+	escuro.color = Color(0.1, 0.05, 0.2, 0.7)
+	escuro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	raiz.add_child(escuro)
+	var margem := MarginContainer.new()
+	margem.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for lado in ["left", "right", "top", "bottom"]:
+		margem.add_theme_constant_override("margin_" + lado, 24)
+	raiz.add_child(margem)
+	var painel := PanelContainer.new()
+	painel.theme_type_variation = &"PainelRoxo"
+	margem.add_child(painel)
+	var coluna := VBoxContainer.new()
+	coluna.add_theme_constant_override("separation", 8)
+	painel.add_child(coluna)
+	var topo := HBoxContainer.new()
+	coluna.add_child(topo)
+	var titulo := Label.new()
+	titulo.theme_type_variation = &"TituloClaro"
+	titulo.add_theme_font_size_override("font_size", 38)
+	titulo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var exploradas := Regioes.LISTA.filter(func(r): return Regioes.explorada(r["id"])).size()
+	titulo.text = "MAPA DA VILA · REGIÕES EXPLORADAS %d/%d" % [exploradas, Regioes.LISTA.size()]
+	topo.add_child(titulo)
+	var fechar := Button.new()
+	fechar.name = "FecharMapa"
+	fechar.text = "FECHAR"
+	fechar.theme_type_variation = &"BotaoSecundario"
+	fechar.custom_minimum_size = Vector2(160, 54)
+	fechar.focus_mode = Control.FOCUS_NONE
+	fechar.pressed.connect(fechar_mapa)
+	topo.add_child(fechar)
+	var mapa := MapaVila.new()
+	mapa.name = "Mapa"
+	mapa.cheio = true
+	mapa.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	mapa.jogador = Vector2(jogador.global_position.x, jogador.global_position.z)
+	var frente := jogador.frente()
+	mapa.giro_jogador = atan2(frente.x, frente.z)
+	coluna.add_child(mapa)
+	mapa.resized.connect(func():
+		mapa.enquadrar_mundo()
+		mapa.queue_redraw())
+
+
+## Desenha de novo a imagem do mapa (região descoberta ou liberada).
+func _redesenhar_mapa() -> void:
+	if is_instance_valid(_mapa_visor):
+		_mapa_visor.get_child(0).queue_redraw()
+		_mapa_visor.render_target_update_mode = SubViewport.UPDATE_ONCE
+
+
+func fechar_mapa() -> void:
+	if is_instance_valid(_mapa_cheio):
+		_mapa_cheio.queue_free()
+	_mapa_cheio = null
+
 
 # --- Pontos de foto ------------------------------------------------------------------
 
