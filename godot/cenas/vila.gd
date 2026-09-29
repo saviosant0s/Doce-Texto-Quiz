@@ -8,6 +8,7 @@ extends Node3D
 ##
 ## Três câmeras (botão no topo; a escolha fica salva):
 ## - AÉREA: de cima e de longe; arrastar o dedo gira em volta do doce.
+## A de PERTO é a padrão.
 ## - PERTO: atrás do doce; acompanha quando ele anda para frente; arrastar o
 ##   dedo na tela gira a visão; se um prédio ficar no meio, ela se aproxima.
 ## - 1ª PESSOA: pelos olhos do doce; joystick para cima/baixo anda e para os
@@ -112,6 +113,10 @@ var _pas: Array[Node3D] = []  # pás dos moinhos (giram)
 var _painel_lote: Control
 var _tempo_rotulos := 0.0
 var _alto := 0.0  # 0 = câmera aérea normal, 1 = de cima (prédio no meio)
+var _giro_aereo := 0.0  # ângulo da câmera aérea (segue _giro devagar)
+var _foco_aereo := Vector3.ZERO  # ponto que a câmera aérea segue (o doce, suavizado)
+var _tapado_alvo := false
+var _tapado_ha := 0.0
 var _borboletas: Array = []  # [{"no": Sprite3D, "centro", "raio", "velocidade", "fase"}]
 var _tempo_vida := 0.0
 var _brilhos_presente := {}  # lugar -> CPUParticles3D
@@ -169,7 +174,7 @@ func _ready() -> void:
 	_criar_historia()
 	_criar_tutorial()
 	_criar_avisos()
-	usar_camera(int(Progresso.config.get("camera_vila", Camera.AEREA)))
+	usar_camera(int(Progresso.config.get("camera_vila_v2", Camera.PERTO)))
 
 
 ## Dia e noite e clima: o céu muda com a hora, e avisa das novidades (a
@@ -252,14 +257,25 @@ func _process(delta: float) -> void:
 	var cabeca := pos + Vector3(0, ALTURA_OLHOS, 0)
 	match modo_camera:
 		Camera.AEREA:
-			# prédio no meio (ex.: atrás da Escola): a câmera sobe e olha mais de cima
-			# arrastar o dedo gira a câmera em volta do doce (_giro)
-			var tapado := _tapado(cabeca, pos + CAMERA_DISTANCIA.rotated(Vector3.UP, _giro))
-			_alto = lerpf(_alto, 1.0 if tapado else 0.0, minf(1.0, 3.0 * delta))
-			var distancia := CAMERA_DISTANCIA.lerp(CAMERA_DE_CIMA, _alto).rotated(Vector3.UP, _giro)
-			var alvo := pos + distancia
-			_camera.global_position = _camera.global_position.lerp(alvo, minf(1.0, CAMERA_SUAVIDADE * delta))
-			_camera.look_at(_camera.global_position - distancia + Vector3(0, 0.8, 0))
+			# a câmera gira EM VOLTA do doce (arrastar o dedo muda _giro): o
+			# ângulo e o ponto seguido são suavizados, e a posição sai deles.
+			# (Antes a posição ia em linha reta até o novo ponto, cortando por
+			# dentro do círculo, e mirava fora do doce: girar parado ficava torto.)
+			_giro_aereo = lerp_angle(_giro_aereo, _giro, minf(1.0, 12.0 * delta))
+			_foco_aereo = _foco_aereo.lerp(pos, minf(1.0, CAMERA_SUAVIDADE * delta))
+			if _foco_aereo.distance_to(pos) > 6.0:
+				_foco_aereo = pos  # teleporte (porta): sem viagem
+			# prédio no meio (ex.: atrás da Escola): a câmera sobe e olha mais de
+			# cima; só muda depois de um tempinho tapado/livre (girando, não pisca)
+			var tapado := _tapado(cabeca, pos + CAMERA_DISTANCIA.rotated(Vector3.UP, _giro_aereo))
+			_tapado_ha = _tapado_ha + delta if tapado != _tapado_alvo else 0.0
+			if _tapado_ha > 0.35:
+				_tapado_alvo = tapado
+				_tapado_ha = 0.0
+			_alto = lerpf(_alto, 1.0 if _tapado_alvo else 0.0, minf(1.0, 3.0 * delta))
+			var distancia := CAMERA_DISTANCIA.lerp(CAMERA_DE_CIMA, _alto).rotated(Vector3.UP, _giro_aereo)
+			_camera.global_position = _foco_aereo + distancia
+			_camera.look_at(_foco_aereo + Vector3(0, 0.8, 0))
 		Camera.PERTO:
 			var alvo := _posicao_perto(cabeca, PERTO_DISTANCIA, PERTO_ALTURA - ALTURA_OLHOS + 0.6)
 			alvo = _sem_atravessar_paredes(cabeca, alvo)
@@ -394,6 +410,8 @@ func usar_camera(modo: int) -> void:
 	_inclinacao = INCLINACAO_INICIAL_1P if modo_camera == Camera.PRIMEIRA_PESSOA else 0.0
 	if modo_camera == Camera.AEREA:
 		_giro = 0.0
+		_giro_aereo = 0.0
+		_foco_aereo = jogador.global_position
 	else:
 		if ultima_porta.is_empty() and jogador.global_position.distance_to(Vector3(0, 0, 7)) < 0.5:
 			jogador.olhar_para(Vector3.ZERO)  # no começo, virado para a praça
@@ -402,8 +420,9 @@ func usar_camera(modo: int) -> void:
 	_camera.fov = 48.0 if modo_camera == Camera.AEREA else 62.0
 	if modo_camera != Camera.AEREA:
 		_camera.global_position = jogador.global_position + Vector3(0, ALTURA_OLHOS, 0) - _frente() * PERTO_DISTANCIA
-	if Progresso.config.get("camera_vila", -1) != modo:
-		Progresso.config["camera_vila"] = modo
+	# (chave nova: a câmera padrão virou a de PERTO, inclusive para quem já jogava)
+	if Progresso.config.get("camera_vila_v2", -1) != modo:
+		Progresso.config["camera_vila_v2"] = modo
 		Progresso.salvar()
 
 

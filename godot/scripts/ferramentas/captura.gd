@@ -67,8 +67,8 @@ func _ready() -> void:
 	for i in int(args.get("historico", "0")):
 		_simular_partida(i % (int(args.get("liberar", "0")) + 1), [4, 7, 9, 6, 10, 8][i % 6])
 	Progresso.moedas = int(args.get("moedas", str(Progresso.moedas)))
-	if args.has("camera"):
-		Progresso.config["camera_vila"] = int(args["camera"])
+	# prints da vila de cima (a aérea mostra mais); --camera=1 para a de perto
+	Progresso.config["camera_vila_v2"] = int(args.get("camera", "0"))
 	if args.has("camera_cozinha"):
 		Progresso.config["camera_cozinha"] = int(args["camera_cozinha"])
 	if args.has("porta"):

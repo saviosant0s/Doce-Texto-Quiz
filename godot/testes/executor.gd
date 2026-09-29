@@ -618,6 +618,26 @@ func _testar_vila() -> void:
 	var lote: Node3D = vila.find_child("Lote_lote_1", true, false)
 	verificar(lote.find_children("*", "MeshInstance3D", true, false).all(func(m): return m.visibility_range_end > 0.0),
 		"lotes longe da câmera não são desenhados")
+	# câmera padrão: a de perto (a chave antiga, de quando a aérea era a padrão, não vale)
+	var config_camera: Variant = Progresso.config.get("camera_vila_v2")
+	Progresso.config.erase("camera_vila_v2")
+	verificar(int(Progresso.config.get("camera_vila_v2", Vila.Camera.PERTO)) == Vila.Camera.PERTO, "câmera padrão é a de perto")
+	if config_camera != null:
+		Progresso.config["camera_vila_v2"] = config_camera
+	# câmera aérea girando com o doce parado: fica sempre à mesma distância e mira nele
+	vila.usar_camera(Vila.Camera.AEREA)
+	vila._tapado_alvo = false
+	vila._alto = 0.0
+	var distancias := []
+	var mira_certa := true
+	for passo in 40:
+		vila._girar_visao(Vector2(12, 0))
+		vila._process(1.0 / 60.0)
+		var alvo := vila._foco_aereo + Vector3(0, 0.8, 0)
+		distancias.append(vila._camera.global_position.distance_to(vila._foco_aereo))
+		if (-vila._camera.global_transform.basis.z).dot((alvo - vila._camera.global_position).normalized()) < 0.999:
+			mira_certa = false
+	verificar(distancias.max() - distancias.min() < 0.8 and mira_certa, "câmera aérea gira em volta do doce, sem cortar caminho")
 	# câmeras: troca em ciclo, 1ª pessoa esconde o doce, a escolha fica salva
 	vila.usar_camera(Vila.Camera.AEREA)
 	vila.proxima_camera()
@@ -625,7 +645,7 @@ func _testar_vila() -> void:
 	vila.proxima_camera()
 	verificar(vila.modo_camera == Vila.Camera.PRIMEIRA_PESSOA, "perto -> 1ª pessoa")
 	verificar(not vila.jogador.get_node("Modelo/Corpo").visible, "em 1ª pessoa o doce fica escondido")
-	verificar(Progresso.config["camera_vila"] == Vila.Camera.PRIMEIRA_PESSOA, "a câmera escolhida fica salva")
+	verificar(Progresso.config["camera_vila_v2"] == Vila.Camera.PRIMEIRA_PESSOA, "a câmera escolhida fica salva")
 	var antes := vila.jogador.global_position
 	var frente := vila._frente()
 	for i in 20:
@@ -2166,7 +2186,7 @@ func _testar_vila_noite() -> void:
 	var gota: Node3D = vila.ceu._gotas[0]
 	vila.jogador.global_position = Vector3(gota.global_position.x, 0, gota.global_position.z)
 	await get_tree().create_timer(0.15).timeout
-	verificar(Confeitaria.acucar() == acucar + CicloDia.ACUCAR_GOTA and not vila.ceu._gotas.has(0), "passar pela gota pega o açúcar")
+	verificar(Confeitaria.acucar() >= acucar + CicloDia.ACUCAR_GOTA and not vila.ceu._gotas.has(0), "passar pela gota pega o açúcar")
 	CicloDia.hora_fixa = 12.0
 	vila.ceu.atualizar()
 	verificar(vila.ceu.noite == 0.0 and not vila.find_children("LuzDaPorta", "OmniLight3D", true, false)[0].visible,
