@@ -7,7 +7,7 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.13.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
+- Versão atual: 0.14.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
@@ -122,7 +122,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-### Rodada de 29/09/2026 (depois de jogar a 0.13.0) — no código, falta publicar a 0.14.0
+### Rodada de 29/09/2026 (depois de jogar a 0.13.0) — publicado na 0.14.0
 
 - Câmera padrão de perto; giro da aérea parado corrigido.
 - Minigames não custam mais açúcar: dão açúcar e moedas (`docs/economia.md`).
@@ -134,7 +134,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 - Pontos de foto (6) com álbum.
 - Arena dos Doces: batalha por turnos com perguntas do quiz, 10 desafiantes.
 - O quiz continua central: casa maior e desafiantes fortes pedem os títulos.
-- Próximo: publicar a 0.14.0 quando o Sávio pedir.
+- Publicado na 0.14.0 (APK 64 e 32 bits, Windows e navegador).
 
 - 29/09 (pedido do Sávio antes de "fechar o sistema por enquanto"): **botões
   diferenciados + verificação geral**, **publicado na 0.13.0**:
