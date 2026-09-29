@@ -1942,6 +1942,39 @@ func _testar_casa() -> void:
 	verificar("trofeu_gigante" in Casa.liberar_especiais() and Casa.quantos("trofeu_gigante") == 1, "título de mestre dá o troféu gigante")
 	verificar(Casa.liberar_especiais().is_empty(), "o especial vem uma vez")
 	Progresso.titulos = titulos
+	# aumentar a casa: moedas e açúcar; a sala cresce e os móveis vão para o meio
+	verificar(Casa.tamanho_casa() == 0 and Casa.largura() == 8 and Casa.fundo() == 6, "a casa começa como CASINHA (sala 8 × 6)")
+	verificar(not Casa.cabe("poltrona_pudim", 9, 0, 0), "na casinha não cabe nada fora da sala 8 × 6")
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.confeitaria["acucar"] = 0
+	Progresso.moedas = 5000
+	verificar(not Casa.aumentar() and Casa.tamanho_casa() == 0 and Progresso.moedas == 5000, "sem açúcar não aumenta (e não cobra)")
+	Progresso.confeitaria["acucar"] = 2000
+	Progresso.moedas = 100
+	verificar(not Casa.aumentar() and Casa.tamanho_casa() == 0, "sem moedas não aumenta")
+	Progresso.moedas = 5000
+	var x_antes := int(Casa.colocados()[0]["x"])
+	conforto = Casa.conforto()
+	verificar(Casa.aumentar() and Casa.tamanho_casa() == 1 and Casa.largura() == 10 and Casa.fundo() == 7,
+		"aumentou: CASA COM VARANDA, sala 10 × 7")
+	verificar(Progresso.moedas == 5000 - int(Casa.TAMANHOS[1]["moedas"]) and Confeitaria.acucar() == 2000 - int(Casa.TAMANHOS[1]["acucar"]),
+		"aumentar cobra moedas e açúcar")
+	verificar(int(Casa.colocados()[0]["x"]) == x_antes + 1 and Casa.cabe("poltrona_pudim", 9, 6, 0), "os móveis vão para o meio; cabe mais coisa")
+	verificar(Casa.conforto() == conforto + int(Casa.TAMANHOS[1]["conforto"]), "casa maior dá conforto")
+	Progresso.moedas = 99999
+	Progresso.confeitaria["acucar"] = 99999
+	verificar(Casa.aumentar() and Casa.aumentar() and Casa.tamanho_casa() == Casa.TAMANHOS.size() - 1 and Casa.largura() == 14,
+		"cresce até o CASARÃO")
+	verificar(not Casa.aumentar() and Casa.proximo_tamanho().is_empty(), "o CASARÃO é o maior")
+	var casinha := Node3D.new()
+	var casarao := Node3D.new()
+	CenarioVila._minha_casa(casinha, 0)
+	CenarioVila._minha_casa(casarao, 3)
+	verificar(casarao.find_children("*", "MeshInstance3D", true, false).size() > casinha.find_children("*", "MeshInstance3D", true, false).size() + 20,
+		"na vila, a casa grande tem varanda, alas e torre")
+	casinha.free()
+	casarao.free()
+	Progresso.confeitaria["acucar"] = acucar_antes
 	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes
 
@@ -2198,6 +2231,23 @@ func _testar_tela_casa() -> void:
 	verificar(Casa.guardados("sofa_marshmallow") == 1, "guardar pela tela")
 	tela.ao_voltar()
 	verificar(not tela.decorando, "voltar sai do modo decorar")
+	# aumentar pela tela: painel, preço e a sala remontada maior
+	var acucar_antes := Confeitaria.acucar()
+	Progresso.moedas = 1000
+	Progresso.confeitaria["acucar"] = 500
+	tela.find_child("BotaoAUMENTAR", true, false).pressed.emit()
+	var painel: Node = tela.find_child("Aumentar", true, false)
+	verificar(painel != null and tela.find_child("InfoAumentar", true, false).text.contains("CASA COM VARANDA")
+		and tela.find_child("CasaFora", true, false) != null, "AUMENTAR mostra a próxima casa (girando) e o preço")
+	tela.find_child("BotaoAumentarCasa", true, false).pressed.emit()
+	await get_tree().process_frame
+	var piso: MeshInstance3D = tela.find_child("Piso", true, false)
+	verificar(Casa.tamanho_casa() == 1 and not is_instance_valid(painel) and (piso.mesh as BoxMesh).size.x == 10.0,
+		"aumentou: o painel fecha e a sala fica maior")
+	verificar(tela._camera.position.z > 8.0 and tela.find_children("Sala*", "Node3D", false, false).size() == 1,
+		"a câmera se afasta para caber a sala; a sala velha sai")
+	tela.ao_voltar()
+	Progresso.confeitaria["acucar"] = acucar_antes
 	Progresso.vila = guardado
 	Progresso.moedas = moedas_antes
 

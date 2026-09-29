@@ -43,6 +43,7 @@ extends Node
 ##   --historia=0,0  histórias da vila neste capítulo e passo; --conversar=N abre a
 ##                 conversa com o morador da vez e passa N falas
 ##   --casa_cheia  Minha Casa decorada; --loja_casa=moveis|paredes|pisos; --decorar
+##   --casa_tamanho=2  tamanho da casa (0 a 3; na sala e na vila); --aumentar abre o painel
 ##   --evento=natal  tema do evento (dia do jogo no meio dele); --fichas=150; --painel_evento abre a trilha
 ##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
 ##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
@@ -158,6 +159,14 @@ func _ready() -> void:
 		casa["moveis"]["relogio_cuco"] = 1
 		Progresso.vila["casa"] = casa
 		Progresso.moedas = 1200
+	if args.has("casa_tamanho"):
+		if not Progresso.vila.has("casa"):
+			Progresso.vila["casa"] = Casa.padrao()
+		var n := int(args["casa_tamanho"])
+		# os móveis vão para o meio da sala maior (como em Casa.aumentar)
+		for c in Progresso.vila["casa"]["colocados"]:
+			c["x"] = int(c["x"]) + (int(Casa.TAMANHOS[n]["grade"][0]) - 8) / 2
+		Progresso.vila["casa"]["tamanho"] = n
 	if args.has("confeitaria_estagio"):
 		Progresso.moedas = 99999
 		for m in Confeitaria.MAQUINAS:
@@ -276,6 +285,11 @@ func _ready() -> void:
 		get_tree().current_scene._aba_loja = args["loja_casa"] if args["loja_casa"] != "" else "moveis"
 		get_tree().current_scene.abrir_loja()
 		get_tree().current_scene.escolher_na_loja(get_tree().current_scene._escolha_loja)
+	if args.has("aumentar"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.moedas = 2000
+		Progresso.confeitaria["acucar"] = 700
+		get_tree().current_scene.abrir_aumentar()
 	if args.has("decorar"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.usar_modo(true)

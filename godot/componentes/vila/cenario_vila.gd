@@ -322,7 +322,9 @@ static func _placa(no: Node3D, nome: String, posicao: Vector3, largura := 3.0) -
 
 ## MINHA CASA: chalé de massa de pão de mel com vigas de chocolate, telhado
 ## de telhas de morango, chaminé, janelas com floreira e caixa de correio.
-static func _minha_casa(no: Node3D) -> Dictionary:
+static func _minha_casa(no: Node3D, tamanho := -1) -> Dictionary:
+	if tamanho < 0:
+		tamanho = Casa.tamanho_casa()
 	var largura := 5.0
 	var altura := 2.9
 	var fundo := 4.0
@@ -372,7 +374,64 @@ static func _minha_casa(no: Node3D) -> Dictionary:
 	Pecas3D.caixa(no, Vector3(0.35, 0.3, 0.5), correio + Vector3(0, 1.1, 0), _m("#6FB8FF", 0.4))
 	Pecas3D.caixa(no, Vector3(0.04, 0.2, 0.14), correio + Vector3(0.2, 1.25, 0.1), _m("#E8364F", 0.4))
 	_parede(no, Vector3(largura, altura + 1.9, fundo), Vector3(0, (altura + 1.9) / 2.0, 0))
+	_casa_maior(no, tamanho, largura, fundo)
 	return {"frente": frente + 0.04, "placa": altura - 0.35}
+
+
+## A casa que cresceu (Casa.aumentar): 1 = varanda de biscoito na frente e uma
+## ala do lado direito; 2 = a ala do outro lado também; 3 = torre de sorvete.
+static func _casa_maior(no: Node3D, tamanho: int, largura: float, fundo: float) -> void:
+	if tamanho < 1:
+		return
+	var frente := fundo / 2.0
+	var viga := Texturas.real("madeira_pintada", "#6B3A1F", 1.2)
+	var biscoito := Texturas.real("madeira_pintada", "#D9A35E", 1.0)
+	# varanda: piso de biscoito com gradil baixo de bengalinhas dos dois lados
+	# da porta (sem toldo: não tapa a placa) e vasos de flor nos cantos
+	Pecas3D.caixa(no, Vector3(largura - 0.4, 0.12, 1.3), Vector3(0, 0.06, frente + 0.65), biscoito)
+	for lado in [-1, 1]:
+		var de := Vector3(lado * 0.95, 0, frente + 1.22)
+		var ate := Vector3(lado * (largura / 2.0 - 0.3), 0, frente + 1.22)
+		for k in 5:
+			var pe := de.lerp(ate, k / 4.0)
+			Pecas3D.cilindro(no, 0.05, 0.05, 0.75, pe + Vector3(0, 0.45, 0), _m("#FFFFFF" if k % 2 == 0 else "#E8364F", 0.35))
+		Pecas3D.cano(no, de + Vector3(0, 0.8, 0), ate + Vector3(0, 0.8, 0), 0.06, _m("#E8364F", 0.35))
+		var vaso := Vector3(lado * (largura / 2.0 - 0.45), 0.12, frente + 0.35)
+		Pecas3D.cilindro(no, 0.2, 0.15, 0.35, vaso + Vector3(0, 0.17, 0), _m("#C8683F", 0.7))
+		Pecas3D.esfera(no, 0.26, vaso + Vector3(0, 0.45, 0), _m("#7BE07B", 0.6))
+		for k in 3:
+			Pecas3D.esfera(no, 0.08, vaso + Vector3(cos(k * 2.1) * 0.18, 0.6, sin(k * 2.1) * 0.18), _m(["#FF6FAE", "#FFD23F", "#FFFFFF"][k], 0.4))
+	# alas dos lados (a direita no tamanho 1; as duas a partir do 2)
+	var lados := [1] if tamanho == 1 else [-1, 1]
+	for lado in lados:
+		var ala := Vector3(lado * (largura / 2.0 + 1.2), 0, -0.3)
+		Pecas3D.caixa(no, Vector3(2.4, 2.3, 3.2), ala + Vector3(0, 1.15, 0), Texturas.real("reboco", "#FFE3EE", 0.6))
+		Pecas3D.caixa(no, Vector3(2.54, 0.36, 3.34), ala + Vector3(0, 0.18, 0), Texturas.real("calcamento", "#CFC6B8", 1.3))
+		for x in [-1.2, 1.2]:
+			Pecas3D.caixa(no, Vector3(0.14, 2.3, 0.08), ala + Vector3(x, 1.15, 1.63), viga)
+		var telhado := PrismMesh.new()
+		telhado.size = Vector3(2.9, 1.2, 3.6)
+		var peca := MeshInstance3D.new()
+		peca.mesh = telhado
+		peca.material_override = _texturizado("#E8364F", "telhas", 1.2, 0.6)
+		peca.position = ala + Vector3(0, 2.9, 0)
+		no.add_child(peca)
+		_janela(no, ala + Vector3(0, 1.3, 1.64), "#E8364F")
+		_parede(no, Vector3(2.4, 3.5, 3.2), ala + Vector3(0, 1.75, 0))
+	if tamanho >= 3:
+		# torre de sorvete: casquinha de wafer, bola de morango e cereja
+		var torre := Vector3(largura / 2.0 + 2.3, 0, 1.0)  # no canto da frente da ala da direita
+		Pecas3D.cilindro(no, 0.95, 1.05, 5.4, torre + Vector3(0, 2.7, 0), Texturas.real("madeira_pintada", "#E0A95E", 0.8))
+		for k in 5:
+			Pecas3D.cilindro(no, 1.07, 1.07, 0.08, torre + Vector3(0, 0.8 + k * 1.0, 0), _m("#B97A3A", 0.6))
+		Pecas3D.esfera(no, 1.3, torre + Vector3(0, 6.1, 0), _m("#FF9FC4", 0.45), Vector3(1, 0.85, 1))
+		Pecas3D.esfera(no, 0.28, torre + Vector3(0, 7.3, 0), _m("#E0101E", 0.12))
+		Pecas3D.cano(no, torre + Vector3(0, 7.5, 0), torre + Vector3(0.12, 7.9, 0), 0.03, _m("#3E7A2E", 0.5))
+		for i in 8:
+			var a := i * TAU / 8.0
+			Pecas3D.esfera(no, 0.22, torre + Vector3(cos(a) * 1.15, 5.35, sin(a) * 1.15), _m("#FF9FC4", 0.45), Vector3(1, 1.4, 1))
+		_janela(no, torre + Vector3(0, 3.6, 1.0), "#FFFFFF")
+		_poste(no, 1.05, 6.0, torre)
 
 
 ## FÁBRICA DE CHOCOLATE: galpão de tijolos com telhado em serra, duas

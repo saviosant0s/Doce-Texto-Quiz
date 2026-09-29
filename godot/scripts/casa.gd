@@ -7,12 +7,27 @@ class_name Casa
 ## CONFORTO: soma dos móveis colocados + parede + piso. Cada faixa nova de
 ## conforto dá um prêmio (uma vez).
 ##
+## AUMENTAR A CASA: com moedas e açúcar a casa cresce (sala maior por dentro
+## e, na vila, alas e torre por fora). Cada tamanho dá conforto.
+##
 ## Estado em Progresso.vila["casa"] = {"moveis": {id: quantos tem},
 ## "colocados": [{"id", "x", "z", "giro"}], "parede", "piso",
-## "paredes": [ids], "pisos": [ids], "premio_conforto": faixa já premiada}.
+## "paredes": [ids], "pisos": [ids], "premio_conforto": faixa já premiada,
+## "tamanho": índice em TAMANHOS}.
 
-const LARGURA := 8  # casas da grade (x)
-const FUNDO := 6  # casas da grade (z)
+## Tamanhos da casa: "grade" = [largura, fundo] da sala em casas; preço para
+## chegar nele (moedas e açúcar); conforto que o tamanho dá; "fora": o que
+## muda na casa lá na vila.
+const TAMANHOS := [
+	{"nome": "CASINHA", "grade": [8, 6], "moedas": 0, "acucar": 0, "conforto": 0,
+		"fora": "Casinha de enxaimel com telhado de morango."},
+	{"nome": "CASA COM VARANDA", "grade": [10, 7], "moedas": 400, "acucar": 150, "conforto": 20,
+		"fora": "Ganha uma varanda de biscoito e uma ala nova do lado."},
+	{"nome": "CASA GRANDE", "grade": [12, 8], "moedas": 900, "acucar": 300, "conforto": 45,
+		"fora": "Ganha a ala do outro lado e mais janelas na sala."},
+	{"nome": "CASARÃO", "grade": [14, 9], "moedas": 1800, "acucar": 600, "conforto": 80,
+		"fora": "Ganha uma TORRE DE SORVETE com cereja no alto!"},
+]
 
 ## "tam": [largura, fundo] em casas; "tapete": fica no chão, outros móveis
 ## podem ficar em cima; "libera": como ganhar (só os especiais).
@@ -95,7 +110,7 @@ static func padrao() -> Dictionary:
 		"colocados": [{"id": "tapete_glace", "x": 3, "z": 2, "giro": 0}, {"id": "poltrona_pudim", "x": 3, "z": 2, "giro": 0},
 			{"id": "mesa_biscoito", "x": 4, "z": 3, "giro": 0}, {"id": "planta_cupcake", "x": 0, "z": 0, "giro": 0}],
 		"parede": "creme", "piso": "madeira",
-		"paredes": ["creme"], "pisos": ["madeira"], "premio_conforto": 0}
+		"paredes": ["creme"], "pisos": ["madeira"], "premio_conforto": 0, "tamanho": 0}
 
 
 static func _estado() -> Dictionary:
@@ -106,6 +121,45 @@ static func _estado() -> Dictionary:
 		if not e.has(chave):
 			e[chave] = padrao()[chave]
 	return e
+
+
+# --- Tamanho da casa ---------------------------------------------------------------
+
+## Índice do tamanho da casa em TAMANHOS (0 = CASINHA).
+static func tamanho_casa() -> int:
+	return clampi(int(_estado()["tamanho"]), 0, TAMANHOS.size() - 1)
+
+
+## Casas da grade da sala (x).
+static func largura() -> int:
+	return int(TAMANHOS[tamanho_casa()]["grade"][0])
+
+
+## Casas da grade da sala (z; a linha 0 fica encostada na parede do fundo).
+static func fundo() -> int:
+	return int(TAMANHOS[tamanho_casa()]["grade"][1])
+
+
+## O próximo tamanho ({} = já é o maior).
+static func proximo_tamanho() -> Dictionary:
+	var i := tamanho_casa() + 1
+	return TAMANHOS[i] if i < TAMANHOS.size() else {}
+
+
+## Paga moedas e açúcar e a casa cresce. Os móveis andam para o meio da sala
+## nova (no x; no z ficam onde estão, encostados na parede do fundo).
+static func aumentar() -> bool:
+	var novo := proximo_tamanho()
+	if novo.is_empty() or Progresso.moedas < int(novo["moedas"]) or Confeitaria.acucar() < int(novo["acucar"]):
+		return false
+	var antes := largura()
+	Confeitaria.gastar_acucar(int(novo["acucar"]))
+	_estado()["tamanho"] = tamanho_casa() + 1
+	var desvio := (largura() - antes) / 2
+	for c in colocados():
+		c["x"] = int(c["x"]) + desvio
+	Progresso.gastar_moedas(int(novo["moedas"]))  # também salva
+	return true
 
 
 # --- Móveis ------------------------------------------------------------------------
@@ -181,7 +235,7 @@ static func colocados() -> Array:
 ## `ignorar`: índice de um colocado que está sendo mudado de lugar.
 static func cabe(id: String, x: int, z: int, giro: int, ignorar := -1) -> bool:
 	var t := tamanho(id, giro)
-	if x < 0 or z < 0 or x + t.x > LARGURA or z + t.y > FUNDO:
+	if x < 0 or z < 0 or x + t.x > largura() or z + t.y > fundo():
 		return false
 	var tapete := bool(MOVEIS[id].get("tapete", false))
 	var lista := colocados()
@@ -291,7 +345,8 @@ static func piso() -> String:
 # --- Conforto ----------------------------------------------------------------------
 
 static func conforto() -> int:
-	var soma := int(PAREDES.get(parede(), {}).get("conforto", 0)) + int(PISOS.get(piso(), {}).get("conforto", 0))
+	var soma := int(PAREDES.get(parede(), {}).get("conforto", 0)) + int(PISOS.get(piso(), {}).get("conforto", 0)) \
+		+ int(TAMANHOS[tamanho_casa()]["conforto"])
 	var tipos := {}
 	for c in colocados():
 		# o mesmo móvel repetido vale menos (metade a partir do segundo)

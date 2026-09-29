@@ -6,12 +6,15 @@ extends Node3D
 ##   toque no chão para pôr; toque num móvel para GIRAR, MUDAR DE LUGAR ou
 ##   GUARDAR.
 ## - CONFORTO no topo: cada faixa nova dá prêmio.
+## - AUMENTAR: com moedas e açúcar a casa cresce (sala maior e, na vila, a
+##   casa ganha varanda, alas e torre).
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const CASA := 1.0  # metros por casa da grade
 const ALTURA_PAREDE := 3.0
 
 var _camera: Camera3D
+var _sala: Node3D
 var _chao: MeshInstance3D
 var _paredes: Array[MeshInstance3D] = []
 var _moveis: Node3D
@@ -48,8 +51,7 @@ func _ready() -> void:
 	_camera = Camera3D.new()
 	_camera.fov = 50.0
 	add_child(_camera)
-	_camera.position = Vector3(0, 7.4, 8.0)
-	_camera.look_at(Vector3(0, 0.2, -0.6))
+	_ajustar_camera()
 	_criar_interface()
 	usar_modo(false)
 	Telas.dica_primeira_vez("minha_casa", "MINHA CASA",
@@ -96,48 +98,76 @@ func _criar_ambiente() -> void:
 	add_child(janela)
 
 
+## (Re)monta chão, paredes, janela, porta e quadro no tamanho da casa.
 func _montar_sala() -> void:
-	var largura := Casa.LARGURA * CASA
-	var fundo := Casa.FUNDO * CASA
-	_chao = Pecas3D.caixa(self, Vector3(largura, 0.1, fundo), Vector3(0, -0.05, 0), StandardMaterial3D.new())
+	if is_instance_valid(_sala):
+		remove_child(_sala)
+		_sala.queue_free()
+	_paredes.clear()
+	_sala = Node3D.new()
+	_sala.name = "Sala"
+	add_child(_sala)
+	var largura := Casa.largura() * CASA
+	var fundo := Casa.fundo() * CASA
+	_chao = Pecas3D.caixa(_sala, Vector3(largura, 0.1, fundo), Vector3(0, -0.05, 0), StandardMaterial3D.new())
 	_chao.name = "Piso"
-	CenarioVila._parede(self, Vector3(largura, 0.1, fundo), Vector3(0, -0.05, 0))  # chão firme para o doce
+	CenarioVila._parede(_sala, Vector3(largura, 0.1, fundo), Vector3(0, -0.05, 0))  # chão firme para o doce
 	# parede do fundo e das laterais (a da frente fica aberta, como casinha de bonecas)
 	for dados in [[Vector3(largura, ALTURA_PAREDE, 0.15), Vector3(0, ALTURA_PAREDE / 2.0, -fundo / 2.0 - 0.075)],
 			[Vector3(0.15, ALTURA_PAREDE, fundo), Vector3(-largura / 2.0 - 0.075, ALTURA_PAREDE / 2.0, 0)],
 			[Vector3(0.15, ALTURA_PAREDE, fundo), Vector3(largura / 2.0 + 0.075, ALTURA_PAREDE / 2.0, 0)]]:
-		var parede := Pecas3D.caixa(self, dados[0], dados[1], StandardMaterial3D.new())
+		var parede := Pecas3D.caixa(_sala, dados[0], dados[1], StandardMaterial3D.new())
 		parede.name = "Parede"
 		_paredes.append(parede)
-		CenarioVila._parede(self, dados[0], dados[1])
+		CenarioVila._parede(_sala, dados[0], dados[1])
 	# rodapé de chocolate e topo de glacê
 	var rodape := Pecas3D.material(Color("#6B3A1F"), 0.5)
 	var glace := Pecas3D.material(Color("#FFFFFF"), 0.4)
-	Pecas3D.caixa(self, Vector3(largura, 0.18, 0.06), Vector3(0, 0.09, -fundo / 2.0 + 0.03), rodape)
+	Pecas3D.caixa(_sala, Vector3(largura, 0.18, 0.06), Vector3(0, 0.09, -fundo / 2.0 + 0.03), rodape)
 	for x in [-1, 1]:
-		Pecas3D.caixa(self, Vector3(0.06, 0.18, fundo), Vector3(x * (largura / 2.0 - 0.03), 0.09, 0), rodape)
-		Pecas3D.caixa(self, Vector3(0.3, 0.12, fundo + 0.3), Vector3(x * (largura / 2.0 + 0.075), ALTURA_PAREDE + 0.06, 0), glace)
-	Pecas3D.caixa(self, Vector3(largura + 0.3, 0.12, 0.3), Vector3(0, ALTURA_PAREDE + 0.06, -fundo / 2.0 - 0.075), glace)
+		Pecas3D.caixa(_sala, Vector3(0.06, 0.18, fundo), Vector3(x * (largura / 2.0 - 0.03), 0.09, 0), rodape)
+		Pecas3D.caixa(_sala, Vector3(0.3, 0.12, fundo + 0.3), Vector3(x * (largura / 2.0 + 0.075), ALTURA_PAREDE + 0.06, 0), glace)
+	Pecas3D.caixa(_sala, Vector3(largura + 0.3, 0.12, 0.3), Vector3(0, ALTURA_PAREDE + 0.06, -fundo / 2.0 - 0.075), glace)
 	# janela no fundo, com céu e cortinas
-	var janela := Vector3(-1.6, 1.7, -fundo / 2.0 + 0.02)
-	Pecas3D.caixa(self, Vector3(1.5, 1.2, 0.05), janela, Pecas3D.material(Color("#FFFFFF"), 0.4))
+	_janela(Vector3(-1.6, 1.7, -fundo / 2.0 + 0.02), 0.0)
+	# porta na lateral direita
+	Pecas3D.caixa(_sala, Vector3(0.06, 2.0, 1.1), Vector3(largura / 2.0 - 0.03, 1.0, 1.5), Pecas3D.material(Color("#7A4322"), 0.5))
+	Pecas3D.esfera(_sala, 0.06, Vector3(largura / 2.0 - 0.08, 1.0, 1.1), Pecas3D.material(Color("#FFC83D"), 0.2, 0.6))
+	# quadro de doce na parede
+	Pecas3D.caixa(_sala, Vector3(1.0, 0.8, 0.05), Vector3(1.6, 1.8, -fundo / 2.0 + 0.03), Pecas3D.material(Color("#C99A52"), 0.5))
+	Pecas3D.caixa(_sala, Vector3(0.85, 0.65, 0.05), Vector3(1.6, 1.8, -fundo / 2.0 + 0.05), Pecas3D.material(Color("#FFE3EE"), 0.8))
+	Pecas3D.esfera(_sala, 0.2, Vector3(1.6, 1.8, -fundo / 2.0 + 0.08), Pecas3D.material(Color("#7A4322"), 0.3), Vector3(1, 1, 0.3))
+	# casa maior: mais uma janela no fundo e uma na parede da esquerda
+	if Casa.tamanho_casa() >= 1:
+		_janela(Vector3(largura / 2.0 - 1.4, 1.7, -fundo / 2.0 + 0.02), 0.0)
+	if Casa.tamanho_casa() >= 2:
+		_janela(Vector3(-largura / 2.0 + 0.02, 1.7, -0.5), PI / 2.0)
+	aplicar_parede_e_piso()
+	CenarioVila.estilo_desenho(_sala)
+
+
+## Janela com céu e cortinas (`giro`: 0 = na parede do fundo; PI/2 = na da esquerda).
+func _janela(centro_janela: Vector3, giro: float) -> void:
+	var no := Node3D.new()
+	no.position = centro_janela
+	no.rotation.y = giro
+	_sala.add_child(no)
+	Pecas3D.caixa(no, Vector3(1.5, 1.2, 0.05), Vector3.ZERO, Pecas3D.material(Color("#FFFFFF"), 0.4))
 	var ceu := Pecas3D.material(Color("#9FD4F7"), 0.3)
 	ceu.emission_enabled = true
 	ceu.emission = Color("#BFE6FF")
 	ceu.emission_energy_multiplier = 0.6
-	Pecas3D.caixa(self, Vector3(1.3, 1.0, 0.05), janela + Vector3(0, 0, 0.02), ceu)
-	Pecas3D.caixa(self, Vector3(0.06, 1.0, 0.07), janela + Vector3(0, 0, 0.04), Pecas3D.material(Color("#FFFFFF"), 0.4))
+	Pecas3D.caixa(no, Vector3(1.3, 1.0, 0.05), Vector3(0, 0, 0.02), ceu)
+	Pecas3D.caixa(no, Vector3(0.06, 1.0, 0.07), Vector3(0, 0, 0.04), Pecas3D.material(Color("#FFFFFF"), 0.4))
 	for x in [-0.85, 0.85]:
-		Pecas3D.caixa(self, Vector3(0.35, 1.45, 0.06), janela + Vector3(x, -0.05, 0.08), Pecas3D.material(Color("#FF8FB8"), 0.8))
-	# porta na lateral direita
-	Pecas3D.caixa(self, Vector3(0.06, 2.0, 1.1), Vector3(largura / 2.0 - 0.03, 1.0, 1.5), Pecas3D.material(Color("#7A4322"), 0.5))
-	Pecas3D.esfera(self, 0.06, Vector3(largura / 2.0 - 0.08, 1.0, 1.1), Pecas3D.material(Color("#FFC83D"), 0.2, 0.6))
-	# quadro de doce na parede
-	Pecas3D.caixa(self, Vector3(1.0, 0.8, 0.05), Vector3(1.6, 1.8, -fundo / 2.0 + 0.03), Pecas3D.material(Color("#C99A52"), 0.5))
-	Pecas3D.caixa(self, Vector3(0.85, 0.65, 0.05), Vector3(1.6, 1.8, -fundo / 2.0 + 0.05), Pecas3D.material(Color("#FFE3EE"), 0.8))
-	Pecas3D.esfera(self, 0.2, Vector3(1.6, 1.8, -fundo / 2.0 + 0.08), Pecas3D.material(Color("#7A4322"), 0.3), Vector3(1, 1, 0.3))
-	aplicar_parede_e_piso()
-	CenarioVila.estilo_desenho(self)
+		Pecas3D.caixa(no, Vector3(0.35, 1.45, 0.06), Vector3(x, -0.05, 0.08), Pecas3D.material(Color("#FF8FB8"), 0.8))
+
+
+## A câmera enquadra a sala inteira (mais longe quando a casa cresce).
+func _ajustar_camera() -> void:
+	var f := maxf(Casa.largura() / 8.0, Casa.fundo() / 6.0)
+	_camera.position = Vector3(0, 7.4, 8.0) * f
+	_camera.look_at(Vector3(0, 0.2, -0.6 * f))
 
 
 ## Põe a textura do papel de parede e do piso escolhidos.
@@ -161,7 +191,7 @@ func aplicar_parede_e_piso() -> void:
 
 ## Centro no mundo de um móvel com canto na casa (x, z) e esse tamanho.
 static func centro(x: int, z: int, tam: Vector2i) -> Vector3:
-	return Vector3(-Casa.LARGURA / 2.0 + x + tam.x / 2.0, 0, -Casa.FUNDO / 2.0 + z + tam.y / 2.0) * CASA
+	return Vector3(-Casa.largura() / 2.0 + x + tam.x / 2.0, 0, -Casa.fundo() / 2.0 + z + tam.y / 2.0) * CASA
 
 
 ## (Re)monta os móveis colocados.
@@ -219,14 +249,7 @@ func _criar_grade() -> void:
 	_grade = Node3D.new()
 	_grade.name = "Grade"
 	add_child(_grade)
-	var linha := StandardMaterial3D.new()
-	linha.albedo_color = Color(1, 1, 1, 0.55)
-	linha.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	linha.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	for x in range(1, Casa.LARGURA):
-		Pecas3D.caixa(_grade, Vector3(0.03, 0.01, Casa.FUNDO * CASA), Vector3(-Casa.LARGURA / 2.0 + x, 0.02, 0), linha)
-	for z in range(1, Casa.FUNDO):
-		Pecas3D.caixa(_grade, Vector3(Casa.LARGURA * CASA, 0.01, 0.03), Vector3(0, 0.02, -Casa.FUNDO / 2.0 + z), linha)
+	_montar_grade()
 	_fantasma = MeshInstance3D.new()
 	_fantasma.name = "Fantasma"
 	_fantasma.mesh = BoxMesh.new()
@@ -238,6 +261,20 @@ func _criar_grade() -> void:
 	add_child(_fantasma)
 
 
+## Linhas da grade no chão (no tamanho da casa).
+func _montar_grade() -> void:
+	for filho in _grade.get_children():
+		filho.queue_free()
+	var linha := StandardMaterial3D.new()
+	linha.albedo_color = Color(1, 1, 1, 0.55)
+	linha.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	linha.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for x in range(1, Casa.largura()):
+		Pecas3D.caixa(_grade, Vector3(0.03, 0.01, Casa.fundo() * CASA), Vector3(-Casa.largura() / 2.0 + x, 0.02, 0), linha)
+	for z in range(1, Casa.fundo()):
+		Pecas3D.caixa(_grade, Vector3(Casa.largura() * CASA, 0.01, 0.03), Vector3(0, 0.02, -Casa.fundo() / 2.0 + z), linha)
+
+
 func _criar_doce() -> void:
 	_doce = DoceAndante.new()
 	_doce.name = "Doce"
@@ -246,9 +283,16 @@ func _criar_doce() -> void:
 	_doce.passeando = true
 	add_child(_doce)
 	_doce.global_position = Vector3(0.5, 0, 1.5)
-	_doce.definir_area_passeio(Rect2(-3.3, -2.3, 6.6, 4.8))
+	_doce.definir_area_passeio(_area_passeio())
 	CenarioVila.estilo_desenho(_doce)
 	_doce.otimizar()
+
+
+## Onde o doce passeia (a sala menos uma margem nas paredes).
+func _area_passeio() -> Rect2:
+	var l := Casa.largura() * CASA
+	var f := Casa.fundo() * CASA
+	return Rect2(-l / 2.0 + 0.7, -f / 2.0 + 0.7, l - 1.4, f - 1.2)
 
 
 # --- Toques ------------------------------------------------------------------------
@@ -277,7 +321,7 @@ func tocar(ponto: Vector2) -> void:
 	var casa := Vector2i(-1, -1)
 	if direcao.y < -0.01:
 		var no_chao := de + direcao * (-de.y / direcao.y)
-		casa = Vector2i(floori(no_chao.x / CASA + Casa.LARGURA / 2.0), floori(no_chao.z / CASA + Casa.FUNDO / 2.0))
+		casa = Vector2i(floori(no_chao.x / CASA + Casa.largura() / 2.0), floori(no_chao.z / CASA + Casa.fundo() / 2.0))
 	tocar_casa(casa, int(batida["collider"].get_meta("indice")) if batida and batida["collider"].has_meta("indice") else -1)
 
 
@@ -445,7 +489,7 @@ func _criar_interface() -> void:
 	_barra_ver.add_theme_constant_override("separation", 14)
 	_barra_ver.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	coluna.add_child(_barra_ver)
-	for par in [["LOJA", abrir_loja, &"BotaoAzul"], ["DECORAR", usar_modo.bind(true), &"Button"]]:
+	for par in [["AUMENTAR", abrir_aumentar, &"BotaoPremio"], ["LOJA", abrir_loja, &"BotaoAzul"], ["DECORAR", usar_modo.bind(true), &"Button"]]:
 		var b := Button.new()
 		b.name = "Botao" + par[0]
 		b.text = par[0]
@@ -784,6 +828,134 @@ func _comprar_escolha() -> void:
 	abrir_loja()
 
 
+## Painel AUMENTAR A CASA: o próximo tamanho (sala e casa na vila, com a
+## casa nova girando), o preço em moedas e açúcar e o botão de aumentar.
+func abrir_aumentar() -> void:
+	fechar_loja()
+	var camada := Control.new()
+	camada.name = "Aumentar"
+	camada.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_interface.add_child(camada)
+	_loja = camada  # fecha e bloqueia os toques na sala como a loja
+	var escuro := ColorRect.new()
+	escuro.color = Color(0.1, 0.05, 0.2, 0.6)
+	escuro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	camada.add_child(escuro)
+	var centro_tela := CenterContainer.new()
+	centro_tela.set_anchors_preset(Control.PRESET_FULL_RECT)
+	camada.add_child(centro_tela)
+	var painel := PanelContainer.new()
+	painel.theme_type_variation = &"PainelRoxo"
+	centro_tela.add_child(painel)
+	var coluna := VBoxContainer.new()
+	coluna.add_theme_constant_override("separation", 12)
+	painel.add_child(coluna)
+	var titulo := Label.new()
+	titulo.theme_type_variation = &"TituloClaro"
+	titulo.add_theme_font_size_override("font_size", 40)
+	titulo.text = "AUMENTAR A CASA"
+	titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	coluna.add_child(titulo)
+	var corpo := HBoxContainer.new()
+	corpo.add_theme_constant_override("separation", 18)
+	coluna.add_child(corpo)
+	var proximo := Casa.proximo_tamanho()
+	var mostrar := Casa.tamanho_casa() + (1 if not proximo.is_empty() else 0)
+	# a casa (como fica na vila) girando
+	var janela := SubViewportContainer.new()
+	janela.stretch = true
+	janela.custom_minimum_size = Vector2(400, 330)
+	corpo.add_child(janela)
+	var visor := SubViewport.new()
+	visor.own_world_3d = true
+	visor.transparent_bg = true
+	janela.add_child(visor)
+	_previa = Node3D.new()
+	visor.add_child(_previa)
+	var casa_fora := Node3D.new()
+	casa_fora.name = "CasaFora"
+	casa_fora.scale = Vector3.ONE * 0.62
+	casa_fora.position.x = -0.6 if mostrar == 1 else 0.0  # só a ala da direita: gira pelo meio
+	_previa.add_child(casa_fora)
+	CenarioVila._minha_casa(casa_fora, mostrar)
+	var camera := Camera3D.new()
+	camera.fov = 38.0
+	camera.position = Vector3(0, 4.2, 9.0)
+	visor.add_child(camera)
+	camera.look_at(Vector3(0, 1.4, 0))
+	var luz := DirectionalLight3D.new()
+	luz.rotation_degrees = Vector3(-40, -30, 0)
+	visor.add_child(luz)
+	var mundo := WorldEnvironment.new()
+	mundo.environment = Environment.new()
+	mundo.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	mundo.environment.ambient_light_color = Color("#FFE6F0")
+	mundo.environment.ambient_light_energy = 0.6
+	visor.add_child(mundo)
+	var lado := VBoxContainer.new()
+	lado.add_theme_constant_override("separation", 10)
+	lado.custom_minimum_size = Vector2(380, 0)
+	corpo.add_child(lado)
+	var atual: Dictionary = Casa.TAMANHOS[Casa.tamanho_casa()]
+	var info := Label.new()
+	info.name = "InfoAumentar"
+	info.theme_type_variation = &"SubtituloClaro"
+	info.add_theme_font_size_override("font_size", 22)
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size = Vector2(380, 0)
+	info.text = "AGORA: %s (SALA %d × %d)" % [atual["nome"], atual["grade"][0], atual["grade"][1]]
+	if proximo.is_empty():
+		info.text += "\n\nSUA CASA JÁ É O MAIOR CASARÃO DA VILA!"
+	else:
+		info.text += "\n\nPRÓXIMA: %s\nSALA %d × %d · CONFORTO +%d\n%s" % [proximo["nome"], proximo["grade"][0],
+			proximo["grade"][1], int(proximo["conforto"]) - int(atual["conforto"]), str(proximo["fora"]).to_upper()]
+	lado.add_child(info)
+	var botao := Button.new()
+	botao.name = "BotaoAumentarCasa"
+	botao.theme_type_variation = &"BotaoComprar"
+	botao.custom_minimum_size = Vector2(380, 72)
+	botao.add_theme_font_size_override("font_size", 24)
+	botao.focus_mode = Control.FOCUS_NONE
+	if proximo.is_empty():
+		botao.text = "JÁ ESTÁ NO MÁXIMO"
+		botao.disabled = true
+	else:
+		botao.text = "AUMENTAR (%d MOEDAS + %d AÇÚCAR)" % [proximo["moedas"], proximo["acucar"]]
+		botao.pressed.connect(aumentar_casa)
+	lado.add_child(botao)
+	var fechar := Button.new()
+	fechar.name = "FecharAumentar"
+	fechar.text = "FECHAR"
+	fechar.theme_type_variation = &"BotaoSecundario"
+	fechar.custom_minimum_size = Vector2(380, 58)
+	fechar.focus_mode = Control.FOCUS_NONE
+	fechar.pressed.connect(fechar_loja)
+	lado.add_child(fechar)
+
+
+## Paga e a casa cresce: remonta a sala, a grade e os móveis no tamanho novo.
+func aumentar_casa() -> void:
+	var proximo := Casa.proximo_tamanho()
+	if proximo.is_empty():
+		return
+	if not Casa.aumentar():
+		if Progresso.moedas < int(proximo["moedas"]):
+			Telas.mostrar_aviso("FALTAM MOEDAS")
+		else:
+			Telas.mostrar_aviso("FALTA AÇÚCAR: JOGUE NO FLIPERAMA, NA TORRE OU NA FÁBRICA!")
+		return
+	fechar_loja()
+	Audio.tocar("construir")
+	_montar_sala()
+	_montar_grade()
+	_ajustar_camera()
+	_doce.definir_area_passeio(_area_passeio())
+	_doce.global_position = Vector3(0.5, 0, 1.5)
+	_depois_de_mudar()
+	_doce.comemorar()
+	Telas.mostrar_aviso("SUA CASA CRESCEU! AGORA É: " + str(proximo["nome"]))
+
+
 func fechar_loja() -> void:
 	if is_instance_valid(_loja):
 		_loja.queue_free()
@@ -804,7 +976,7 @@ func _process(delta: float) -> void:
 		_fantasma.visible = false
 		return
 	var no_chao := de + direcao * (-de.y / direcao.y)
-	var casa := Vector2i(floori(no_chao.x / CASA + Casa.LARGURA / 2.0), floori(no_chao.z / CASA + Casa.FUNDO / 2.0))
+	var casa := Vector2i(floori(no_chao.x / CASA + Casa.largura() / 2.0), floori(no_chao.z / CASA + Casa.fundo() / 2.0))
 	var id := escolhido if escolhido != "" else str(Casa.colocados()[selecionado]["id"])
 	var giro := 0 if escolhido != "" else int(Casa.colocados()[selecionado]["giro"])
 	var tam := Casa.tamanho(id, giro)
