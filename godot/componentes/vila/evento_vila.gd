@@ -16,7 +16,16 @@ const CORES := {
 	"carnaval": ["#B07CFF", "#FFD23F", "#6FD3FF", "#FF6FAE"],
 	"pascoa": ["#6FD3FF", "#FFB3D1", "#FFF1A8", "#B8F0C8"],
 	"junina": ["#E8364F", "#FFD23F", "#6FD3FF", "#7BE07B"],
+	"criancas": ["#6FD3FF", "#FF6FAE", "#FFD23F", "#7BE07B", "#B07CFF"],
 }
+
+
+## Cores do evento de agora (o tema FESTA usa a cor que o evento escolheu).
+static func cores_evento(tema: String) -> Array:
+	if CORES.has(tema):
+		return CORES[tema]
+	var cor := Color(str(Eventos.dados().get("cor", "#FF6FAE")))
+	return [cor.to_html(false), "#FFFFFF", cor.lightened(0.4).to_html(false), "#FFD23F"]
 
 var id := ""
 var _jogador: Node3D
@@ -147,7 +156,7 @@ static func _material_casca(brilho: float) -> StandardMaterial3D:
 ## Oito postes em volta da praça com varais de bandeirinhas (ou luzinhas,
 ## no Natal e no Halloween) entre eles.
 func _varais() -> void:
-	var cores: Array = CORES[id]
+	var cores: Array = cores_evento(id)
 	var raio := 6.6
 	var postes := []
 	for i in 8:
@@ -205,6 +214,14 @@ func _enfeites() -> void:
 			"pascoa":
 				for k in 3:
 					Pecas3D.esfera(self, 0.3, p + Vector3((k - 1) * 0.55, 0.35, 0), _m(CORES["pascoa"][k], 0.3), Vector3(0.8, 1.15, 0.8))
+			"criancas", "festa":
+				# cacho de balões amarrado num bloquinho de brinquedo
+				var cores: Array = cores_evento(id)
+				Pecas3D.caixa(self, Vector3(0.45, 0.45, 0.45), p + Vector3(0, 0.225, 0), _m(cores[0], 0.4))
+				Pecas3D.caixa(self, Vector3(0.35, 0.35, 0.35), p + Vector3(0.55, 0.175, 0.1), _m(cores[2], 0.4), Vector3(0, 25, 0))
+				for k in 3:
+					var a := k * TAU / 3.0
+					balao(self, p + Vector3(cos(a) * 0.35, 1.9 + k * 0.25, sin(a) * 0.35), p + Vector3(0, 0.45, 0), cores[(k + 1) % cores.size()])
 			"junina":
 				for k in 4:
 					var a := k * TAU / 4.0
@@ -226,7 +243,7 @@ func _enfeites() -> void:
 
 ## Partículas do tema caindo perto do jogador (pétalas, folhas, neve, confete).
 func _particulas() -> void:
-	var cores: Array = CORES[id]
+	var cores: Array = cores_evento(id)
 	var p := CPUParticles3D.new()
 	p.name = "ParticulasEvento"
 	p.amount = [40, 70, 110][Qualidade.nivel()]
@@ -279,7 +296,7 @@ func _criar_item(indice: int, lugar: Vector3) -> Node3D:
 	disco.bottom_radius = 0.45
 	disco.height = 0.02
 	aro.mesh = disco
-	var mat := _luz(Eventos.EVENTOS[id]["cor"], 0.8)
+	var mat := _luz(str(Eventos.dados()["cor"]), 0.8)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color.a = 0.5
 	aro.material_override = mat
@@ -290,6 +307,16 @@ func _criar_item(indice: int, lugar: Vector3) -> Node3D:
 	for peca in no.find_children("*", "MeshInstance3D", true, false):
 		peca.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF  # flutua: sem sombra
 	return no
+
+
+## Balão brilhante com o nozinho e a cordinha até `amarrado`.
+static func balao(pai: Node3D, p: Vector3, amarrado: Vector3, cor: String, tamanho := 1.0) -> void:
+	var mat := _m(cor, 0.15)
+	mat.clearcoat_enabled = true
+	mat.clearcoat = 0.7
+	Pecas3D.esfera(pai, 0.32 * tamanho, p, mat, Vector3(0.9, 1.1, 0.9))
+	Pecas3D.cilindro(pai, 0.0, 0.07 * tamanho, 0.1 * tamanho, p - Vector3(0, 0.37 * tamanho, 0), mat)
+	Pecas3D.cano(pai, p - Vector3(0, 0.42 * tamanho, 0), amarrado, 0.01, _m("#FFFFFF", 0.5))
 
 
 ## O formato da ficha de cada evento (pétala, abóbora, estrela, confete,
@@ -316,6 +343,8 @@ static func ficha_3d(no: Node3D, evento: String) -> void:
 		"pascoa":
 			Pecas3D.esfera(no, 0.2, Vector3.ZERO, _m("#6FD3FF", 0.3), Vector3(0.85, 1.15, 0.85))
 			Pecas3D.rosquinha(no, 0.16, 0.19, Vector3.ZERO, _m("#FFB3D1", 0.3), Vector3(1, 0.3, 1))
+		"criancas", "festa":
+			balao(no, Vector3(0, 0.1, 0), Vector3(0, -0.35, 0), cores_evento(evento)[0], 0.55)
 		_:
 			Pecas3D.cano(no, Vector3(-0.3, 0.2, 0), Vector3(0.3, 0.2, 0), 0.015, _m("#FFFFFF", 0.4))
 			for i in 3:

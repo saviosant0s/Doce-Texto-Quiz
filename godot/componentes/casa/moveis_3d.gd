@@ -150,6 +150,20 @@ static func montar(id: String, pai: Node3D) -> void:
 			for x in [-0.42, 0.42]:
 				Pecas3D.rosquinha(pai, 0.1, 0.16, Vector3(x, 1.15, 0), ouro, Vector3.ONE, Vector3(90, 0, 0))
 			Pecas3D.esfera(pai, 0.12, Vector3(0, 1.5, 0), _luz("#FFE27A", 1.0))
+		"trem_brinquedo":
+			# locomotiva de brinquedo com um vagão de balas, nos trilhos
+			for z in [-0.18, 0.18]:
+				Pecas3D.caixa(pai, Vector3(1.8, 0.04, 0.05), Vector3(0, 0.02, z), _m("#8B5A2B", 0.6))
+			Pecas3D.caixa(pai, Vector3(0.6, 0.35, 0.36), Vector3(0.45, 0.3, 0), _m("#E8364F", 0.3))
+			Pecas3D.caixa(pai, Vector3(0.3, 0.3, 0.38), Vector3(0.28, 0.6, 0), _m("#6FD3FF", 0.3))
+			Pecas3D.cilindro(pai, 0.08, 0.1, 0.25, Vector3(0.62, 0.6, 0), _m("#3B2A5C", 0.4))
+			Pecas3D.caixa(pai, Vector3(0.55, 0.28, 0.34), Vector3(-0.3, 0.26, 0), _m("#FFD23F", 0.3))
+			for k in 5:
+				Pecas3D.esfera(pai, 0.07, Vector3(-0.45 + (k % 3) * 0.14, 0.44, -0.08 + (k / 3) * 0.16),
+					_m(["#FF6FAE", "#7BE07B", "#B07CFF", "#FFFFFF", "#6FD3FF"][k], 0.3))
+			for x in [-0.45, -0.15, 0.3, 0.6]:
+				for z in [-0.19, 0.19]:
+					Pecas3D.cilindro(pai, 0.08, 0.08, 0.05, Vector3(x, 0.1, z), _m("#3B2A5C", 0.4), Vector3.ONE, Vector3(90, 0, 0))
 		"trofeu_arena":
 			# taça de chocolate com duas espadinhas de pirulito cruzadas atrás
 			var chocolate := _m("#6B3A1F", 0.25)

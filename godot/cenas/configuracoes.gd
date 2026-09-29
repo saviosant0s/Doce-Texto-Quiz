@@ -14,6 +14,7 @@ func _ready() -> void:
 	_criar_chave_animacoes()
 	_criar_qualidade()
 	_criar_chave_dia()
+	_criar_chave_desempenho()
 	_atualizar_resumo()
 	Animacoes.entrar(%Coluna, Vector2(0, 30))
 
@@ -105,6 +106,18 @@ func _criar_chave_dia() -> void:
 	chave.text = "Dia e noite na vila (desligado: sempre de dia)"
 	chave.button_pressed = not CicloDia.sempre_dia()
 	chave.toggled.connect(func(ligado: bool): CicloDia.escolher_sempre_dia(not ligado))
+	%Linhas.add_child(chave)
+
+
+func _criar_chave_desempenho() -> void:
+	var chave := CheckButton.new()
+	chave.name = "Desempenho"
+	chave.text = "Mostrar desempenho (FPS e memória, para testes)"
+	chave.button_pressed = bool(Progresso.config.get("desempenho", false))
+	chave.toggled.connect(func(ligado: bool):
+		Progresso.config["desempenho"] = ligado
+		Progresso.salvar()
+		Telas.mostrar_desempenho(ligado))
 	%Linhas.add_child(chave)
 
 

@@ -124,6 +124,13 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ### Rodada de 29/09/2026 (depois de jogar a 0.14.0 no celular) — no código, falta publicar a 0.15.0
 
+- Indicador de desempenho (Configurações): FPS, memória do jogo e do aparelho,
+  vídeo, desenhos e triângulos (componentes/painel_desempenho.gd).
+- Eventos por calendário (datas de verdade) e pela internet, sem atualizar o
+  app: eventos/eventos.json publicado no site (ferramentas/publicar_eventos.sh);
+  formato em docs/eventos.md. Tema novo SEMANA DAS CRIANÇAS (6 a 19/10, balões,
+  trem de brinquedo) e tema FESTA para eventos novos da internet.
+
 - Travada ao abrir: a vila "aquece" atrás do carregamento (câmera olha tudo
   antes). O minimapa desenha o mapa uma vez numa imagem (redesenhar custava
   ~200 chamadas de desenho).

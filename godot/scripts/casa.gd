@@ -76,6 +76,8 @@ const MOVEIS := {
 		"libera": "evento", "como": "Prêmio do evento CAÇA AOS OVOS."},
 	"fogueira_junina": {"nome": "FOGUEIRA JUNINA", "preco": 0, "tam": [1, 1], "conforto": 40,
 		"libera": "evento", "como": "Prêmio do evento ARRAIÁ DOCE."},
+	"trem_brinquedo": {"nome": "TREM DE BRINQUEDO", "preco": 0, "tam": [2, 1], "conforto": 45,
+		"libera": "evento", "como": "Prêmio do evento SEMANA DAS CRIANÇAS."},
 }
 
 ## Papéis de parede e pisos: {id: {"nome", "preco", "conforto"}}; o primeiro

@@ -61,6 +61,8 @@ func _ready() -> void:
 	_criar_cortina()
 	_criar_aviso_girar()
 	_tirar_dicas.call_deferred()
+	(func(): mostrar_desempenho(bool(Progresso.config.get("desempenho", false)))).call_deferred()
+	_baixar_eventos.call_deferred()
 
 
 ## A física (o andar dos doces) roda no ritmo da tela do aparelho (60, 90 ou
@@ -70,6 +72,31 @@ func _ajustar_fisica() -> void:
 	if hz >= 60:
 		Engine.physics_ticks_per_second = clampi(hz, 60, 120)
 		Engine.max_physics_steps_per_frame = 4
+
+
+## Liga/desliga o indicador de desempenho (FPS e memória; Configurações).
+func mostrar_desempenho(ligado: bool) -> void:
+	var painel := get_node_or_null("PainelDesempenho")
+	if ligado and painel == null:
+		add_child(PainelDesempenho.new())
+	elif not ligado and painel:
+		painel.queue_free()
+
+
+## Busca na internet os eventos novos do calendário (sem precisar atualizar o
+## app; ver Eventos). Sem internet, fica com os que já tinha.
+func _baixar_eventos() -> void:
+	if DisplayServer.get_name() == "headless":
+		return  # testes
+	var pedido := HTTPRequest.new()
+	pedido.timeout = 10.0
+	add_child(pedido)
+	pedido.request_completed.connect(func(resultado: int, codigo: int, _cabecalhos, corpo: PackedByteArray):
+		if resultado == HTTPRequest.RESULT_SUCCESS and codigo == 200:
+			Eventos.guardar_remotos(corpo.get_string_from_utf8())
+		pedido.queue_free())
+	if pedido.request(Eventos.URL_REMOTA) != OK:
+		pedido.queue_free()
 
 
 # --- Navegação ---------------------------------------------------------------

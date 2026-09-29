@@ -7,6 +7,10 @@ var _total := 0
 
 func _ready() -> void:
 	Progresso.somente_memoria = true
+	# data sem evento de calendário (os testes da roda de temas não dependem do dia)
+	Eventos.data_fixa = "2026-09-01"
+	Eventos._remotos = []
+	Eventos._remotos_lidos = true
 	await get_tree().process_frame
 	_testar_regras()
 	_testar_sorteio()
@@ -2260,10 +2264,45 @@ func _testar_eventos() -> void:
 		"tempo de verdade até trocar o tema (%d h)" % Eventos.horas_restantes())
 	CicloDia.agora_fixo = -1.0
 	verificar(Eventos.ativo(), "sempre tem um tema na vila")
+	# calendário: datas de verdade valem mais que a roda
+	Eventos.data_fixa = "2026-10-12"
+	verificar(Eventos.atual() == "criancas" and Eventos.edicao() == "criancas-2026" and Eventos.dados()["ficha"] == "BALÕES"
+		and Eventos.fim_texto() == "ATÉ 19/10" and Eventos.dias_restantes() == 8,
+		"12/10: Semana das Crianças (do calendário do app), até 19/10")
+	Eventos.data_fixa = "2027-10-12"
+	verificar(Eventos.edicao() == "criancas-2027", "no outro ano, edição nova (todo ano: MM-DD)")
+	Eventos.data_fixa = "2026-12-31"
+	var natal_ok := Eventos.atual() == "natal"
+	Eventos.data_fixa = "2027-01-01"
+	verificar(natal_ok and Eventos.atual() != "natal" and Eventos.fim_texto() == "", "o Natal vai até 31/12; depois volta a roda")
+	# eventos da internet: valem mais, com tema FESTA se o tema não existe no app
+	var json := JSON.stringify({"versao": 1, "eventos": [
+		{"id": "aniversario_vila", "tema": "bolo_gigante", "inicio": "2027-01-10", "fim": "2027-01-15",
+			"nome": "Aniversário da Vila", "ficha": "velinhas", "cor": "#B07CFF", "texto": "Parabéns, vila!", "movel": "nao_existe"},
+		{"id": "com-hifen", "inicio": "2027-01-10", "fim": "2027-01-15"},
+		{"id": "sem_data", "inicio": "amanha", "fim": "2027-01-15"},
+		{"id": "criancas_extra", "tema": "criancas", "inicio": "10-01", "fim": "10-20", "nome": "Mês das Crianças"}]})
+	verificar(Eventos.guardar_remotos(json) == 2, "do arquivo da internet, só entram os eventos bem escritos")
+	Eventos.data_fixa = "2027-01-12"
+	var festa := Eventos.dados()
+	verificar(Eventos.atual() == "festa" and festa["nome"] == "ANIVERSÁRIO DA VILA" and festa["ficha"] == "VELINHAS" and festa["cor"] == "#B07CFF"
+		and Eventos.edicao() == "aniversario_vila-2027", "evento novo pela internet: tema FESTA com nome, ficha e cor próprios")
+	verificar(Eventos.premio(4).get("moedas", 0) == 150 and Eventos.premio(6).get("bau", "") == "ouro" and not Eventos.premio(4).has("movel"),
+		"evento sem móvel/doce próprio: a trilha dá moedas e baú de ouro no lugar")
+	Eventos.data_fixa = "2027-10-02"
+	verificar(Eventos.dados()["nome"] == "MÊS DAS CRIANÇAS", "o evento da internet vale mais que o do app nas mesmas datas")
+	var textura := Node3D.new()
+	EventoVila.ficha_3d(textura, "festa")
+	verificar(textura.get_child_count() > 0, "a ficha do tema FESTA tem desenho (balão)")
+	textura.free()
+	Eventos._remotos = []
+	Eventos.data_fixa = "2026-09-01"
 	for id in Eventos.EVENTOS:
 		var ev: Dictionary = Eventos.EVENTOS[id]
-		verificar(Colecao.dados(ev["doce"]).get("evento", "") == id and Casa.MOVEIS.has(ev["movel"]),
-			"%s tem doce e móvel exclusivos" % id)
+		# (Semana das Crianças e o tema FESTA dos eventos da internet não têm
+		# doce próprio: a trilha dá baú de ouro no lugar)
+		verificar((ev["doce"] == "" or Colecao.dados(ev["doce"]).get("evento", "") == id)
+			and (ev["movel"] == "" or Casa.MOVEIS.has(ev["movel"])), "%s: doce e móvel do prêmio existem" % id)
 		verificar(not Colecao.a_venda(ev["doce"]), "o doce de %s não se compra" % id)
 	CicloDia.dia_fixo = 6 * d
 	Progresso.vila.erase("evento")

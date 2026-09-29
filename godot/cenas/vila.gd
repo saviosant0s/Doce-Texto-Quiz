@@ -1177,8 +1177,11 @@ func abrir_evento() -> void:
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.custom_minimum_size.x = 900
-	info.text = "VOCÊ TEM %d %s · O TEMA MUDA SOZINHO EM %d DIAS DO JOGO (~%d H)\nGANHE JOGANDO QUALQUER JOGO E PEGANDO AS %s PELA VILA (%d POR DIA DO JOGO)." % [
-		Eventos.fichas(), dados["ficha"], Eventos.dias_restantes(), Eventos.horas_restantes(), dados["ficha"], Eventos.ITENS_POR_DIA]
+	var quando := "O TEMA MUDA SOZINHO EM %d DIAS DO JOGO (~%d H)" % [Eventos.dias_restantes(), Eventos.horas_restantes()]
+	if Eventos.fim_texto() != "":
+		quando = "EVENTO %s (FALTAM %d DIAS)" % [Eventos.fim_texto(), Eventos.dias_restantes()]
+	info.text = "VOCÊ TEM %d %s · %s\nGANHE JOGANDO QUALQUER JOGO E PEGANDO AS %s PELA VILA (%d POR DIA DO JOGO)." % [
+		Eventos.fichas(), dados["ficha"], quando, dados["ficha"], Eventos.ITENS_POR_DIA]
 	coluna.add_child(info)
 	var grade := GridContainer.new()
 	grade.name = "Trilha"

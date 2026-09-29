@@ -44,7 +44,7 @@ extends Node
 ##                 conversa com o morador da vez e passa N falas
 ##   --casa_cheia  Minha Casa decorada; --loja_casa=moveis|paredes|pisos; --decorar
 ##   --casa_tamanho=2  tamanho da casa (0 a 3; na sala e na vila); --aumentar abre o painel
-##   --evento=natal  tema do evento (dia do jogo no meio dele); --fichas=150; --painel_evento abre a trilha
+##   --evento=natal  tema do evento (roda; criancas = data do calendário); --fichas=150; --painel_evento abre a trilha
 ##   --hora=21     Vila: hora do dia (noite, pôr do sol...); sem ela, 14h
 ##   --chuva       Vila: chuva de granulado (com as gotas pelo chão)
 ##   --sujo        Vila: o doce sujo de chocolate (como ao sair da fonte da praça)
@@ -54,6 +54,7 @@ extends Node
 ##   --batalha=0,ccec  Arena: luta contra o desafiante 0 e responde (c = certa, e = errada)
 ##   --batalha_time    Arena: abre a escolha do time; --arena_vencidos=3 já venceu os 3 primeiros
 ##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
+##   --painel_desempenho  liga o indicador de FPS e memória
 ##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
 ##   --espera=1.2  segundos até tirar o print
 
@@ -82,10 +83,20 @@ func _ready() -> void:
 		Vila.ultima_porta = args["porta"]
 	# evento da temporada: --evento=2026-10-20 (data do evento), --fichas=150
 	if args.has("evento"):
-		# --evento=natal: o dia do jogo em que esse tema está no meio
-		CicloDia.dia_fixo = 24870 * Eventos.DIAS_POR_EVENTO + Eventos.ORDEM.find(args["evento"]) * Eventos.DIAS_POR_EVENTO + 10
+		# --evento=natal: o dia do jogo em que esse tema está no meio (fora
+		# das datas do calendário); --evento=criancas: uma data dele
+		Eventos.data_fixa = "2026-09-01"
+		if args["evento"] in Eventos.ORDEM:
+			CicloDia.dia_fixo = 24870 * Eventos.DIAS_POR_EVENTO + Eventos.ORDEM.find(args["evento"]) * Eventos.DIAS_POR_EVENTO + 10
+		else:
+			for ev in Eventos.CALENDARIO:
+				if ev["tema"] == args["evento"]:
+					Eventos.data_fixa = "2026-" + str(ev["inicio"]).right(5)
 	if args.has("fichas"):
 		Eventos.ganhar_fichas(int(args["fichas"]))
+	if args.has("painel_desempenho"):
+		Progresso.config["desempenho"] = true
+		Telas.mostrar_desempenho(true)
 	if args.has("qualidade"):
 		Progresso.config["qualidade"] = int(args["qualidade"])  # 0 baixa, 1 média, 2 alta
 	# dia e noite: --hora=21 (fixa a hora), --chuva (chuva de granulado)
