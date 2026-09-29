@@ -69,6 +69,81 @@ static func _luz(cor: String, forca := 1.2) -> StandardMaterial3D:
 	return mat
 
 
+static var _cascas := {}  # brilho -> material da casca
+
+
+## Abóbora de verdade: gomos (seis partes em volta), casca com listras e
+## pintinhas e relevo, cabinho torto com gavinha e folha. `rosto`: carinha
+## entalhada com luz dentro. `brilho`: um pouco de luz própria (à noite).
+static func abobora(pai: Node3D, pe: Vector3, raio: float, rosto := false, giro := 0.0, brilho := 0.15) -> void:
+	var no := Node3D.new()
+	no.position = pe
+	no.rotation.y = giro
+	pai.add_child(no)
+	var casca := _material_casca(brilho)
+	var centro := Vector3(0, raio * 0.85, 0)
+	Pecas3D.esfera(no, raio * 0.8, centro, casca, Vector3(1.1, 0.95, 1.1))
+	for i in 6:
+		var a := i * TAU / 6.0
+		var gomo := Pecas3D.esfera(no, raio * 0.62, centro + Vector3(cos(a), 0, sin(a)) * raio * 0.5, casca, Vector3(0.75, 1.3, 0.95))
+		gomo.rotation.y = -a
+	# cabinho torto, gavinha enrolada e uma folha
+	var verde := _m("#4E7A2A", 0.8)
+	var topo := centro + Vector3(0, raio * 0.95, 0)
+	Pecas3D.cano(no, topo - Vector3(0, raio * 0.15, 0), topo + Vector3(raio * 0.12, raio * 0.35, 0), raio * 0.09, _m("#6B5A2A", 0.9))
+	var anterior := topo + Vector3(0.02, 0.02, 0)
+	for k in range(1, 7):
+		var ponto := topo + Vector3(cos(k * 1.3) * raio * 0.28, raio * 0.05 + k * 0.012, sin(k * 1.3) * raio * 0.28)
+		Pecas3D.cano(no, anterior, ponto, raio * 0.025, verde)
+		anterior = ponto
+	var folha := Pecas3D.esfera(no, raio * 0.3, topo + Vector3(-raio * 0.3, 0, raio * 0.1), _m("#3FA34D", 0.7), Vector3(1, 0.12, 0.7))
+	folha.rotation.z = 0.35
+	if rosto:
+		var luz := _luz("#FFC83D", 2.0)
+		var frente := centro + Vector3(0, 0, raio * 0.98)
+		for lado in [-1, 1]:
+			var olho := Pecas3D.cilindro(no, 0.0, raio * 0.16, raio * 0.2, frente + Vector3(lado * raio * 0.32, raio * 0.2, 0),
+				luz, Vector3(1, 1, 0.25), Vector3(90, 0, 0))
+			olho.rotation_degrees.z = 180
+		Pecas3D.esfera(no, raio * 0.4, frente + Vector3(0, -raio * 0.22, 0), luz, Vector3(1.2, 0.35, 0.2))
+
+
+## Casca de abóbora: laranja com listras mais escuras nos vincos dos gomos,
+## pintinhas e relevo (feita uma vez só).
+static func _material_casca(brilho: float) -> StandardMaterial3D:
+	if not _cascas.has(brilho):
+		var imagem := Image.create(128, 64, true, Image.FORMAT_RGBA8)
+		var sorteio := RandomNumberGenerator.new()
+		sorteio.seed = 31
+		var claro := Color("#FF9A2E")
+		var escuro := Color("#C8520C")
+		for x in 128:
+			var vinco := pow(absf(sin(x / 128.0 * PI * 8.0)), 0.6)
+			for y in 64:
+				var cor := escuro.lerp(claro, vinco) * sorteio.randf_range(0.92, 1.05)
+				if sorteio.randf() < 0.02:
+					cor = cor.lightened(0.25)
+				cor.a = 1.0
+				imagem.set_pixel(x, y, cor)
+		imagem.generate_mipmaps()
+		var casca := Pecas3D.material_textura(ImageTexture.create_from_image(imagem), 0.55)
+		var relevo := NoiseTexture2D.new()
+		relevo.noise = FastNoiseLite.new()
+		relevo.noise.frequency = 0.08
+		relevo.as_normal_map = true
+		relevo.bump_strength = 6.0
+		relevo.width = 128
+		relevo.height = 128
+		casca.normal_enabled = true
+		casca.normal_texture = relevo
+		casca.normal_scale = 0.6
+		casca.emission_enabled = true
+		casca.emission = Color("#FF7A10")
+		casca.emission_energy_multiplier = brilho
+		_cascas[brilho] = casca
+	return _cascas[brilho]
+
+
 ## Oito postes em volta da praça com varais de bandeirinhas (ou luzinhas,
 ## no Natal e no Halloween) entre eles.
 func _varais() -> void:
@@ -117,8 +192,7 @@ func _enfeites() -> void:
 			"halloween":
 				for k in 3:
 					var q: Vector3 = p + Vector3((k - 1) * 0.6, 0, (k % 2) * 0.4)
-					Pecas3D.esfera(self, 0.35 - k * 0.06, q + Vector3(0, 0.3, 0), _luz("#FF8A1F", 0.25), Vector3(1.2, 0.9, 1.2))
-					Pecas3D.cilindro(self, 0.03, 0.04, 0.15, q + Vector3(0, 0.62 - k * 0.06, 0), _m("#3FA34D", 0.6))
+					abobora(self, q, 0.35 - k * 0.06, k == 0, p.x * 7.0 + k)
 			"natal":
 				Pecas3D.caixa(self, Vector3(0.6, 0.5, 0.6), p + Vector3(0, 0.25, 0), _m("#E8364F", 0.4))
 				Pecas3D.caixa(self, Vector3(0.1, 0.52, 0.62), p + Vector3(0, 0.25, 0), _m("#FFD23F", 0.3))
@@ -228,8 +302,7 @@ static func ficha_3d(no: Node3D, evento: String) -> void:
 				Pecas3D.esfera(no, 0.14, Vector3(cos(a) * 0.15, sin(a) * 0.15, 0), _m("#FF8FB8", 0.4), Vector3(1, 1, 0.4))
 			Pecas3D.esfera(no, 0.09, Vector3.ZERO, _m("#FFD23F", 0.4))
 		"halloween":
-			Pecas3D.esfera(no, 0.25, Vector3.ZERO, _luz("#FF8A1F", 0.6), Vector3(1.2, 0.9, 1.2))
-			Pecas3D.cilindro(no, 0.03, 0.04, 0.12, Vector3(0, 0.25, 0), _m("#3FA34D", 0.6))
+			abobora(no, Vector3(0, -0.2, 0), 0.25, false, 1.0, 0.35)
 		"natal":
 			for i in 5:
 				var a := i * TAU / 5.0 + PI / 2.0
