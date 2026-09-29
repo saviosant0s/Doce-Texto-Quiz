@@ -415,6 +415,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_vila_terrenos()
 	await _testar_vila_noite()
 	await _testar_fonte_chocolate()
+	await _testar_tela_batalha()
 	await _testar_tela_casa()
 	await _testar_vila_historia()
 	await _testar_vila_evento()
@@ -2430,6 +2431,36 @@ func _testar_vila_noite() -> void:
 		"de dia as luzes apagam")
 	CicloDia.hora_fixa = -1.0
 	CicloDia.chuva_fixa = -1
+	Progresso.vila = guardado
+
+
+func _testar_tela_batalha() -> void:
+	_secao("tela da arena")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	Progresso.vila.erase("arena")
+	Telas.ir_para("batalha")
+	await _esperar_tela("Batalha")
+	await get_tree().create_timer(0.2).timeout
+	var tela := get_tree().current_scene
+	verificar(tela.find_child("Desafiante0", true, false) != null and tela.find_child("Lutar0", true, false) != null,
+		"a arena mostra a escada de desafiantes")
+	tela.mostrar_time()
+	await get_tree().process_frame
+	var cartao: Control = tela.find_child("Escolher_brigadeiro", true, false)
+	verificar(cartao != null and cartao.find_child("Marca", true, false).visible, "cartões dos doces; o do time aparece marcado")
+	tela.lutar(0)
+	var limite := Time.get_ticks_msec() + 5000
+	while not tela.respondendo and Time.get_ticks_msec() < limite:
+		await get_tree().process_frame
+	verificar(tela.respondendo and tela._alternativas.get_child_count() >= 2, "a luta começa com uma pergunta")
+	var vida := int(tela.luta.deles()["vida"])
+	tela.responder(int(tela.luta.pergunta["resposta"]))
+	limite = Time.get_ticks_msec() + 5000
+	while not tela.respondendo and not tela.luta.acabou() and Time.get_ticks_msec() < limite:
+		await get_tree().process_frame
+	verificar(int(tela.luta.deles()["vida"]) < vida, "acertou pela tela: o doce do desafiante perde vida")
+	tela.desistir()
+	verificar(tela.luta == null and tela.find_child("Desafiante0", true, false) != null, "desistir volta para a arena")
 	Progresso.vila = guardado
 
 

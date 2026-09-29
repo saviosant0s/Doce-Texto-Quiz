@@ -19,7 +19,8 @@ extends RefCounted
 
 const VIDA_BASE := [100, 115, 130, 150]  # por raridade (COMUM a LENDÁRIO)
 const ATAQUE_BASE := [34, 37, 40, 44]
-const POR_NIVEL := 0.12  # +12% de vida e ataque por nível acima do 1
+const VIDA_POR_NIVEL := 0.2  # +20% de vida por nível acima do 1 (subir o doce faz diferença)
+const ATAQUE_POR_NIVEL := 0.12  # +12% de ataque por nível
 const TAMANHO_TIME := 3
 const SUPER_COM := 3  # acertos seguidos para o SUPER
 const TEMPO := 20.0  # segundos por pergunta
@@ -127,11 +128,11 @@ static func _raridade(id: String) -> int:
 
 
 static func vida(id: String, nivel: int) -> int:
-	return roundi(VIDA_BASE[_raridade(id)] * (1.0 + POR_NIVEL * (maxi(1, nivel) - 1)))
+	return roundi(VIDA_BASE[_raridade(id)] * (1.0 + VIDA_POR_NIVEL * (maxi(1, nivel) - 1)))
 
 
 static func ataque(id: String, nivel: int) -> int:
-	return roundi(ATAQUE_BASE[_raridade(id)] * (1.0 + POR_NIVEL * (maxi(1, nivel) - 1)))
+	return roundi(ATAQUE_BASE[_raridade(id)] * (1.0 + ATAQUE_POR_NIVEL * (maxi(1, nivel) - 1)))
 
 
 ## Força para comparar doces (vida + 3x ataque).
