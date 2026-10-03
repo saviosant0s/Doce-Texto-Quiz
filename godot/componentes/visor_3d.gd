@@ -11,6 +11,9 @@ extends Control
 ## Toque rápido (sem arrastar): quem usa o visor dentro de um botão (ex.: o
 ## cartão do nível) liga este sinal à mesma ação do botão.
 signal tocado
+## A cena 3D já foi desenhada pelo menos uma vez (até lá, quem usa o visor
+## pode deixar a foto do personagem no lugar, para não ficar um buraco vazio).
+signal pronto
 
 const SENSIBILIDADE := 0.012  # radianos por pixel arrastado
 const LIMITE_TOQUE := 14.0  # px: mexeu menos que isso, foi um toque (não um giro)
@@ -56,6 +59,16 @@ func _ready() -> void:
 	_pivo.rotation.y = angulo_inicial
 	_viewport.add_child(_pivo)
 	_montar(_pivo)
+	_avisar_quando_desenhar()
+
+
+func _avisar_quando_desenhar() -> void:
+	# dois quadros desenhados: o primeiro às vezes sai vazio (tamanho ainda 1x1)
+	for i in 2:
+		await Telas.quadro_desenhado()
+		if not is_instance_valid(self) or not is_inside_tree():
+			return
+	pronto.emit()
 
 
 ## Sobrescreva para colocar o modelo dentro de `pivo`.

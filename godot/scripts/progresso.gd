@@ -28,6 +28,19 @@ var estatisticas := {}
 var conquistas := {}
 ## Coleção de doces 3D: {"doces": [ids comprados], "companheiro": id} (ver Colecao).
 var colecao := {}
+## Minha Confeitaria: açúcar, máquinas, estoque e encomendas (ver Confeitaria).
+var confeitaria := {}
+## Laboratório do Office: {"estrelas": {id_fase: 1..3}, "baus": {id_bau: true}} (ver Laboratorio).
+var laboratorio := {}
+## Baús surpresa fechados e garantia (ver Baus).
+var baus := {}
+## Missões do dia/semana e prêmio por entrar (ver Missoes).
+var missoes := {}
+## Nível e experiência do jogador (ver Experiencia).
+var jogador := {}
+## Doce Match: {"estrelas": {"1": 3, ...}} por nível (ver DoceMatch).
+var doce_match := {}
+var vila := {}  # terrenos e presentes da Vila dos Doces (ver Terrenos)
 
 ## Quando verdadeiro, nada é gravado em disco (usado ao gerar prints e em testes).
 var somente_memoria := false
@@ -51,10 +64,17 @@ func _zerar() -> void:
 	perguntas = {}
 	estatisticas = {
 		"partidas": 0, "revisoes": 0, "respostas": 0, "acertos": 0, "tempo_total": 0.0,
-		"melhor_sequencia": 0, "moedas_ganhas": 0,
+		"melhor_sequencia": 0, "moedas_ganhas": 0, "match_recorde": 0, "match_partidas": 0,
 	}
 	conquistas = {}
-	colecao = {"doces": [], "companheiro": ""}
+	colecao = {"doces": [], "companheiro": "", "fragmentos": {}, "niveis": {}}
+	confeitaria = Confeitaria.padrao()
+	laboratorio = {"estrelas": {}, "baus": {}}
+	baus = Baus.padrao()
+	missoes = Missoes.padrao()
+	jogador = {"xp": 0, "nivel": 1}
+	doce_match = {"estrelas": {}}
+	vila = Terrenos.padrao()
 
 
 # --- Consultas ---------------------------------------------------------------
@@ -170,6 +190,13 @@ func salvar() -> void:
 		"estatisticas": estatisticas,
 		"conquistas": conquistas,
 		"colecao": colecao,
+		"confeitaria": confeitaria,
+		"laboratorio": laboratorio,
+		"baus": baus,
+		"missoes": missoes,
+		"jogador": jogador,
+		"doce_match": doce_match,
+		"vila": vila,
 	}
 	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
 	if arquivo:
@@ -207,6 +234,26 @@ func carregar() -> void:
 			estatisticas[chave] = int(estatisticas[chave])
 	conquistas = dados.get("conquistas", {})
 	colecao.merge(dados.get("colecao", {}), true)
+	var confeitaria_salva: Dictionary = dados.get("confeitaria", {})
+	confeitaria.merge(confeitaria_salva, true)
+	if not confeitaria_salva.is_empty() and not confeitaria_salva.has("presente_inicial"):
+		# save de antes do presente de açúcar: ganha agora, uma vez só
+		confeitaria["acucar"] = int(confeitaria["acucar"]) + Confeitaria.ACUCAR_INICIAL
+	laboratorio.merge(dados.get("laboratorio", {}), true)
+	for id in laboratorio["estrelas"]:
+		laboratorio["estrelas"][id] = int(laboratorio["estrelas"][id])
+	baus.merge(dados.get("baus", {}), true)
+	for tipo in baus["fechados"]:
+		baus["fechados"][tipo] = int(baus["fechados"][tipo])
+	missoes.merge(dados.get("missoes", {}), true)
+	jogador.merge(dados.get("jogador", {}), true)
+	doce_match.merge(dados.get("doce_match", {}), true)
+	vila.merge(dados.get("vila", {}), true)
+	jogador["xp"] = int(jogador["xp"])
+	jogador["nivel"] = int(jogador["nivel"])
+	for chave in ["fragmentos", "niveis"]:
+		for id in colecao[chave]:
+			colecao[chave][id] = int(colecao[chave][id])
 	alterado.emit()
 
 

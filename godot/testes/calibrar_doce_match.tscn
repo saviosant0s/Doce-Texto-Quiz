@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://testes/calibrar_doce_match.gd" id="1"]
+
+[node name="Calibrar" type="Node"]
+script = ExtResource("1")
