@@ -158,6 +158,15 @@ Time de até 3 doces (vida e ataque pela raridade e +12% por nível). Acertou
 Milho) até 200 moedas + 100 açúcar + baú de ouro + Troféu da Arena (Rei do
 Chocolate); revanche = 30% (mínimo 10); derrota = 5 açúcar.
 
+## Chefão na vila (desde a 0.15.0)
+
+O primeiro chefão aparece logo; depois, um a cada 2 dias do jogo (cada dia =
+40 min), na praça. Vida 500 + 150 por chefão vencido (até 2000). 5 corações.
+Acerto = dano do ataque do seu doce companheiro × 2,2, +25% por acerto
+seguido (até +100%) e +25% se responder em até 6 s. Vencer: 60 moedas + 15
+por chefão já vencido (até 150) + 50 açúcar + 30 XP + baú de doce (de ouro a
+cada 3º chefão). Perder: 10 açúcar e pode tentar de novo.
+
 ## Regiões do mapa (desde a 0.15.0)
 
 | Região | Portão abre com | Descobrir | Coisinhas por dia |

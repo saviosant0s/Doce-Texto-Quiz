@@ -32,6 +32,7 @@ func _ready() -> void:
 	_testar_casa()
 	_testar_pontos_foto()
 	_testar_regioes()
+	_testar_chefao()
 	_testar_batalha()
 	_testar_historia()
 	_testar_eventos()
@@ -641,12 +642,20 @@ func _testar_vila() -> void:
 	# as regiões em volta (ilha, bosque, montanha) ficam nos blocos delas e só
 	# são desenhadas de perto: contam à parte
 	var regioes: Array = vila.get_children().filter(func(n): return String(n.name).begins_with("Regiao_"))
+	# o chefão (quando invade a praça) também conta à parte
+	var gigante: Node = vila.get_node_or_null("Chefao")
 	var pecas_vila := []
+	var pecas_chefao := 0
 	for m in vila.find_children("*", "MeshInstance3D", true, false):
-		if not vila.ceu.is_ancestor_of(m) and not regioes.any(func(r): return r.is_ancestor_of(m)):
+		if vila.ceu.is_ancestor_of(m) or regioes.any(func(r): return r.is_ancestor_of(m)):
+			continue
+		if gigante != null and gigante.is_ancestor_of(m):
+			pecas_chefao += 1
+		else:
 			pecas_vila.append(m)
 	# (até ~40 blocos a mais durante um evento da temporada: decoração e objetos)
 	verificar(pecas_vila.size() < 430, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
+	verificar(pecas_chefao < 40, "o chefão gigante é leve (%d blocos)" % pecas_chefao)
 	var regioes_leves := regioes.size() == 3
 	for r in regioes:
 		var blocos_regiao: Array = r.find_children("*", "MeshInstance3D", true, false)
@@ -2085,6 +2094,59 @@ func _testar_regioes() -> void:
 	Progresso.confeitaria["acucar"] = acucar_antes
 
 
+func _testar_chefao() -> void:
+	_secao("chefão na vila")
+	var guardado: Dictionary = Progresso.vila.duplicate(true)
+	var moedas_antes := Progresso.moedas
+	var acucar_antes := Confeitaria.acucar()
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	Progresso.vila.erase("chefao")
+	CicloDia.dia_fixo = 11  # dia sem invasão (só o primeiro chefão, que vem logo)
+	verificar(Chefao.invasao() == "chefao-primeiro" and Chefao.na_praca(), "o primeiro chefão aparece logo")
+	var luta := Chefao.new(5)
+	verificar(luta.vida == Chefao.VIDA_BASE and luta.coracoes == Chefao.CORACOES and not luta.bravo(), "começa com a vida cheia e 5 corações")
+	var p := luta.proxima_pergunta()
+	var r := luta.responder(int(p["resposta"]), 10.0)
+	verificar(r["acertou"] and r["dano"] > 0 and luta.vida == Chefao.VIDA_BASE - int(r["dano"]) and luta.combo == 1, "acertou: o doce bate no chefão")
+	var primeiro: int = r["dano"]
+	p = luta.proxima_pergunta()
+	r = luta.responder(int(p["resposta"]), 10.0)
+	verificar(luta.combo == 2 and r["dano"] > primeiro * 1.05, "acertos seguidos aumentam o combo e o estrago")
+	p = luta.proxima_pergunta()
+	r = luta.responder(-1, Chefao.TEMPO)
+	verificar(not r["acertou"] and luta.coracoes == Chefao.CORACOES - 1 and luta.combo == 0, "errou: perde um coração e o combo zera")
+	var ficou_bravo := false
+	while not luta.acabou():
+		p = luta.proxima_pergunta()
+		r = luta.responder(int(p["resposta"]), 2.0)
+		ficou_bravo = ficou_bravo or r["ficou_bravo"]
+	verificar(ficou_bravo and luta.venceu(), "na metade da vida ele fica bravo; acertando tudo, vence")
+	verificar(Chefao.new().tempo() == Chefao.TEMPO and luta.bravo(), "bravo tem menos tempo para responder")
+	var moedas := Progresso.moedas
+	var ganho := luta.concluir()
+	verificar(Progresso.moedas == moedas + int(ganho["moedas"]) and Chefao.vencidos() == 1 and not Chefao.na_praca(),
+		"vencer dá o prêmio e o chefão sai da praça")
+	CicloDia.dia_fixo = 10
+	verificar(Chefao.na_praca() and Chefao.invasao() == "chefao-10" and Chefao.vida_maxima() == Chefao.VIDA_BASE + Chefao.VIDA_POR_VITORIA,
+		"depois ele volta a cada %d dias do jogo, mais forte" % Chefao.DIAS_ENTRE)
+	CicloDia.dia_fixo = 11
+	verificar(not Chefao.na_praca() and Chefao.horas_ate_proxima() > 0.0, "nos outros dias a praça fica em paz")
+	CicloDia.dia_fixo = 10
+	var derrota := Chefao.new(2)
+	while not derrota.acabou():
+		derrota.proxima_pergunta()
+		derrota.responder(-1, Chefao.TEMPO)
+	var acucar := Confeitaria.acucar()
+	derrota.concluir()
+	verificar(derrota.perdeu() and Confeitaria.acucar() == acucar + Chefao.ACUCAR_DERROTA and Chefao.na_praca(),
+		"sem corações: um pouco de açúcar e ele continua na praça")
+	CicloDia.dia_fixo = -1
+	Progresso.vila = guardado
+	Progresso.moedas = moedas_antes
+	Progresso.confeitaria["acucar"] = acucar_antes
+	Progresso.jogador = jogador_antes
+
+
 func _testar_batalha() -> void:
 	_secao("batalha de doces")
 	var guardado: Dictionary = Progresso.vila.duplicate(true)
@@ -2282,6 +2344,7 @@ func _testar_eventos() -> void:
 		{"id": "com-hifen", "inicio": "2027-01-10", "fim": "2027-01-15"},
 		{"id": "sem_data", "inicio": "amanha", "fim": "2027-01-15"},
 		{"id": "criancas_extra", "tema": "criancas", "inicio": "10-01", "fim": "10-20", "nome": "Mês das Crianças"}]})
+	Eventos.arquivo_remotos = "user://teste_eventos_remotos.json"  # (não mexe no do jogo)
 	verificar(Eventos.guardar_remotos(json) == 2, "do arquivo da internet, só entram os eventos bem escritos")
 	Eventos.data_fixa = "2027-01-12"
 	var festa := Eventos.dados()
@@ -2296,6 +2359,8 @@ func _testar_eventos() -> void:
 	verificar(textura.get_child_count() > 0, "a ficha do tema FESTA tem desenho (balão)")
 	textura.free()
 	Eventos._remotos = []
+	DirAccess.remove_absolute(Eventos.arquivo_remotos)
+	Eventos.arquivo_remotos = "user://eventos_remotos.json"
 	Eventos.data_fixa = "2026-09-01"
 	for id in Eventos.EVENTOS:
 		var ev: Dictionary = Eventos.EVENTOS[id]
@@ -2579,7 +2644,8 @@ func _testar_fonte_chocolate() -> void:
 		"a bacia da fonte tem mureta baixa (dá para pular dentro)")
 	jogador.global_position = Vector3(0, 0, 3.0)
 	await get_tree().create_timer(0.1).timeout
-	verificar(vila._dica_fonte.visible and jogador.sujeira == 0.0, "perto da fonte aparece a dica de pular; o doce está limpo")
+	verificar(vila._dica_fonte.visible == not is_instance_valid(vila._chefao) and jogador.sujeira == 0.0,
+		"perto da fonte aparece a dica de pular (sem chefão em cima); o doce está limpo")
 	jogador.global_position = Vector3(1.0, 0, 1.0)
 	await get_tree().create_timer(0.1).timeout
 	verificar(jogador.global_position.distance_to(Vector3(1.0, 0, 1.0)) < 0.2, "dentro da bacia o doce fica em pé no chão (o chocolate cobre as pernas)")
@@ -2627,6 +2693,19 @@ func _testar_fonte_chocolate() -> void:
 	vila._atualizar_botao_foto()
 	verificar(vila._brilho_foto != null, "perto de uma vista bonita, o botão de foto pulsa")
 	Progresso.vila["fotos"] = guardado_fotos
+	# chefão: na vila nova ele está em cima da fonte
+	_secao("chefão na praça")
+	verificar(vila.find_child("Chefao", true, false) is ChefaoVila == Chefao.na_praca(), "o chefão aparece na fonte em dia de invasão")
+	if is_instance_valid(vila._chefao):
+		verificar(vila._texto_ponto("chefao") == "ENFRENTAR O CHEFÃO", "perto da praça: ENFRENTAR O CHEFÃO")
+		vila.enfrentar_chefao()
+		await get_tree().process_frame
+		verificar(is_instance_valid(vila._luta_chefao) and not vila._interface.visible and vila.camera_externa,
+			"enfrentar abre a luta (sem a interface da vila)")
+		vila.ao_voltar()
+		await get_tree().process_frame
+		verificar(not is_instance_valid(vila._luta_chefao) and vila._interface.visible and not vila.camera_externa
+			and vila._camera.projection == Camera3D.PROJECTION_PERSPECTIVE, "fugir volta para a vila (câmera normal)")
 	# regiões na vila: portão fechado segura, abre com o requisito; mapa
 	_secao("regiões na vila")
 	var guardado_regioes: Dictionary = Progresso.vila.get("regioes", {}).duplicate(true)

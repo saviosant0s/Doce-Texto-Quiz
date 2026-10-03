@@ -27,7 +27,8 @@ class_name Eventos
 const ORDEM := ["primavera", "halloween", "natal", "carnaval", "pascoa", "junina"]
 const DIAS_POR_EVENTO := 30
 const URL_REMOTA := "https://saviosant0s.github.io/Doce-Texto-Quiz/eventos.json"
-const ARQUIVO_REMOTOS := "user://eventos_remotos.json"
+## Onde fica a cópia do eventos.json baixado (os testes usam outro arquivo).
+static var arquivo_remotos := "user://eventos_remotos.json"
 
 ## Eventos de data marcada que já vêm no app: "tema" é a decoração (EVENTOS);
 ## o resto (nome, ficha, cor, texto, movel, doce) é opcional e troca o do tema.
@@ -85,7 +86,7 @@ const TRILHA := [
 
 ## Fichas por evento dos jogos (quantidade vezes o valor; ver Missoes.registrar).
 const FICHAS_POR_EVENTO := {"partidas": 5.0, "acertos": 1.0, "estrelas": 2.0, "torre": 0.5, "fabrica": 2.0,
-	"match": 4.0, "clientes": 2.0, "lab_fases": 5.0, "baus": 2.0}
+	"match": 4.0, "clientes": 2.0, "lab_fases": 5.0, "baus": 2.0, "chefao": 15.0, "corrida": 4.0}
 const ITENS_POR_DIA := 6  # por dia do jogo (40 min)
 const FICHAS_ITEM := 3
 
@@ -135,8 +136,8 @@ static func fim_depois(ev: Dictionary) -> bool:
 static func calendario() -> Array:
 	if not _remotos_lidos:
 		_remotos_lidos = true
-		if FileAccess.file_exists(ARQUIVO_REMOTOS):
-			_remotos = ler_remotos(FileAccess.get_file_as_string(ARQUIVO_REMOTOS))
+		if FileAccess.file_exists(arquivo_remotos):
+			_remotos = ler_remotos(FileAccess.get_file_as_string(arquivo_remotos))
 	return _remotos + CALENDARIO
 
 
@@ -186,7 +187,7 @@ static func ler_remotos(texto: String) -> Array:
 static func guardar_remotos(texto: String) -> int:
 	var lista := ler_remotos(texto)
 	if JSON.parse_string(texto) is Dictionary:
-		var arquivo := FileAccess.open(ARQUIVO_REMOTOS, FileAccess.WRITE)
+		var arquivo := FileAccess.open(arquivo_remotos, FileAccess.WRITE)
 		if arquivo:
 			arquivo.store_string(texto)
 	_remotos = lista

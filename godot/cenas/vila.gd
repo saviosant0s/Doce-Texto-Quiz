@@ -188,6 +188,7 @@ func _ready() -> void:
 	for boneco in find_children("*", "DoceAndante", true, false):
 		boneco.otimizar()
 	_criar_evento()
+	_criar_chefao()
 	_criar_vida()
 	_criar_itens_regioes()
 	_criar_camera()
@@ -279,7 +280,7 @@ func _fonte_de_chocolate(delta: float) -> void:
 		jogador.limpar(delta / SECAR * (4.0 if CicloDia.chovendo() else 1.0))
 	_na_fonte = dentro
 	if _dica_fonte:
-		_dica_fonte.visible = not dentro and raio < 3.6 and jogador.sujeira < 0.5
+		_dica_fonte.visible = not dentro and raio < 3.6 and jogador.sujeira < 0.5 and not is_instance_valid(_chefao)
 
 
 ## Respingo de chocolate ao cair na fonte.
@@ -312,7 +313,7 @@ func _chape(onde: Vector3) -> void:
 
 
 func _mover(delta: float) -> void:
-	if fotografando != "":
+	if fotografando != "" or camera_externa:
 		jogador.andar(Vector3.ZERO, delta)  # parado fazendo pose
 		return
 	if dialogo and dialogo.aberto:
@@ -373,8 +374,8 @@ func _process(delta: float) -> void:
 		_atualizar_relogio()
 		_atualizar_botao_foto()
 		_atualizar_regioes()
-	if fotografando != "":
-		return  # a câmera está no enquadramento do ponto de foto (tirar_foto)
+	if fotografando != "" or camera_externa:
+		return  # a câmera está no enquadramento da foto ou da luta com o chefão
 	var pos := _pos_visual()
 	var cabeca := pos + Vector3(0, ALTURA_OLHOS, 0)
 	match modo_camera:
@@ -711,6 +712,9 @@ func _saiu_da_porta(corpo: Node3D, id: String) -> void:
 func ao_voltar() -> void:
 	if is_instance_valid(_painel_lote):
 		_fechar_painel_lote()
+		return
+	if is_instance_valid(_luta_chefao):
+		_luta_chefao.sair()
 		return
 	if is_instance_valid(_mapa_cheio):
 		fechar_mapa()
@@ -1167,6 +1171,57 @@ func _criar_evento() -> void:
 			Eventos.dados()["texto"], Eventos.dados()["ficha"]])
 
 
+# --- Chefão na praça ---------------------------------------------------------------
+
+## Câmera e doce controlados de fora (a luta com o chefão).
+var camera_externa := false
+var _chefao: ChefaoVila
+var _area_chefao: Area3D
+var _luta_chefao: LutaChefao
+
+
+## Dia de invasão: o chefão gigante senta em cima da fonte (ver Chefao).
+func _criar_chefao() -> void:
+	if not Chefao.na_praca():
+		return
+	_chefao = ChefaoVila.new()
+	_chefao.doce = Chefao.doce()
+	add_child(_chefao)
+	_area_chefao = BairroVila.area(self, "AreaChefao", Vector3(0, 1, 0), Vector3(17, 3, 17))
+	_area_chefao.body_entered.connect(_chegou_no_ponto.bind("chefao"))
+	_area_chefao.body_exited.connect(_saiu_do_ponto.bind("chefao"))
+	(func(): Telas.mostrar_aviso("%s INVADIU A PRAÇA! VÁ ATÉ A FONTE PARA ENFRENTAR!" % Chefao.nome())).call_deferred()
+
+
+func enfrentar_chefao() -> void:
+	if not is_instance_valid(_chefao) or is_instance_valid(_luta_chefao) or fotografando != "":
+		return
+	camera_externa = true
+	_interface.visible = false
+	_botao_entrar.visible = false
+	_luta_chefao = LutaChefao.new(self, _chefao)
+	add_child(_luta_chefao)
+
+
+## Fim da luta (fugiu, perdeu ou venceu): a vila volta ao normal; vencido, o
+## chefão sai da praça.
+func sair_da_luta_chefao() -> void:
+	camera_externa = false
+	_camera.fov = 48.0
+	_interface.visible = true
+	_foco_aereo = _pos_visual()
+	if not Chefao.na_praca():
+		if is_instance_valid(_chefao):
+			_chefao.queue_free()
+		if is_instance_valid(_area_chefao):
+			_area_chefao.queue_free()
+		_ponto_atual = ""
+		_botao_entrar.visible = false
+	elif _ponto_atual == "chefao":
+		_botao_entrar.visible = true
+	_atualizar_topo()
+
+
 ## Painel do evento: quanto falta, como ganhar fichas e a trilha de prêmios.
 func abrir_evento() -> void:
 	var dados := Eventos.dados()
@@ -1299,15 +1354,15 @@ func _passo_historia() -> void:
 	if _moradores_historia.has(vez):
 		var morador: Node3D = _moradores_historia[vez]
 		perto = morador.global_position.distance_to(jogador.global_position) < 2.6
-	if perto and _porta_atual == "" and (_ponto_atual == "" or _ponto_atual == "morador"):
+	# perto do morador o FALAR vale mais que o ENFRENTAR (a área do chefão cobre a praça)
+	if perto and _porta_atual == "" and _ponto_atual in ["", "morador", "chefao"]:
 		if _ponto_atual != "morador":
 			_ponto_atual = "morador"
 			_botao_entrar.text = "FALAR COM " + Historia.MORADORES[vez]
 			_pintar_botao_acao()
 			_botao_entrar.visible = true
 	elif _ponto_atual == "morador":
-		_ponto_atual = ""
-		_botao_entrar.visible = false
+		_saiu_do_ponto(jogador, "morador")
 
 
 ## Conversa com o morador da vez (conforme o passo: falar, pergunta ou entregar).
@@ -1468,7 +1523,9 @@ func _atualizar_rotulos_producao() -> void:
 ## coletar/presente, comprar/construir/evoluir, falar).
 func _pintar_botao_acao() -> void:
 	var t := _botao_entrar.text
-	if t.begins_with("COLETAR") or t.begins_with("ABRIR PRESENTE"):
+	if t.begins_with("ENFRENTAR"):
+		_botao_entrar.theme_type_variation = &"BotaoPerigo"
+	elif t.begins_with("COLETAR") or t.begins_with("ABRIR PRESENTE"):
 		_botao_entrar.theme_type_variation = &"BotaoPremio"
 	elif t.begins_with("COMPRAR") or t.begins_with("CONSTRUIR") or t.begins_with("EVOLUIR"):
 		_botao_entrar.theme_type_variation = &"BotaoComprar"
@@ -1483,6 +1540,8 @@ func _pintar_botao_acao() -> void:
 func _chegou_no_ponto(corpo: Node3D, id: String) -> void:
 	if corpo != jogador:
 		return
+	if id == "chefao" and _ponto_atual != "" and _ponto_atual != "chefao":
+		return  # a área do chefão cobre a praça: o ponto mais perto (morador...) vale mais
 	_ponto_atual = id
 	_porta_atual = ""
 	_botao_entrar.text = _texto_ponto(id)
@@ -1501,10 +1560,15 @@ func _saiu_do_ponto(corpo: Node3D, id: String) -> void:
 	if corpo == jogador and _ponto_atual == id:
 		_ponto_atual = ""
 		_botao_entrar.visible = false
+		# ainda na praça com o chefão: o botão volta a ser ENFRENTAR
+		if id != "chefao" and is_instance_valid(_area_chefao) and _area_chefao.overlaps_body(jogador):
+			_chegou_no_ponto(jogador, "chefao")
 
 
 ## Texto do botão perto de um lote ou presente.
 func _texto_ponto(id: String) -> String:
+	if id == "chefao":
+		return "ENFRENTAR O CHEFÃO"
 	if id == "morador":
 		var vez := Historia.morador_da_vez()
 		return "FALAR COM " + str(Historia.MORADORES.get(vez, "MORADOR"))
@@ -1527,6 +1591,9 @@ func _texto_ponto(id: String) -> String:
 
 ## Ação do botão perto de um lote ou presente.
 func agir(id: String) -> void:
+	if id == "chefao":
+		enfrentar_chefao()
+		return
 	if id == "morador":
 		conversar()
 		return

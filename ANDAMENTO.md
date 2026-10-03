@@ -124,6 +124,11 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ### Rodada de 29/09/2026 (depois de jogar a 0.14.0 no celular) — no código, falta publicar a 0.15.0
 
+- CHEFÃO NA VILA (scripts/chefao.gd, componentes/vila/chefao_vila.gd e
+  luta_chefao.gd): o Rei do Chocolate (ou o doce do evento) gigante invade a
+  praça a cada 2 dias do jogo e fica em cima da fonte; ENFRENTAR abre a luta
+  ali mesmo (câmera de lado, perguntas do quiz, combo, corações, fica BRAVO
+  na metade). Vencer dá moedas, açúcar, XP e baú (de ouro a cada 3 chefões).
 - Indicador de desempenho (Configurações): FPS, memória do jogo e do aparelho,
   vídeo, desenhos e triângulos (componentes/painel_desempenho.gd).
 - Eventos por calendário (datas de verdade) e pela internet, sem atualizar o
