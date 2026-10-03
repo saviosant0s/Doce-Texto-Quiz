@@ -167,6 +167,13 @@ seguido (até +100%) e +25% se responder em até 6 s. Vencer: 60 moedas + 15
 por chefão já vencido (até 150) + 50 açúcar + 30 XP + baú de doce (de ouro a
 cada 3º chefão). Perder: 10 açúcar e pode tentar de novo.
 
+## Corrida de Doces (desde a 0.15.0)
+
+De graça. Prêmio pelo lugar: 1º 40 moedas + 30 açúcar; 2º 25 + 20; 3º 15 +
+15; 4º 5 + 10. Cada cubo de açúcar pego na pista: +1 açúcar (e +1% de
+velocidade, até 10%). Ganhar com tempo recorde: baú de doce. +15 XP. Seu
+doce: +1,5% de velocidade por nível. Rivais mais fortes a cada vitória (até 5).
+
 ## Regiões do mapa (desde a 0.15.0)
 
 | Região | Portão abre com | Descobrir | Coisinhas por dia |

@@ -31,6 +31,12 @@ func _ready() -> void:
 	fabrica.tooltip_text = "Fábrica de Chocolate"
 	fabrica.pressed.connect(Telas.abrir.bind("fabrica"))
 	torre.add_sibling(fabrica)
+	var corrida: Button = %Laboratorio.duplicate()
+	corrida.name = "Corrida"
+	corrida.icon = preload("res://assets/icones/bandeira.svg")
+	corrida.tooltip_text = "Corrida de Doces"
+	corrida.pressed.connect(Telas.abrir.bind("corrida"))
+	fabrica.add_sibling(corrida)
 	%ComoJogar.pressed.connect(Telas.abrir.bind("como_jogar"))
 	%Creditos.pressed.connect(Telas.abrir.bind("creditos"))
 	%Configuracoes.pressed.connect(Telas.abrir.bind("configuracoes"))

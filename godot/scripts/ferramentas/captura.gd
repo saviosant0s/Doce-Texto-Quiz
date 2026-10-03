@@ -54,6 +54,14 @@ extends Node
 ##   --mapa        Vila: abre o mapa cheio; --regioes=ilha,bosque exploradas (e liberadas: nível 9 e títulos)
 ##   --batalha=0,ccec  Arena: luta contra o desafiante 0 e responde (c = certa, e = errada)
 ##   --batalha_time    Arena: abre a escolha do time; --arena_vencidos=3 já venceu os 3 primeiros
+##   --corrida=120  Corrida: já correndo, com o seu kart a 120 m da largada (os rivais em volta);
+##                 --corrida_turbo com turbo; --corrida_pergunta perto do 1º portal (a pergunta
+##                 na tela); --corrida_escolha=2 toca na resposta; --corrida_fim corre até o fim
+##   --abertura    Vila: passa a abertura animada (--abertura_final vai direto para o
+##                 nome do jogo); --trailer grava até o fim da abertura e fecha o jogo
+##                 (use com o --write-movie do Godot: ver ferramentas/gerar_divulgacao.sh)
+##   --trailer_corrida=24  Corrida: corre sozinho (acerta os portais, pega as setas) por 24 s
+##                 e fecha o jogo (para o vídeo do trailer, com o --write-movie)
 ##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
 ##   --painel_desempenho  liga o indicador de FPS e memória
 ##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
@@ -399,6 +407,90 @@ func _ready() -> void:
 		f.jogo.pedidos_feitos = int(args["fabrica"])
 		f.jogo._novo_pedido()
 		f._montar_pedido()
+	if args.has("trailer_corrida"):
+		await get_tree().create_timer(0.8).timeout
+		var pista_demo: Node = get_tree().current_scene
+		pista_demo.comecar()
+		var demo: Corrida = pista_demo.corrida
+		var fim_demo := Time.get_ticks_msec()  # (no --write-movie o relógio do jogo anda a 30 quadros por segundo)
+		var segundos := 0.0
+		var pensando := 0.0
+		while segundos < float(args["trailer_corrida"]):
+			await get_tree().process_frame
+			var passo := get_process_delta_time()
+			segundos += passo
+			# toca na resposta certa depois de "ler" um pouquinho
+			if demo.portal_ativo >= 0 and demo.escolha < 0:
+				pensando += passo
+				if pensando > 1.6:
+					pista_demo.escolher(int(demo.pergunta()["resposta"]))
+					pensando = 0.0
+			# fora dos portais, vai para as setas e desvia das poças e blocos
+			pista_demo._dedos.clear()
+			var eu := demo.jogador()
+			if demo.portal_ativo < 0 and not eu["auto"] and demo.contagem <= 0.0:
+				var alvo: float = eu["x"]
+				for e in demo.setas:
+					var falta := demo._distancia_a_frente(eu["s"], e["s"])
+					if falta > 0.0 and falta < 30.0:
+						alvo = e["x"]
+				for e in demo.pocas + demo.blocos:
+					var falta := demo._distancia_a_frente(eu["s"], e["s"])
+					if falta > 0.0 and falta < 20.0 and absf(alvo - e["x"]) < 2.4:
+						alvo = e["x"] + (3.0 if e["x"] < 0.0 else -3.0)
+				if absf(alvo - eu["x"]) > 0.3:
+					pista_demo._dedos[0] = int(signf(alvo - eu["x"]))
+		print("trailer da corrida: %.1f s (%d ms de verdade)" % [segundos, Time.get_ticks_msec() - fim_demo])
+		get_tree().quit()
+		return
+	if args.has("corrida") or args.has("corrida_pergunta") or args.has("corrida_fim"):
+		await get_tree().create_timer(0.3).timeout
+		var pista: Node = get_tree().current_scene
+		pista.comecar()
+		var c: Corrida = pista.corrida
+		c.contagem = 0.0
+		var s := float(args.get("corrida", "60"))
+		if args.has("corrida_pergunta"):
+			s = c.portais[0] - Corrida.AVISO_PORTAL + 6.0
+		for i in c.corredores.size():
+			c.colocar(i, s + [0.0, 10.0, 5.0, -7.0][i], [0.5, -3.0, 3.5, -1.5][i])
+			c.corredores[i]["v"] = 22.0
+		if args.has("corrida_turbo"):
+			c.jogador()["turbo"] = 3.0
+		pista._seguir_com_camera(0.0, true)
+		# meio segundo de corrida a 60 quadros por segundo (o print sem placa de
+		# vídeo desenha poucos quadros; a câmera e o fogo ficariam estranhos)
+		for i in 30:
+			pista._process(1.0 / 60.0)
+			if i % 10 == 0:
+				await get_tree().process_frame
+		pista.set_process(false)
+		if args.has("corrida_escolha"):
+			for i in 30:
+				await get_tree().process_frame
+			pista.escolher(int(args["corrida_escolha"]))
+		if args.has("corrida_fim"):
+			for i in 6000:
+				if c.portal_ativo >= 0 and c.escolha < 0:
+					pista.escolher(int(c.pergunta()["resposta"]))
+				pista._process(1.0 / 30.0)
+				if pista.estado == "fim":
+					break
+			await get_tree().create_timer(1.8).timeout
+	if args.has("abertura") or args.has("abertura_final") or args.has("trailer"):
+		await get_tree().process_frame
+		var vila_abertura: Vila = get_tree().current_scene
+		Vila.abrir_com_abertura = false
+		vila_abertura.ver_abertura()  # (a captura abre a cena direto, sem o aquecer do Telas)
+		var abertura: AberturaVila = vila_abertura._abertura
+		if args.has("abertura_final"):
+			abertura.pular()
+		elif args.has("trailer"):
+			while abertura.tomada >= 0:
+				await get_tree().process_frame
+			await get_tree().create_timer(4.5).timeout
+			get_tree().quit()
+			return
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()

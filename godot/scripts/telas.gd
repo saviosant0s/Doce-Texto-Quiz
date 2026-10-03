@@ -23,6 +23,7 @@ const CENAS := {
 	"fabrica": "res://cenas/fabrica.tscn",
 	"minha_casa": "res://cenas/minha_casa.tscn",
 	"batalha": "res://cenas/batalha.tscn",
+	"corrida": "res://cenas/corrida.tscn",
 	"vila": "res://cenas/vila.tscn",
 	"carregamento": "res://cenas/carregamento.tscn",
 	"partida": "res://cenas/partida.tscn",
@@ -212,9 +213,9 @@ func _trocar_cena(caminho: String) -> void:
 	await tween.finished
 	# telas 3D demoram um pouco para montar: mostra "carregando" com o doce
 	# companheiro (já desenhado antes de a montagem começar)
-	var pesada := caminho in [CENAS["vila"], CENAS["cozinha"]]
+	var pesada := caminho in [CENAS["vila"], CENAS["cozinha"], CENAS["corrida"]]
 	if pesada:
-		_mostrar_carregando("vila" if caminho == CENAS["vila"] else "cozinha")
+		_mostrar_carregando(CENAS.find_key(caminho))
 		await quadro_desenhado()
 		await _carregar_com_barra(caminho)
 	else:

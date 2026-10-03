@@ -97,3 +97,12 @@ salvar("chape", mistura(ruido(0.35, 9, 40) * 1.2, varredura(420, 140, 0.18, 10) 
 # foto: clique do obturador (dois estalos secos) + zumbidinho do flash
 salvar("foto", mistura(ruido(0.025, 160, 2), junta(np.zeros(int(TAXA * 0.07)), ruido(0.03, 140, 2) * 0.8),
     varredura(1800, 3200, 0.2, 14) * 0.15), 0.7)
+# bip: contagem da largada da corrida (curtinho)
+salvar("bip", tom(660, 0.16, 14, (1.0, 0.25)), 0.55)
+# largada: bip agudo e longo (JÁ!)
+salvar("largada", tom(1320, 0.5, 5, (1.0, 0.3, 0.1)), 0.6)
+# turbo: "vush" subindo (ruído que abre + assobio)
+x = t(0.55)
+vush = rng.standard_normal(len(x))
+vush = np.convolve(vush, np.ones(12) / 12, mode="same") * np.sin(np.pi * x / 0.55) ** 2
+salvar("turbo", mistura(vush, varredura(300, 1500, 0.5, 4) * 0.35), 0.6)

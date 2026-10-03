@@ -15,6 +15,7 @@ func _ready() -> void:
 	_criar_qualidade()
 	_criar_chave_dia()
 	_criar_chave_desempenho()
+	_criar_botao_abertura()
 	_atualizar_resumo()
 	Animacoes.entrar(%Coluna, Vector2(0, 30))
 
@@ -119,6 +120,22 @@ func _criar_chave_desempenho() -> void:
 		Progresso.salvar()
 		Telas.mostrar_desempenho(ligado))
 	%Linhas.add_child(chave)
+
+
+## Ver de novo a abertura animada da vila (AberturaVila).
+func _criar_botao_abertura() -> void:
+	var botao := Button.new()
+	botao.name = "VerAbertura"
+	botao.text = "VER A ABERTURA DO JOGO"
+	botao.theme_type_variation = &"BotaoSecundario"
+	botao.custom_minimum_size = Vector2(0, 56)
+	botao.focus_mode = Control.FOCUS_NONE
+	botao.pressed.connect(func():
+		Progresso.salvar()
+		Vila.abrir_com_abertura = true
+		Telas.ir_para("vila"))
+	# no painel do progresso, embaixo do resumo (a coluna do som já está cheia)
+	%Resumo.add_sibling(botao)
 
 
 func _atualizar_resumo() -> void:

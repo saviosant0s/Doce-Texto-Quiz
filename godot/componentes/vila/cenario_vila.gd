@@ -259,6 +259,8 @@ static func predio(pai: Node3D, dados: Dictionary) -> Dictionary:
 			forma = _minha_casa(no)
 		"arena":
 			forma = _arena(no)
+		"corrida":
+			forma = _pista_corrida(no)
 		_:
 			forma = _casa_simples(no, dados)
 	no.set_meta("pecas", no.find_children("*", "MeshInstance3D", true, false).size())
@@ -477,6 +479,67 @@ static func _arena(no: Node3D) -> Dictionary:
 	_poste(no, raio + 0.1, altura + 1.0, Vector3.ZERO)
 	_parede(no, Vector3(2.4, 2.7, 0.7), Vector3(0, 1.35, raio - 0.05))
 	return {"frente": raio + 0.31, "placa": 2.35}
+
+
+## PISTA DE CORRIDA: garagem de corrida com toldo listrado, bandeira
+## quadriculada no telhado, pilhas de pneus de rosquinha e um kart na frente.
+static func _pista_corrida(no: Node3D) -> Dictionary:
+	var largura := 5.4
+	var altura := 2.9
+	var fundo := 3.8
+	var frente := fundo / 2.0
+	var parede := Pecas3D.material_textura(Pecas3D.listras([Color("#FFF6C8"), Color("#FFFFFF")], 14), 0.55)
+	Pecas3D.caixa(no, Vector3(largura, altura, fundo), Vector3(0, altura / 2.0, 0), parede)
+	Pecas3D.caixa(no, Vector3(largura + 0.1, 0.4, fundo + 0.1), Vector3(0, 0.2, 0), Texturas.real("madeira_pintada", "#2E1D4A", 1.0))
+	Pecas3D.caixa(no, Vector3(largura + 0.5, 0.3, fundo + 0.5), Vector3(0, altura + 0.15, 0), _m("#E8364F", 0.4))
+	# faixa quadriculada em volta do alto
+	var img := Image.create(16, 2, false, Image.FORMAT_RGBA8)
+	for x in 16:
+		for y in 2:
+			img.set_pixel(x, y, Color("#2E1D4A") if (x + y) % 2 == 0 else Color("#FFFFFF"))
+	var xadrez := StandardMaterial3D.new()
+	xadrez.albedo_texture = ImageTexture.create_from_image(img)
+	xadrez.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	xadrez.roughness = 0.5
+	xadrez.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_placa_plana(no, Vector2(largura, 0.4), Vector3(0, altura - 0.3, frente + 0.03), xadrez)
+	# toldo listrado na frente
+	var toldo := Pecas3D.material_textura(Pecas3D.listras([Color("#E8364F"), Color("#FFFFFF")], 10), 0.5)
+	Pecas3D.caixa(no, Vector3(largura, 0.12, 1.2), Vector3(0, altura - 0.75, frente + 0.55), toldo, Vector3(-14, 0, 0))
+	# mastro com a bandeira quadriculada
+	Pecas3D.cilindro(no, 0.06, 0.06, 2.2, Vector3(-1.6, altura + 1.4, -0.6), _m("#FFFFFF", 0.4))
+	var bandeira := _placa_plana(no, Vector2(1.3, 0.85), Vector3(-0.9, altura + 2.05, -0.6), xadrez)
+	bandeira.rotation_degrees = Vector3(0, -8, -4)
+	Pecas3D.esfera(no, 0.12, Vector3(-1.6, altura + 2.55, -0.6), _m("#FFD23F", 0.3))
+	# pilhas de pneus de rosquinha nos cantos da frente
+	var massa := _m("#D9955A", 0.7)
+	var cobertura := _m("#FF8FB8", 0.25)
+	for lado in [-1, 1]:
+		for k in 3:
+			var p := Vector3(lado * (largura / 2.0 + 0.55), 0.22 + k * 0.36, frente + 0.2)
+			Pecas3D.rosquinha(no, 0.18, 0.48, p, massa, Vector3(1, 0.9, 1))
+			Pecas3D.rosquinha(no, 0.2, 0.44, p + Vector3(0, 0.13, 0), cobertura, Vector3(1, 0.35, 1))
+		_parede(no, Vector3(1.0, 1.2, 1.0), Vector3(lado * (largura / 2.0 + 0.55), 0.6, frente + 0.2))
+	# o kart de enfeite, de lado na frente (sem piloto)
+	var kart := Kart3D.new()
+	kart.cor = Color("#F4E038")
+	kart.position = Vector3(2.0, 0, frente + 2.0)
+	kart.rotation.y = -PI / 2.0
+	no.add_child(kart)
+	_parede(no, Vector3(1.6, 1.0, 2.6), Vector3(2.0, 0.5, frente + 2.0))
+	return {"frente": frente + 0.02, "placa": altura - 0.95}
+
+
+## Placa plana (as duas faces) com a textura inteira, de frente para o +z.
+static func _placa_plana(no: Node3D, tamanho: Vector2, posicao: Vector3, mat: Material) -> MeshInstance3D:
+	var quadro := QuadMesh.new()
+	quadro.size = tamanho
+	var peca := MeshInstance3D.new()
+	peca.mesh = quadro
+	peca.material_override = mat
+	peca.position = posicao
+	no.add_child(peca)
+	return peca
 
 
 ## FÁBRICA DE CHOCOLATE: galpão de tijolos com telhado em serra, duas

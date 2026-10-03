@@ -62,6 +62,7 @@ static var _ultima_dica := ""
 const LUGARES := {
 	"vila": ["VILA DOS", "DOCES", 210],
 	"cozinha": ["COZINHA DA", "CONFEITARIA", 125],
+	"corrida": ["PISTA DE", "CORRIDA", 170],
 }
 
 ## No modo cortina a tela não vai sozinha para a partida (o Telas cuida).

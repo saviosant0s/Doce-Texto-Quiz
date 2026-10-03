@@ -21,6 +21,9 @@ const EFEITOS := {
 	"vitoria": preload("res://assets/sons/vitoria.wav"),
 	"chape": preload("res://assets/sons/chape.wav"),
 	"foto": preload("res://assets/sons/foto.wav"),
+	"bip": preload("res://assets/sons/bip.wav"),
+	"largada": preload("res://assets/sons/largada.wav"),
+	"turbo": preload("res://assets/sons/turbo.wav"),
 }
 ## Quantos efeitos podem tocar ao mesmo tempo (passos + moedas + estouros...).
 const CANAIS_EFEITOS := 8

@@ -12,6 +12,13 @@ func _ready() -> void:
 	Eventos._remotos = []
 	Eventos._remotos_lidos = true
 	await get_tree().process_frame
+	# TESTES_SO=corrida,tela_corrida roda só esses (mais rápido, para conferir uma parte)
+	var so := OS.get_environment("TESTES_SO")
+	if so != "":
+		for nome in so.split(","):
+			await call("_testar_" + nome)
+		_fim()
+		return
 	_testar_regras()
 	_testar_sorteio()
 	_testar_progresso()
@@ -39,7 +46,12 @@ func _ready() -> void:
 	_testar_salvar_vila_nova()
 	_testar_torre()
 	_testar_fabrica()
+	_testar_corrida()
 	await _testar_fluxo_completo()
+	_fim()
+
+
+func _fim() -> void:
 	print("")
 	if _falhas == 0:
 		print("TODOS OS TESTES PASSARAM (%d verificações)" % _total)
@@ -427,6 +439,8 @@ func _testar_fluxo_completo() -> void:
 	await _testar_vila_evento()
 	await _testar_tela_torre()
 	await _testar_tela_fabrica()
+	await _testar_tela_corrida()
+	await _testar_tela_abertura()
 	await _testar_tela_colecao()
 	await _testar_tela_confeitaria()
 	await _testar_tela_doce_match()
@@ -653,8 +667,9 @@ func _testar_vila() -> void:
 			pecas_chefao += 1
 		else:
 			pecas_vila.append(m)
-	# (até ~40 blocos a mais durante um evento da temporada: decoração e objetos)
-	verificar(pecas_vila.size() < 430, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
+	# (até ~40 blocos a mais durante um evento da temporada: decoração e objetos;
+	# a Pista de Corrida trouxe ~12 materiais novos: xadrez, listras, o kart)
+	verificar(pecas_vila.size() < 450, "cenário juntado em poucos blocos (leve: %d)" % pecas_vila.size())
 	verificar(pecas_chefao < 40, "o chefão gigante é leve (%d blocos)" % pecas_chefao)
 	var regioes_leves := regioes.size() == 3
 	for r in regioes:
@@ -2938,3 +2953,226 @@ func _testar_tela_fabrica() -> void:
 	tela.jogo.tempo = 0.01
 	await get_tree().create_timer(1.2).timeout
 	verificar(tela.find_child("DeNovo", true, false) is Button, "o tempo acabou: tela de fim com DE NOVO")
+
+
+# --- Corrida de Doces -------------------------------------------------------------------
+
+func _testar_corrida() -> void:
+	_secao("corrida de doces")
+	var estatisticas: Dictionary = Progresso.estatisticas.duplicate(true)
+	Progresso.estatisticas["corrida_vitorias"] = 2  # rivais médios
+	var c := Corrida.new(7, ["jujuba", "pacoca", "cocada"])
+	verificar(c.comprimento > 400.0 and c.comprimento < 520.0, "pista de uns 460 m (%d)" % c.comprimento)
+	verificar(c.corredores.size() == 4 and c.jogador()["jogador"] and c.corredores[1]["nome"] == "JUJUBA",
+		"4 karts: o seu e 3 rivais da coleção")
+	verificar(c.colocacao(0) == 4, "o jogador larga em último (para ultrapassar)")
+	verificar(c.portais.size() == Corrida.VOLTAS * Corrida.PORTAIS_EM.size() and c.portais[0] < c.portais[1]
+		and c.portais[2] > c.comprimento, "2 portais do quiz por volta")
+	var perguntas_ok := c.perguntas.size() == c.portais.size()
+	var ids := {}
+	for p in c.perguntas:
+		perguntas_ok = perguntas_ok and p["alternativas"].size() == 4 and int(p["resposta"]) in [0, 1, 2, 3]
+		ids[p["id"]] = true
+	verificar(perguntas_ok and ids.size() == c.perguntas.size(), "uma pergunta diferente em cada portal, 4 faixas")
+	var limpo := true
+	for e in c.setas + c.pocas + c.blocos + c.cubos_pista:
+		for p in c.portais.slice(0, 2):
+			limpo = limpo and not (e["s"] > p - Corrida.AVISO_PORTAL and e["s"] < p + 8.0)
+	verificar(limpo and c.setas.size() >= 4 and c.pocas.size() >= 4 and c.blocos.size() >= 3 and c.cubos_pista.size() >= 30,
+		"setas, poças, blocos e cubos fora do caminho dos portais")
+	verificar(c.ponto(0.0).distance_to(Vector3.ZERO) < 0.1 and c.lado(0.0).distance_to(Vector3.RIGHT) < 0.05
+		and c.frente(0.0).distance_to(Vector3.FORWARD) < 0.05, "a largada olha para o norte (direita = leste)")
+	verificar(c.zona(5.0)["id"] == "vila" and c.zona(c.curva.get_closest_offset(Vector3(80, 1.6, -92)))["id"] == "lago"
+		and c.zona(c.curva.get_closest_offset(Vector3(70, 7, 42)))["id"] == "montanha", "trechos: vila, lago, bosque, montanha")
+	verificar(Corrida.faixa_de(-5.0) == 0 and Corrida.faixa_de(0.4) == 2 and Corrida.faixa_de(9.0) == 3, "faixa do portal pelo lado")
+	verificar(Corrida.texto_tempo(65.34) == "1:05.3", "tempo em minutos e segundos")
+	# largada
+	var antes: float = c.jogador()["s"]
+	var eventos := c.avancar(1.0) + c.avancar(1.0)
+	verificar(c.jogador()["s"] == antes and eventos.is_empty(), "na contagem (3, 2, 1) ninguém anda")
+	eventos = c.avancar(1.05)
+	verificar(eventos.any(func(e): return e["tipo"] == "largada"), "JÁ! a corrida começa")
+	# coisas na pista (o jogador passa por cima de cada uma)
+	var eu := c.jogador()
+	eu["s"] = c.setas[0]["s"] - 0.3
+	eu["x"] = c.setas[0]["x"]
+	eu["v"] = 25.0
+	eventos = c.avancar(0.1)
+	verificar(eu["turbo"] > 0.0 and eventos.any(func(e): return e["tipo"] == "seta"), "seta no chão: turbo")
+	eu["s"] = c.pocas[0]["s"] - 0.3
+	eu["x"] = c.pocas[0]["x"]
+	eu["v"] = 25.0
+	c.avancar(0.1)
+	verificar(eu["lento"] > 0.0, "poça de calda: fica lento")
+	eu["s"] = c.blocos[0]["s"] - 0.3
+	eu["x"] = c.blocos[0]["x"]
+	eu["v"] = 25.0
+	c.avancar(0.05)
+	verificar(eu["v"] < 15.0, "bloco de gelatina: trombada")
+	var cubo: Dictionary = c.cubos_pista[0]
+	eu["s"] = cubo["s"] - 0.3
+	eu["x"] = cubo["x"]
+	eu["v"] = 25.0
+	eventos = c.avancar(0.1)
+	verificar(c.cubos == 1 and cubo["pego"] == 1 and eventos.any(func(e): return e["tipo"] == "cubo"), "pegou um cubo de açúcar")
+	eu["s"] = cubo["s"] - 0.3
+	c.avancar(0.1)
+	verificar(c.cubos == 1, "o mesmo cubo não vale duas vezes na mesma volta")
+	# corrida inteira acertando tudo (tocando na resposta; fora dos portais,
+	# o piloto do teste pega as setas e desvia das poças e blocos)
+	var certa := _correr(Corrida.new(11, ["jujuba", "pacoca", "cocada"]), true)
+	verificar(certa["corrida"].acabou and certa["acertos"] == 4 and certa["portais"] == 4, "acertando os 4 portais: 4 turbos")
+	verificar(certa["perguntas"] == 4 and certa["lento_na_pergunta"], "cada portal mostra a pergunta e o tempo fica lento")
+	verificar(certa["voltas"] == 1 and certa["corrida"].jogador()["fim"] > 25.0 and certa["corrida"].jogador()["fim"] < 80.0,
+		"2 voltas em menos de 1 min e 20 s (%.1f s)" % certa["corrida"].jogador()["fim"])
+	verificar(certa["corrida"].colocacao(0) == 1, "acertando tudo, ganha a corrida")
+	var errada := _correr(Corrida.new(11, ["jujuba", "pacoca", "cocada"]), false)
+	verificar(errada["acertos"] == 0 and errada["corrida"].jogador()["fim"] > certa["corrida"].jogador()["fim"] + 3.0,
+		"errando os portais fica bem mais lento")
+	verificar(errada["corrida"].colocacao(0) > 1, "errando tudo, perde a corrida")
+	var lugares := {}
+	for i in 4:
+		lugares[certa["corrida"].colocacao(i)] = true
+	verificar(lugares.size() == 4, "todos chegam, cada um num lugar")
+	# prêmio
+	Progresso.estatisticas.erase("corrida_recorde")
+	Progresso.estatisticas.erase("corrida_vitorias")
+	var moedas := Progresso.moedas
+	var acucar := Confeitaria.acucar()
+	var baus := Baus.quantos("doce")
+	var ganho: Dictionary = certa["corrida"].concluir()
+	verificar(ganho["lugar"] == 1 and ganho["moedas"] == 40 and Progresso.moedas == moedas + 40
+		and Confeitaria.acucar() == acucar + int(ganho["acucar"]) and ganho["acucar"] >= 30, "1º lugar: 40 moedas e 30 açúcar (+ cubos)")
+	verificar(ganho["recorde_novo"] and ganho["bau"] == "doce" and Baus.quantos("doce") == baus + 1
+		and Corrida.vitorias() == 1 and Corrida.recorde() > 0.0, "ganhar com recorde dá um baú de doce")
+	ganho = errada["corrida"].concluir()
+	verificar(not ganho["recorde_novo"] and ganho["bau"] == "" and ganho["moedas"] == Corrida.PREMIOS[ganho["lugar"] - 1]["moedas"],
+		"perder: prêmio menor, sem baú")
+	Progresso.estatisticas["corrida_vitorias"] = 0
+	var facil: float = Corrida.new(3).corredores[1]["habilidade"]
+	Progresso.estatisticas["corrida_vitorias"] = 3
+	verificar(Corrida.new(3).corredores[1]["habilidade"] > facil + 0.2, "quem ganha corridas enfrenta rivais mais rápidos")
+	Progresso.estatisticas = estatisticas
+
+
+## Piloto do teste (fora dos portais): vai para as setas e desvia das poças e blocos.
+func _pilotar_teste(c: Corrida) -> void:
+	var eu := c.jogador()
+	c.direcao = 0.0
+	if c.portal_ativo >= 0 or eu["auto"]:
+		return
+	var alvo: float = eu["x"]
+	for e in c.setas:
+		var falta := c._distancia_a_frente(eu["s"], e["s"])
+		if falta > 0.0 and falta < 30.0:
+			alvo = e["x"]
+	for e in c.pocas + c.blocos:
+		var falta := c._distancia_a_frente(eu["s"], e["s"])
+		if falta > 0.0 and falta < 20.0 and absf(alvo - e["x"]) < 2.4:
+			alvo = e["x"] + (3.0 if e["x"] < 0.0 else -3.0)
+	if absf(alvo - eu["x"]) > 0.3:
+		c.direcao = signf(alvo - eu["x"])
+
+
+## Corre uma corrida inteira (o jogador só toca nas respostas, certas ou erradas).
+func _correr(c: Corrida, acertar: bool) -> Dictionary:
+	var r := {"corrida": c, "acertos": 0, "portais": 0, "perguntas": 0, "voltas": 0, "lento_na_pergunta": true}
+	for passo in 6000:
+		var eventos := c.avancar(1.0 / 30.0)
+		for e in eventos:
+			match e["tipo"]:
+				"pergunta":
+					r["perguntas"] += 1
+				"portal":
+					if e["quem"] == 0:
+						r["portais"] += 1
+						r["acertos"] += 1 if e["acertou"] else 0
+				"volta":
+					if e["quem"] == 0:
+						r["voltas"] += 1
+		_pilotar_teste(c)
+		if c.portal_ativo >= 0 and c.escolha < 0:
+			if c.falta_portal() < 0.7:
+				r["lento_na_pergunta"] = r["lento_na_pergunta"] and c.ritmo < 0.2
+				var certa: int = c.pergunta()["resposta"]
+				c.escolher(certa if acertar else (certa + 2) % 4)
+		if c.acabou:
+			break
+	return r
+
+
+func _testar_tela_corrida() -> void:
+	_secao("tela da corrida")
+	var estatisticas: Dictionary = Progresso.estatisticas.duplicate(true)
+	Telas.ir_para("corrida")
+	verificar(await _esperar_tela("Corrida", 10.0), "abre a Pista de Corrida")
+	var tela := get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	verificar(tela.find_child("Correr", true, false) is Button and tela._karts.size() == 4,
+		"início: 4 karts no grid e o botão CORRER")
+	var pecas := tela.find_children("*", "MeshInstance3D", true, false).filter(
+		func(m): return not tela._karts_no.is_ancestor_of(m)).size()
+	verificar(pecas < 120, "pista juntada em poucos blocos (leve: %d)" % pecas)
+	tela.find_child("Correr", true, false).pressed.emit()
+	await get_tree().process_frame
+	verificar(tela.estado == "correndo" and tela._hud.visible, "CORRER! começa a contagem")
+	var c: Corrida = tela.corrida
+	c.contagem = 0.0
+	tela._dedos[0] = 1
+	var x0: float = c.jogador()["x"]
+	for i in 10:
+		tela._process(1.0 / 60.0)
+	verificar(c.jogador()["x"] > x0 + 0.5, "segurar ▶ vira o kart para a direita")
+	tela._dedos.clear()
+	c.colocar(0, c.portais[0] - Corrida.AVISO_PORTAL - 1.0, 0.0)
+	for i in 10:
+		tela._process(1.0 / 60.0)
+	verificar(tela._quadro.visible and c.portal_ativo == 0 and c.ritmo < 1.0, "perto do portal: pergunta e câmera lenta")
+	var certa := int(c.pergunta()["resposta"])
+	tela._cartoes[certa].pressed.emit()
+	verificar(c.escolha == certa and c.jogador()["auto"], "tocar na resposta leva o kart para a faixa dela")
+	for i in 900:
+		tela._process(1.0 / 30.0)
+		if c.jogador()["proximo_portal"] > 0:
+			break
+	verificar(c.jogador()["acertos"] == 1 and c.jogador()["turbo"] > 0.0, "passou pela faixa certa: TURBO")
+	for i in 6000:
+		if c.portal_ativo >= 0 and c.escolha < 0:
+			tela.escolher(int(c.pergunta()["resposta"]))
+		tela._process(1.0 / 30.0)
+		if tela.estado == "fim":
+			break
+	verificar(tela.estado == "fim" and c.acabou, "chegou ao fim das 2 voltas")
+	await get_tree().create_timer(2.2).timeout
+	verificar(tela.find_child("DeNovo", true, false) is Button, "fim: resultado com CORRER DE NOVO")
+	tela.find_child("DeNovo", true, false).pressed.emit()
+	await get_tree().process_frame
+	verificar(tela.estado == "correndo" and tela.corrida != c, "CORRER DE NOVO começa outra corrida")
+	Progresso.estatisticas = estatisticas
+
+
+
+func _testar_tela_abertura() -> void:
+	_secao("abertura")
+	Vila.abrir_com_abertura = true
+	Telas.ir_para("vila")
+	verificar(await _esperar_tela("Vila", 10.0), "VER ABERTURA abre a vila")
+	var vila: Vila = get_tree().current_scene
+	for i in 60:
+		if is_instance_valid(vila._abertura):
+			break
+		await get_tree().create_timer(0.1).timeout
+	verificar(is_instance_valid(vila._abertura) and not vila._interface.visible and vila.camera_externa,
+		"a abertura passa sem a interface da vila")
+	if not is_instance_valid(vila._abertura):
+		return
+	var abertura: AberturaVila = vila._abertura
+	await get_tree().create_timer(0.6).timeout
+	verificar(abertura.tomada == 0, "começa pela vista de cima da vila")
+	abertura.pular()
+	verificar(abertura.tomada == -1 and abertura.find_child("TocarParaJogar", true, false).visible
+		and abertura.find_child("Logo", true, false).visible, "PULAR vai direto para o nome do jogo e TOQUE PARA JOGAR")
+	abertura.fechar()
+	await get_tree().create_timer(0.7).timeout
+	verificar(not is_instance_valid(abertura) and vila._interface.visible and not vila.camera_externa
+		and Progresso.config.get("abertura_vista", false), "tocar devolve a vila (e a abertura fica marcada como vista)")

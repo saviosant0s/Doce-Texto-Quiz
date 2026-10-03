@@ -56,12 +56,16 @@ const PREDIOS := [
 		"telhado": "#8B4A2B", "cena": "fabrica", "acao": "ENTRAR NA FÁBRICA"},
 	{"id": "arena", "nome": "ARENA DOS DOCES", "posicao": Vector3(12, 0, 19), "parede": "#FFB3D1",
 		"telhado": "#E8364F", "cena": "batalha", "acao": "ENTRAR NA ARENA"},
+	{"id": "corrida", "nome": "PISTA DE CORRIDA", "posicao": Vector3(-12, 0, 19), "parede": "#FFF6C8",
+		"telhado": "#E8364F", "cena": "corrida", "acao": "CORRER NA PISTA"},
 ]
 ## Moradores que sempre passeiam (os mascotes dos níveis).
 const MORADORES := ["bala_verde", "milho_doce"]
 
 ## Prédio de onde o jogador saiu por último (ele volta na porta dele).
 static var ultima_porta := ""
+## Mostrar a abertura na próxima vez que a vila abrir (VER ABERTURA nas configurações).
+static var abrir_com_abertura := false
 
 var jogador: DoceAndante
 var _camera: Camera3D
@@ -228,6 +232,10 @@ func aquecer() -> void:
 	_camera.global_transform = guardado
 	set_process(true)
 	await Telas.quadro_desenhado()
+	# a abertura começa quando a cortina abre (primeira vez na vila ou pedida)
+	if abrir_com_abertura or (not Progresso.config.get("abertura_vista", false) and not Progresso.somente_memoria):
+		abrir_com_abertura = false
+		ver_abertura()
 
 
 ## Dia e noite e clima: o céu muda com a hora, e avisa das novidades (a
@@ -1169,6 +1177,37 @@ func _criar_evento() -> void:
 	Telas.dica_primeira_vez("evento_" + Eventos.edicao(), Eventos.dados()["nome"],
 		"%s Junte %s jogando e pegando as que estão espalhadas pela vila (8 por dia). Toque em EVENTO no topo para ver os prêmios: tem móvel e doce exclusivos!" % [
 			Eventos.dados()["texto"], Eventos.dados()["ficha"]])
+
+
+# --- Abertura ----------------------------------------------------------------------
+
+var _abertura: AberturaVila
+
+
+## A abertura animada (AberturaVila): a câmera voa pela vila sem a interface.
+func ver_abertura() -> void:
+	if is_instance_valid(_abertura) or is_instance_valid(_luta_chefao) or fotografando != "":
+		return
+	camera_externa = true
+	_interface.visible = false
+	_botao_entrar.visible = false
+	if is_instance_valid(_seta):
+		_seta.visible = false  # a seta do tutorial volta no fim
+	_abertura = AberturaVila.new(self)
+	_abertura.terminou.connect(_fim_da_abertura)
+	add_child(_abertura)
+
+
+func _fim_da_abertura() -> void:
+	camera_externa = false
+	_interface.visible = true
+	if is_instance_valid(_seta):
+		_seta.visible = true
+	_foco_aereo = _pos_visual()
+	Progresso.config["abertura_vista"] = true
+	Progresso.salvar()
+	usar_camera(modo_camera)
+	_atualizar_topo()
 
 
 # --- Chefão na praça ---------------------------------------------------------------

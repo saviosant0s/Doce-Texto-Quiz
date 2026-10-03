@@ -129,6 +129,17 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   praça a cada 2 dias do jogo e fica em cima da fonte; ENFRENTAR abre a luta
   ali mesmo (câmera de lado, perguntas do quiz, combo, corações, fica BRAVO
   na metade). Vencer dá moedas, açúcar, XP e baú (de ouro a cada 3 chefões).
+- CORRIDA DE DOCES (scripts/corrida.gd, cenas/corrida.gd, componentes/corrida/
+  kart_3d.gd): prédio PISTA DE CORRIDA na vila (e botão no menu dos outros
+  jogos). 4 karts de doce, 2 voltas por vila, ponte do lago, bosque e
+  montanha; ◀ ▶ viram; setas (turbo), poças, blocos de gelatina e cubos de
+  açúcar; PORTAIS DO QUIZ: câmera lenta, toque na resposta e o kart vai para
+  a faixa dela (certa = TURBO). Rivais ficam mais rápidos com as vitórias.
+- ABERTURA ANIMADA (componentes/vila/abertura_vila.gd): na primeira vez na
+  vila a câmera voa mostrando o jogo com legendas e termina no nome do jogo
+  com TOQUE PARA JOGAR (PULAR a qualquer hora; VER A ABERTURA nas
+  configurações). ferramentas/gerar_divulgacao.sh grava o trailer e tira as
+  imagens da página de download.
 - Indicador de desempenho (Configurações): FPS, memória do jogo e do aparelho,
   vídeo, desenhos e triângulos (componentes/painel_desempenho.gd).
 - Eventos por calendário (datas de verdade) e pela internet, sem atualizar o
