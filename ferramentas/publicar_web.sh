@@ -55,18 +55,16 @@ if [ -n "$KEYSTORE" ]; then
 	rm -f apk/doce-texto-quiz-v*.apk
 	cp apk/doce-texto-quiz.apk "apk/doce-texto-quiz-v$VERSAO_APK.apk"
 	cp apk/doce-texto-quiz-32bits.apk "apk/doce-texto-quiz-v$VERSAO_APK-32bits.apk"
-	# página simples para baixar (o link da pasta apk/)
-	cat > apk/index.html <<HTML
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Baixar o Doce Texto Quiz</title>
-<style>body{font-family:sans-serif;background:#7E57B1;color:#fff;text-align:center;padding:24px}
-a.b{display:block;max-width:420px;margin:18px auto;padding:18px;border-radius:18px;background:#F4E038;color:#5E3D8E;font-weight:bold;font-size:22px;text-decoration:none}
-a.c{color:#FAEE84}</style></head><body>
-<h1>Doce Texto Quiz v$VERSAO_APK</h1>
-<a class="b" href="doce-texto-quiz-v$VERSAO_APK.apk">BAIXAR PARA ANDROID</a>
-<p>Celular antigo ou o app não abre? <a class="c" href="doce-texto-quiz-v$VERSAO_APK-32bits.apk">Baixe a versão para celulares antigos (32 bits)</a>.</p>
-</body></html>
-HTML
+	# página de download (modelo em ferramentas/pagina_download.html), com as
+	# imagens e o trailer de ferramentas/gerar_divulgacao.sh, se gerados
+	sed -e "s/__VERSAO__/$VERSAO_APK/g" -e "s/__APK__/doce-texto-quiz-v$VERSAO_APK.apk/g" \
+		-e "s/__APK32__/doce-texto-quiz-v$VERSAO_APK-32bits.apk/g" "$RAIZ/ferramentas/pagina_download.html" > apk/index.html
+	mkdir -p apk/imagens
+	cp "$RAIZ/godot/assets/abertura.png" apk/imagens/logo.png
+	if [ -d "$RAIZ/build/divulgacao/imagens" ]; then
+		cp "$RAIZ"/build/divulgacao/imagens/*.jpg apk/imagens/
+		[ -f "$RAIZ/build/divulgacao/trailer.mp4" ] && cp "$RAIZ/build/divulgacao/trailer.mp4" apk/
+	fi
 fi
 # Pacote de entrega (ferramentas/gerar_entrega.sh), se tiver sido gerado
 if ls "$RAIZ"/build/entrega/Doce_Texto_Quiz_*.zip >/dev/null 2>&1; then

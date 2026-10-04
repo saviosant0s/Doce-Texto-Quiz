@@ -7,7 +7,7 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.14.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
+- Versão atual: 0.15.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
@@ -122,7 +122,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-### Rodada de 29/09/2026 (depois de jogar a 0.14.0 no celular) — no código, falta publicar a 0.15.0
+### Rodada de 29/09/2026 (depois de jogar a 0.14.0 no celular) — publicado na 0.15.0
 
 - CHEFÃO NA VILA (scripts/chefao.gd, componentes/vila/chefao_vila.gd e
   luta_chefao.gd): o Rei do Chocolate (ou o doce do evento) gigante invade a
@@ -140,6 +140,8 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   com TOQUE PARA JOGAR (PULAR a qualquer hora; VER A ABERTURA nas
   configurações). ferramentas/gerar_divulgacao.sh grava o trailer e tira as
   imagens da página de download.
+- Página de download nova (ferramentas/pagina_download.html, publicada em
+  apk/index.html): trailer, telas, o que tem no jogo e como instalar.
 - Indicador de desempenho (Configurações): FPS, memória do jogo e do aparelho,
   vídeo, desenhos e triângulos (componentes/painel_desempenho.gd).
 - Eventos por calendário (datas de verdade) e pela internet, sem atualizar o
