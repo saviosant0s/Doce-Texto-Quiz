@@ -98,6 +98,7 @@ func _criar_qualidade() -> void:
 		botao.theme_type_variation = &"BotaoRoxo" if i == Qualidade.nivel() else &"BotaoSecundario"
 		botao.pressed.connect(func():
 			Qualidade.escolher(i)
+			Telas._ajustar_fisica()
 			for outro in linha.get_children():
 				if outro is Button:
 					outro.theme_type_variation = &"BotaoRoxo" if outro == botao else &"BotaoSecundario")

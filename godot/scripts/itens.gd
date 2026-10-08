@@ -33,3 +33,82 @@ static func sem_tinta(botao: Button) -> void:
 	for estado in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_focus_color",
 			"icon_hover_pressed_color", "icon_disabled_color"]:
 		botao.add_theme_color_override(estado, Color.WHITE if estado != "icon_disabled_color" else Color(1, 1, 1, 0.5))
+
+
+# --- Prêmios com ícones (nunca só em texto) ------------------------------------------
+
+## Palavras de prêmio que viram ícone nos avisos ("+20 MOEDAS" -> "+20" + moeda).
+const ICONES_PALAVRAS := {"AÇÚCAR": ACUCAR, "MOEDAS": MOEDA, "MOEDA": MOEDA, "XP": XP,
+	"EXPERIÊNCIA": XP, "ESTRELAS": ESTRELA, "ESTRELA": ESTRELA}
+static var _padrao_premio: RegEx
+
+
+## Uma "fichinha" de prêmio: o ícone do item e o número (+20), lado a lado.
+static func ficha(icone: Texture2D, texto: String, tamanho := 32, cor := Color.WHITE) -> HBoxContainer:
+	var linha := HBoxContainer.new()
+	linha.add_theme_constant_override("separation", 4)
+	linha.alignment = BoxContainer.ALIGNMENT_CENTER
+	linha.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var imagem := TextureRect.new()
+	imagem.texture = icone
+	imagem.custom_minimum_size = Vector2.ONE * tamanho * 1.25
+	imagem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	imagem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	imagem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	linha.add_child(imagem)
+	if texto != "":
+		var rotulo := Label.new()
+		rotulo.theme_type_variation = &"TituloClaro"
+		rotulo.add_theme_font_size_override("font_size", tamanho)
+		rotulo.add_theme_color_override("font_color", cor)
+		rotulo.add_theme_constant_override("outline_size", maxi(4, tamanho / 5))
+		rotulo.add_theme_color_override("font_outline_color", Color("#3B2A5C"))
+		rotulo.text = texto
+		linha.add_child(rotulo)
+	return linha
+
+
+## As fichinhas de um prêmio {"moedas", "acucar", "xp", "bau", "estrelas"} (o que tiver).
+static func fichas_premio(premio: Dictionary, tamanho := 32) -> HBoxContainer:
+	var linha := HBoxContainer.new()
+	linha.name = "Fichas"
+	linha.alignment = BoxContainer.ALIGNMENT_CENTER
+	linha.add_theme_constant_override("separation", tamanho)
+	linha.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for par in [["moedas", MOEDA], ["acucar", ACUCAR], ["xp", XP], ["estrelas", ESTRELA]]:
+		if int(premio.get(par[0], 0)) > 0:
+			linha.add_child(ficha(par[1], "+%d" % int(premio[par[0]]), tamanho))
+	var tipo_bau := str(premio.get("bau", ""))
+	if tipo_bau != "":
+		linha.add_child(ficha(bau(tipo_bau), "+1", tamanho))
+	return linha
+
+
+## Texto de aviso com os prêmios em ícone: "PRESENTE: +20 AÇÚCAR +10 MOEDAS"
+## vira "PRESENTE:" + [+20 açúcar] + [+10 moeda] (o resto continua texto).
+static func texto_com_icones(texto: String, tamanho := 28) -> HBoxContainer:
+	if _padrao_premio == null:
+		_padrao_premio = RegEx.create_from_string("([+\\-]?\\d+)\\s+(?:DE\\s+)?(AÇÚCAR|MOEDAS|MOEDA|XP|EXPERIÊNCIA|ESTRELAS|ESTRELA)\\b")
+	var linha := HBoxContainer.new()
+	linha.alignment = BoxContainer.ALIGNMENT_CENTER
+	linha.add_theme_constant_override("separation", 8)
+	linha.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var inicio := 0
+	for achado in _padrao_premio.search_all(texto):
+		var antes := texto.substr(inicio, achado.get_start() - inicio).strip_edges()
+		if antes != "":
+			linha.add_child(_rotulo_aviso(antes, tamanho))
+		linha.add_child(ficha(ICONES_PALAVRAS[achado.get_string(2)], achado.get_string(1), tamanho))
+		inicio = achado.get_end()
+	var resto := texto.substr(inicio).strip_edges()
+	if resto != "" or linha.get_child_count() == 0:
+		linha.add_child(_rotulo_aviso(resto, tamanho))
+	return linha
+
+
+static func _rotulo_aviso(texto: String, tamanho: int) -> Label:
+	var rotulo := Label.new()
+	rotulo.theme_type_variation = &"TituloClaro"
+	rotulo.add_theme_font_size_override("font_size", tamanho)
+	rotulo.text = texto
+	return rotulo

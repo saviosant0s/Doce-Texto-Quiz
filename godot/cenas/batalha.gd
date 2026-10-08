@@ -871,14 +871,15 @@ func _terminar() -> void:
 			numero.create_tween().tween_method(func(v: float): numero.text = "+%d" % roundi(v), 0.0, float(total), 0.9)
 		var extras := ""
 		if ganho.has("bau"):
-			extras += "+ BAÚ " + ("DE OURO" if ganho["bau"] == "ouro" else "DE DOCE")
+			premios.add_child(Itens.ficha(Itens.bau(ganho["bau"]), "+1", 44))
 		if ganho.has("movel"):
-			extras += ("\n" if extras != "" else "") + "+ " + Casa.MOVEIS[ganho["movel"]]["nome"] + " PARA A MINHA CASA!"
+			extras = "+ " + Casa.MOVEIS[ganho["movel"]]["nome"] + " PARA A MINHA CASA!"
 		if extras != "":
 			_texto(coluna, extras, 30)
 		_texto(coluna, "%d ACERTOS EM %d PERGUNTAS" % [luta.acertos, luta.rodadas], 24)
 	else:
-		_texto(coluna, "+%d AÇÚCAR PELO ESFORÇO" % ganho["acucar"], 30)
+		coluna.add_child(Itens.fichas_premio({"acucar": ganho["acucar"]}, 40))
+		_texto(coluna, "PELO ESFORÇO", 26)
 		_texto(coluna, "Dica: suba seus doces de nível ou troque o time!", 24)
 	var botoes := HBoxContainer.new()
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER

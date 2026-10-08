@@ -519,8 +519,8 @@ func _terminar() -> void:
 	_texto_painel(coluna, "%d PEDIDOS" % jogo.pedidos_feitos, 56)
 	if premio["recorde_novo"]:
 		_texto_painel(coluna, "NOVO RECORDE!", 32).add_theme_color_override("font_color", Cores.AMARELO)
-	_texto_painel(coluna, "+%d MOEDAS · +%d AÇÚCAR · %d PONTOS%s" % [premio["moedas"], premio["acucar"], jogo.pontos,
-		"  ·  +1 BAÚ DE DOCE!" if premio["bau"] != "" else ""], 26)
+	coluna.add_child(Itens.fichas_premio(premio, 40))  # moedas, açúcar e o baú, com os ícones
+	_texto_painel(coluna, "%d PONTOS" % jogo.pontos, 26)
 	var botoes := HBoxContainer.new()
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
 	botoes.add_theme_constant_override("separation", 16)

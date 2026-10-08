@@ -443,6 +443,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_tela_corrida()
 	await _testar_tela_abertura()
 	await _testar_tela_amigos()
+	await _testar_premios_com_icones()
 	await _testar_tela_colecao()
 	await _testar_tela_confeitaria()
 	await _testar_tela_doce_match()
@@ -3300,3 +3301,24 @@ func _testar_tela_amigos() -> void:
 	verificar(not Progresso.visitando and Vila.visita.is_empty() and Progresso.vila.get("lotes", {}) == lotes
 		and Progresso.moedas == moedas + int(Amigos.PREMIO_VISITA["moedas"]), "de volta: o seu progresso inteiro (+ o prêmio da visita)")
 	Progresso.jogador = jogador_antes
+
+
+func _testar_premios_com_icones() -> void:
+	_secao("prêmios com ícones")
+	var linha := Itens.texto_com_icones("PRESENTE: +20 AÇÚCAR  +10 MOEDAS")
+	var icones := linha.find_children("*", "TextureRect", true, false)
+	verificar(linha.get_child_count() == 3 and linha.get_child(0) is Label and icones.size() == 2
+		and icones[0].texture == Itens.ACUCAR and icones[1].texture == Itens.MOEDA, "aviso com prêmio: o texto vira ícones")
+	verificar(Itens.texto_com_icones("DIA 2: +5 DE AÇÚCAR").find_children("*", "TextureRect", true, false).size() == 1
+		and Itens.texto_com_icones("FALTAM MOEDAS").find_children("*", "TextureRect", true, false).is_empty(),
+		"\"+5 DE AÇÚCAR\" vira ícone; \"FALTAM MOEDAS\" continua texto")
+	linha.free()
+	Telas.mostrar_premio({"moedas": 5, "acucar": 3, "xp": 10, "bau": "ouro"}, "TESTE")
+	await get_tree().process_frame
+	var premio := Telas.find_child("Premio", true, false)
+	var fichas: Node = premio.find_child("Fichas", true, false) if premio else null
+	verificar(fichas != null and fichas.get_child_count() == 4
+		and fichas.get_child(3).find_children("*", "TextureRect", true, false)[0].texture == Itens.BAU_OURO,
+		"cartão de prêmio: moedas, açúcar, XP e o baú, cada um com o seu desenho")
+	await get_tree().create_timer(3.5).timeout
+	verificar(not is_instance_valid(premio), "o cartão de prêmio some sozinho")

@@ -232,7 +232,9 @@ func _final() -> void:
 ## o nome do jogo na esquerda.
 func _olhar_ao_lado(doce: Vector3) -> void:
 	var direcao := doce + Vector3(0, 1.0, 0) - _camera.global_position
-	_camera.look_at(_camera.global_position + direcao.rotated(Vector3.UP, deg_to_rad(19.0)))
+	var tela := get_viewport().get_visible_rect().size
+	var desvio := 19.0 if tela.x > tela.y * 1.2 else 0.0  # tela em pé (vídeo vertical): o doce no meio
+	_camera.look_at(_camera.global_position + direcao.rotated(Vector3.UP, deg_to_rad(desvio)))
 
 
 ## TOQUE PARA JOGAR: tira as faixas e devolve a vila ao jogador.

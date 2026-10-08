@@ -121,7 +121,7 @@ func _ao_tocar_acao() -> void:
 	for outro in _cartoes:
 		_atualizar_cartao(outro)
 	for conquista in Conquistas.verificar({}):
-		Telas.mostrar_aviso("CONQUISTA: %s  +%d MOEDAS" % [conquista["nome"], conquista["moedas"]])
+		Telas.mostrar_premio({"moedas": conquista["moedas"]}, "CONQUISTA: %s" % conquista["nome"])
 		_atualizar_topo()
 
 

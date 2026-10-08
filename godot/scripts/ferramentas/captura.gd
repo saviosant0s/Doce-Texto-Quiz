@@ -64,10 +64,23 @@ extends Node
 ##                 e fecha o jogo (para o vídeo do trailer, com o --write-movie)
 ##   --amigos      Vila: abre o painel AMIGOS com 3 amigos de exemplo no ranking
 ##   --visita      Vila: visita a vila de uma amiga de exemplo (com terrenos e casa grande)
+##   VÍDEO VERTICAL (ferramentas/gerar_video_stories.sh, com o --write-movie do Godot):
+##   --retrato     não mostra o "gire o celular" (tela em pé)
+##   --sem_musica  sem a música de fundo (o vídeo tem a trilha dele)
+##   --duracao=6   grava 6 s e fecha o jogo (em vez de tirar o print)
+##   --video_vila  Vila sem interface, câmera descendo do alto até a praça
+##   --video_batalha / --video_chefao  luta jogando sozinha (responde certo depois de "ler")
+##   --corrida_inicio=120  com o --trailer_corrida, já larga a 120 m
+##   --abertura_sem_texto  a abertura sem legendas, faixas nem logo (só a câmera)
+##   --premio      mostra o cartão de prêmio (ícones) e um aviso com prêmio
 ##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
 ##   --painel_desempenho  liga o indicador de FPS e memória
 ##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
 ##   --espera=1.2  segundos até tirar o print
+
+
+## Segundos já gravados nos modos de vídeo que jogam sozinhos (ver --duracao).
+var _tempo_video := 0.0
 
 
 func _ready() -> void:
@@ -78,6 +91,9 @@ func _ready() -> void:
 	if not args.has("capturar"):
 		return
 	Progresso.somente_memoria = true
+	if args.has("sem_musica"):
+		Progresso.config["volume_musica"] = 0.0
+		Audio.aplicar_volumes()
 	for i in int(args.get("liberar", "0")):
 		Progresso.niveis[i]["aprovado"] = true
 		Progresso.niveis[i]["estrelas"] = 3 - i
@@ -414,6 +430,13 @@ func _ready() -> void:
 		var pista_demo: Node = get_tree().current_scene
 		pista_demo.comecar()
 		var demo: Corrida = pista_demo.corrida
+		if args.has("corrida_inicio"):
+			demo.contagem = 0.0
+			var inicio := float(args["corrida_inicio"])
+			for i in demo.corredores.size():
+				demo.colocar(i, inicio + [0.0, 9.0, 5.0, -6.0][i], [0.5, -3.0, 3.5, -1.5][i])
+				demo.corredores[i]["v"] = 22.0
+			pista_demo._seguir_com_camera(0.0, true)
 		var fim_demo := Time.get_ticks_msec()  # (no --write-movie o relógio do jogo anda a 30 quadros por segundo)
 		var segundos := 0.0
 		var pensando := 0.0
@@ -518,6 +541,47 @@ func _ready() -> void:
 			while get_tree().current_scene == null or get_tree().current_scene.name != "Vila":
 				await get_tree().process_frame
 			await get_tree().create_timer(1.0).timeout
+	if args.has("video_vila"):
+		await get_tree().process_frame
+		var vila_video: Vila = get_tree().current_scene
+		vila_video.camera_externa = true
+		vila_video._interface.visible = false
+		var cam: Camera3D = vila_video._camera
+		var de := Transform3D(Basis.looking_at(Vector3(0, -60, -48)), Vector3(0, 62, 46))
+		var ate := Transform3D(Basis.looking_at(Vector3(0, -9, -15)), Vector3(0, 11, 13))
+		var segundos := float(args.get("duracao", "4"))
+		var voo := create_tween()
+		voo.tween_method(func(p: float): cam.global_transform = de.interpolate_with(ate, p), 0.0, 1.0, segundos) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if args.has("video_batalha") or args.has("video_chefao"):
+		await get_tree().create_timer(0.3).timeout
+		var cena: Node = get_tree().current_scene
+		var luta_no: Node = cena
+		if args.has("video_batalha"):
+			cena.lutar(0)
+		else:
+			cena.enfrentar_chefao()
+			luta_no = cena._luta_chefao
+		var lendo := 0.0
+		while _tempo_video < float(args.get("duracao", "999")):
+			await get_tree().process_frame
+			_tempo_video += get_process_delta_time()
+			if not is_instance_valid(luta_no) or luta_no.luta == null or luta_no.luta.acabou():
+				break
+			if luta_no.respondendo:
+				lendo += get_process_delta_time()
+				if lendo > 1.4:
+					luta_no.responder(int(luta_no.luta.pergunta["resposta"]))
+					lendo = 0.0
+	if args.has("abertura_sem_texto"):
+		await get_tree().process_frame
+		var vila_fim: Vila = get_tree().current_scene
+		if is_instance_valid(vila_fim._abertura):
+			vila_fim._abertura.visible = false
+	if args.has("premio"):
+		await get_tree().create_timer(0.3).timeout
+		Telas.mostrar_aviso("+15 AÇÚCAR  +8 MOEDAS")
+		Telas.mostrar_premio({"moedas": 40, "acucar": 30, "xp": 25, "bau": "ouro"}, "MISSÃO CUMPRIDA!")
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()
@@ -566,6 +630,34 @@ func _ready() -> void:
 		vila.jogador.global_position = porta + (porta - predio).normalized() * 3.0
 		vila.jogador.olhar_para(predio)
 		vila.usar_camera(Vila.Camera.PERTO)
+	if args.has("perfil"):
+		# tempo de CPU por quadro (sem desenhar: só scripts, física e motor), a
+		# toda velocidade (o modo de baixo consumo esperaria entre os quadros)
+		OS.low_processor_usage_mode = false
+		await get_tree().process_frame
+		var inicio_perfil := Time.get_ticks_usec()
+		var quadros := 0
+		var soma := 0.0
+		var pior := 0.0
+		var soma_fisica := 0.0
+		var fim_perfil := Time.get_ticks_msec() + int(float(args["perfil"]) * 1000)
+		while Time.get_ticks_msec() < fim_perfil:
+			await get_tree().process_frame
+			var t := Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+			soma += t
+			pior = maxf(pior, t)
+			soma_fisica += Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
+			quadros += 1
+		print("PERFIL %s: %.2f ms/quadro de CPU (%d quadros), processo %.2f (pior %.1f), física %.2f ms, nós %d, objetos %d" % [args["capturar"],
+			(Time.get_ticks_usec() - inicio_perfil) / 1000.0 / maxi(1, quadros), quadros,
+			soma / maxi(1, quadros), pior, soma_fisica / maxi(1, quadros), Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+			Performance.get_monitor(Performance.OBJECT_COUNT)])
+		get_tree().quit()
+		return
+	if args.has("duracao"):
+		await get_tree().create_timer(maxf(0.05, float(args["duracao"]) - _tempo_video)).timeout
+		get_tree().quit()
+		return
 	await get_tree().create_timer(float(args.get("espera", "1.2"))).timeout
 	if args.has("desempenho"):
 		# quanto a tela pesa para desenhar (o FPS aqui não vale: é sem placa de vídeo)

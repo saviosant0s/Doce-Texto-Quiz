@@ -1234,6 +1234,8 @@ static func qualidade_3d(viewport: Viewport) -> Dictionary:
 	var antes := {"msaa": viewport.msaa_3d, "escala": viewport.scaling_3d_scale}
 	viewport.msaa_3d = Qualidade.ANTISSERRILHADO[Qualidade.nivel()]
 	viewport.scaling_3d_scale = Qualidade.ESCALA_3D[Qualidade.nivel()]
+	# mapa de sombra do sol menor fora da ALTA (o padrão de 4096 pesa em placa integrada)
+	RenderingServer.directional_shadow_atlas_set_size(4096 if Qualidade.nivel() == Qualidade.ALTA else 2048, true)
 	return antes
 
 
@@ -1251,8 +1253,8 @@ const EXPOSICAO_ACES := 0.95
 
 
 static func acabamento(ambiente: Environment) -> void:
-	if modo_leve():
-		return
+	if modo_leve() or Qualidade.nivel() == Qualidade.BAIXA:
+		return  # (gráficos BAIXA: sem brilho nem ajuste de cor, que custam um passe a mais na tela toda)
 	ambiente.tonemap_mode = Environment.TONE_MAPPER_ACES
 	ambiente.tonemap_exposure = EXPOSICAO_ACES
 	ambiente.tonemap_white = 4.0

@@ -136,6 +136,22 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 - APK menor: texturas reais limitadas a 512 px (as de aspereza, 256).
 - Configurações: coluna do som com rolagem e textos que quebram a linha
   (a tela não estoura mais em 16:9).
+- Prêmios com os desenhos (pedido do Sávio: "não pode ser texto"):
+  Telas.mostrar_premio (cartão no meio da tela com moeda, açúcar, XP e baú
+  entrando um por um) nas missões, prêmio do dia, presentes, estrela
+  cadente, regiões, conquistas, casa, visita; os avisos com "+N MOEDAS/AÇÚCAR"
+  mostram o ícone no lugar da palavra (Itens.texto_com_icones); telas de fim
+  (torre, fábrica, chefão, corrida, arena) com os ícones dos baús e do XP.
+  Avisos ao mesmo tempo ficam empilhados.
+- Vídeo vertical de divulgação (stories/reels, 1080x1920, ~30 s):
+  ferramentas/gerar_video_stories.sh grava as cenas jogando sozinho em pé
+  (--retrato, --write-movie) e ferramentas/montar_video_stories.py monta com
+  fundo, cartão, legendas, tela final e música. Saída em build/stories/.
+- Desempenho (docs/desempenho.md, com a pesquisa e as fontes): doces 3D das
+  telas (Visor3D) juntados e com resolução/antisserrilhado pela qualidade;
+  qualidade MÉDIA de início em placa integrada ou até 8 GB; vigia de
+  lentidão que desce a qualidade sozinho; física a 60/s fora da ALTA;
+  sombra, brilho e materiais mais leves na MÉDIA/BAIXA.
 
 ### Rodada de 29/09/2026 (depois de jogar a 0.14.0 no celular) — publicado na 0.15.0
 

@@ -63,6 +63,9 @@ static func acabar(mat: StandardMaterial3D) -> void:
 	if mat.has_meta("real") or mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
 		return  # foto escaneada: já tem relevo, aspereza e sombreado próprios
 	var t := tipo(mat)
+	var qualidade := Qualidade.nivel()
+	if qualidade == Qualidade.BAIXA:
+		return  # gráficos BAIXA: só a luz física (relevo e verniz pesam em placa fraca)
 	if mat.normal_texture == null:
 		mat.normal_enabled = true
 		mat.normal_texture = relevo(t)
@@ -76,8 +79,8 @@ static func acabar(mat: StandardMaterial3D) -> void:
 			mat.uv1_scale = Vector3.ONE * RUIDOS[t][2]
 	match t:
 		Tipo.LISO:
-			if mat.metallic < 0.3 and mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
-				mat.clearcoat_enabled = true
+			if mat.metallic < 0.3 and mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED and qualidade == Qualidade.ALTA:
+				mat.clearcoat_enabled = true  # verniz "molhado": só na ALTA (é mais um reflexo por pixel)
 				mat.clearcoat = 0.3
 				mat.clearcoat_roughness = 0.25
 			mat.roughness = maxf(mat.roughness, 0.12)

@@ -362,7 +362,7 @@ func _terminar(venceu: bool) -> void:
 			var numero := _texto(premios, "+0", 44)
 			var total: int = par[1]
 			numero.create_tween().tween_method(func(v: float): numero.text = "+%d" % roundi(v), 0.0, float(total), 0.9)
-		_texto(coluna, "+ BAÚ %s  + %d DE EXPERIÊNCIA" % ["DE OURO" if ganho["bau"] == "ouro" else "DE DOCE", ganho["xp"]], 28)
+		coluna.add_child(Itens.fichas_premio({"bau": ganho["bau"], "xp": ganho["xp"]}, 40))
 		_texto(coluna, "%d ACERTOS EM %d PERGUNTAS" % [luta.acertos, luta.rodadas], 22)
 	else:
 		_texto(coluna, "+%d AÇÚCAR PELO ESFORÇO. ELE CONTINUA NA PRAÇA: TENTE DE NOVO!" % ganho.get("acucar", 0), 24)

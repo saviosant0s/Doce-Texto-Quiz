@@ -260,7 +260,7 @@ func _criar_ceu() -> void:
 	ceu.configurar(_ambiente, _sol, self, jogador, _camera)
 	ceu.estrela_pega.connect(func(premio: Dictionary):
 		jogador.comemorar()
-		Telas.mostrar_aviso("ESTRELA CADENTE: +%d AÇÚCAR  +%d MOEDAS" % [premio["acucar"], premio["moedas"]])
+		Telas.mostrar_premio(premio, "ESTRELA CADENTE!")
 		_atualizar_topo())
 	ceu.gota_pega.connect(func(acucar: int):
 		Telas.mostrar_aviso("GOTA DE GRANULADO: +%d AÇÚCAR" % acucar)
@@ -1314,11 +1314,10 @@ func _modo_visita() -> void:
 	dono.add_child(aceno)
 	jogador.global_position = Vector3(0, 0, 9.5)
 	jogador.olhar_para(Vector3(0, 0, 5))
-	var aviso := "BEM-VINDO À VILA DE %s!" % visita.get("n", "AMIGO")
+	Telas.mostrar_aviso.call_deferred("BEM-VINDO À VILA DE %s!" % visita.get("n", "AMIGO"))
 	if not _premio_visita.is_empty():
-		aviso += " +%d AÇÚCAR  +%d MOEDAS POR VISITAR" % [_premio_visita["acucar"], _premio_visita["moedas"]]
+		Telas.mostrar_premio.call_deferred(_premio_visita, "PRÊMIO DA VISITA!")
 		_premio_visita = {}
-	Telas.mostrar_aviso.call_deferred(aviso)
 
 
 # --- Abertura ----------------------------------------------------------------------
@@ -1608,6 +1607,7 @@ func _mostrar_premio() -> void:
 		partes.append("+%d XP" % premio["xp"])
 	if premio.has("bau"):
 		partes.append("+1 BAÚ DE DOCE")
+	Telas.mostrar_premio(premio, "CAPÍTULO COMPLETO!")
 	var falas := ["Você terminou \"%s\"! Prêmio: %s." % [Historia.CAPITULOS[int(premio["capitulo"])]["titulo"], ", ".join(partes)]]
 	if premio.has("movel"):
 		falas.append("E um móvel exclusivo para a sua casa: %s!" % Casa.MOVEIS[premio["movel"]]["nome"])
@@ -1790,7 +1790,7 @@ func agir(id: String) -> void:
 		if _brilhos_presente.has(lugar) and is_instance_valid(_brilhos_presente[lugar]):
 			_brilhos_presente[lugar].emitting = false
 		CenarioVila.estilo_desenho(_presentes[lugar])
-		Telas.mostrar_aviso("PRESENTE: +%d AÇÚCAR  +%d MOEDAS" % [premio["acucar"], premio["moedas"]])
+		Telas.mostrar_premio(premio, "PRESENTE!")
 		_depois_de_agir()
 		return
 	if not Terrenos.comprado(id):
@@ -2056,7 +2056,7 @@ func _atualizar_regioes() -> void:
 		if not premio.is_empty():
 			Audio.tocar("vitoria")
 			jogador.comemorar()
-			Telas.mostrar_aviso("VOCÊ DESCOBRIU: %s!  +%d MOEDAS  +%d AÇÚCAR" % [Regioes.regiao(aqui)["nome"], premio["moedas"], premio["acucar"]])
+			Telas.mostrar_premio(premio, "VOCÊ DESCOBRIU: %s!" % Regioes.regiao(aqui)["nome"])
 			_atualizar_topo()
 			_redesenhar_mapa()
 

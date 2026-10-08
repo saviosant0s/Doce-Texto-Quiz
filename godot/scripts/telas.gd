@@ -88,9 +88,62 @@ func _vila_do_link() -> void:
 ## 120 Hz), para o movimento não "dar degraus" em telas mais rápidas.
 func _ajustar_fisica() -> void:
 	var hz := roundi(DisplayServer.screen_get_refresh_rate())
-	if hz >= 60:
+	# só na qualidade ALTA a física acompanha telas de 90/120 Hz: num aparelho
+	# fraco, a física a 120 por segundo pesava o dobro e, quando a tela caía
+	# de quadros, ainda rodava vários passos por quadro (mais lento ainda)
+	if hz >= 60 and Qualidade.nivel() == Qualidade.ALTA:
 		Engine.physics_ticks_per_second = clampi(hz, 60, 120)
-		Engine.max_physics_steps_per_frame = 4
+	else:
+		Engine.physics_ticks_per_second = 60
+	Engine.max_physics_steps_per_frame = 2
+
+
+func _process(delta: float) -> void:
+	_vigiar_lentidao(delta)
+
+
+# --- Vigia de lentidão ------------------------------------------------------------------
+# Nas telas 3D, se o jogo ficar abaixo de FPS_MINIMO por uns segundos (depois
+# de carregar), os gráficos descem um nível sozinhos e o jogador fica sabendo.
+# Uma vez por tela; nunca nos testes nem nas capturas.
+
+const FPS_MINIMO := 33.0
+const SEGUNDOS_MEDINDO := 6.0
+var _vigia_tempo := 0.0
+var _vigia_quadros := 0
+var _vigia_cena: Node = null
+
+
+func _vigiar_lentidao(delta: float) -> void:
+	var cena := get_tree().current_scene
+	if cena == null or _trocando or Progresso.somente_memoria or DisplayServer.get_name() == "headless" \
+			or Qualidade.nivel() == Qualidade.BAIXA or not (cena is Node3D or cena.has_method("aquecer")):
+		_vigia_cena = null
+		return
+	if cena != _vigia_cena:
+		_vigia_cena = cena
+		_vigia_tempo = -4.0  # espera a tela "assentar" depois de abrir
+		_vigia_quadros = 0
+		return
+	_vigia_tempo += delta
+	if _vigia_tempo < 0.0:
+		return
+	_vigia_quadros += 1
+	if _vigia_tempo < SEGUNDOS_MEDINDO:
+		return
+	var fps := _vigia_quadros / _vigia_tempo
+	_vigia_tempo = -SEGUNDOS_MEDINDO * 3.0  # mede de novo daqui a pouco
+	_vigia_quadros = 0
+	if fps >= FPS_MINIMO:
+		return
+	var novo := Qualidade.baixar()
+	_ajustar_fisica()
+	var viewport := get_viewport()
+	viewport.msaa_3d = Qualidade.ANTISSERRILHADO[novo]
+	viewport.scaling_3d_scale = Qualidade.ESCALA_3D[novo]
+	for luz in cena.find_children("*", "DirectionalLight3D", true, false):
+		(luz as DirectionalLight3D).shadow_enabled = luz.shadow_enabled and Qualidade.sombras()
+	mostrar_aviso("O JOGO ESTAVA LENTO: GRÁFICOS EM %s (MUDE NAS CONFIGURAÇÕES)" % Qualidade.NOMES[novo])
 
 
 ## Liga/desliga o indicador de desempenho (FPS e memória; Configurações).
@@ -344,23 +397,85 @@ func _unhandled_input(evento: InputEvent) -> void:
 # --- Avisos e confirmação ----------------------------------------------------
 
 ## Mostra uma mensagem curta na parte de baixo da tela.
+## Prêmios no texto ("+20 MOEDAS", "+10 DE AÇÚCAR"...) aparecem com o ícone.
 func mostrar_aviso(texto: String) -> void:
+	# avisos ao mesmo tempo ficam empilhados (antes um ficava em cima do outro)
+	var acima := 0.0
+	for outro in _camada_avisos.get_children():
+		if outro.has_meta("aviso") and not outro.is_queued_for_deletion():
+			acima += outro.size.y + 10.0
 	var aviso := PanelContainer.new()
+	aviso.name = "Aviso"
+	aviso.set_meta("aviso", true)
 	aviso.theme_type_variation = &"Etiqueta"
-	var rotulo := Label.new()
-	rotulo.theme_type_variation = &"TituloClaro"
-	rotulo.text = texto
-	aviso.add_child(rotulo)
+	aviso.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	aviso.add_child(Itens.texto_com_icones(texto, 30))
 	_camada_avisos.add_child(aviso)
 	aviso.reset_size()
 	var tela := get_viewport().get_visible_rect().size
-	aviso.position = ((tela - aviso.size) * Vector2(0.5, 1.0) - Vector2(0, 40)).round()
+	aviso.position = ((tela - aviso.size) * Vector2(0.5, 1.0) - Vector2(0, 40 + acima)).round()
 	aviso.modulate.a = 0.0
 	var tween := create_tween()
 	tween.tween_property(aviso, "modulate:a", 1.0, 0.2)
 	tween.tween_interval(1.6)
 	tween.tween_property(aviso, "modulate:a", 0.0, 0.3)
 	tween.tween_callback(aviso.queue_free)
+
+
+## Prêmio ganho, no meio da tela: o título e as fichinhas (ícone + número)
+## entrando uma por uma com o som da moeda; depois sobe e some. `premio` =
+## {"moedas", "acucar", "xp", "bau", "estrelas"} (o que tiver).
+func mostrar_premio(premio: Dictionary, titulo := "VOCÊ GANHOU!") -> void:
+	var camada := Control.new()
+	camada.name = "Premio"
+	camada.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	camada.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_camada_avisos.add_child(camada)
+	var centro := CenterContainer.new()
+	centro.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	camada.add_child(centro)
+	var cartao := PanelContainer.new()
+	cartao.theme_type_variation = &"PainelRoxo"
+	cartao.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	centro.add_child(cartao)
+	var coluna := VBoxContainer.new()
+	coluna.add_theme_constant_override("separation", 10)
+	coluna.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cartao.add_child(coluna)
+	var rotulo := Label.new()
+	rotulo.theme_type_variation = &"TituloClaro"
+	rotulo.add_theme_font_size_override("font_size", 40)
+	rotulo.add_theme_color_override("font_color", Cores.AMARELO)
+	rotulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rotulo.text = titulo
+	coluna.add_child(rotulo)
+	var fichas := Itens.fichas_premio(premio, 44)
+	coluna.add_child(fichas)
+	cartao.modulate.a = 0.0
+	await get_tree().process_frame
+	if not is_instance_valid(cartao):
+		return
+	cartao.pivot_offset = cartao.size / 2.0
+	cartao.scale = Vector2.ONE * 0.5
+	var entrada := cartao.create_tween().set_parallel()
+	entrada.tween_property(cartao, "modulate:a", 1.0, 0.15)
+	entrada.tween_property(cartao, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	for i in fichas.get_child_count():
+		var ficha := fichas.get_child(i) as Control
+		ficha.modulate.a = 0.0
+		ficha.pivot_offset = ficha.size / 2.0
+		var pulo := ficha.create_tween()
+		pulo.tween_interval(0.2 + 0.14 * i)
+		pulo.tween_callback(func(): Audio.tocar("moeda", 1.0 + 0.12 * i, -6.0))
+		pulo.tween_property(ficha, "modulate:a", 1.0, 0.01)
+		pulo.tween_property(ficha, "scale", Vector2.ONE * 1.35, 0.1)
+		pulo.tween_property(ficha, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
+	var saida := cartao.create_tween()
+	saida.tween_interval(2.1 + 0.14 * fichas.get_child_count())
+	saida.tween_property(cartao, "position:y", cartao.position.y - 60.0, 0.35)
+	saida.parallel().tween_property(cartao, "modulate:a", 0.0, 0.35)
+	saida.tween_callback(camada.queue_free)
 
 
 ## Pergunta algo ao jogador e espera a resposta. Uso:
@@ -465,8 +580,10 @@ func _criar_aviso_girar() -> void:
 	texto.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	texto.set_anchors_preset(Control.PRESET_FULL_RECT)
 	aviso.add_child(texto)
+	# (--retrato: gravação do vídeo vertical de divulgação, ver captura.gd)
+	var retrato := "--retrato" in OS.get_cmdline_user_args()
 	var atualizar := func():
 		var tamanho := get_viewport().get_visible_rect().size
-		aviso.visible = tamanho.y > tamanho.x
+		aviso.visible = tamanho.y > tamanho.x and not retrato
 	get_viewport().size_changed.connect(atualizar)
 	atualizar.call()

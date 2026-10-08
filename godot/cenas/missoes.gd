@@ -272,11 +272,9 @@ func resgatar(periodo: String, indice: int) -> void:
 	if premio.is_empty():
 		return
 	Audio.tocar("moeda")
-	var texto := "+%d MOEDAS  +%d XP" % [premio["moedas"], premio["xp"]]
 	if premio.has("bau"):
-		texto += "  +1 " + Baus.NOMES[premio["bau"]]
 		Audio.tocar("construir")
-	Telas.mostrar_aviso(texto)
+	Telas.mostrar_premio(premio, "MISSÃO CUMPRIDA!")
 	Experiencia.anunciar()
 	_atualizar()
 
@@ -286,13 +284,9 @@ func resgatar_entrada() -> void:
 	if premio.is_empty():
 		return
 	Audio.tocar("moeda")
-	if premio.has("moedas"):
-		Telas.mostrar_aviso("DIA %d: +%d MOEDAS" % [premio["dia"], premio["moedas"]])
-	elif premio.has("acucar"):
-		Telas.mostrar_aviso("DIA %d: +%d DE AÇÚCAR" % [premio["dia"], premio["acucar"]])
-	else:
+	if premio.has("bau"):
 		Audio.tocar("construir")
-		Telas.mostrar_aviso("DIA %d: +1 %s!" % [premio["dia"], Baus.NOMES[premio["bau"]]])
+	Telas.mostrar_premio(premio, "PRÊMIO DO DIA %d!" % premio["dia"])
 	_atualizar()
 
 

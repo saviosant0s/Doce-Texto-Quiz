@@ -19,6 +19,9 @@ const SENSIBILIDADE := 0.012  # radianos por pixel arrastado
 const LIMITE_TOQUE := 14.0  # px: mexeu menos que isso, foi um toque (não um giro)
 const ATRITO := 3.0  # quanto o giro "de embalo" freia por segundo
 const ESPERA_PARA_VOLTAR := 1.5  # segundos parado até voltar para a pose inicial
+## Resolução máxima da cena 3D em relação ao tamanho lógico, por qualidade
+## (BAIXA, MÉDIA, ALTA): numa tela grande, a ALTA desenha mais nítido.
+const ESCALA_MAXIMA := [1.0, 1.5, 2.0]
 
 ## Ângulo (em radianos, no eixo Y) da pose inicial.
 @export var angulo_inicial := -0.5
@@ -43,7 +46,9 @@ func _ready() -> void:
 	_viewport = SubViewport.new()
 	_viewport.transparent_bg = true
 	_viewport.own_world_3d = true
-	_viewport.msaa_3d = Viewport.MSAA_4X
+	# serrilhado e resolução conforme a qualidade dos gráficos (antes: sempre 4x
+	# e até 3x o tamanho da tela; a batalha, com dois doces grandes, pesava)
+	_viewport.msaa_3d = Qualidade.ANTISSERRILHADO[Qualidade.nivel()]
 	add_child(_viewport)
 	_imagem = TextureRect.new()
 	_imagem.texture = _viewport.get_texture()
@@ -88,7 +93,7 @@ func remontar() -> void:
 
 ## Tamanho em pixels de verdade = tamanho na tela x escala da janela.
 func _ajustar_resolucao() -> void:
-	var escala := clampf(get_tree().root.get_final_transform().get_scale().x, 1.0, 3.0)
+	var escala := clampf(get_tree().root.get_final_transform().get_scale().x, 1.0, ESCALA_MAXIMA[Qualidade.nivel()])
 	_viewport.size = Vector2i((size * escala).round()).maxi(1)
 
 

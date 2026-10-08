@@ -43,6 +43,10 @@ func _montar(pivo: Node3D) -> void:
 		cor.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		for malha in pivo.find_children("*", "MeshInstance3D", true, false):
 			malha.material_override = cor
+	# leve: as peças de cada parte (corpo, olhos, braços, granulado...) viram um
+	# bloco só (antes cada granulado era um desenho; a batalha tem dois doces)
+	JuntarMalhas.simplificar(pivo)
+	JuntarMalhas.juntar_boneco(pivo)
 	if not _animacao.is_inside_tree():
 		add_child(_animacao)
 	_animacao.configurar(pivo)

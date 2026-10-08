@@ -1066,7 +1066,7 @@ func _resultado(ganho: Dictionary) -> void:
 	if ganho["recorde_novo"]:
 		extras.append("RECORDE NOVO: %s!" % Corrida.texto_tempo(ganho["tempo"]))
 	if ganho["bau"] != "":
-		extras.append("+ BAÚ DE DOCE")
+		premios.add_child(Itens.ficha(Itens.bau(ganho["bau"]), "+1", 42))
 	extras.append("%d DE %d PORTAIS CERTOS  ·  %d CUBOS" % [corrida.jogador()["acertos"], corrida.portais.size(), corrida.cubos])
 	_texto(coluna, "\n".join(extras), 22)
 	var botoes := HBoxContainer.new()

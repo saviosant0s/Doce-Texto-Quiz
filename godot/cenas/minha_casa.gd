@@ -399,14 +399,9 @@ func _depois_de_mudar() -> void:
 	_atualizar_acoes()
 	_atualizar_topo()
 	for ganho in Casa.premiar():
-		var texto := "SUA CASA FICOU %s!" % Casa.nome_faixa(int(ganho["faixa"]))
-		if ganho.has("moedas"):
-			texto += " +%d MOEDAS" % ganho["moedas"]
-		if ganho.has("bau"):
-			texto += " + BAÚ " + ("DE OURO" if ganho["bau"] == "ouro" else "DE DOCE")
 		Audio.tocar("vitoria")
 		_doce.comemorar()
-		Telas.mostrar_aviso(texto)
+		Telas.mostrar_premio(ganho, "SUA CASA FICOU %s!" % Casa.nome_faixa(int(ganho["faixa"])))
 		_atualizar_topo()
 
 

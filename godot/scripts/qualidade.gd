@@ -13,8 +13,31 @@ const ESCALA_3D := [0.6, 0.8, 1.0]  # tamanho do 3D em relação à tela
 const ANTISSERRILHADO := [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X]
 
 
+## Começa em MÉDIA no celular e no navegador; no computador, ALTA só com placa
+## de vídeo dedicada e mais de 8 GB de memória (placa integrada, como as Intel
+## dos notebooks, ou pouca memória: MÉDIA).
 static func padrao() -> int:
-	return MEDIA if OS.has_feature("mobile") else ALTA
+	if OS.has_feature("mobile") or OS.has_feature("web"):
+		return MEDIA
+	return MEDIA if computador_simples() else ALTA
+
+
+static func computador_simples() -> bool:
+	var placa := RenderingServer.get_video_adapter_name().to_lower()
+	if RenderingServer.get_video_adapter_type() == RenderingDevice.DEVICE_TYPE_INTEGRATED_GPU:
+		return true
+	for marca in ["intel", "llvmpipe", "swiftshader", "microsoft basic", "radeon(tm) graphics", "radeon graphics", "vega"]:
+		if marca in placa:
+			return true
+	var memoria := int(OS.get_memory_info().get("physical", 0))
+	return memoria > 0 and memoria <= 9 * 1024 * 1024 * 1024
+
+
+## A tela 3D ficou lenta: desce um nível (até BAIXA). Retorna o nível novo.
+static func baixar() -> int:
+	var novo := maxi(BAIXA, nivel() - 1)
+	escolher(novo)
+	return novo
 
 
 static func nivel() -> int:
