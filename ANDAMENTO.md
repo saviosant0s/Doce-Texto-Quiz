@@ -143,10 +143,17 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   mostram o ícone no lugar da palavra (Itens.texto_com_icones); telas de fim
   (torre, fábrica, chefão, corrida, arena) com os ícones dos baús e do XP.
   Avisos ao mesmo tempo ficam empilhados.
-- Vídeo vertical de divulgação (stories/reels, 1080x1920, ~30 s):
-  ferramentas/gerar_video_stories.sh grava as cenas jogando sozinho em pé
-  (--retrato, --write-movie) e ferramentas/montar_video_stories.py monta com
-  fundo, cartão, legendas, tela final e música. Saída em build/stories/.
+- Vídeo vertical de divulgação (stories/reels, 1080x1920, 31 s), pedido
+  "profissional, com edições massa": ferramentas/gerar_video_stories.sh grava
+  as cenas jogando sozinho em pé (--retrato, --write-movie) e
+  ferramentas/editar_video_stories.py edita quadro a quadro (Pillow + numpy):
+  gancho com as perguntas pulando e os personagens, logo caindo na virada da
+  musica_2 (64,16 s; 155 batidas por minuto, cortes na batida), transições
+  de chicote/zoom/flash, câmera lenta no portal da corrida e nos golpes,
+  pergunta do chefão saltando do cartão com CERTO!, adesivos TURBO!/POW!/
+  BOOM!, fichas de moeda/açúcar/XP e baú abrindo, tela final com BAIXE AGORA
+  pulsando; trilha com efeitos (vush, impacto, subida) a -14 LUFS.
+  --quadros=1.0,3.2 só desenha prévias. Saída em build/stories/.
 - Desempenho (docs/desempenho.md, com a pesquisa e as fontes): doces 3D das
   telas (Visor3D) juntados e com resolução/antisserrilhado pela qualidade;
   qualidade MÉDIA de início em placa integrada ou até 8 GB; vigia de

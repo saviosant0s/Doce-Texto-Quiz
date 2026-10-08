@@ -1,10 +1,12 @@
 #!/bin/bash
 # Vídeo vertical de divulgação (formato stories/reels do Instagram, 1080x1920,
-# ~30 s): grava as melhores partes do jogo jogando sozinho (o próprio Godot,
-# --write-movie a 30 quadros por segundo) e monta com legendas, faixas, a
-# tela final e a música (ferramentas/montar_video_stories.py).
+# ~31 s): grava as melhores partes do jogo jogando sozinho (o próprio Godot,
+# --write-movie a 30 quadros por segundo) e edita quadro a quadro com cortes no
+# ritmo da música, transições, câmera lenta, legendas, adesivos e a tela final
+# (ferramentas/editar_video_stories.py).
 # Saída: build/stories/doce_texto_stories.mp4 (+ capa.jpg).
-# Precisa de xvfb-run, ffmpeg e python3 com Pillow. Demora uns 10 minutos.
+# Precisa de xvfb-run, ffmpeg e python3 com Pillow, numpy e scipy. Grava em
+# uns 15 minutos (sem placa de vídeo) e edita em uns 3.
 # Uso (na pasta do repositório): ferramentas/gerar_video_stories.sh
 #     (as cenas já gravadas em build/stories/cenas ficam; apague para regravar)
 #     SO_MONTAR=1 ferramentas/gerar_video_stories.sh   (só remonta, sem gravar de novo)
@@ -51,4 +53,4 @@ if [ -z "$SO_MONTAR" ]; then
 	gravar 5_casa minha_casa --casa_cheia --duracao=3.8
 	gravar 6_final vila --abertura_final --abertura_sem_texto --duracao=5.4
 fi
-python3 ferramentas/montar_video_stories.py "$SAIDA"
+python3 ferramentas/editar_video_stories.py "$SAIDA"
