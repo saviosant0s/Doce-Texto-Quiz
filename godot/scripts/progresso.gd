@@ -44,6 +44,11 @@ var vila := {}  # terrenos e presentes da Vila dos Doces (ver Terrenos)
 
 ## Quando verdadeiro, nada é gravado em disco (usado ao gerar prints e em testes).
 var somente_memoria := false
+## Visitando a vila de um amigo: o progresso em memória é o "de mentira" da
+## visita (Amigos.aplicar_visita) e o de verdade fica guardado à parte; nada é
+## gravado em disco até voltar (terminar_visita).
+var visitando := false
+var _guardado := {}
 
 
 func _ready() -> void:
@@ -178,9 +183,16 @@ func apagar() -> void:
 
 func salvar() -> void:
 	alterado.emit()
-	if somente_memoria:
+	if somente_memoria or visitando:
 		return
-	var dados := {
+	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
+	if arquivo:
+		arquivo.store_string(JSON.stringify(_dados(), "  "))
+
+
+## Tudo o que é salvo (menos a configuração, que é do aparelho).
+func _dados() -> Dictionary:
+	return {
 		"versao": VERSAO,
 		"niveis": niveis,
 		"titulos": titulos,
@@ -198,9 +210,46 @@ func salvar() -> void:
 		"doce_match": doce_match,
 		"vila": vila,
 	}
-	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
-	if arquivo:
-		arquivo.store_string(JSON.stringify(dados, "  "))
+
+
+## Começa a visita à vila de um amigo (dados de Amigos.decodificar): guarda o
+## progresso de verdade e monta o da visita. A configuração continua a mesma.
+func comecar_visita(amigo: Dictionary) -> void:
+	if visitando:
+		terminar_visita()
+	_guardado = _dados().duplicate(true)
+	visitando = true
+	var config_atual := config
+	_zerar()
+	config = config_atual
+	Amigos.aplicar_visita(amigo)
+	alterado.emit()
+
+
+## Volta da visita: o progresso de verdade volta inteiro.
+func terminar_visita() -> void:
+	if not visitando:
+		return
+	var d := _guardado
+	niveis.clear()
+	for n in d["niveis"]:
+		niveis.append(n)
+	titulos = d["titulos"]
+	moedas = d["moedas"]
+	perguntas = d["perguntas"]
+	estatisticas = d["estatisticas"]
+	conquistas = d["conquistas"]
+	colecao = d["colecao"]
+	confeitaria = d["confeitaria"]
+	laboratorio = d["laboratorio"]
+	baus = d["baus"]
+	missoes = d["missoes"]
+	jogador = d["jogador"]
+	doce_match = d["doce_match"]
+	vila = d["vila"]
+	_guardado = {}
+	visitando = false
+	alterado.emit()
 
 
 func carregar() -> void:

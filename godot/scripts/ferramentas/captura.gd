@@ -62,6 +62,8 @@ extends Node
 ##                 (use com o --write-movie do Godot: ver ferramentas/gerar_divulgacao.sh)
 ##   --trailer_corrida=24  Corrida: corre sozinho (acerta os portais, pega as setas) por 24 s
 ##                 e fecha o jogo (para o vídeo do trailer, com o --write-movie)
+##   --amigos      Vila: abre o painel AMIGOS com 3 amigos de exemplo no ranking
+##   --visita      Vila: visita a vila de uma amiga de exemplo (com terrenos e casa grande)
 ##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
 ##   --painel_desempenho  liga o indicador de FPS e memória
 ##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
@@ -491,6 +493,31 @@ func _ready() -> void:
 			await get_tree().create_timer(4.5).timeout
 			get_tree().quit()
 			return
+	if args.has("amigos") or args.has("visita"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.jogador["nome"] = "ANA"
+		Progresso.jogador["semana"] = {"id": Amigos.semana(), "pontos": 340}
+		for exemplo in [["bia00001", "BIA", "pudim", 520, 0], ["leo00002", "LEO", "churros", 210, 0], ["duda0003", "DUDA", "sorvete", 90, 1]]:
+			var d := Amigos.meus_dados()
+			d["i"] = exemplo[0]
+			d["n"] = exemplo[1]
+			d["d"] = exemplo[2]
+			d["dn"] = 3
+			d["l"] = 9
+			d["lo"] = {"lote_1": ["moinho", 3], "lote_2": ["cofre", 2], "lote_3": ["casa", 2], "lote_4": ["jardim", 2], "lote_5": ["fonte", 1]}
+			d["m"] = {"brigadeiro": 3, "maca": 2, "cupcake": 2}
+			d["c"] = {"t": 2, "p": "creme", "pi": "madeira", "o": []}
+			d["r"] = ["ilha"]
+			d["s"] = [Amigos.semana() - exemplo[4], exemplo[3]]
+			Amigos.adicionar(Amigos.codificar(d))
+		if args.has("amigos"):
+			get_tree().current_scene.abrir_amigos()
+		else:
+			Vila.visitar(Amigos.amigo("bia00001"))
+			await get_tree().create_timer(1.5).timeout
+			while get_tree().current_scene == null or get_tree().current_scene.name != "Vila":
+				await get_tree().process_frame
+			await get_tree().create_timer(1.0).timeout
 	if args.has("conferir"):
 		await get_tree().create_timer(0.3).timeout
 		get_tree().current_scene.conferir()

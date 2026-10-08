@@ -66,6 +66,13 @@ const MORADORES := ["bala_verde", "milho_doce"]
 static var ultima_porta := ""
 ## Mostrar a abertura na próxima vez que a vila abrir (VER ABERTURA nas configurações).
 static var abrir_com_abertura := false
+## Visita à vila de um amigo (dados de Amigos.decodificar; vazio = a sua
+## vila) e o doce de quem visita ({"doce", "nivel"}). Ver visitar().
+static var visita := {}
+static var visitante := {}
+## Prêmio do dia por visitar (mostrado ao chegar).
+static var _premio_visita := {}
+const ICONE_AMIGOS := preload("res://assets/icones/pessoas.svg")
 
 var jogador: DoceAndante
 var _camera: Camera3D
@@ -192,16 +199,22 @@ func _ready() -> void:
 	for boneco in find_children("*", "DoceAndante", true, false):
 		boneco.otimizar()
 	_criar_evento()
-	_criar_chefao()
+	if visita.is_empty():
+		_criar_chefao()
 	_criar_vida()
-	_criar_itens_regioes()
+	if visita.is_empty():
+		_criar_itens_regioes()
 	_criar_camera()
 	_criar_ceu()
 	_criar_interface()
 	_criar_minimapa()
-	_criar_historia()
-	_criar_tutorial()
-	_criar_avisos()
+	if visita.is_empty():
+		_criar_historia()
+		_criar_tutorial()
+		_criar_avisos()
+		_criar_botao_amigos()
+	else:
+		_modo_visita()
 	usar_camera(int(Progresso.config.get("camera_vila_v2", Camera.PERTO)))
 
 
@@ -233,7 +246,7 @@ func aquecer() -> void:
 	set_process(true)
 	await Telas.quadro_desenhado()
 	# a abertura começa quando a cortina abre (primeira vez na vila ou pedida)
-	if abrir_com_abertura or (not Progresso.config.get("abertura_vista", false) and not Progresso.somente_memoria):
+	if visita.is_empty() and (abrir_com_abertura or (not Progresso.config.get("abertura_vista", false) and not Progresso.somente_memoria)):
 		abrir_com_abertura = false
 		ver_abertura()
 
@@ -324,8 +337,8 @@ func _mover(delta: float) -> void:
 	if fotografando != "" or camera_externa:
 		jogador.andar(Vector3.ZERO, delta)  # parado fazendo pose
 		return
-	if dialogo and dialogo.aberto:
-		jogador.andar(Vector3.ZERO, delta)  # parado enquanto conversa
+	if (dialogo and dialogo.aberto) or is_instance_valid(_painel_amigos):
+		jogador.andar(Vector3.ZERO, delta)  # parado enquanto conversa (ou digita no painel dos amigos)
 		return
 	if _entrando:
 		_andar_na_entrada(delta)
@@ -699,6 +712,8 @@ func _andar_na_entrada(delta: float) -> void:
 func _chegou_na_porta(corpo: Node3D, id: String) -> void:
 	if corpo != jogador:
 		return
+	if not visita.is_empty() and id != "casa":
+		return  # na vila do amigo, só dá para entrar na casa dele (só olhando)
 	_porta_atual = id
 	var dados: Dictionary = PREDIOS.filter(func(p): return p["id"] == id)[0]
 	_botao_entrar.text = dados["acao"]
@@ -735,6 +750,12 @@ func ao_voltar() -> void:
 		if is_instance_valid(_camada_foto):
 			sair_da_foto()
 		return  # (a câmera ainda está indo tirar a foto)
+	if is_instance_valid(_painel_amigos):
+		_painel_amigos.fechar()
+		return
+	if not visita.is_empty():
+		voltar_da_visita()
+		return
 	Telas.ir_para("inicio")
 
 
@@ -893,6 +914,9 @@ func _criar_jogador() -> void:
 	var id := Colecao.companheiro()
 	jogador.id = id if not id.is_empty() else "brigadeiro"
 	jogador.nivel = Companheiros.nivel(jogador.id)
+	if not visita.is_empty() and not visitante.is_empty():
+		jogador.id = visitante["doce"]  # quem visita anda com o próprio doce
+		jogador.nivel = visitante["nivel"]
 	add_child(jogador)
 	if _portas.has(ultima_porta):
 		var porta: Vector3 = _portas[ultima_porta]["porta"]
@@ -1177,6 +1201,124 @@ func _criar_evento() -> void:
 	Telas.dica_primeira_vez("evento_" + Eventos.edicao(), Eventos.dados()["nome"],
 		"%s Junte %s jogando e pegando as que estão espalhadas pela vila (8 por dia). Toque em EVENTO no topo para ver os prêmios: tem móvel e doce exclusivos!" % [
 			Eventos.dados()["texto"], Eventos.dados()["ficha"]])
+
+
+# --- Amigos e visitas (ver Amigos) -------------------------------------------------
+
+var _painel_amigos: PainelAmigos
+
+
+## Botão AMIGOS embaixo do minimapa (código da vila, amigos e ranking).
+func _criar_botao_amigos() -> void:
+	var botao := Button.new()
+	botao.name = "Amigos"
+	botao.text = "AMIGOS"
+	botao.icon = ICONE_AMIGOS
+	botao.expand_icon = true
+	botao.add_theme_constant_override("icon_max_width", 26)
+	botao.add_theme_font_size_override("font_size", 22)
+	botao.theme_type_variation = &"BotaoRoxo"
+	botao.focus_mode = Control.FOCUS_NONE
+	botao.tooltip_text = "Código da vila, amigos e ranking da semana"
+	botao.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	botao.offset_left = -172
+	botao.offset_right = -18
+	botao.offset_top = 248
+	botao.offset_bottom = 300
+	botao.pressed.connect(abrir_amigos)
+	_interface.add_child(botao)
+
+
+func abrir_amigos() -> void:
+	if is_instance_valid(_painel_amigos):
+		return
+	_painel_amigos = PainelAmigos.new()
+	_interface.add_child(_painel_amigos)
+
+
+## Vai visitar a vila do amigo: o progresso de verdade fica guardado
+## (Progresso.comecar_visita) e a vila abre montada com os dados dele.
+static func visitar(amigo: Dictionary) -> void:
+	var meu := Colecao.companheiro()
+	if meu == "" or not Colecao.tem(meu):
+		meu = "brigadeiro"
+	visitante = {"doce": meu, "nivel": Companheiros.nivel(meu)}
+	_premio_visita = Amigos.premiar_visita()
+	ultima_porta = ""
+	Progresso.comecar_visita(amigo)
+	visita = amigo
+	Telas.ir_para("vila")
+
+
+func voltar_da_visita() -> void:
+	Progresso.terminar_visita()
+	visita = {}
+	ultima_porta = ""
+	Telas.ir_para("vila")
+
+
+## Na vila do amigo: o topo mostra de quem é a vila e o botão de voltar; o
+## doce dele espera na praça (acenando) e não dá para mexer em nada.
+func _modo_visita() -> void:
+	for nome_no in ["Casa", "Progresso", "BotaoEvento", "Saldos", "Foto"]:
+		var no := _interface.find_child(nome_no, true, false) as Control
+		if no:
+			no.visible = false
+	var topo := _interface.find_child("Casa", true, false).get_parent() as HBoxContainer
+	var voltar := Button.new()
+	voltar.name = "VoltarDaVisita"
+	voltar.text = "VOLTAR PARA A MINHA VILA"
+	voltar.theme_type_variation = &"BotaoSecundario"
+	voltar.custom_minimum_size = Vector2(0, 54)
+	voltar.add_theme_font_size_override("font_size", 22)
+	voltar.focus_mode = Control.FOCUS_NONE
+	voltar.pressed.connect(voltar_da_visita)
+	topo.add_child(voltar)
+	topo.move_child(voltar, 0)
+	var placa := PanelContainer.new()
+	placa.name = "PlacaVisita"
+	placa.theme_type_variation = &"EtiquetaAmarela"
+	placa.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var texto := Label.new()
+	texto.theme_type_variation = &"Titulo"
+	texto.add_theme_font_size_override("font_size", 28)
+	texto.text = "VILA DE %s · NÍVEL %d" % [visita.get("n", "AMIGO"), int(visita.get("l", 1))]
+	placa.add_child(texto)
+	topo.add_child(placa)
+	topo.move_child(placa, 1)
+	# o doce do amigo na praça, com o nome em cima
+	var dono := DoceAndante.new()
+	dono.name = "DonoDaVila"
+	dono.id = Colecao.companheiro()
+	dono.nivel = Companheiros.nivel(dono.id)
+	dono.sem_colisao = true
+	add_child(dono)
+	dono.global_position = Vector3(0, 0, 5.2)
+	dono.olhar_para(Vector3(0, 0, 20))
+	dono.otimizar()
+	var nome_dono := Label3D.new()
+	nome_dono.text = str(visita.get("n", "AMIGO"))
+	nome_dono.font = CenarioVila.FONTE
+	nome_dono.font_size = 64
+	nome_dono.pixel_size = 0.006
+	nome_dono.outline_size = 16
+	nome_dono.modulate = Color("#FFD23F")
+	nome_dono.outline_modulate = Color("#2E1D4A")
+	nome_dono.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	nome_dono.position = Vector3(0, 2.3, 0)
+	dono.add_child(nome_dono)
+	var aceno := Timer.new()
+	aceno.wait_time = 4.0
+	aceno.autostart = true
+	aceno.timeout.connect(dono.comemorar)
+	dono.add_child(aceno)
+	jogador.global_position = Vector3(0, 0, 9.5)
+	jogador.olhar_para(Vector3(0, 0, 5))
+	var aviso := "BEM-VINDO À VILA DE %s!" % visita.get("n", "AMIGO")
+	if not _premio_visita.is_empty():
+		aviso += " +%d AÇÚCAR  +%d MOEDAS POR VISITAR" % [_premio_visita["acucar"], _premio_visita["moedas"]]
+		_premio_visita = {}
+	Telas.mostrar_aviso.call_deferred(aviso)
 
 
 # --- Abertura ----------------------------------------------------------------------
@@ -1577,7 +1719,7 @@ func _pintar_botao_acao() -> void:
 
 
 func _chegou_no_ponto(corpo: Node3D, id: String) -> void:
-	if corpo != jogador:
+	if corpo != jogador or not visita.is_empty():
 		return
 	if id == "chefao" and _ponto_atual != "" and _ponto_atual != "chefao":
 		return  # a área do chefão cobre a praça: o ponto mais perto (morador...) vale mais

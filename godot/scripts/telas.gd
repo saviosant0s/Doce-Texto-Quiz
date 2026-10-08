@@ -64,6 +64,24 @@ func _ready() -> void:
 	_tirar_dicas.call_deferred()
 	(func(): mostrar_desempenho(bool(Progresso.config.get("desempenho", false)))).call_deferred()
 	_baixar_eventos.call_deferred()
+	_vila_do_link.call_deferred()
+
+
+## Jogo no navegador aberto pelo link de um amigo (...?vila=CÓDIGO, ver
+## Amigos.mensagem): adiciona o amigo e oferece visitar a vila dele.
+func _vila_do_link() -> void:
+	if not OS.has_feature("web"):
+		return
+	var codigo = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('vila') || ''")
+	if not codigo is String or codigo == "":
+		return
+	var r := Amigos.adicionar(codigo)
+	if not r.has("amigo"):
+		mostrar_aviso(r["texto"])
+		return
+	await get_tree().create_timer(1.5).timeout
+	if await confirmar("VISITAR A VILA DE %s?" % r["amigo"]["n"], "Você recebeu o código da vila de um amigo. Ele já está na sua lista de AMIGOS (na vila).", "VISITAR", "DEPOIS"):
+		Vila.visitar(r["amigo"])
 
 
 ## A física (o andar dos doces) roda no ritmo da tela do aparelho (60, 90 ou

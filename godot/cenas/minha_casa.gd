@@ -54,10 +54,23 @@ func _ready() -> void:
 	_ajustar_camera()
 	_criar_interface()
 	usar_modo(false)
+	if Progresso.visitando:
+		_modo_visita()
+		return
 	Telas.dica_primeira_vez("minha_casa", "MINHA CASA",
 		"Compre móveis, papel de parede e piso na LOJA. Depois toque em DECORAR e escolha onde pôr cada coisa. Quanto mais bonita, mais CONFORTO, e cada nível de conforto dá prêmio!")
 	for id in novos:
 		Telas.mostrar_aviso("MÓVEL ESPECIAL NOVO: " + Casa.MOVEIS[id]["nome"] + "!")
+
+
+## Casa de um amigo (visita): só para olhar, sem loja, decorar nem aumentar.
+func _modo_visita() -> void:
+	_barra_ver.visible = false
+	_rotulo_moedas.get_parent().get_parent().visible = false
+	var titulo := find_child("TituloCasa", true, false) as Label
+	if titulo:
+		titulo.text = "CASA DE %s" % Vila.visita.get("n", "AMIGO")
+	_dica.text = "VOCÊ ESTÁ VISITANDO: SÓ DÁ PARA OLHAR"
 
 
 func ao_voltar() -> void:
@@ -436,6 +449,7 @@ func _criar_interface() -> void:
 	titulo.theme_type_variation = &"Titulo"
 	titulo.add_theme_font_size_override("font_size", 36)
 	titulo.text = "MINHA CASA"
+	titulo.name = "TituloCasa"
 	etiqueta.add_child(titulo)
 	topo.add_child(etiqueta)
 	var conforto := PanelContainer.new()

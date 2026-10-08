@@ -122,6 +122,21 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+### Rodada de 08/10/2026 — no código, falta publicar (0.16.0)
+
+- VILA DOS AMIGOS E RANKING DA SEMANA, sem servidor (scripts/amigos.gd,
+  componentes/vila/painel_amigos.gd): botão AMIGOS na vila (embaixo do
+  minimapa). Cada jogador tem um CÓDIGO DA VILA (COPIAR ou ENVIAR PELO
+  WHATSAPP; o link do navegador ?vila=CÓDIGO já adiciona e oferece visitar).
+  Colar o código de um amigo põe ele no RANKING DA SEMANA (pontos por jogar,
+  zeram toda segunda) e permite VISITAR a vila dele (só olhando: o seu
+  progresso fica guardado em Progresso.comecar_visita/terminar_visita; dá
+  para entrar na casa dele). Visitar dá +10 açúcar e +5 moedas por dia.
+  Ranking online de verdade precisaria de um servidor (conta do Sávio).
+- APK menor: texturas reais limitadas a 512 px (as de aspereza, 256).
+- Configurações: coluna do som com rolagem e textos que quebram a linha
+  (a tela não estoura mais em 16:9).
+
 ### Rodada de 29/09/2026 (depois de jogar a 0.14.0 no celular) — publicado na 0.15.0
 
 - CHEFÃO NA VILA (scripts/chefao.gd, componentes/vila/chefao_vila.gd e

@@ -174,6 +174,13 @@ De graça. Prêmio pelo lugar: 1º 40 moedas + 30 açúcar; 2º 25 + 20; 3º 15 
 velocidade, até 10%). Ganhar com tempo recorde: baú de doce. +15 XP. Seu
 doce: +1,5% de velocidade por nível. Rivais mais fortes a cada vitória (até 5).
 
+## Amigos e ranking da semana (desde a 0.16.0)
+
+Visitar a vila de um amigo: +10 açúcar e +5 moedas, uma vez por dia. Pontos
+da semana (só para o ranking, não viram moedas): acerto no quiz 10, partida
+5, estrela 25, fase do laboratório 30, cliente 3, Doce Match 15, andar da
+torre 2, pedido da fábrica 8, corrida 20, chefão 60.
+
 ## Regiões do mapa (desde a 0.15.0)
 
 | Região | Portão abre com | Descobrir | Coisinhas por dia |

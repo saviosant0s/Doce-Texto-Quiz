@@ -47,6 +47,7 @@ func _ready() -> void:
 	_testar_torre()
 	_testar_fabrica()
 	_testar_corrida()
+	_testar_amigos()
 	await _testar_fluxo_completo()
 	_fim()
 
@@ -441,6 +442,7 @@ func _testar_fluxo_completo() -> void:
 	await _testar_tela_fabrica()
 	await _testar_tela_corrida()
 	await _testar_tela_abertura()
+	await _testar_tela_amigos()
 	await _testar_tela_colecao()
 	await _testar_tela_confeitaria()
 	await _testar_tela_doce_match()
@@ -3176,3 +3178,125 @@ func _testar_tela_abertura() -> void:
 	await get_tree().create_timer(0.7).timeout
 	verificar(not is_instance_valid(abertura) and vila._interface.visible and not vila.camera_externa
 		and Progresso.config.get("abertura_vista", false), "tocar devolve a vila (e a abertura fica marcada como vista)")
+
+
+# --- Amigos e ranking da semana ----------------------------------------------------------
+
+## Um amigo de mentira (a partir dos seus dados, com outro id e outra vila).
+func _amigo_de_teste(id: String, nome: String, pontos: int) -> Dictionary:
+	var d := Amigos.meus_dados()
+	d["i"] = id
+	d["n"] = nome
+	d["d"] = "pudim"
+	d["l"] = 7
+	d["lo"] = {"lote_1": ["moinho", 2], "lote_2": ["casa", 1]}
+	d["c"] = {"t": 1, "p": "creme", "pi": "madeira", "o": [["poltrona_pudim", 2, 2, 90]]}
+	d["s"] = [Amigos.semana(), pontos]
+	return d
+
+
+func _testar_amigos() -> void:
+	_secao("amigos e ranking da semana")
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	var agora := Time.get_unix_time_from_datetime_string("2026-10-08T12:00:00")
+	Terrenos.agora_fixo = agora
+	verificar(Amigos.texto_semana() == "05/10 a 11/10", "a semana vai de segunda a domingo (%s)" % Amigos.texto_semana())
+	var fuso := int(Time.get_time_zone_from_system().get("bias", 0)) * 60.0
+	verificar(Amigos.semana(Time.get_unix_time_from_datetime_string("2026-10-11T23:00:00") - fuso) == Amigos.semana()
+		and Amigos.semana(Time.get_unix_time_from_datetime_string("2026-10-12T01:00:00") - fuso) == Amigos.semana() + 1,
+		"a semana vira na segunda-feira")
+	Progresso.jogador.erase("semana")
+	Missoes.registrar("acertos", 3)
+	Missoes.registrar("corrida", 1)
+	verificar(Amigos.pontos_da_semana() == 3 * Amigos.PONTOS["acertos"] + Amigos.PONTOS["corrida"], "jogar dá pontos da semana")
+	Progresso.jogador["semana"] = {"id": Amigos.semana() - 1, "pontos": 999}
+	verificar(Amigos.pontos_da_semana() == 0, "na semana nova os pontos zeram")
+	Progresso.jogador["semana"] = {"id": Amigos.semana(), "pontos": 120}
+	verificar(Amigos.escolher_nome("  maria! clara 123456789 ") == "MARIA CLARA 12" and Amigos.nome() == "MARIA CLARA 12",
+		"o nome fica em maiúsculas, sem símbolos e com até 14 letras")
+	var codigo := Amigos.meu_codigo()
+	var lido := Amigos.decodificar("olha meu código: " + codigo + " valeu!")
+	verificar(codigo.begins_with(Amigos.PREFIXO) and codigo.length() < 700 and lido["i"] == Amigos.meu_id()
+		and lido["n"] == "MARIA CLARA 12" and int(lido["s"][1]) == 120, "o código guarda a vila e dá para ler de volta (%d letras)" % codigo.length())
+	var mexido := codigo.substr(0, 20) + ("A" if codigo[20] != "A" else "B") + codigo.substr(21)
+	verificar(Amigos.decodificar(mexido).is_empty() and Amigos.decodificar("DTQ1-abc").is_empty() and Amigos.decodificar("oi").is_empty(),
+		"código mexido, cortado ou errado não vale")
+	Progresso.jogador["amigos"] = []
+	verificar(not Amigos.adicionar(codigo)["ok"], "não dá para adicionar o próprio código")
+	var bia := Amigos.codificar(_amigo_de_teste("bia00001", "BIA", 450))
+	var r := Amigos.adicionar(bia)
+	verificar(r["ok"] and Amigos.lista().size() == 1 and Amigos.amigo("bia00001")["n"] == "BIA", "colar o código adiciona o amigo")
+	var bia_nova := _amigo_de_teste("bia00001", "BIA", 610)
+	Amigos.adicionar(Amigos.codificar(bia_nova))
+	verificar(Amigos.lista().size() == 1 and Amigos.pontos_amigo(Amigos.amigo("bia00001")) == 610, "o código novo do mesmo amigo atualiza (não repete)")
+	var velho := _amigo_de_teste("leo00002", "LEO", 900)
+	velho["s"] = [Amigos.semana() - 1, 900]
+	Amigos.adicionar(Amigos.codificar(velho))
+	var ranking := Amigos.ranking()
+	verificar(ranking.size() == 3 and ranking[0]["nome"] == "BIA" and ranking[1]["eu"] and ranking[2]["nome"] == "LEO"
+		and not ranking[2]["atual"], "ranking da semana: código de outra semana vale 0")
+	# visita: o progresso de verdade fica guardado e volta inteiro
+	var moedas := Progresso.moedas
+	var lotes: Dictionary = Progresso.vila.get("lotes", {}).duplicate(true)
+	Progresso.comecar_visita(Amigos.amigo("bia00001"))
+	verificar(Progresso.visitando and Terrenos.construcao("lote_1") == "moinho" and Terrenos.nivel("lote_1") == 2
+		and Casa.tamanho_casa() == 1 and Colecao.companheiro() == "pudim" and Experiencia.nivel() == 7,
+		"na visita a vila é montada com os dados do amigo")
+	Progresso.moedas += 5000
+	Progresso.salvar()
+	Progresso.terminar_visita()
+	verificar(not Progresso.visitando and Progresso.moedas == moedas and Progresso.vila.get("lotes", {}) == lotes
+		and Amigos.lista().size() == 2, "voltando da visita, tudo volta como era")
+	var acucar := Confeitaria.acucar()
+	var premio := Amigos.premiar_visita()
+	verificar(not premio.is_empty() and Confeitaria.acucar() == acucar + int(Amigos.PREMIO_VISITA["acucar"])
+		and Amigos.premiar_visita().is_empty(), "visitar dá um prêmio por dia")
+	Terrenos.agora_fixo = -1.0
+	Progresso.jogador = jogador_antes
+
+
+func _testar_tela_amigos() -> void:
+	_secao("vila dos amigos")
+	var jogador_antes: Dictionary = Progresso.jogador.duplicate(true)
+	Progresso.jogador["amigos"] = []
+	Progresso.jogador["nome"] = "ANA"
+	Vila.ultima_porta = ""
+	Telas.ir_para("vila")
+	verificar(await _esperar_tela("Vila", 10.0), "abre a vila")
+	var vila: Vila = get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
+	var botao := vila.find_child("Amigos", true, false) as Button
+	verificar(botao != null and botao.is_visible_in_tree(), "botão AMIGOS na vila")
+	botao.pressed.emit()
+	await get_tree().process_frame
+	var painel := vila.find_child("PainelAmigos", true, false) as PainelAmigos
+	verificar(painel != null and painel.find_child("Codigo", true, false).text.begins_with(Amigos.PREFIXO), "o painel mostra o código da vila")
+	var colar := painel.find_child("CodigoAmigo", true, false) as LineEdit
+	colar.text = Amigos.codificar(_amigo_de_teste("bia00001", "BIA", 450))
+	painel.find_child("Adicionar", true, false).pressed.emit()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	verificar(Amigos.lista().size() == 1 and painel.find_child("Visitar_bia00001", true, false) is Button, "colar o código põe o amigo no ranking")
+	var moedas := Progresso.moedas
+	var lotes: Dictionary = Progresso.vila.get("lotes", {}).duplicate(true)
+	var meu_doce := Colecao.companheiro() if Colecao.companheiro() != "" else "brigadeiro"
+	painel.find_child("Visitar_bia00001", true, false).pressed.emit()
+	await get_tree().create_timer(0.5).timeout
+	verificar(await _esperar_tela("Vila", 10.0), "VISITAR abre a vila do amigo")
+	await get_tree().create_timer(0.5).timeout
+	vila = get_tree().current_scene
+	var dono := vila.find_child("DonoDaVila", true, false) as DoceAndante
+	verificar(Progresso.visitando and dono != null and dono.id == "pudim" and vila.jogador.id == meu_doce,
+		"na visita: o doce do amigo na praça e você com o seu doce")
+	verificar(vila.find_child("PlacaVisita", true, false) != null and not vila.find_child("Saldos", true, false).visible
+		and vila.find_child("Amigos", true, false) == null, "topo da visita: de quem é a vila e VOLTAR (sem saldos)")
+	verificar(Terrenos.construcao("lote_1") == "moinho", "os terrenos são os do amigo")
+	vila._chegou_na_porta(vila.jogador, "escola")
+	verificar(not vila._botao_entrar.visible, "na visita não dá para entrar nos prédios (só na casa)")
+	vila.find_child("VoltarDaVisita", true, false).pressed.emit()
+	await get_tree().create_timer(0.5).timeout
+	verificar(await _esperar_tela("Vila", 10.0), "VOLTAR leva para a sua vila")
+	await get_tree().create_timer(0.3).timeout
+	verificar(not Progresso.visitando and Vila.visita.is_empty() and Progresso.vila.get("lotes", {}) == lotes
+		and Progresso.moedas == moedas + int(Amigos.PREMIO_VISITA["moedas"]), "de volta: o seu progresso inteiro (+ o prêmio da visita)")
+	Progresso.jogador = jogador_antes

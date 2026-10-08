@@ -16,6 +16,11 @@ func _ready() -> void:
 	_criar_chave_dia()
 	_criar_chave_desempenho()
 	_criar_botao_abertura()
+	# os textos das chaves quebram a linha (inteiros, deixavam a tela mais
+	# larga que o celular: a versão e as bordas ficavam cortadas)
+	for chave in %Linhas.find_children("*", "CheckButton", true, false):
+		chave.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		chave.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_atualizar_resumo()
 	Animacoes.entrar(%Coluna, Vector2(0, 30))
 
