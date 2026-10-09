@@ -154,6 +154,23 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   BOOM!, fichas de moeda/açúcar/XP e baú abrindo, tela final com BAIXE AGORA
   pulsando; trilha com efeitos (vush, impacto, subida) a -14 LUFS.
   --quadros=1.0,3.2 só desenha prévias. Saída em build/stories/.
+  Versão 2 (~43 s, pedido depois de ver a 1ª: "faltou a paisagem, a batalha
+  ficou simples, faltou o Doce Match e a fábrica"): tomadas de paisagem com
+  câmera de cinema (captura --video_voo: ponte da ilha no fim de tarde com o
+  doce andando, vale do sorvete, chuva de granulado perto da casa, vila à
+  noite), Doce Match e Fábrica jogando sozinhos (--video_match, --video_fabrica,
+  gravados em 1620x1620 e recortados), a batalha nova com SUPER e nocaute;
+  as gravações agora usam --animacoes (sem placa de vídeo os doces ficavam
+  parados: não respiravam, piscavam nem acenavam).
+- BATALHA com golpe animado de verdade (cenas/batalha.gd, AnimacaoDoce):
+  o atacante se encolhe e recua, dá o bote em arco, o mundo para um instante
+  no contato (raios, anel, palavra de quadrinho POW!/BAM!/TUM!, faíscas,
+  tremida), o alvo pisca branco, é empurrado achatado e de olhos apertados e
+  volta balançando; o número do dano pula. SUPER: a arena escurece, raios
+  dourados giram atrás do doce, ele brilha, gira no ar com rastro e bate com
+  mais força. NOCAUTE: sai voando girando e o próximo do time cai do alto.
+- Prêmios ao mesmo tempo (ex.: visita + missão) aparecem em fila, um cartão de
+  cada vez (antes ficavam um em cima do outro).
 - Desempenho (docs/desempenho.md, com a pesquisa e as fontes): doces 3D das
   telas (Visor3D) juntados e com resolução/antisserrilhado pela qualidade;
   qualidade MÉDIA de início em placa integrada ou até 8 GB; vigia de

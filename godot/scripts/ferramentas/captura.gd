@@ -69,7 +69,14 @@ extends Node
 ##   --sem_musica  sem a música de fundo (o vídeo tem a trilha dele)
 ##   --duracao=6   grava 6 s e fecha o jogo (em vez de tirar o print)
 ##   --video_vila  Vila sem interface, câmera descendo do alto até a praça
-##   --video_batalha / --video_chefao  luta jogando sozinha (responde certo depois de "ler")
+##   --video_voo=ilha  Vila sem interface: tomada de paisagem (ver VOOS), com o doce
+##                 andando em algumas; --voo_p=0.5 para a câmera no meio (para prints)
+##   --animacoes   (nos vídeos) os doces respiram, piscam e acenam mesmo sem placa de vídeo
+##   --video_match=3  Doce Match: joga sozinho o nível 3 (com peças especiais e a bomba)
+##   --video_fabrica  Fábrica de Chocolate: joga sozinha (pega os chocolates do pedido)
+##   --video_batalha / --video_chefao  luta jogando sozinha (responde certo depois de "ler"
+##                 por --leitura=1.4 s); --batalha_super: o 2º acerto é o SUPER e nocauteia;
+##                 --desafiante=1 luta contra esse desafiante (use com --arena_vencidos)
 ##   --corrida_inicio=120  com o --trailer_corrida, já larga a 120 m
 ##   --abertura_sem_texto  a abertura sem legendas, faixas nem logo (só a câmera)
 ##   --premio      mostra o cartão de prêmio (ícones) e um aviso com prêmio
@@ -81,6 +88,21 @@ extends Node
 
 ## Segundos já gravados nos modos de vídeo que jogam sozinhos (ver --duracao).
 var _tempo_video := 0.0
+
+## Tomadas de paisagem do vídeo de divulgação (--video_voo=nome): a câmera vai
+## de "de" a "ate" ([posição, para onde olha]) ou dá uma volta ("orbita": centro,
+## raio, altura, graus de, graus até); "doce": o doce anda (de onde, direção).
+## A hora e a chuva vêm de --hora e --chuva.
+const VOOS := {
+	"ilha": {"de": [Vector3(-38.5, 2.4, 4.6), Vector3(-58, 1.2, 1.2)], "ate": [Vector3(-47.5, 3.0, 5.2), Vector3(-72, 3.0, -0.5)],
+		"doce": [Vector3(-42.5, 0, 2.0), Vector3(-0.62, 0, 0.0)]},
+	"montanha": {"de": [Vector3(46.0, 2.4, -3.0), Vector3(78, 5.0, 12.0)], "ate": [Vector3(52.0, 4.0, 0.5), Vector3(80, 7.0, 14.0)],
+		"doce": [Vector3(50.0, 0, 0.0), Vector3(0.55, 0, 0.25)]},
+	"lago": {"de": [Vector3(-18.0, 2.2, 15.8), Vector3(-30.5, 0.8, 10.4)], "ate": [Vector3(-21.5, 4.2, 18.0), Vector3(-33.0, 1.0, 8.5)]},
+	"noite": {"orbita": [Vector3(0, 1.5, 3.0), 30.0, 13.0, 55.0, 15.0]},
+	"chuva": {"de": [Vector3(5.6, 1.8, 10.6), Vector3(-0.6, 2.0, 21.0)], "ate": [Vector3(4.4, 2.6, 12.0), Vector3(-0.6, 2.4, 21.0)],
+		"doce": [Vector3(0.6, 0, 20.0), Vector3(0.12, 0, -0.34)]},
+}
 
 
 func _ready() -> void:
@@ -553,12 +575,86 @@ func _ready() -> void:
 		var voo := create_tween()
 		voo.tween_method(func(p: float): cam.global_transform = de.interpolate_with(ate, p), 0.0, 1.0, segundos) \
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if args.has("video_voo"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var vila_voo: Vila = get_tree().current_scene
+		vila_voo.camera_externa = true
+		vila_voo._interface.visible = false
+		Telas._camada_avisos.visible = false  # (o aviso do chefão na praça)
+		var voo: Dictionary = VOOS[args["video_voo"]]
+		var segundos := float(args.get("duracao", "4"))
+		if voo.has("doce"):
+			vila_voo.set_physics_process(false)
+			vila_voo.jogador.global_position = voo["doce"][0]
+		if args.has("voo_p"):
+			var p_fixo := float(args["voo_p"])
+			if voo.has("doce"):
+				vila_voo.jogador.global_position += voo["doce"][1].normalized() * DoceAndante.VELOCIDADE * 0.7 * p_fixo * segundos
+				vila_voo.jogador.olhar_para(vila_voo.jogador.global_position + voo["doce"][1])
+			_posicionar_voo(vila_voo._camera, voo, p_fixo)
+		else:
+			while _tempo_video < segundos:
+				_posicionar_voo(vila_voo._camera, voo, _tempo_video / segundos)
+				if voo.has("doce"):
+					vila_voo.jogador.andar(voo["doce"][1], get_process_delta_time())
+				await get_tree().process_frame
+				_tempo_video += get_process_delta_time()
+	if args.has("video_match"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.confeitaria["acucar"] = 200
+		var tela_match: Node = get_tree().current_scene
+		tela_match.comecar_nivel(int(args["video_match"]))
+		# peças especiais e a bomba no tabuleiro: explosões logo nas primeiras jogadas
+		for c in [[2, 3, DoceMatch.Especial.LINHA], [5, 2, DoceMatch.Especial.COLUNA], [3, 6, DoceMatch.Especial.EMBRULHO]]:
+			tela_match.jogo.especial[c[1]][c[0]] = c[2]
+		tela_match.jogo.grade[5][6] = DoceMatch.BOMBA
+		tela_match.jogo.especial[5][6] = DoceMatch.Especial.BOMBA
+		tela_match._criar_pecas()
+		var pensa := 0.0
+		while _tempo_video < float(args.get("duracao", "8")):
+			await get_tree().process_frame
+			_tempo_video += get_process_delta_time()
+			if tela_match._ocupado or tela_match.jogo.acabou():
+				pensa = 0.0
+				continue
+			pensa += get_process_delta_time()
+			if pensa > 0.45:
+				pensa = 0.0
+				var jogada := _melhor_jogada(tela_match.jogo)
+				if not jogada.is_empty():
+					tela_match.jogar(jogada[0], jogada[1])
+	if args.has("video_fabrica"):
+		await get_tree().create_timer(0.3).timeout
+		Progresso.confeitaria["acucar"] = 200
+		var tela_fabrica: Node = get_tree().current_scene
+		tela_fabrica.comecar()
+		var mao := 0.0
+		while _tempo_video < float(args.get("duracao", "8")):
+			await get_tree().process_frame
+			_tempo_video += get_process_delta_time()
+			mao += get_process_delta_time()
+			var f: Fabrica = tela_fabrica.jogo
+			if mao < 0.45 or f.acabou or f.pergunta_pendente:
+				if f.pergunta_pendente and is_instance_valid(tela_fabrica._painel) and mao > 1.2:
+					tela_fabrica._resultado_pergunta(true)
+					mao = 0.0
+				continue
+			for item in f.esteira:
+				# pega no meio da esteira (assim ela fica cheia de chocolates passando)
+				if not item["defeito"] and int(f.pedido.get(item["tipo"], 0)) > 0 and item["x"] > 0.45 and item["x"] < 0.9:
+					tela_fabrica.tocar(item["id"])
+					mao = 0.0
+					break
 	if args.has("video_batalha") or args.has("video_chefao"):
 		await get_tree().create_timer(0.3).timeout
 		var cena: Node = get_tree().current_scene
 		var luta_no: Node = cena
 		if args.has("video_batalha"):
-			cena.lutar(0)
+			cena.lutar(int(args.get("desafiante", "0")))
+			if args.has("batalha_super"):
+				cena.luta.sequencia = Batalha.SUPER_COM - 2
+				cena.luta.deles()["vida"] = int(cena.luta.meu()["ataque"] * 2.6)
 		else:
 			cena.enfrentar_chefao()
 			luta_no = cena._luta_chefao
@@ -570,7 +666,7 @@ func _ready() -> void:
 				break
 			if luta_no.respondendo:
 				lendo += get_process_delta_time()
-				if lendo > 1.4:
+				if lendo > float(args.get("leitura", "1.4")):
 					luta_no.responder(int(luta_no.luta.pergunta["resposta"]))
 					lendo = 0.0
 	if args.has("abertura_sem_texto"):
@@ -696,6 +792,40 @@ func _ready() -> void:
 				print("  ", c, ": ", somas[c])
 	get_viewport().get_texture().get_image().save_png(args.get("saida", "user://captura.png"))
 	get_tree().quit()
+
+
+## Doce Match jogando sozinho: primeiro as jogadas com peça especial (explodem
+## mais), senão qualquer jogada que forme fila.
+func _melhor_jogada(jogo: DoceMatch) -> Array:
+	var possivel := jogo.jogada_possivel()
+	if possivel.is_empty() or jogo.especial_em(possivel[0]) != 0:
+		return possivel
+	for y in DoceMatch.ALTURA:
+		for x in DoceMatch.LARGURA:
+			var a := Vector2i(x, y)
+			if jogo.especial_em(a) == 0:
+				continue
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var teste := jogo.copia()
+				if teste.dentro(a + d) and teste.trocar(a, a + d):
+					return [a, a + d]
+	return possivel
+
+
+## Câmera da tomada de paisagem no ponto p (0 a 1) do caminho, com início e fim suaves.
+func _posicionar_voo(camera: Camera3D, voo: Dictionary, p: float) -> void:
+	var k := smoothstep(0.0, 1.0, clampf(p, 0.0, 1.0))
+	var pos: Vector3
+	var olhar: Vector3
+	if voo.has("orbita"):
+		var o: Array = voo["orbita"]
+		var ang := deg_to_rad(lerpf(o[3], o[4], k))
+		pos = o[0] + Vector3(sin(ang) * o[1], o[2], cos(ang) * o[1])
+		olhar = o[0]
+	else:
+		pos = voo["de"][0].lerp(voo["ate"][0], k)
+		olhar = voo["de"][1].lerp(voo["ate"][1], k)
+	camera.global_transform = Transform3D(Basis.looking_at(olhar - pos), pos)
 
 
 func _simular_partida(nivel: int, acertos: int) -> void:

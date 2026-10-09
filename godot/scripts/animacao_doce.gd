@@ -36,6 +36,7 @@ var _passo := 0.0
 var _proxima_piscada := randf_range(0.8, 2.0)
 var _acenando_ate := 0.0
 var _proximo_aceno := randf_range(0.6, 1.8)  # acena logo que aparece
+var _acao_ate := 0.0  # golpe ou pancada da batalha: o respiro e o aceno esperam
 
 
 ## Procura as partes animadas dentro de `modelo` (chame de novo ao trocar o doce).
@@ -47,6 +48,7 @@ func configurar(modelo: Node3D) -> void:
 	_pernas.assign(modelo.find_children("Perna?", "Node3D", true, false))  # PernaE e PernaD
 	_base_pernas.assign(_pernas.map(func(p): return p.position))
 	_orbita = modelo.find_child("Orbita", true, false)
+	_acao_ate = 0.0
 
 
 ## Pulinho com aceno (ao tocar, ao comprar, ao chegar em algum lugar).
@@ -57,6 +59,56 @@ func comemorar() -> void:
 	var tween := create_tween()
 	tween.tween_property(_corpo, "position:y", 0.35, 0.18).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	tween.tween_property(_corpo, "position:y", 0.0, 0.25).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BOUNCE)
+
+
+## BATALHA: encolhe e puxa o braço para trás (antes do bote).
+func preparar_golpe() -> void:
+	if not _corpo:
+		return
+	_acao_ate = _tempo + 0.6
+	var tween := create_tween().set_parallel()
+	tween.tween_property(_corpo, "scale", Vector3(1.14, 0.84, 1.14), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if is_instance_valid(_aceno):
+		tween.tween_property(_aceno, "rotation:z", 1.4, 0.16)
+
+
+## BATALHA: o bote (estica o corpo) e o soco com o braço.
+func golpear() -> void:
+	if not _corpo:
+		return
+	_acao_ate = _tempo + 0.55
+	var tween := create_tween()
+	tween.tween_property(_corpo, "scale", Vector3(0.86, 1.2, 0.86), 0.08)
+	tween.tween_property(_corpo, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	if is_instance_valid(_aceno):
+		var soco := create_tween()
+		soco.tween_property(_aceno, "rotation:z", -0.2, 0.07)
+		soco.tween_interval(0.15)
+		soco.tween_property(_aceno, "rotation:z", BRACO_ABAIXADO, 0.25)
+
+
+## BATALHA: apanhou (achata, aperta os olhos e balança até voltar).
+func apanhar(forte := false) -> void:
+	if not _corpo:
+		return
+	_acao_ate = _tempo + 0.75
+	var tween := create_tween()
+	tween.tween_property(_corpo, "scale", Vector3(1.3, 0.62 if forte else 0.76, 1.3), 0.06)
+	tween.tween_property(_corpo, "scale", Vector3.ONE, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	for olhos in _olhos:
+		if is_instance_valid(olhos):
+			var aperta := create_tween()
+			aperta.tween_property(olhos, "scale:y", 0.12, 0.05)
+			aperta.tween_interval(0.45 if forte else 0.28)
+			aperta.tween_property(olhos, "scale:y", 1.0, 0.12)
+
+
+## BATALHA: nocaute (olhos fechados; a queda é do visor).
+func desmaiar() -> void:
+	_acao_ate = _tempo + 2.0
+	for olhos in _olhos:
+		if is_instance_valid(olhos):
+			create_tween().tween_property(olhos, "scale:y", 0.1, 0.08)
 
 
 func _process(delta: float) -> void:
@@ -71,6 +123,8 @@ func _process(delta: float) -> void:
 		return
 	if is_instance_valid(_orbita):
 		_orbita.rotation.y += delta * 1.3
+	if _tempo < _acao_ate:
+		return  # golpe ou pancada da batalha em andamento
 	if not andando:
 		# respira: estica e achata de leve
 		var respiro := sin(_tempo * 2.6) * 0.025

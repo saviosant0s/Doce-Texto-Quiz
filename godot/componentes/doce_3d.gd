@@ -59,3 +59,20 @@ func _ao_tocar() -> void:
 ## Pulinho com giro e aceno (ao tocar ou ao comprar).
 func comemorar() -> void:
 	_animacao.comemorar()
+
+
+## BATALHA (ver AnimacaoDoce): prepara o golpe, golpeia, apanha e desmaia.
+func preparar_golpe() -> void:
+	_animacao.preparar_golpe()
+
+
+func golpear() -> void:
+	_animacao.golpear()
+
+
+func apanhar(forte := false) -> void:
+	_animacao.apanhar(forte)
+
+
+func desmaiar() -> void:
+	_animacao.desmaiar()

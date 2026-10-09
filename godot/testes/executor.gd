@@ -2640,9 +2640,36 @@ func _testar_tela_batalha() -> void:
 	var vida := int(tela.luta.deles()["vida"])
 	tela.responder(int(tela.luta.pergunta["resposta"]))
 	limite = Time.get_ticks_msec() + 5000
+	var palavra := false
 	while not tela.respondendo and not tela.luta.acabou() and Time.get_ticks_msec() < limite:
+		palavra = palavra or tela.find_child("PalavraGolpe", true, false) != null
 		await get_tree().process_frame
 	verificar(int(tela.luta.deles()["vida"]) < vida, "acertou pela tela: o doce do desafiante perde vida")
+	verificar(palavra, "o golpe tem a palavra de quadrinho (POW!, BAM!...)")
+	verificar(tela._visor_meu.position == Vector2.ZERO and tela._visor_deles.position == Vector2.ZERO
+		and is_zero_approx(tela._visor_meu.rotation) and is_zero_approx(tela._visor_deles.rotation),
+		"depois do golpe os dois doces voltam para o lugar")
+	tela.desistir()
+	# SUPER que nocauteia: raios atrás do atacante e o próximo do time entra
+	Progresso.vila["arena"] = {"vencidos": [0], "time": [], "vitorias": 1}
+	tela.lutar(1)
+	limite = Time.get_ticks_msec() + 5000
+	while not tela.respondendo and Time.get_ticks_msec() < limite:
+		await get_tree().process_frame
+	tela.luta.sequencia = Batalha.SUPER_COM - 1
+	tela.luta.deles()["vida"] = 1
+	var primeiro: String = tela.luta.deles()["id"]
+	tela.responder(int(tela.luta.pergunta["resposta"]))
+	limite = Time.get_ticks_msec() + 6000
+	var raios := false
+	while not tela.respondendo and not tela.luta.acabou() and Time.get_ticks_msec() < limite:
+		raios = raios or tela.find_child("RaiosSuper", true, false) != null
+		await get_tree().process_frame
+	verificar(raios and tela.find_child("RaiosSuper", true, false) == null and tela.find_child("EscuroSuper", true, false) == null,
+		"SUPER: raios e arena escura durante o golpe, e somem depois")
+	verificar(tela.luta.deles()["id"] != primeiro and is_equal_approx(tela._visor_deles.modulate.a, 1.0)
+		and tela._visor_deles.position == Vector2.ZERO and tela._visor_deles.scale == Vector2.ONE,
+		"nocaute: o próximo doce do desafiante entra e fica no lugar")
 	tela.desistir()
 	verificar(tela.luta == null and tela.find_child("Desafiante0", true, false) != null, "desistir volta para a arena")
 	Progresso.vila = guardado
@@ -3313,12 +3340,21 @@ func _testar_premios_com_icones() -> void:
 		and Itens.texto_com_icones("FALTAM MOEDAS").find_children("*", "TextureRect", true, false).is_empty(),
 		"\"+5 DE AÇÚCAR\" vira ícone; \"FALTAM MOEDAS\" continua texto")
 	linha.free()
+	for velho in Telas.find_children("Premio", "Control", true, false):
+		velho.free()  # sobra de outro teste (a visita dá prêmio)
 	Telas.mostrar_premio({"moedas": 5, "acucar": 3, "xp": 10, "bau": "ouro"}, "TESTE")
+	Telas.mostrar_premio({"acucar": 7}, "SEGUNDO")
 	await get_tree().process_frame
 	var premio := Telas.find_child("Premio", true, false)
 	var fichas: Node = premio.find_child("Fichas", true, false) if premio else null
 	verificar(fichas != null and fichas.get_child_count() == 4
 		and fichas.get_child(3).find_children("*", "TextureRect", true, false)[0].texture == Itens.BAU_OURO,
 		"cartão de prêmio: moedas, açúcar, XP e o baú, cada um com o seu desenho")
+	verificar(Telas.find_children("Premio*", "Control", true, false).size() == 1,
+		"dois prêmios juntos: um cartão de cada vez (o segundo espera)")
+	await get_tree().create_timer(3.2).timeout
+	premio = Telas.find_child("Premio", true, false)
+	fichas = premio.find_child("Fichas", true, false) if premio else null
+	verificar(fichas != null and fichas.get_child_count() == 1, "depois que o primeiro some, aparece o segundo")
 	await get_tree().create_timer(3.5).timeout
 	verificar(not is_instance_valid(premio), "o cartão de prêmio some sozinho")

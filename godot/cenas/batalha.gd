@@ -10,6 +10,9 @@ extends Control
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const BRILHO := preload("res://assets/doce_match/brilho.svg")
+const RAIOS := preload("res://assets/itens/raios.svg")
+## Palavra de história em quadrinhos no golpe (o SUPER tem a dele).
+const PALAVRAS_GOLPE := ["POW!", "TUM!", "BAM!", "PAF!", "TOMA!"]
 const FOTOS := "res://assets/doces_3d/fotos/%s.png"
 const VERDE := Color("#7BE07B")
 const AMARELO := Color("#F4E038")
@@ -701,65 +704,256 @@ func responder(k: int) -> void:
 		_nova_pergunta()
 
 
+## O golpe: o atacante se prepara (encolhe e recua), dá o bote em arco até o
+## outro doce, o mundo para um instante no contato (raios, anel, POW!, faíscas e
+## tremida), o alvo é empurrado para trás achatado e volta balançando. No SUPER a
+## arena escurece, raios giram atrás do atacante e ele gira no ar deixando rastro.
+## Nocaute: o doce sai voando girando e o próximo do time cai do alto.
 func _animar_golpe(r: Dictionary) -> void:
 	var meu_bate: bool = r["atacante"] == "meu"
 	var atacante := _visor_meu if meu_bate else _visor_deles
 	var alvo := _visor_deles if meu_bate else _visor_meu
 	var quem_apanha := "deles" if meu_bate else "meu"
-	# o atacante avança, bate e volta
-	var avanco := create_tween()
-	avanco.tween_property(atacante, "position:x", 150.0 if meu_bate else -150.0, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-	avanco.tween_property(atacante, "position:x", 0.0, 0.25).set_trans(Tween.TRANS_SINE)
-	await get_tree().create_timer(0.16).timeout
+	var lado := 1.0 if meu_bate else -1.0  # para onde o atacante vai
+	var forte: bool = r["super"]
+	var alcance: float = ((alvo.get_parent() as Control).get_global_rect().get_center().x
+		- (atacante.get_parent() as Control).get_global_rect().get_center().x) * 0.55
+	for visor in [atacante, alvo]:
+		visor.pivot_offset = Vector2(visor.size.x / 2.0, visor.size.y * 0.8)  # gira e achata pelos pés
+	var extras: Array[Node] = []
+	if forte:
+		extras = _carregar_super(atacante)
+		await get_tree().create_timer(0.5).timeout
+		if luta == null:
+			_sumir(extras)
+			return
+	# antecipação: recua, inclina para trás e se encolhe
+	atacante.preparar_golpe()
+	var prepara := create_tween().set_parallel()
+	prepara.tween_property(atacante, "position:x", -40.0 * signf(alcance), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	prepara.tween_property(atacante, "rotation", deg_to_rad(-10.0 * lado), 0.16)
+	await prepara.finished
 	if luta == null:
+		_sumir(extras)
 		return
-	Audio.tocar("explosao" if r["super"] else "estouro")
+	# o bote: pula em arco até o outro doce (no SUPER, girando)
+	atacante.golpear()
+	Audio.tocar("pulo", 1.25, -4.0)
+	var bote := create_tween().set_parallel()
+	bote.tween_property(atacante, "position:x", alcance, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	bote.tween_property(atacante, "rotation", (TAU if forte else deg_to_rad(14.0)) * lado, 0.16)
+	var arco := create_tween()
+	arco.tween_property(atacante, "position:y", -60.0, 0.08).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	arco.tween_property(atacante, "position:y", 0.0, 0.08).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	if forte:
+		for i in 3:
+			get_tree().create_timer(0.04 * (i + 1)).timeout.connect(_rastro.bind(atacante))
+	await bote.finished
+	if luta == null:
+		_sumir(extras)
+		return
+	if forte:
+		atacante.rotation = 0.0  # (a volta inteira acabou)
+	# contato: estouro, o alvo pisca branco e o mundo para um instante
 	var centro_alvo := alvo.get_global_rect().get_center()
-	_faiscas(centro_alvo, 40 if r["super"] else 18, r["super"])
-	_tremer(_palco, 16.0 if r["super"] else 6.0)
-	if r["super"]:
-		var flash := ColorRect.new()
-		flash.color = Color(1, 1, 0.85, 0.7)
-		flash.set_anchors_preset(PRESET_FULL_RECT)
-		flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(flash)
-		var some := flash.create_tween()
-		some.tween_property(flash, "color:a", 0.0, 0.45)
-		some.tween_callback(flash.queue_free)
-	# o alvo treme e fica vermelho
-	var tremor := create_tween()
-	for i in 4:
-		tremor.tween_property(alvo, "position:x", 14.0 if i % 2 == 0 else -14.0, 0.04)
-	tremor.tween_property(alvo, "position:x", 0.0, 0.04)
-	alvo.modulate = Color(1, 0.45, 0.45)
-	create_tween().tween_property(alvo, "modulate", Color.WHITE, 0.35)
+	var contato := centro_alvo - Vector2(alvo.size.x * 0.16 * signf(alcance), 0)
+	Audio.tocar("explosao" if forte else "estouro")
+	if forte:
+		Audio.tocar("explosao", 0.7, -4.0)
+	alvo.apanhar(forte)
+	alvo.modulate = Color(3, 3, 3)
+	_impacto(contato, forte)
+	_faiscas(contato, 44 if forte else 22, forte)
+	_tremer(_palco, 18.0 if forte else 9.0)
+	await get_tree().create_timer(0.12 if forte else 0.07).timeout
+	if luta == null:
+		_sumir(extras)
+		return
+	# o alvo é empurrado para trás, inclinado e vermelho, e volta balançando
+	var empurra := create_tween().set_parallel()
+	empurra.tween_property(alvo, "position:x", (95.0 if forte else 55.0) * signf(alcance), 0.12) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	empurra.tween_property(alvo, "rotation", deg_to_rad(16.0 * lado), 0.12)
+	empurra.tween_property(alvo, "modulate", Color(1, 0.45, 0.45), 0.08)
+	empurra.chain().tween_property(alvo, "position:x", 0.0, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	empurra.parallel().tween_property(alvo, "rotation", 0.0, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	empurra.parallel().tween_property(alvo, "modulate", Color.WHITE, 0.35)
+	# o atacante volta num pulinho
+	var volta := create_tween().set_parallel()
+	volta.tween_property(atacante, "position:x", 0.0, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	volta.tween_property(atacante, "rotation", 0.0, 0.32)
+	volta.tween_property(atacante, "modulate", Color.WHITE, 0.3)
+	var pulinho := create_tween()
+	pulinho.tween_property(atacante, "position:y", -28.0, 0.14).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	pulinho.tween_property(atacante, "position:y", 0.0, 0.14).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	_sumir(extras)
 	var texto := "-%d" % r["dano"]
+	var cor := Color.WHITE
 	if r["super"]:
 		texto = "SUPER! " + texto
+		cor = Color("#FF6FAE")
 	elif r["rapido"]:
 		texto = "RÁPIDO! " + texto
+		cor = AMARELO
 	var onde := Vector2(0.72 if meu_bate else 0.28, 0.3)
-	_texto_voando(texto, onde, 44 if r["super"] else 36, 0.9)
+	_texto_pulando(texto, onde, 56 if r["super"] else 46, cor)
 	_atualizar_vida(quem_apanha)
 	_atualizar_super()
-	await get_tree().create_timer(0.55).timeout
+	await get_tree().create_timer(0.6).timeout  # (o alvo termina de balançar: 0,12 + 0,45 s)
 	if luta == null:
 		return
 	if r["nocaute"]:
 		Audio.tocar("caixa", 0.8)
-		_texto_voando("NOCAUTE!", onde + Vector2(0, 0.08), 40, 0.9)
+		alvo.desmaiar()
+		_texto_pulando("NOCAUTE!", onde + Vector2(0, 0.08), 48, Color.WHITE)
 		_estrelas_tontas(centro_alvo + Vector2(0, -70))
-		var queda := create_tween().set_parallel()
-		queda.tween_property(alvo, "modulate:a", 0.0, 0.4)
-		queda.tween_property(alvo, "position:y", 60.0, 0.4)
-		await queda.finished
-		alvo.position.y = 0.0
+		await get_tree().create_timer(0.3).timeout
+		# sai voando girando
+		alvo.pivot_offset = alvo.size / 2.0
+		var voa := create_tween().set_parallel()
+		voa.tween_property(alvo, "position", Vector2(420.0 * signf(alcance), -280.0), 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		voa.tween_property(alvo, "rotation", TAU * 2.0 * lado, 0.55)
+		voa.tween_property(alvo, "scale", Vector2.ONE * 0.4, 0.55)
+		voa.tween_property(alvo, "modulate:a", 0.0, 0.3).set_delay(0.25)
+		Audio.tocar("pulo", 0.7)
+		await voa.finished
+		alvo.position = Vector2.ZERO
+		alvo.rotation = 0.0
+		alvo.scale = Vector2.ONE
+		if luta == null:
+			return
 		if r["entrou"] != "":
+			# o próximo do time cai do alto e quica
 			_mostrar_lutador(quem_apanha, false)
-			alvo.modulate.a = 0.0
-			create_tween().tween_property(alvo, "modulate:a", 1.0, 0.35)
-			await get_tree().create_timer(0.4).timeout
+			alvo.position.y = -600.0
+			alvo.modulate.a = 1.0
+			var cai := create_tween()
+			cai.tween_property(alvo, "position:y", 0.0, 0.55).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+			get_tree().create_timer(0.22).timeout.connect(func():
+				if is_instance_valid(_palco):
+					Audio.tocar("chape", 1.2, -4.0)
+					_tremer(_palco, 7.0))
+			await cai.finished
 	_atualizar_bancos()
+
+
+## SUPER: a arena escurece, raios dourados giram atrás do atacante e ele brilha
+## carregando. Devolve os nós para sumir depois do golpe.
+func _carregar_super(atacante: Doce3D) -> Array[Node]:
+	var escuro := ColorRect.new()
+	escuro.name = "EscuroSuper"
+	escuro.color = Color(0.08, 0.03, 0.15, 0.0)
+	escuro.set_anchors_preset(PRESET_FULL_RECT)
+	escuro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(escuro)
+	move_child(escuro, _palco.get_index())  # atrás dos doces
+	create_tween().tween_property(escuro, "color:a", 0.6, 0.25)
+	var raios := TextureRect.new()
+	raios.name = "RaiosSuper"
+	raios.texture = RAIOS
+	raios.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	raios.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vaga := atacante.get_parent() as Control
+	vaga.add_child(raios)
+	vaga.move_child(raios, 0)
+	var lado := minf(vaga.size.x, vaga.size.y) * 1.5
+	raios.size = Vector2.ONE * lado
+	raios.pivot_offset = raios.size / 2.0
+	raios.position = vaga.size / 2.0 - raios.size / 2.0
+	raios.modulate = Color(1, 0.85, 0.3, 0.0)
+	raios.scale = Vector2.ONE * 0.4
+	var giro := raios.create_tween().set_parallel()
+	giro.tween_property(raios, "modulate:a", 0.95, 0.2)
+	giro.tween_property(raios, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	giro.tween_property(raios, "rotation", TAU * 0.7, 1.6)
+	Audio.tocar("especial", 0.8)
+	var brilho := create_tween()
+	brilho.tween_property(atacante, "modulate", Color(1.7, 1.5, 1.0), 0.3)
+	_tremer(atacante, 4.0)
+	_faiscas(atacante.get_global_rect().get_center(), 24, true)
+	return [escuro, raios]
+
+
+func _sumir(nos: Array[Node]) -> void:
+	for no in nos:
+		if is_instance_valid(no):
+			var some := no.create_tween()
+			some.tween_property(no, "modulate:a", 0.0, 0.3)
+			some.tween_callback(no.queue_free)
+
+
+## Estouro do golpe: raios, um anel que cresce e uma palavra de quadrinho (POW!).
+func _impacto(onde: Vector2, forte: bool) -> void:
+	var raios := TextureRect.new()
+	raios.texture = RAIOS
+	raios.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	raios.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	raios.size = Vector2.ONE * (380.0 if forte else 250.0)
+	raios.pivot_offset = raios.size / 2.0
+	raios.position = onde - raios.size / 2.0
+	raios.modulate = Color(1, 0.95, 0.6, 0.95)
+	raios.scale = Vector2.ONE * 0.2
+	add_child(raios)
+	var t := raios.create_tween().set_parallel()
+	t.tween_property(raios, "scale", Vector2.ONE * 1.3, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(raios, "rotation", 0.6, 0.3)
+	t.tween_property(raios, "modulate:a", 0.0, 0.25).set_delay(0.08)
+	t.chain().tween_callback(raios.queue_free)
+	var anel := Panel.new()
+	anel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = Color(1, 1, 1, 0)
+	estilo.border_color = Color(1, 1, 1, 0.9)
+	estilo.set_border_width_all(10)
+	estilo.set_corner_radius_all(999)
+	anel.add_theme_stylebox_override("panel", estilo)
+	anel.size = Vector2.ONE * (220.0 if forte else 150.0)
+	anel.pivot_offset = anel.size / 2.0
+	anel.position = onde - anel.size / 2.0
+	anel.scale = Vector2.ONE * 0.2
+	add_child(anel)
+	var a := anel.create_tween().set_parallel()
+	a.tween_property(anel, "scale", Vector2.ONE * 1.6, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	a.tween_property(anel, "modulate:a", 0.0, 0.28)
+	a.chain().tween_callback(anel.queue_free)
+	var palavra := Label.new()
+	palavra.name = "PalavraGolpe"
+	palavra.theme_type_variation = &"TituloClaro"
+	palavra.add_theme_font_size_override("font_size", 92 if forte else 70)
+	palavra.add_theme_color_override("font_color", Color("#FF6FAE") if forte else AMARELO)
+	palavra.add_theme_constant_override("outline_size", 18)
+	palavra.add_theme_color_override("font_outline_color", Color("#3B2A5C"))
+	palavra.text = "SUPER!" if forte else PALAVRAS_GOLPE.pick_random()
+	palavra.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(palavra)
+	palavra.size = palavra.get_combined_minimum_size()
+	palavra.pivot_offset = palavra.size / 2.0
+	palavra.position = onde + Vector2(0, -120) - palavra.size / 2.0
+	palavra.rotation = randf_range(-0.28, 0.28)
+	palavra.scale = Vector2.ONE * 0.2
+	var p := palavra.create_tween()
+	p.tween_property(palavra, "scale", Vector2.ONE * 1.25, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	p.tween_property(palavra, "scale", Vector2.ONE, 0.12)
+	p.tween_interval(0.35)
+	p.tween_property(palavra, "modulate:a", 0.0, 0.2)
+	p.tween_callback(palavra.queue_free)
+
+
+## Cópia apagada do doce no caminho do bote do SUPER (rastro).
+func _rastro(visor: Doce3D) -> void:
+	if not is_instance_valid(visor) or not is_instance_valid(visor._imagem):
+		return
+	var copia := TextureRect.new()
+	copia.texture = visor._imagem.texture
+	copia.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	copia.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(copia)
+	copia.size = visor._imagem.size
+	copia.global_position = visor._imagem.global_position
+	copia.modulate = Color(1, 0.6, 0.9, 0.5)
+	var some := copia.create_tween()
+	some.tween_property(copia, "modulate:a", 0.0, 0.25)
+	some.tween_callback(copia.queue_free)
 
 
 ## Põe no lado o doce da vez (nome, nível, vida e o modelo 3D).
@@ -1113,6 +1307,19 @@ func _confete() -> void:
 	add_child(confete)
 	confete.emitting = true
 	confete.finished.connect(confete.queue_free)
+
+
+## Texto que pula na tela (cresce, passa do ponto e volta), sobe e some: o dano
+## do golpe e o NOCAUTE (posição em fração da tela).
+func _texto_pulando(texto: String, onde: Vector2, tamanho: int, cor: Color) -> Label:
+	var rotulo := _texto_voando(texto, onde, tamanho, 1.0)
+	rotulo.add_theme_color_override("font_color", cor)
+	rotulo.pivot_offset = rotulo.get_combined_minimum_size() / 2.0
+	rotulo.scale = Vector2.ONE * 0.3
+	var pulo := rotulo.create_tween()
+	pulo.tween_property(rotulo, "scale", Vector2.ONE * 1.3, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pulo.tween_property(rotulo, "scale", Vector2.ONE, 0.15)
+	return rotulo
 
 
 ## Texto que sobe e some (posição em fração da tela).

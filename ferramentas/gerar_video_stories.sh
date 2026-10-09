@@ -6,10 +6,11 @@
 # (ferramentas/editar_video_stories.py).
 # Saída: build/stories/doce_texto_stories.mp4 (+ capa.jpg).
 # Precisa de xvfb-run, ffmpeg e python3 com Pillow, numpy e scipy. Grava em
-# uns 15 minutos (sem placa de vídeo) e edita em uns 3.
+# uns 45 minutos (sem placa de vídeo) e edita em uns 4.
 # Uso (na pasta do repositório): ferramentas/gerar_video_stories.sh
 #     (as cenas já gravadas em build/stories/cenas ficam; apague para regravar)
 #     SO_MONTAR=1 ferramentas/gerar_video_stories.sh   (só remonta, sem gravar de novo)
+#     SO_GRAVAR=1 ferramentas/gerar_video_stories.sh   (só grava as cenas que faltam)
 cd "$(dirname "$0")/.." || exit 1
 SAIDA=build/stories
 mkdir -p "$SAIDA/cenas"
@@ -25,32 +26,53 @@ ALTURA=1560
 
 # o modo filme grava no tamanho da tela do projeto: um override.cfg (só
 # durante a gravação) põe a tela em pé, com a interface no tamanho certo
-cat > godot/override.cfg <<CFG
+tela_do_filme() {  # largura, altura
+	cat > godot/override.cfg <<CFG
 [display]
-window/size/viewport_width=$LARGURA
-window/size/viewport_height=$ALTURA
+window/size/viewport_width=$1
+window/size/viewport_height=$2
 CFG
+}
 trap 'rm -f godot/override.cfg' EXIT
 
-gravar() {  # nome, tela, opções da captura... (cena já gravada fica: apague para regravar)
+# nome, tela, opções da captura... (cena já gravada fica: apague para regravar).
+# QUADRADO=1: grava em 1280x1280 (jogos 2D feitos para a tela deitada, como o
+# Doce Match e a Fábrica: a interface fica do tamanho de sempre e o editor
+# recorta a parte da ação)
+gravar() {
 	if [ -f "$SAIDA/cenas/$1.avi" ]; then
 		echo "cena já gravada: $1"
 		return
 	fi
+	local tam=${LARGURA}x${ALTURA}
+	if [ -n "$QUADRADO" ]; then
+		tam=1280x1280
+		tela_do_filme 1280 1280
+	else
+		tela_do_filme $LARGURA $ALTURA
+	fi
 	# shellcheck disable=SC2086
-	timeout 1800 xvfb-run -a -s "-screen 0 ${LARGURA}x${ALTURA}x24" godot --path godot $RENDER \
-		--resolution ${LARGURA}x${ALTURA} --write-movie "$(pwd)/$SAIDA/cenas/$1.avi" --fixed-fps 30 \
-		-- --capturar="$2" --saida="$(pwd)/$SAIDA/cenas/nada.png" --retrato --sem_musica --qualidade=2 "${@:3}" \
+	timeout 1800 xvfb-run -a -s "-screen 0 ${tam}x24" godot --path godot $RENDER \
+		--resolution $tam --write-movie "$(pwd)/$SAIDA/cenas/$1.avi" --fixed-fps 30 \
+		-- --capturar="$2" --saida="$(pwd)/$SAIDA/cenas/nada.png" --retrato --sem_musica --qualidade=2 --animacoes "${@:3}" \
 		> "$SAIDA/cenas/$1.log" 2>&1
 	echo "cena gravada: $1 ($(ffprobe -v error -show_entries format=duration -of csv=p=0 "$SAIDA/cenas/$1.avi") s)"
 }
 
+REGIOES=--regioes=ilha,bosque,montanha
 if [ -z "$SO_MONTAR" ]; then
 	gravar 1_vila vila --video_vila --duracao=4.6
 	gravar 2_corrida corrida --trailer_corrida=6.6 --corrida_inicio=100
 	gravar 3_chefao vila --video_chefao --duracao=6.2
-	gravar 4_batalha batalha --video_batalha --duracao=5.6
-	gravar 5_casa minha_casa --casa_cheia --duracao=3.8
+	gravar 4_batalha batalha --video_batalha --batalha_super --desafiante=1 --arena_vencidos=1 \
+		--nivel_doce=brigadeiro:6 --leitura=1.0 --duracao=11
 	gravar 6_final vila --abertura_final --abertura_sem_texto --duracao=5.4
+	# paisagens (ver VOOS em godot/scripts/ferramentas/captura.gd)
+	gravar ilha vila --video_voo=ilha --hora=17.6 --duracao=4.4 $REGIOES
+	gravar montanha vila --video_voo=montanha --hora=15 --duracao=4.4 $REGIOES
+	gravar chuva vila --video_voo=chuva --hora=13 --chuva --duracao=4.4 $REGIOES
+	gravar noite vila --video_voo=noite --hora=21 --duracao=4.4 $REGIOES
+	QUADRADO=1 gravar match doce_match --video_match=8 --duracao=8
+	QUADRADO=1 gravar fabrica fabrica --video_fabrica --duracao=8
 fi
-python3 ferramentas/editar_video_stories.py "$SAIDA"
+[ -n "$SO_GRAVAR" ] || python3 ferramentas/editar_video_stories.py "$SAIDA"

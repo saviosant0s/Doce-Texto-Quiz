@@ -47,6 +47,7 @@ var _carregando: Control  # cenas/carregamento.tscn em "modo cortina"
 var _destino := ""
 var _pendente := ""
 var _camada_avisos: CanvasLayer
+var _premio_atual: Control  # cartão de prêmio na tela (os outros esperam)
 var _trocando := false
 ## Telas leves abertas POR CIMA da atual (ex.: missões na vila), sem trocar a
 ## cena: abrem e fecham na hora, sem recarregar a vila em 3D.
@@ -424,10 +425,15 @@ func mostrar_aviso(texto: String) -> void:
 
 ## Prêmio ganho, no meio da tela: o título e as fichinhas (ícone + número)
 ## entrando uma por uma com o som da moeda; depois sobe e some. `premio` =
-## {"moedas", "acucar", "xp", "bau", "estrelas"} (o que tiver).
+## {"moedas", "acucar", "xp", "bau", "estrelas"} (o que tiver). Dois prêmios
+## ao mesmo tempo aparecem em fila (um cartão de cada vez).
 func mostrar_premio(premio: Dictionary, titulo := "VOCÊ GANHOU!") -> void:
+	while is_instance_valid(_premio_atual) and _premio_atual.is_inside_tree():
+		await _premio_atual.tree_exited
+		await get_tree().process_frame
 	var camada := Control.new()
 	camada.name = "Premio"
+	_premio_atual = camada
 	camada.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	camada.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_camada_avisos.add_child(camada)
