@@ -32,6 +32,18 @@ Configurações (FPS, memória, desenhos por quadro) e, no computador,
 Todas as telas ficam abaixo de ~7 ms de processador por quadro (scripts,
 física e motor): o gargalo nos aparelhos fracos é a **placa de vídeo**.
 
+Desenhos por quadro na qualidade MÉDIA (a de início em placa integrada ou com
+até 8 GB), 1280x720, medidos com `--desempenho` em 09/10/2026:
+
+| Tela | Desenhos | Triângulos | Observação |
+|---|---|---|---|
+| Vila (câmera de perto) | 638 | 520 mil | a mais pesada: blocos da vila (218 mil) e regiões (até 60 m) |
+| Vila (de cima) | 571 | 491 mil | |
+| Corrida | 303 | 189 mil | |
+| Doce Match | 137 | 2 mil | 2D |
+| Batalha | 92 | 15 mil | depois de juntar as peças dos doces (antes: centenas) |
+| Fábrica | 48 | 3 mil | 2D |
+
 ## O que foi feito (0.16.0)
 
 | Onde | Antes | Agora |
@@ -46,6 +58,9 @@ física e motor): o gargalo nos aparelhos fracos é a **placa de vídeo**.
 | Texturas | fotos de 1024 px | 512 px (as de aspereza, 256): ~24 MB a menos no APK |
 
 ## Próximos passos possíveis
+
+- Vila: menos triângulos nos blocos da vila (versões simplificadas dos prédios
+  de longe, com `visibility_range`) e sombra só dos objetos grandes na MÉDIA.
 
 - Medir no aparelho de verdade com o indicador de desempenho ligado e anotar
   FPS e desenhos por tela (vila, corrida, batalha, Doce Match).
