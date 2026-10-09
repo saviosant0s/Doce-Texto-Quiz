@@ -171,6 +171,12 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   mais força. NOCAUTE: sai voando girando e o próximo do time cai do alto.
 - Prêmios ao mesmo tempo (ex.: visita + missão) aparecem em fila, um cartão de
   cada vez (antes ficavam um em cima do outro).
+- LAG NA LUTA CONTRA O CHEFÃO (o "Fear Carnet" que o Sávio citou): cada ataque
+  montava shaders novos na hora (bolas, faíscas, pingos de chocolate, chuva de
+  doces) e a luz vermelha do chefão ficava sempre ligada. Agora os efeitos
+  reaproveitam malha e material, a vila os prepara atrás da cortina e a luz só
+  liga quando ele fica bravo: de 51 montagens no meio da luta para nenhuma que
+  trave (detalhes e medição em docs/desempenho.md; captura --travadas).
 - GOLPES DE LUTA na batalha (pedido: "movimentos de luta mesmo, malabarismos"):
   em rodízio a cada acerto, COMBO DE SOCOS (corre em guarda e solta três
   socos alternando os braços), VOADORA (pulo alto com a perna esticada),

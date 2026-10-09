@@ -57,6 +57,31 @@ até 8 GB), 1280x720, medidos com `--desempenho` em 09/10/2026:
 | Materiais "realistas" | relevo e verniz em tudo | BAIXA: sem relevo nem verniz; MÉDIA: relevo sem verniz; ALTA: tudo |
 | Texturas | fotos de 1024 px | 512 px (as de aspereza, 256): ~24 MB a menos no APK |
 
+## Lag na luta contra o chefão (09/10/2026)
+
+O lag relatado era na luta contra o chefão, na praça da vila. A luta acrescenta pouco
+desenho (~+10%: 632 → 699 desenhos), mas cada efeito criava materiais e
+malhas novos (bolas de bala e de chocolate, faíscas, a chuva de doces do fim,
+os pingos de chocolate do doce sujo), que a vila não tinha preparado no
+carregamento: a placa de vídeo montava o shader na hora, e a tela parava um
+instante. Medido com `--travadas` (conta as montagens de shader por quadro,
+`RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_*`), numa luta de 20 s
+com 2 erros:
+
+| | Montagens no meio da luta | Que travam a tela ("desenho"/"superfície") |
+|---|---|---|
+| Antes | 51 shaders em 15 momentos (3 a cada ataque, 9 no primeiro erro) | sim |
+| Depois | 5 "variações" (o Godot monta em segundo plano) | nenhuma |
+
+O que mudou:
+- Bolas, faíscas, chuva de doces e pingos usam malha e material criados uma vez
+  só (antes, novos a cada ataque); as bolas têm 400 triângulos (eram 4 mil).
+- A vila, atrás da cortina do carregamento, desenha uma vez cada efeito da luta,
+  o doce sujo de chocolate e a luz vermelha do chefão (`Vila.aquecer`,
+  `LutaChefao.aquecer_efeitos`).
+- A luz vermelha do chefão ficava ligada (com força zero) o tempo todo na praça;
+  agora só liga quando ele fica bravo.
+
 ## Próximos passos possíveis
 
 - Vila: menos triângulos nos blocos da vila (versões simplificadas dos prédios

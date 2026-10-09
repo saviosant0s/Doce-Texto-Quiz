@@ -235,10 +235,25 @@ func aquecer() -> void:
 	for i in 6:
 		var a := i * TAU / 6.0
 		vistas.append([pos + Vector3(sin(a) * 5.0, 2.4, cos(a) * 5.0), pos + Vector3(0, 1.2, 0)])
+	# também o que só aparece na luta do chefão e ao sair da fonte (as balas, as
+	# faíscas, a chuva de doces, a luz vermelha dele e o doce sujo de chocolate):
+	# antes, cada um montava o shader na primeira vez, no meio da luta
+	var efeitos := LutaChefao.aquecer_efeitos(self, pos + Vector3(0, 1.6, 0))
+	var estava_sujo := jogador.sujeira > 0.0
+	if not estava_sujo:
+		jogador.sujar()
+	if is_instance_valid(_chefao):
+		_chefao.aquecer(true)
 	set_process(false)
 	for vista in vistas:
 		_camera.global_transform = Transform3D(Basis.looking_at(vista[1] - vista[0]), vista[0])
 		await Telas.quadro_desenhado()
+	for no in efeitos:
+		no.queue_free()
+	if not estava_sujo:
+		jogador.limpar(1.0)
+	if is_instance_valid(_chefao):
+		_chefao.aquecer(false)
 	for peca in alcances:
 		if is_instance_valid(peca):
 			peca.visibility_range_end = alcances[peca]

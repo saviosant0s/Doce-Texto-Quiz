@@ -87,11 +87,17 @@ extends Node
 ##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
 ##   --painel_desempenho  liga o indicador de FPS e memória
 ##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
+##   --travadas    no fim, imprime os quadros mais lentos (tempo real, em ms) e quando
+##                 aconteceram: as travadas de montar shader aparecem como picos
 ##   --espera=1.2  segundos até tirar o print
 
 
 ## Segundos já gravados nos modos de vídeo que jogam sozinhos (ver --duracao).
 var _tempo_video := 0.0
+## --travadas: [ms do quadro, segundos desde o começo] de cada quadro.
+var _quadros: Array = []
+var _ultimo_quadro := 0
+var _inicio_travadas := 0
 
 ## Tomadas de paisagem do vídeo de divulgação (--video_voo=nome): a câmera vai
 ## de "de" a "ate" ([posição, para onde olha]) ou dá uma volta ("orbita": centro,
@@ -121,6 +127,11 @@ func _ready() -> void:
 	if not args.has("capturar"):
 		return
 	Progresso.somente_memoria = true
+	set_process(args.has("travadas"))
+	if args.has("travadas"):
+		OS.low_processor_usage_mode = false
+		_inicio_travadas = Time.get_ticks_usec()
+		_ultimo_quadro = _inicio_travadas
 	if args.has("sem_musica"):
 		Progresso.config["volume_musica"] = 0.0
 		Audio.aplicar_volumes()
@@ -716,7 +727,13 @@ func _ready() -> void:
 	if args.has("video_batalha") or args.has("video_chefao"):
 		await get_tree().create_timer(0.3).timeout
 		var cena: Node = get_tree().current_scene
+		if args.has("travadas") and cena.has_method("aquecer"):
+			await cena.aquecer()  # como no jogo (o Telas aquece a vila atrás da cortina)
+			for i in 30:
+				await get_tree().process_frame
+			_momento = "vila pronta (andando por ela)"
 		var luta_no: Node = cena
+		_momento = "abrindo a luta"
 		if args.has("video_batalha"):
 			cena.lutar(int(args.get("desafiante", "0")))
 			if args.has("golpe_inicial"):  # ordem fixa dos golpes (ver Batalha.GOLPES)
@@ -734,9 +751,13 @@ func _ready() -> void:
 			if not is_instance_valid(luta_no) or luta_no.luta == null or luta_no.luta.acabou():
 				break
 			if luta_no.respondendo:
+				_momento = "esperando a resposta"
 				lendo += get_process_delta_time()
 				if lendo > float(args.get("leitura", "1.4")):
-					luta_no.responder(int(luta_no.luta.pergunta["resposta"]))
+					var errar: bool = str(args.get("errar", "")).split(",").has(str(luta_no.luta.rodadas))
+					var certa := int(luta_no.luta.pergunta["resposta"])
+					_momento = "errou: o chefão ataca" if errar else "acertou: o doce ataca"
+					luta_no.responder((certa + 1) % luta_no.luta.pergunta["alternativas"].size() if errar else certa)
 					lendo = 0.0
 	if args.has("abertura_sem_texto"):
 		await get_tree().process_frame
@@ -821,6 +842,8 @@ func _ready() -> void:
 		return
 	if args.has("duracao"):
 		await get_tree().create_timer(maxf(0.05, float(args["duracao"]) - _tempo_video)).timeout
+		if args.has("travadas"):
+			_mostrar_travadas()
 		get_tree().quit()
 		return
 	await get_tree().create_timer(float(args.get("espera", "1.2"))).timeout
@@ -861,6 +884,50 @@ func _ready() -> void:
 				print("  ", c, ": ", somas[c])
 	get_viewport().get_texture().get_image().save_png(args.get("saida", "user://captura.png"))
 	get_tree().quit()
+
+
+func _process(_delta: float) -> void:
+	var agora := Time.get_ticks_usec()
+	_quadros.append([(agora - _ultimo_quadro) / 1000.0, (agora - _inicio_travadas) / 1e6])
+	_ultimo_quadro = agora
+	# montagens de shader (pipelines) neste quadro: quem aparece pela primeira vez
+	var total := 0
+	var tipos := ""
+	var nomes := ["2D", "malha", "superfície", "desenho", "variação"]
+	var infos := [RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_CANVAS, RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_MESH,
+			RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_SURFACE, RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_DRAW,
+			RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_SPECIALIZATION]
+	for i in infos.size():
+		var n := RenderingServer.get_rendering_info(infos[i])
+		total += n
+		if _por_tipo.size() > i and n > _por_tipo[i]:
+			tipos += " %s:%d" % [nomes[i], n - _por_tipo[i]]
+		if _por_tipo.size() <= i:
+			_por_tipo.append(n)
+		else:
+			_por_tipo[i] = n
+	if total > _montagens:
+		print("MONTOU %d shader(s) em %.1f s de jogo (%s)%s" % [total - _montagens, _tempo_video, _momento, tipos])
+	_montagens = total
+
+
+var _por_tipo: Array[int] = []
+
+
+## O que está acontecendo (para o --travadas dizer quando montou shader).
+var _momento := "carregando"
+var _montagens := 0
+
+
+func _mostrar_travadas() -> void:
+	var tempos: Array = _quadros.map(func(q): return q[0])
+	tempos.sort()
+	var mediana: float = tempos[tempos.size() / 2] if not tempos.is_empty() else 0.0
+	var piores := _quadros.duplicate()
+	piores.sort_custom(func(a, b): return a[0] > b[0])
+	print("TRAVADAS: %d quadros, mediana %.1f ms" % [_quadros.size(), mediana])
+	for q in piores.slice(0, 12):
+		print("  %.0f ms em %.2f s" % [q[0], q[1]])
 
 
 ## Doce Match jogando sozinho: primeiro as jogadas com peça especial (explodem

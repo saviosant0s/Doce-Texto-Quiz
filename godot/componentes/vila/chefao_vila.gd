@@ -65,6 +65,7 @@ func _ready() -> void:
 	_luz_brava = OmniLight3D.new()
 	_luz_brava.light_color = Color("#FF3030")
 	_luz_brava.light_energy = 0.0
+	_luz_brava.visible = false  # (apagada mas ligada, a luz pesava em tudo em volta da praça)
 	_luz_brava.omni_range = 12.0
 	_luz_brava.position = _pivo.position + Vector3(0, 0, 4)
 	add_child(_luz_brava)
@@ -124,6 +125,7 @@ var _bravo := false
 func ficar_bravo() -> void:
 	_bravo = true
 	create_tween().tween_property(_pivo, "scale", Vector3.ONE * ESCALA * _tamanho(), 0.5).set_trans(Tween.TRANS_ELASTIC)
+	_luz_brava.visible = true
 	create_tween().tween_property(_luz_brava, "light_energy", 3.0, 0.5)
 	(_aura.mesh.material as StandardMaterial3D).albedo_color = Color(0.6, 0.05, 0.05, 0.6)
 	_aura.amount = 70
@@ -136,13 +138,29 @@ func _tamanho() -> float:
 ## Vencido: encolhe girando e explode numa chuva de doces coloridos.
 func explodir() -> void:
 	_aura.emitting = false
+	var chuva := chuva_de_doces(160)
+	chuva.position = _pivo.position
+	add_child(chuva)
+	var tween := create_tween().set_parallel()
+	tween.tween_property(_pivo, "scale", Vector3.ONE * 0.01, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(_pivo, "rotation:y", TAU * 2.0, 0.6)
+	tween.tween_property(_luz_brava, "light_energy", 0.0, 0.4)
+	await tween.finished
+	_luz_brava.visible = false
+	chuva.emitting = true
+
+
+static var _malha_chuva: SphereMesh
+
+
+## A chuva de doces coloridos de quando ele é vencido (sem tocar ainda).
+static func chuva_de_doces(quantos: int) -> CPUParticles3D:
 	var chuva := CPUParticles3D.new()
 	chuva.name = "ChuvaDeDoces"
 	chuva.one_shot = true
 	chuva.explosiveness = 0.9
-	chuva.amount = 160
+	chuva.amount = quantos
 	chuva.lifetime = 2.6
-	chuva.position = _pivo.position
 	chuva.direction = Vector3.UP
 	chuva.spread = 70.0
 	chuva.initial_velocity_min = 6.0
@@ -153,20 +171,26 @@ func explodir() -> void:
 	chuva.hue_variation_min = -1.0
 	chuva.hue_variation_max = 1.0
 	chuva.color = Color("#FF6FAE")
-	var bala := SphereMesh.new()
-	bala.radius = 0.16
-	bala.height = 0.32
-	bala.radial_segments = 8
-	bala.rings = 4
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.roughness = 0.2
-	bala.material = mat
-	chuva.mesh = bala
-	add_child(chuva)
-	var tween := create_tween().set_parallel()
-	tween.tween_property(_pivo, "scale", Vector3.ONE * 0.01, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-	tween.tween_property(_pivo, "rotation:y", TAU * 2.0, 0.6)
-	tween.tween_property(_luz_brava, "light_energy", 0.0, 0.4)
-	await tween.finished
-	chuva.emitting = true
+	chuva.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if _malha_chuva == null:
+		_malha_chuva = SphereMesh.new()
+		_malha_chuva.radius = 0.16
+		_malha_chuva.height = 0.32
+		_malha_chuva.radial_segments = 8
+		_malha_chuva.rings = 4
+		var mat := StandardMaterial3D.new()
+		mat.vertex_color_use_as_albedo = true
+		mat.roughness = 0.2
+		_malha_chuva.material = mat
+	chuva.mesh = _malha_chuva
+	return chuva
+
+
+## Aquecer a vila: liga a luz vermelha (fraquinha) por um instante, para o
+## celular preparar o desenho com ela antes da luta.
+func aquecer(ligar: bool) -> void:
+	_luz_brava.visible = ligar or _bravo
+	if ligar and not _bravo:
+		_luz_brava.light_energy = 0.01
+	elif not _bravo:
+		_luz_brava.light_energy = 0.0

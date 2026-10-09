@@ -277,18 +277,23 @@ func _criar_pingos() -> CPUParticles3D:
 	pingos.initial_velocity_min = 0.1
 	pingos.initial_velocity_max = 0.3
 	pingos.gravity = Vector3(0, -9.0, 0)
-	var gota := SphereMesh.new()
-	gota.radius = 0.035
-	gota.height = 0.1
-	gota.radial_segments = 6
-	gota.rings = 3
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color("#4A2412")
-	mat.roughness = 0.15
-	gota.material = mat
-	pingos.mesh = gota
+	if _gota == null:  # a mesma gota sempre (malha nova = shader montado de novo, uma travadinha)
+		_gota = SphereMesh.new()
+		_gota.radius = 0.035
+		_gota.height = 0.1
+		_gota.radial_segments = 6
+		_gota.rings = 3
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color("#4A2412")
+		mat.roughness = 0.15
+		_gota.material = mat
+	pingos.mesh = _gota
+	pingos.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(pingos)
 	return pingos
+
+
+static var _gota: SphereMesh
 
 
 func _process(_delta: float) -> void:

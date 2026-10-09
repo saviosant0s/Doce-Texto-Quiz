@@ -38,6 +38,13 @@ var _alternativas: GridContainer
 var _tempo_resta := 0.0
 var _painel: Control
 
+## Materiais e malhas dos efeitos, criados uma vez só e "aquecidos" na vila
+## atrás da cortina (aquecer_efeitos): antes, cada bala, faísca e a sujeira de
+## chocolate montavam o shader na primeira vez, no meio da luta (travadas).
+static var _mats_bola := {}
+static var _malhas_bola := {}
+static var _malha_faisca: SphereMesh
+
 
 func _init(vila: Node, chefao: ChefaoVila) -> void:
 	_vila = vila
@@ -417,16 +424,7 @@ func _atualizar_vida() -> void:
 
 ## Uma bola (bala ou chocolate) voando em arco de `de` até `ate`.
 func _arremesso(de: Vector3, ate: Vector3, cor: String, raio: float, altura: float) -> void:
-	var bola := MeshInstance3D.new()
-	var malha := SphereMesh.new()
-	malha.radius = raio
-	malha.height = raio * 2.0
-	bola.mesh = malha
-	var mat := Pecas3D.material(Color(cor), 0.15)
-	mat.emission_enabled = true
-	mat.emission = Color(cor)
-	mat.emission_energy_multiplier = 0.4
-	bola.material_override = mat
+	var bola := _bola(cor, raio)
 	_vila.add_child(bola)
 	bola.global_position = de
 	var meio := (de + ate) / 2.0 + Vector3(0, altura, 0)
@@ -439,6 +437,37 @@ func _arremesso(de: Vector3, ate: Vector3, cor: String, raio: float, altura: flo
 
 ## Faíscas coloridas (ou respingos de chocolate) num ponto do mundo.
 func _faiscas(onde: Vector3, quantas: int, cor := Color("#FFFFFF")) -> void:
+	var p := _particulas(quantas, cor)
+	_vila.add_child(p)
+	p.global_position = onde
+	p.emitting = true
+	p.finished.connect(p.queue_free)
+
+
+## Uma bola (bala ou chocolate), com material e malha que já existem.
+static func _bola(cor: String, raio: float) -> MeshInstance3D:
+	if not _mats_bola.has(cor):
+		var mat := Pecas3D.material(Color(cor), 0.15)
+		mat.emission_enabled = true
+		mat.emission = Color(cor)
+		mat.emission_energy_multiplier = 0.4
+		_mats_bola[cor] = mat
+	if not _malhas_bola.has(raio):
+		var malha := SphereMesh.new()
+		malha.radius = raio
+		malha.height = raio * 2.0
+		malha.radial_segments = 20  # (a padrão, 64x32, são 4 mil triângulos por bola)
+		malha.rings = 10
+		_malhas_bola[raio] = malha
+	var bola := MeshInstance3D.new()
+	bola.mesh = _malhas_bola[raio]
+	bola.material_override = _mats_bola[cor]
+	bola.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return bola
+
+
+## As faíscas (ou respingos de chocolate), sem tocar ainda.
+static func _particulas(quantas: int, cor: Color) -> CPUParticles3D:
 	var p := CPUParticles3D.new()
 	p.one_shot = true
 	p.explosiveness = 0.95
@@ -456,20 +485,35 @@ func _faiscas(onde: Vector3, quantas: int, cor := Color("#FFFFFF")) -> void:
 		p.hue_variation_min = -1.0
 		p.hue_variation_max = 1.0
 		p.color = Color("#FF6FAE")
-	var bolinha := SphereMesh.new()
-	bolinha.radius = 0.1
-	bolinha.height = 0.2
-	bolinha.radial_segments = 6
-	bolinha.rings = 3
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	bolinha.material = mat
-	p.mesh = bolinha
-	_vila.add_child(p)
-	p.global_position = onde
-	p.emitting = true
-	p.finished.connect(p.queue_free)
+	if _malha_faisca == null:
+		_malha_faisca = SphereMesh.new()
+		_malha_faisca.radius = 0.1
+		_malha_faisca.height = 0.2
+		_malha_faisca.radial_segments = 6
+		_malha_faisca.rings = 3
+		var mat := StandardMaterial3D.new()
+		mat.vertex_color_use_as_albedo = true
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_malha_faisca.material = mat
+	p.mesh = _malha_faisca
+	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return p
+
+
+## Põe uma de cada coisa da luta em `onde` (bala, chocolate, faíscas e a chuva
+## de doces do fim), para a vila desenhar uma vez atrás da cortina e o
+## celular preparar os shaders antes. Devolve os nós (para tirar depois).
+static func aquecer_efeitos(pai: Node3D, onde: Vector3) -> Array[Node3D]:
+	var nos: Array[Node3D] = [_bola("#FF6FAE", 0.45), _bola("#5A2E17", 0.7), _particulas(12, Color("#FF6FAE")),
+		ChefaoVila.chuva_de_doces(12)]
+	for i in nos.size():
+		pai.add_child(nos[i])
+		nos[i].global_position = onde + Vector3((i - 1.5) * 0.4, 0, 0)
+		if nos[i] is CPUParticles3D:
+			(nos[i] as CPUParticles3D).one_shot = false
+			(nos[i] as CPUParticles3D).preprocess = 0.3  # já aparecem no primeiro quadro
+			(nos[i] as CPUParticles3D).emitting = true
+	return nos
 
 
 func _tremer_camera() -> void:
