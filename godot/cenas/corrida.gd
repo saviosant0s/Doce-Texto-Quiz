@@ -101,11 +101,7 @@ func ao_voltar() -> void:
 
 func _criar_ambiente() -> void:
 	var ambiente := Environment.new()
-	var ceu := ProceduralSkyMaterial.new()
-	ceu.sky_top_color = Color("#6FB8F0")
-	ceu.sky_horizon_color = Color("#FFD9EC")
-	ceu.ground_horizon_color = Color("#FFD9EC")
-	ceu.ground_bottom_color = Color("#86C96F")
+	var ceu := VisualRealista.ceu(Color("#6FB8F0"), Color("#FFD9EC"), Color("#86C96F"))
 	var sky := Sky.new()
 	sky.sky_material = ceu
 	ambiente.background_mode = Environment.BG_SKY
@@ -119,6 +115,7 @@ func _criar_ambiente() -> void:
 	ambiente.fog_density = 0.0035
 	ambiente.fog_sky_affect = 0.0
 	CenarioVila.acabamento(ambiente)
+	VisualRealista.ambiente(ambiente)
 	var mundo := WorldEnvironment.new()
 	mundo.environment = ambiente
 	add_child(mundo)
@@ -130,6 +127,7 @@ func _criar_ambiente() -> void:
 	sol.shadow_opacity = 0.65
 	sol.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sol.directional_shadow_max_distance = 45.0
+	VisualRealista.sol(sol)
 	add_child(sol)
 
 

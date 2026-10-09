@@ -21,7 +21,7 @@ const ATRITO := 3.0  # quanto o giro "de embalo" freia por segundo
 const ESPERA_PARA_VOLTAR := 1.5  # segundos parado até voltar para a pose inicial
 ## Resolução máxima da cena 3D em relação ao tamanho lógico, por qualidade
 ## (BAIXA, MÉDIA, ALTA): numa tela grande, a ALTA desenha mais nítido.
-const ESCALA_MAXIMA := [1.0, 1.5, 2.0]
+const ESCALA_MAXIMA := [1.0, 1.5, 2.0, 2.0]
 
 ## Ângulo (em radianos, no eixo Y) da pose inicial.
 @export var angulo_inicial := -0.5

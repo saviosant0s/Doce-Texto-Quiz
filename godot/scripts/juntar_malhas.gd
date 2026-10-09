@@ -16,7 +16,7 @@ const CONTORNO := preload("res://tema/contorno_junto.gdshader")
 ## Menos faces nas formas pequenas (pelo tamanho no mundo).
 ## Na qualidade MÉDIA (padrão no celular) e BAIXA, ainda menos faces.
 static func simplificar(raiz: Node) -> void:
-	var fator: float = [0.55, 0.75, 1.0][Qualidade.nivel()]
+	var fator: float = [0.55, 0.75, 1.0, 1.0][Qualidade.nivel()]
 	for no in raiz.find_children("*", "MeshInstance3D", true, false):
 		var peca := no as MeshInstance3D
 		if not peca.mesh is PrimitiveMesh:

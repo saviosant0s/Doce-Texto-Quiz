@@ -82,6 +82,29 @@ O que mudou:
 - A luz vermelha do chefão ficava ligada (com força zero) o tempo todo na praça;
   agora só liga quando ele fica bravo.
 
+## Gráficos mais realistas sem pesar (09/10/2026)
+
+Pedido: "deixe super realista", num PC de 8 GB com placa integrada e sem
+voltar o lag. A escolha foi gastar onde quase não custa (`scripts/visual_realista.gd`):
+
+| O quê | Custo | Qualidade |
+|---|---|---|
+| Céu com sol, halo e nuvens (`tema/ceu_doce.gdshader`) | o céu já era desenhado; sem `TIME`, o reflexo do céu (luz ambiente) só é refeito quando a hora muda | MÉDIA e acima |
+| Líquidos com ondinhas e céu refletido (`tema/liquido_doce.gdshader`) | 1 shader para os 5 líquidos; o reflexo é a cor do céu calculada no próprio shader (sem câmera extra nem SSR) | MÉDIA e acima |
+| Sol que anda (baixo e dourado de manhã e no fim da tarde, sombras compridas) | nenhum: a luz já era atualizada a cada 2 s | todas |
+| Sombra macia (filtro MEDIUM) e fundo longe desfocado | um passe de desfoque | ALTA |
+| SSAO, SSIL, SSR, névoa volumétrica, sombra de 4 faixas | pesado (renderizador Forward+, o jogo reinicia) | ULTRA (só computador) |
+
+Desenhos por quadro na vila: 632 → 636. O ULTRA não aparece no celular nem
+no navegador, e sem o Forward+ ele vale como ALTA; se o jogo ficar lento no
+ULTRA, o vigia de lentidão desce para ALTA e desliga os efeitos na hora.
+
+Ficaram de fora a névoa com a cor do céu (`fog_aerial_perspective`) e o brilho
+do sol na névoa (`fog_sun_scatter`): no renderizador Mobile, com qualquer uma
+das duas ligada, os postes, as pedrinhas e a forminha do doce perdiam a luz do
+sol e ficavam arroxeados (achado comparando pixels dos prints com cada ajuste
+ligado e desligado).
+
 ## Próximos passos possíveis
 
 - Vila: menos triângulos nos blocos da vila (versões simplificadas dos prédios

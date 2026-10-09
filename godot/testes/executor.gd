@@ -1209,6 +1209,20 @@ func _testar_configuracoes() -> void:
 	verificar(await _esperar_tela("Configuracoes"), "abre as configurações")
 	var tela := get_tree().current_scene
 	verificar(tela.find_child("Qualidade", true, false) != null, "opção de qualidade dos gráficos")
+	verificar(tela.find_child("Qualidade3", true, false) == null and Qualidade.escolhida() == Qualidade.ALTA,
+		"ULTRA só aparece no computador (aqui, sem tela, não)")
+	Progresso.config["qualidade"] = Qualidade.ULTRA
+	verificar(Qualidade.nivel() == Qualidade.ALTA and not Qualidade.ultra_ativo(),
+		"sem o renderizador Forward+, o ULTRA vale como ALTA (até o jogo reiniciar)")
+	Qualidade.escolher(Qualidade.ALTA)
+	verificar(not Qualidade.reiniciar_se_precisar(get_tree()), "na ALTA o jogo não reinicia")
+	var ambiente_ultra := Environment.new()
+	ambiente_ultra.ssao_enabled = true
+	ambiente_ultra.ssr_enabled = true
+	ambiente_ultra.volumetric_fog_enabled = true
+	VisualRealista.desligar_ultra(ambiente_ultra)
+	verificar(not ambiente_ultra.ssao_enabled and not ambiente_ultra.ssr_enabled and not ambiente_ultra.volumetric_fog_enabled,
+		"jogo lento no ULTRA: os efeitos pesados desligam na hora")
 	var controles := tela.find_children("*", "HSlider", true, false)
 	verificar(controles.size() == 2, "dois controles de volume")
 	if controles.size() == 2:
@@ -1890,6 +1904,14 @@ func _testar_ciclo_dia() -> void:
 	verificar(CicloDia.fase(10.0) == "MANHÃ" and CicloDia.fase(22.0) == "NOITE" and CicloDia.fase(18.3) == "PÔR DO SOL",
 		"nome de cada momento do dia")
 	verificar((CicloDia.misturar(CicloDia.CEU_TOPO, 23.0) as Color).v < 0.3, "céu escuro de noite")
+	verificar(CicloDia.altura_sol(12.0) < -50.0 and CicloDia.altura_sol(18.2) > -12.0 and CicloDia.altura_sol(18.2) < 0.0
+		and CicloDia.altura_sol(7.0) > -25.0, "o sol fica alto ao meio-dia e baixo (sem sumir) de manhã e no pôr do sol")
+	verificar(is_equal_approx(CicloDia.altura_sol(23.0), -48.0) and is_equal_approx(CicloDia.altura_sol(3.0), -48.0),
+		"de noite a luz é a da lua, alta")
+	var sol_tarde := CicloDia.cor_sol(18.2)
+	var sol_dia := CicloDia.cor_sol(12.0)
+	verificar(sol_tarde.r - sol_tarde.b > sol_dia.r - sol_dia.b and CicloDia.cor_sol(23.0).b > CicloDia.cor_sol(23.0).r,
+		"luz dourada com o sol baixo; de noite, a luz azulada da lua")
 	# relógio do jogo: um dia do jogo = 40 min de verdade, andando sozinho
 	CicloDia.agora_fixo = 1000000.0
 	var hora_a := CicloDia.hora()

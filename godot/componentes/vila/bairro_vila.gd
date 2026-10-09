@@ -396,7 +396,8 @@ static func _fonte(no: Node3D, nivel := 1) -> void:
 ## Lago de Chocolate com um deque de biscoito e um barquinho de bolacha.
 static func lago(pai: Node3D, centro: Vector3) -> void:
 	var chocolate := _m("#5A2E17", 0.08)
-	Pecas3D.cilindro(pai, 6.5, 6.5, 0.06, centro + Vector3(0, 0.04, 0), chocolate)
+	Pecas3D.cilindro(pai, 6.5, 6.5, 0.06, centro + Vector3(0, 0.04, 0),
+		VisualRealista.liquido("chocolate", chocolate, Vector2(centro.x, centro.z), Vector2(6.5, 6.5)))
 	Pecas3D.rosquinha(pai, 6.3, 7.0, centro + Vector3(0, 0.06, 0), _m("#E9B97A", 0.8), Vector3(1, 0.3, 1))
 	# redemoinhos de chantili
 	for p in [Vector3(-2, 0, -2), Vector3(2.5, 0, 1.5), Vector3(-1, 0, 3)]:

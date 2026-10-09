@@ -846,6 +846,10 @@ func _ready() -> void:
 			_mostrar_travadas()
 		get_tree().quit()
 		return
+	if args.has("esconder"):  # --esconder=Evento,Chefao: some com esses nós da cena (para achar quem faz sombra)
+		for nome in args["esconder"].split(","):
+			for no in get_tree().current_scene.find_children(nome + "*", "Node3D", true, false):
+				no.visible = false
 	await get_tree().create_timer(float(args.get("espera", "1.2"))).timeout
 	if args.has("desempenho"):
 		# quanto a tela pesa para desenhar (o FPS aqui não vale: é sem placa de vídeo)

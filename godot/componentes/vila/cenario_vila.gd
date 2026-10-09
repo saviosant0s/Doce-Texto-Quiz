@@ -191,10 +191,12 @@ static func praca(pai: Node3D, raio: float) -> void:
 	var chocolate := _m("#5A2E17", 0.15)
 	var borda := _texturizado("#FFF1F5", "glace", 1.5, 0.3)
 	Pecas3D.cilindro(pai, 2.0, 2.2, 0.7, Vector3(0, 0.35, 0), borda)
-	Pecas3D.cilindro(pai, 1.8, 1.8, 0.06, Vector3(0, 0.68, 0), chocolate)
+	Pecas3D.cilindro(pai, 1.8, 1.8, 0.06, Vector3(0, 0.68, 0),
+		VisualRealista.liquido("chocolate", chocolate, Vector2.ZERO, Vector2(1.8, 1.8)))
 	Pecas3D.cilindro(pai, 0.3, 0.35, 2.2, Vector3(0, 1.4, 0), borda)
 	Pecas3D.cilindro(pai, 1.0, 0.7, 0.3, Vector3(0, 2.3, 0), borda)
-	Pecas3D.cilindro(pai, 0.95, 0.95, 0.05, Vector3(0, 2.46, 0), chocolate)
+	Pecas3D.cilindro(pai, 0.95, 0.95, 0.05, Vector3(0, 2.46, 0),
+		VisualRealista.liquido("chocolate", chocolate, Vector2.ZERO, Vector2(0.95, 0.95)))
 	Pecas3D.esfera(pai, 0.45, Vector3(0, 2.75, 0), chocolate, Vector3(1, 0.8, 1))
 	# pingos de chocolate escorrendo pela borda do pratinho de cima
 	for i in 10:
@@ -1235,7 +1237,7 @@ static func qualidade_3d(viewport: Viewport) -> Dictionary:
 	viewport.msaa_3d = Qualidade.ANTISSERRILHADO[Qualidade.nivel()]
 	viewport.scaling_3d_scale = Qualidade.ESCALA_3D[Qualidade.nivel()]
 	# mapa de sombra do sol menor fora da ALTA (o padrão de 4096 pesa em placa integrada)
-	RenderingServer.directional_shadow_atlas_set_size(4096 if Qualidade.nivel() == Qualidade.ALTA else 2048, true)
+	RenderingServer.directional_shadow_atlas_set_size(4096 if Qualidade.nivel() >= Qualidade.ALTA else 2048, true)
 	return antes
 
 

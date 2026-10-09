@@ -199,6 +199,36 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   qualidade MÉDIA de início em placa integrada ou até 8 GB; vigia de
   lentidão que desce a qualidade sozinho; física a 60/s fora da ALTA;
   sombra, brilho e materiais mais leves na MÉDIA/BAIXA.
+- GRÁFICOS MAIS REALISTAS (pedido: "deixe super realista", sem voltar o lag;
+  scripts/visual_realista.gd), na MÉDIA e na ALTA, quase sem custo (3 a 4
+  desenhos a mais por quadro):
+  - CÉU de verdade (tema/ceu_doce.gdshader) na vila e na corrida: sol com
+    disco e halo (largo e dourado no fim da tarde), faixa clara no horizonte,
+    nuvens com volume e borda dourada do lado do sol, cinzas na chuva e
+    escuras à noite. Sem TIME de propósito: o reflexo do céu só é refeito
+    quando a hora muda.
+  - LÍQUIDOS (tema/liquido_doce.gdshader): lago de morango, lago e fonte de
+    chocolate e rio de calda com ondinhas andando, o céu refletido
+    (mais reflexo olhando rente), brilho do sol e o meio mais escuro que a
+    beira. De longe as ondinhas somem e a água vira espelho.
+  - O SOL ANDA pelo céu (CicloDia.altura_sol): nasce baixo, 58° ao meio-dia e
+    desce até quase o horizonte no fim da tarde (antes ficava a 35° no "pôr do
+    sol" e nunca aparecia). Com o sol baixo a luz fica dourada
+    (CicloDia.cor_sol), as sombras compridas, e o céu ganha a faixa laranja no
+    horizonte do lado do sol e o disco do sol. Depois do pôr do sol a mesma luz
+    vira a da lua.
+  - Na ALTA: sombra mais macia e o fundo bem longe levemente desfocado.
+  - Qualidade ULTRA (só computador, aparece nas Configurações): o jogo
+    reinicia no renderizador Forward+ (Qualidade.reiniciar_se_precisar) e liga
+    sombra de contato (SSAO), luz rebatida colorida (SSIL), reflexo dos prédios
+    nos lagos (SSR), névoa volumétrica com raios de sol e sombra de 4 faixas.
+    Se ficar lento, o vigia desce para ALTA e desliga esses efeitos na hora.
+    Pesada: não serve para placa integrada (o PC do Sávio, 8 GB, fica na
+    MÉDIA/ALTA). Sem o Forward+ (celular, navegador), ULTRA vale como ALTA.
+  - Ficou de fora: a névoa com a cor do céu e o brilho do sol na névoa
+    (fog_aerial_perspective, fog_sun_scatter). No renderizador Mobile os postes,
+    as pedrinhas e a forminha do doce perdiam a luz do sol (arroxeados).
+  - Na BAIXA e no navegador fica tudo como antes.
 
 ### Rodada de 29/09/2026 (depois de jogar a 0.14.0 no celular) — publicado na 0.15.0
 

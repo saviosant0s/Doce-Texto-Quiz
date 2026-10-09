@@ -58,6 +58,7 @@ signal por_cima_fechou
 
 
 func _ready() -> void:
+	(func(): Qualidade.reiniciar_se_precisar(get_tree())).call_deferred()  # (gráficos ULTRA)
 	_ajustar_fisica()
 	_detectar_renderizacao()
 	_criar_cortina()
@@ -92,7 +93,7 @@ func _ajustar_fisica() -> void:
 	# só na qualidade ALTA a física acompanha telas de 90/120 Hz: num aparelho
 	# fraco, a física a 120 por segundo pesava o dobro e, quando a tela caía
 	# de quadros, ainda rodava vários passos por quadro (mais lento ainda)
-	if hz >= 60 and Qualidade.nivel() == Qualidade.ALTA:
+	if hz >= 60 and Qualidade.nivel() >= Qualidade.ALTA:
 		Engine.physics_ticks_per_second = clampi(hz, 60, 120)
 	else:
 		Engine.physics_ticks_per_second = 60
@@ -144,6 +145,10 @@ func _vigiar_lentidao(delta: float) -> void:
 	viewport.scaling_3d_scale = Qualidade.ESCALA_3D[novo]
 	for luz in cena.find_children("*", "DirectionalLight3D", true, false):
 		(luz as DirectionalLight3D).shadow_enabled = luz.shadow_enabled and Qualidade.sombras()
+	if Qualidade.ultra_ativo():
+		for mundo in cena.find_children("*", "WorldEnvironment", true, false):
+			if (mundo as WorldEnvironment).environment:
+				VisualRealista.desligar_ultra((mundo as WorldEnvironment).environment)
 	mostrar_aviso("O JOGO ESTAVA LENTO: GRÁFICOS EM %s (MUDE NAS CONFIGURAÇÕES)" % Qualidade.NOMES[novo])
 
 

@@ -86,24 +86,40 @@ func _criar_qualidade() -> void:
 	rotulo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	linha.add_child(rotulo)
 	var grupo := ButtonGroup.new()
-	for i in Qualidade.NOMES.size():
+	var niveis := Qualidade.NOMES.size() if Qualidade.tem_ultra() else Qualidade.ULTRA
+	for i in niveis:
 		var botao := Button.new()
 		botao.name = "Qualidade%d" % i
 		botao.text = Qualidade.NOMES[i]
 		botao.toggle_mode = true
 		botao.button_group = grupo
-		botao.button_pressed = i == Qualidade.nivel()
+		botao.button_pressed = i == Qualidade.escolhida()
 		botao.custom_minimum_size = Vector2(110, 46)
 		botao.add_theme_font_size_override("font_size", 24)
-		botao.theme_type_variation = &"BotaoRoxo" if i == Qualidade.nivel() else &"BotaoSecundario"
+		botao.theme_type_variation = &"BotaoRoxo" if i == Qualidade.escolhida() else &"BotaoSecundario"
+		if i == Qualidade.ULTRA:
+			botao.tooltip_text = "Super realista: sombras de contato, reflexo na água e raios de sol. Para placa de vídeo forte; o jogo reinicia."
 		botao.pressed.connect(func():
+			if i == Qualidade.ULTRA and not Qualidade.ultra_ativo():
+				if not await Telas.confirmar("GRÁFICOS ULTRA", "Super realista: sombra de contato, reflexo dos prédios na água e raios de sol na névoa. Precisa de placa de vídeo forte (se ficar lento, ele volta sozinho para ALTA). O jogo vai reiniciar.", "REINICIAR", "CANCELAR"):
+					_marcar_qualidade(linha, Qualidade.escolhida())
+					return
+				Qualidade.escolher(i)
+				Qualidade.reiniciar_se_precisar(get_tree())
+				return
 			Qualidade.escolher(i)
 			Telas._ajustar_fisica()
-			for outro in linha.get_children():
-				if outro is Button:
-					outro.theme_type_variation = &"BotaoRoxo" if outro == botao else &"BotaoSecundario")
+			_marcar_qualidade(linha, i))
 		linha.add_child(botao)
 	%Linhas.add_child(linha)
+
+
+func _marcar_qualidade(linha: Control, nivel: int) -> void:
+	for outro in linha.get_children():
+		if outro is Button:
+			var escolhido: bool = outro.name == "Qualidade%d" % nivel
+			outro.button_pressed = escolhido
+			outro.theme_type_variation = &"BotaoRoxo" if escolhido else &"BotaoSecundario"
 
 
 ## Dia e noite na vila: pelo relógio do aparelho ou sempre de dia.

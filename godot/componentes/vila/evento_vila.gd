@@ -246,7 +246,7 @@ func _particulas() -> void:
 	var cores: Array = cores_evento(id)
 	var p := CPUParticles3D.new()
 	p.name = "ParticulasEvento"
-	p.amount = [40, 70, 110][Qualidade.nivel()]
+	p.amount = [40, 70, 110, 140][Qualidade.nivel()]
 	p.lifetime = 5.0
 	p.local_coords = false
 	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX

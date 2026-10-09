@@ -46,7 +46,6 @@ const CEU_TOPO := [Color("#9FD4F7"), Color("#8A9FE0"), Color("#0B1030")]
 const CEU_HORIZONTE := [Color("#FFD6EA"), Color("#FF9E6B"), Color("#2B2A5E")]
 const COR_SOL := [Color("#FFF0D6"), Color("#FFB26B"), Color("#8098FF")]
 const ENERGIA_SOL := [1.0, 0.7, 0.2]
-const ALTURA_SOL := [-55.0, -14.0, -48.0]  # graus (de noite é a lua, alta)
 const AMBIENTE := [1.0, 0.85, 0.45]
 const NEVOA := [Color("#FFE3F0"), Color("#FFC6A8"), Color("#1C1A44")]
 
@@ -67,6 +66,33 @@ static func agora() -> float:
 ## Horas do jogo desde o começo dos tempos.
 static func horas_jogo() -> float:
 	return agora() / DURACAO_DIA * 24.0 + HORA_INICIAL
+
+
+## Altura da luz do sol em graus, como no rotation_degrees.x dela (negativa =
+## acima do horizonte): o sol nasce baixo, sobe até 58° ao meio-dia e desce até
+## quase encostar no horizonte no fim da tarde (luz dourada, sombras compridas,
+## o disco do sol aparecendo no céu). Depois do pôr do sol a mesma luz vira a
+## da lua, alta (48°), e volta a ser o sol antes de amanhecer.
+static func altura_sol(h := -1.0) -> float:
+	if h < 0.0:
+		h = hora()
+	var sol := 3.0 + 55.0 * sin(PI * clampf((h - 5.8) / 12.8, 0.0, 1.0))  # 5h48 a 18h36
+	return -lerpf(sol, 48.0, _luz_da_lua(h))
+
+
+## Cor da luz do sol: a da hora (COR_SOL) e mais dourada quanto mais baixo o
+## sol está (como de verdade: no fim da tarde a luz atravessa mais ar).
+static func cor_sol(h := -1.0) -> Color:
+	if h < 0.0:
+		h = hora()
+	var cor: Color = misturar(COR_SOL, h)
+	var baixo := 1.0 - clampf((-altura_sol(h) - 3.0) / 27.0, 0.0, 1.0)
+	return cor.lerp(Color("#FFA65C"), baixo * 0.65 * (1.0 - _luz_da_lua(h)))
+
+
+## 0 = a luz é o sol, 1 = é a lua (troca logo depois do pôr do sol e antes de amanhecer).
+static func _luz_da_lua(h: float) -> float:
+	return smoothstep(18.6, 19.5, h) if h > 12.0 else 1.0 - smoothstep(5.0, 5.8, h)
 
 
 ## Hora do jogo agora (0 a 24, com os minutos); meio-dia se "sempre dia".

@@ -195,7 +195,8 @@ static func _ilha(no: Node3D) -> void:
 	agua.emission_enabled = true
 	agua.emission = Color("#FF8FB8")
 	agua.emission_energy_multiplier = 0.15
-	var lago := Pecas3D.cilindro(no, 1.0, 1.0, 0.06, LAGO_CENTRO + Vector3(0, 0.04, 0), agua)
+	var agua_viva := VisualRealista.liquido("morango", agua, Vector2(LAGO_CENTRO.x, LAGO_CENTRO.z), LAGO_RAIOS)
+	var lago := Pecas3D.cilindro(no, 1.0, 1.0, 0.06, LAGO_CENTRO + Vector3(0, 0.04, 0), agua_viva)
 	lago.scale = Vector3(LAGO_RAIOS.x, 1, LAGO_RAIOS.y)
 	var areia := _m("#F6E3C6", 0.9)
 	var borda := Pecas3D.cilindro(no, 1.0, 1.0, 0.05, LAGO_CENTRO + Vector3(0, 0.02, 0), areia)
@@ -278,7 +279,8 @@ static func _bosque(no: Node3D) -> void:
 	var calda := _m("#C98A3A", 0.05)
 	calda.metallic = 0.25
 	var largura := v.size.x
-	Pecas3D.caixa(no, Vector3(largura, 0.06, RIO_Z.y - RIO_Z.x), Vector3(0, 0.04, (RIO_Z.x + RIO_Z.y) / 2.0), calda)
+	Pecas3D.caixa(no, Vector3(largura, 0.06, RIO_Z.y - RIO_Z.x), Vector3(0, 0.04, (RIO_Z.x + RIO_Z.y) / 2.0),
+		VisualRealista.liquido("calda", calda, Vector2.ZERO, Vector2.ZERO, Vector2(1.0, 0.0)))
 	for z in [RIO_Z.x - 0.5, RIO_Z.y + 0.5]:
 		Pecas3D.caixa(no, Vector3(largura, 0.08, 1.2), Vector3(0, 0.04, z), _m("#F6E3C6", 0.9))
 	# colisão nas margens, menos na ponte

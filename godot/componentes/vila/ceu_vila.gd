@@ -15,7 +15,7 @@ const CORES_GRANULADO := ["#FF6FAE", "#6FD3FF", "#FFD23F", "#7BE07B", "#B07CFF",
 const DISTANCIA_PEGAR := 1.3
 
 var _ambiente: Environment
-var _ceu: ProceduralSkyMaterial
+var _ceu: Material  # ProceduralSkyMaterial (BAIXA) ou o céu realista (ver VisualRealista)
 var _sol: DirectionalLight3D
 var _jogador: Node3D
 var _camera: Camera3D
@@ -70,12 +70,13 @@ func atualizar(ja := false) -> void:
 	noite = CicloDia.noite(h)
 	var chuva := CicloDia.chovendo()
 	var cinza := 0.45 if chuva else 0.0
-	_ceu.sky_top_color = (CicloDia.misturar(CicloDia.CEU_TOPO, h) as Color).lerp(Color("#8E97A8"), cinza * (1.0 - noite))
-	_ceu.sky_horizon_color = (CicloDia.misturar(CicloDia.CEU_HORIZONTE, h) as Color).lerp(Color("#C9CCD6"), cinza * (1.0 - noite))
-	_ceu.ground_horizon_color = _ceu.sky_horizon_color
-	_sol.light_color = CicloDia.misturar(CicloDia.COR_SOL, h)
+	var topo := (CicloDia.misturar(CicloDia.CEU_TOPO, h) as Color).lerp(Color("#8E97A8"), cinza * (1.0 - noite))
+	var horizonte := (CicloDia.misturar(CicloDia.CEU_HORIZONTE, h) as Color).lerp(Color("#C9CCD6"), cinza * (1.0 - noite))
+	VisualRealista.cores_do_ceu(_ceu, topo, horizonte)
+	VisualRealista.clima_do_ceu(_ceu, CicloDia.cor_sol(h), noite, chuva)
+	_sol.light_color = CicloDia.cor_sol(h)
 	_sol.light_energy = _energia_sol * float(CicloDia.misturar(CicloDia.ENERGIA_SOL, h)) * (0.6 if chuva else 1.0)
-	_sol.rotation_degrees.x = CicloDia.misturar(CicloDia.ALTURA_SOL, h)
+	_sol.rotation_degrees.x = CicloDia.altura_sol(h)
 	_ambiente.ambient_light_energy = _energia_ambiente * float(CicloDia.misturar(CicloDia.AMBIENTE, h))
 	_ambiente.fog_light_color = CicloDia.misturar(CicloDia.NEVOA, h)
 	# de noite, as luzes das portas, janelas e luminárias acendem
@@ -299,7 +300,7 @@ func _mudar_chuva(chuva: bool) -> void:
 func _criar_chuva() -> CPUParticles3D:
 	var chuva := CPUParticles3D.new()
 	chuva.name = "ChuvaDeGranulado"
-	chuva.amount = [120, 220, 360][Qualidade.nivel()]
+	chuva.amount = [120, 220, 360, 480][Qualidade.nivel()]
 	chuva.lifetime = 1.8
 	chuva.local_coords = false
 	chuva.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX

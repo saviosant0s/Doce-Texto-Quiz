@@ -777,11 +777,8 @@ func ao_voltar() -> void:
 # --- Montagem ------------------------------------------------------------------
 
 func _criar_ambiente() -> void:
-	var ceu := ProceduralSkyMaterial.new()
-	ceu.sky_top_color = Color("#9FD4F7")
-	ceu.sky_horizon_color = Color("#FFD6EA")
-	ceu.ground_horizon_color = Color("#FFD6EA")
-	ceu.ground_bottom_color = Color("#C9B3EC")
+	# céu com sol, halo e nuvens (VisualRealista; na BAIXA, o degradê simples)
+	var ceu := VisualRealista.ceu(Color("#9FD4F7"), Color("#FFD6EA"), Color("#C9B3EC"))
 	var sky := Sky.new()
 	sky.sky_material = ceu
 	var ambiente := Environment.new()
@@ -803,6 +800,7 @@ func _criar_ambiente() -> void:
 	ambiente.fog_density = 0.004
 	ambiente.fog_sky_affect = 0.0
 	CenarioVila.acabamento(ambiente)
+	VisualRealista.ambiente(ambiente)
 	_ambiente = ambiente
 	var sol := DirectionalLight3D.new()
 	_sol = sol
@@ -813,9 +811,10 @@ func _criar_ambiente() -> void:
 	sol.shadow_enabled = Qualidade.sombras()
 	sol.shadow_opacity = 0.8
 	sol.shadow_blur = 1.5  # borda da sombra macia
-	sol.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if Qualidade.nivel() == Qualidade.ALTA \
+	sol.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if Qualidade.nivel() >= Qualidade.ALTA \
 		else DirectionalLight3D.SHADOW_ORTHOGONAL
 	sol.directional_shadow_max_distance = 45.0
+	VisualRealista.sol(sol)
 	add_child(sol)
 	# antisserrilhado e 3D um pouco menor (volta ao normal ao sair da vila)
 	_qualidade_antes = CenarioVila.qualidade_3d(get_viewport())
@@ -986,6 +985,7 @@ func _criar_moradores() -> void:
 func _criar_camera() -> void:
 	_camera = Camera3D.new()
 	_camera.fov = 48.0
+	VisualRealista.camera(_camera)
 	add_child(_camera)
 	_camera.global_position = jogador.global_position + CAMERA_DISTANCIA
 
