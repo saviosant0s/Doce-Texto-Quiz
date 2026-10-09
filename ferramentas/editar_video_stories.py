@@ -72,7 +72,11 @@ def b(n):
 
 # roteiro (em batidas): gancho 0-8, logo 8-12, vila 12, paisagens, jogos,
 # prêmios e a tela final
-PAISAGENS, CORRIDA, CHEFAO, BATALHA, MATCH, FABRICA, PREMIOS, FINAL, FIM = 20, 36, 48, 60, 74, 82, 90, 96, 110
+PAISAGENS, CORRIDA, CHEFAO, BATALHA, BATALHA2, EVOLUCAO, COZINHA, MATCH, PREMIOS, FINAL, FIM = \
+    18, 34, 46, 58, 69, 73, 82, 92, 99, 104, 118
+# a batalha gravada (4_batalha): segundos da cena em que cada coisa acontece
+# (medidos no vídeo: ver ferramentas/gerar_video_stories.sh)
+B_PERGUNTA, B_VOADORA, B_CARGA, B_SUPER, B_CAI, B_CAMBALHOTA = 2.4, 4.0, 6.15, 7.05, 9.4, 13.7
 TOTAL = round(b(FIM) * FPS) / FPS
 
 
@@ -599,20 +603,24 @@ class Fundo:
 class Cena:
     """Um vídeo gravado pelo jogo, inteiro na memória, com o ajuste de cor de cada quadro."""
 
-    def __init__(self, pasta, nome, ate=None, lado_max=1560):
-        """`ate`: lê só até esse segundo; `lado_max`: reduz as cenas maiores (memória)."""
+    def __init__(self, pasta, nome, ate=None, lado_max=1560, de=0.0, qps=FPS):
+        """Lê de `de` até `ate` segundos (memória), reduz as cenas maiores que
+        `lado_max` e guarda `qps` quadros por segundo (as que passam aceleradas
+        não precisam de todos)."""
+        self.de, self.qps = de, qps
         caminho = os.path.join(pasta, nome + ".avi")
         tamanho = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
                                   "-of", "csv=p=0", caminho], capture_output=True, text=True, check=True).stdout
         self.largura, self.altura = (int(x) for x in tamanho.strip().split(","))
         fator = min(1.0, lado_max / max(self.largura, self.altura))
         self.largura, self.altura = round(self.largura * fator / 2) * 2, round(self.altura * fator / 2) * 2
-        bruto = subprocess.run(["ffmpeg", "-v", "error", "-i", caminho] + (["-t", str(ate)] if ate else []) +
-                               ["-vf", f"scale={self.largura}:{self.altura}:flags=lanczos", "-f", "rawvideo", "-pix_fmt",
-                                "rgb24", "-"], capture_output=True, check=True).stdout
+        bruto = subprocess.run(["ffmpeg", "-v", "error", "-ss", str(de), "-i", caminho] +
+                               (["-t", str(ate - de)] if ate else []) +
+                               ["-vf", f"fps={qps},scale={self.largura}:{self.altura}:flags=lanczos", "-f", "rawvideo",
+                                "-pix_fmt", "rgb24", "-"], capture_output=True, check=True).stdout
         self.quadros = np.frombuffer(bruto, np.uint8).reshape(-1, self.altura, self.largura, 3)
         self.n = len(self.quadros)
-        self.duracao = self.n / FPS
+        self.duracao = de + self.n / qps
         # tira a névoa: estica os tons de cada quadro (suavizado no tempo, sem piscar)
         amostra = self.quadros[:, ::16, ::16].astype(np.float32) @ np.array([0.299, 0.587, 0.114], np.float32)
         amostra = amostra.reshape(self.n, -1)
@@ -631,8 +639,11 @@ class Cena:
             self.tabelas.append(np.clip(y * 255, 0, 255).astype(np.uint8))
 
     def quadro(self, t):
-        i = int(limitar(round(t * FPS), 0, self.n - 1))
+        i = self.indice(t)
         return i, self.quadros[i]
+
+    def indice(self, t):
+        return int(limitar(round((t - self.de) * self.qps), 0, self.n - 1))
 
 
 def ajustar_cor(arr, tabela, saturacao=1.2):
@@ -723,7 +734,7 @@ def borrar(arr, dx, dy):
 def conteudo(trecho, t):
     """Quadro do trecho (no tamanho do cartão) no instante t (relativo ao trecho)."""
     _, q = trecho.cena.quadro(trecho.origem(t))
-    i = int(limitar(round(trecho.origem(t) * FPS), 0, trecho.cena.n - 1))
+    i = trecho.cena.indice(trecho.origem(t))
     x0, y0, cw, ch = trecho.caixa(t)
     img = Image.fromarray(q).resize((CARTAO_L, CARTAO_A), Image.BICUBIC, box=(x0, y0, x0 + cw, y0 + ch))
     arr = ajustar_cor(np.asarray(img), trecho.cena.tabelas[i])
@@ -790,10 +801,13 @@ def montar_roteiro(pasta):
     MASCARA = Image.new("L", (CARTAO_L, CARTAO_A), 0)
     ImageDraw.Draw(MASCARA).rounded_rectangle([0, 0, CARTAO_L - 1, CARTAO_A - 1], RAIO_CARTAO, fill=255)
     # (até onde cada cena é usada; as quadradas, reduzidas: o recorte já fica do tamanho do cartão)
-    for nome, ate, lado in (("1_vila", None, 1560), ("ilha", None, 1560), ("montanha", None, 1560), ("chuva", None, 1560),
-                            ("noite", None, 1560), ("2_corrida", 6.8, 1560), ("3_chefao", 5.3, 1560),
-                            ("4_batalha", 9.8, 1560), ("match", 4.6, 1280), ("fabrica", 7.8, 1280), ("6_final", 2.6, 1560)):
-        CENAS[nome] = Cena(pasta, nome, ate, lado)
+    for nome, de, ate, lado, qps in (("1_vila", 1.4, None, 1560, 30), ("por_do_sol", 0.4, 3.1, 1560, 30),
+                                     ("ilha", 0.4, 2.8, 1560, 30), ("chuva", 0.7, 2.7, 1560, 30),
+                                     ("timelapse", 0.2, 4.9, 1560, 15), ("2_corrida", 1.0, 6.8, 1560, 30),
+                                     ("3_chefao", 0.4, 5.3, 1560, 30), ("4_batalha", 2.2, 14.6, 1560, 30),
+                                     ("evolucao", 0.8, 10.8, 1280, 15), ("cozinha", 0.3, 12.5, 1560, 15),
+                                     ("match", 0.6, 4.6, 1280, 30), ("6_final", 0.0, 2.2, 1560, 30)):
+        CENAS[nome] = Cena(pasta, nome, ate, lado, de, qps)
 
     # ---- gancho (batidas 0 a 8): perguntas pulando + personagens
     def grupo_gancho(t):
@@ -851,12 +865,15 @@ def montar_roteiro(pasta):
 
     # ---- cenas do jogo
     c = CENAS
-    vila = Trecho(c["1_vila"], 12, PAISAGENS, [(0, 1.5), ("FIM", 4.6)], [(0, 1.0, .5, .5), ("FIM", 1.08, .5, .55)])
+    vila = Trecho(c["1_vila"], 12, PAISAGENS, [(0, 1.6), ("FIM", 4.6)], [(0, 1.0, .5, .5), ("FIM", 1.08, .5, .55)])
+    # paisagens: pôr do sol, a ponte da ilha, a chuva de granulado e o timelapse (o dia virando noite)
     paisagens = []
-    for i, (nome, zoom) in enumerate((("ilha", 1.0), ("montanha", 1.0), ("chuva", 1.0), ("noite", 1.0))):
-        ini_p = PAISAGENS + 4 * i
-        paisagens.append(Trecho(c[nome], ini_p, ini_p + 4, [(0, 0.4), ("FIM", 4.3)],
-                                [(0, zoom, .5, .5), ("FIM", zoom * 1.06, .5, .5)]))
+    ini_p = PAISAGENS
+    for nome, batidas, de, ate in (("por_do_sol", 4, 0.6, 2.9), ("ilha", 4, 0.6, 2.6), ("chuva", 3, 0.9, 2.5),
+                                   ("timelapse", 5, 0.4, 4.7)):
+        paisagens.append(Trecho(c[nome], ini_p, ini_p + batidas, [(0, de), ("FIM", ate)],
+                                [(0, 1.0, .5, .5), ("FIM", 1.05, .5, .5)]))
+        ini_p += batidas
     o = CORRIDA
     corrida = Trecho(c["2_corrida"], o, o + 12, [(0, 1.2), (1.95, 4.5), (3.35, 5.2), ("FIM", 6.5)],
                      [(0, 1.0, .5, .5), (1.95, 1.0, .5, .55), (3.3, 1.22, .5, .6), (3.48, 1.0, .5, .5), ("FIM", 1.0, .5, .5)])
@@ -867,26 +884,35 @@ def montar_roteiro(pasta):
                     [(0, 1.25, .5, .3), (0.95, 1.3, .5, .32), (1.22, 1.0, .5, .5), (2.6, 1.0, .5, .5),
                      (2.82, 1.45, .48, .28), (3.95, 1.55, .48, .27), (4.4, 1.05, .5, .45), ("FIM", 1.0, .5, .5)])
     chefao.socos.append((chefao.quando(4.0), 0.13))
-    # batalha: golpe (4,05 s da cena), SUPER carregando e o golpe (7,1 s), nocaute e o próximo caindo
+    # batalha: voadora, o SUPER (tornado com uppercut, câmera lenta) que nocauteia e o próximo caindo
     o = BATALHA
-    batalha = Trecho(c["4_batalha"], o, MATCH, [(0, 1.0), (1.0, 3.75), (1.9, 4.3), (2.5, 6.2), (3.3, 6.95), (4.0, 7.3),
-                                                ("FIM", 9.4)],
-                     [(0, 1.0, .5, .5), (1.0, 1.0, .5, .5), (1.4, 1.12, .55, .4), (1.9, 1.0, .5, .5), (2.5, 1.0, .5, .5),
-                      (3.4, 1.22, .38, .4), (3.6, 1.0, .5, .45), ("FIM", 1.0, .5, .5)])
-    batalha.socos.extend([(batalha.quando(4.05), 0.1), (batalha.quando(7.1), 0.18)])
+    batalha = Trecho(c["4_batalha"], o, BATALHA2,
+                     [(0, B_PERGUNTA), (0.4, B_VOADORA - 0.5), (1.15, B_VOADORA + 0.25), (1.55, B_CARGA),
+                      (2.3, B_SUPER - 0.1), (2.9, B_SUPER + 0.2), ("FIM", B_CAI)],
+                     [(0, 1.0, .5, .5), (0.5, 1.0, .5, .5), (0.85, 1.15, .55, .42), (1.3, 1.0, .5, .5),
+                      (1.6, 1.0, .5, .5), (2.3, 1.2, .5, .42), (2.95, 1.0, .5, .42), ("FIM", 1.0, .5, .5)])
+    batalha.socos.extend([(batalha.quando(B_VOADORA), 0.1), (batalha.quando(B_SUPER), 0.18)])
+    # (corte seco) a cambalhota: mortal no ar e cai pisando
+    batalha2 = Trecho(c["4_batalha"], BATALHA2, EVOLUCAO, [(0, B_CAMBALHOTA - 0.85), (1.1, B_CAMBALHOTA + 0.15),
+                                                            ("FIM", B_CAMBALHOTA + 0.75)],
+                      [(0, 1.1, .5, .45), (1.1, 1.18, .55, .42), ("FIM", 1.0, .5, .5)])
+    batalha2.socos.append((batalha2.quando(B_CAMBALHOTA), 0.12))
+    # evolução (Coleção em 1280x1280, zoom no doce): a maçã do nível 1 ao 5, cortando o tempo parado
+    evolucao = Trecho(c["evolucao"], EVOLUCAO, COZINHA, [(0, 1.0), ("FIM", 10.6)],
+                      [(0, 1.75, .19, .37), ("FIM", 1.85, .19, .36)])
+    # cozinha da Confeitaria (o doce pega, atende, recolhe as moedas e melhora a máquina)
+    cozinha = Trecho(c["cozinha"], COZINHA, MATCH, [(0, 0.5), ("FIM", 12.3)], [(0, 1.08, .5, .5), ("FIM", 1.12, .5, .5)])
     # Doce Match (gravado em 1280x1280): a bomba explode em 1,0 s e as cascatas vão até ~3,8 s
-    match = Trecho(c["match"], MATCH, FABRICA, [(0, 0.85), (1.0, 1.6), ("FIM", 4.3)],
+    match = Trecho(c["match"], MATCH, PREMIOS, [(0, 0.85), (1.0, 1.6), ("FIM", 4.0)],
                    [(0, 1.35, .652, .5), (1.0, 1.42, .652, .5), ("FIM", 1.35, .652, .5)])
     match.socos.append((match.quando(1.0), 0.08))
-    # Fábrica (1280x1280): zoom na esteira (os chocolates, as faíscas e o PEDIDO PRONTO)
-    fabrica = Trecho(c["fabrica"], FABRICA, PREMIOS, [(0, 2.0), ("FIM", 7.6)],
-                     [(0, 1.75, .56, .55), ("FIM", 1.85, .56, .56)])
-    premios = Trecho(c["6_final"], PREMIOS, FINAL, [(0, 0.0), ("FIM", 2.3)], [(0, 1.12, .5, .5), ("FIM", 1.2, .5, .48)])
-    TRECHOS.extend([vila] + paisagens + [corrida, chefao, batalha, match, fabrica, premios])
-    TRANSICOES.extend([(b(PAISAGENS), "chicote_esq", 0.28), (b(PAISAGENS + 4), "dissolve", 0.4),
-                       (b(PAISAGENS + 8), "dissolve", 0.4), (b(PAISAGENS + 12), "dissolve", 0.5),
+    premios = Trecho(c["6_final"], PREMIOS, FINAL, [(0, 0.0), ("FIM", 1.9)], [(0, 1.12, .5, .5), ("FIM", 1.2, .5, .48)])
+    TRECHOS.extend([vila] + paisagens + [corrida, chefao, batalha, batalha2, evolucao, cozinha, match, premios])
+    p0, p1, p2, p3 = (tr.ini for tr in paisagens)
+    TRANSICOES.extend([(p0, "chicote_esq", 0.28), (p1, "dissolve", 0.45), (p2, "dissolve", 0.45), (p3, "dissolve", 0.5),
                        (b(CORRIDA), "zoom", 0.36), (b(CHEFAO), "chicote_cima", 0.28), (b(BATALHA), "chicote_dir", 0.28),
-                       (b(MATCH), "zoom", 0.36), (b(FABRICA), "chicote_esq", 0.28), (b(PREMIOS), "flash", 0)])
+                       (b(BATALHA2), "chicote_esq", 0.24), (b(EVOLUCAO), "flash", 0), (b(COZINHA), "chicote_esq", 0.28), (b(MATCH), "zoom", 0.36),
+                       (b(PREMIOS), "flash", 0)])
     for t, tipo, _d in TRANSICOES:
         if tipo == "flash":
             flash(t, 0.9, 0.06, 0.3)
@@ -898,25 +924,27 @@ def montar_roteiro(pasta):
             som(t - 0.2, "vush", 0.8)
 
     LEGENDAS.extend([
-        Legenda(b(12.4), b(19.6), "EXPLORE A", "VILA DOS DOCES"),
-        Legenda(b(PAISAGENS + 0.4), b(PAISAGENS + 7.6), "UM MUNDO INTEIRO", "PARA EXPLORAR"),
-        Legenda(b(PAISAGENS + 8.4), b(PAISAGENS + 15.6), "DIA, NOITE E", "CHUVA DE GRANULADO!"),
+        Legenda(b(12.4), b(PAISAGENS - 0.4), "EXPLORE A", "VILA DOS DOCES"),
+        Legenda(p0 + 0.15, p2 - 0.15, "UM MUNDO INTEIRO", "PARA EXPLORAR"),
+        Legenda(p2 + 0.15, b(CORRIDA - 0.4), "DIA, NOITE E", "CHUVA DE GRANULADO!"),
         Legenda(b(CORRIDA + 0.4), b(CORRIDA + 4.6), "CORRIDA", "DE DOCES"),
         Legenda(b(CORRIDA + 5.2), b(CORRIDA + 11.6), "ACERTOU?", "TURBO!"),
         Legenda(b(CHEFAO + 0.3), b(CHEFAO + 3.0), "ENFRENTE O", "CHEFÃO!"),
         Legenda(b(CHEFAO + 3.3), b(CHEFAO + 11.6), "ACERTE E", "ATAQUE!"),
-        Legenda(b(BATALHA + 0.4), b(BATALHA + 6.0), "BATALHAS", "NA ARENA!"),
-        Legenda(b(BATALHA + 6.4), b(MATCH - 0.4), "ACERTE 3 SEGUIDAS:", "SUPER ATAQUE!"),
-        Legenda(b(MATCH + 0.4), b(FABRICA - 0.4), "DOCE MATCH:", "COMBINE E EXPLODA!"),
-        Legenda(b(FABRICA + 0.4), b(PREMIOS - 0.4), "CORRA NA FÁBRICA", "DE CHOCOLATE!"),
+        Legenda(b(BATALHA + 0.3), batalha.quando(B_CARGA) - 0.1, "BATALHAS COM", "GOLPES DE LUTA!"),
+        Legenda(batalha.quando(B_CARGA) + 0.05, b(BATALHA2 - 0.3), "ACERTE 3 SEGUIDAS:", "SUPER ATAQUE!"),
+        Legenda(b(BATALHA2 + 0.2), b(EVOLUCAO - 0.3), "VOADORA, MORTAL", "E PIRUETA!"),
+        Legenda(b(EVOLUCAO + 0.3), b(COZINHA - 0.4), "MELHORE E VEJA O", "DOCE EVOLUIR!"),
+        Legenda(b(COZINHA + 0.4), b(MATCH - 0.4), "PRODUZA, VENDA", "E MELHORE A LOJA!"),
+        Legenda(b(MATCH + 0.4), b(PREMIOS - 0.4), "DOCE MATCH:", "COMBINE E EXPLODA!"),
         Legenda(b(PREMIOS + 0.3), b(FINAL - 0.3), "A CADA ACERTO", "GANHE PRÊMIOS!"),
     ])
     for leg in LEGENDAS:
         som(leg.ini, "estouro", 0.45)
     FRENTE.extend(LEGENDAS)
 
-    # paisagens: um brilho quando a vila anoitece
-    som(b(PAISAGENS + 12) - 0.1, "especial", 0.5)
+    # paisagens: um brilho quando a vila anoitece no timelapse
+    som(p3 + 0.8, "especial", 0.5)
     # corrida: câmera lenta no portal, depois TURBO!
     t_lenta = corrida.ini + 1.95
     som(t_lenta - 0.1, "desce", 0.8)
@@ -945,44 +973,58 @@ def montar_roteiro(pasta):
     FRENTE.append(Peca(adesivo("POW!", 150, AMARELO, ROSA, semente=6), 790, 470, t_golpe, chefao.fim - 0.25, giro=-12,
                        balanco=2))
     FRENTE.append(Explosao(t_golpe, 520, 420, 40, semente=11, vel=(500, 1200), vida=1.1))
-    # batalha: golpe, SUPER (câmera lenta, tremida e flash) e nocaute
-    t_golpe1 = batalha.quando(4.05)
-    tremida(t_golpe1, 16, 8)
-    som(t_golpe1, "impacto_leve", 0.8)
-    som(batalha.quando(6.4), "subida_curta", 0.7)
-    t_super = batalha.quando(7.1)
+    # batalha: voadora e o SUPER (câmera lenta, tremida e flash) com nocaute
+    t_voadora = batalha.quando(B_VOADORA)
+    som(t_voadora - 0.3, "vush", 0.6)
+    tremida(t_voadora, 18, 8)
+    som(t_voadora, "impacto_leve", 0.9)
+    som(batalha.quando(B_CARGA), "subida_curta", 0.7)
+    t_super = batalha.quando(B_SUPER)
     som(t_super - 0.2, "desce", 0.5)
     tremida(t_super, 32, 5)
     flash(t_super, 0.5, 0.02, 0.2)
     som(t_super, "impacto", 1.0)
     FRENTE.append(Explosao(t_super, 700, 520, 50, icones, 6, semente=13, vel=(600, 1400), vida=1.2))
-    som(batalha.quando(9.0), "chape", 0.7)
+    som(batalha.quando(B_CAI - 0.3), "chape", 0.7)
+    t_mortal = batalha2.quando(B_CAMBALHOTA)
+    som(t_mortal - 0.4, "vush", 0.6)
+    tremida(t_mortal, 22, 7)
+    som(t_mortal, "impacto_leve", 1.0)
+    # evolução: um vush e um brilho a cada nível, e NÍVEL MÁXIMO no fim
+    for k in range(4):
+        t_nivel = evolucao.quando(1.2 + 2.2 * k + 0.75)
+        som(t_nivel - 0.25, "vush", 0.5)
+        som(t_nivel, "especial", 0.7)
+        flash(t_nivel, 0.35, 0.05, 0.2)
+    t_maximo = evolucao.quando(1.2 + 2.2 * 3 + 0.9)
+    FRENTE.append(Peca(adesivo("NÍVEL MÁXIMO!", 84, AMARELO, ROSA, semente=17), 540, 205, t_maximo, b(COZINHA) - 0.15,
+                       giro=-6, balanco=2))
+    som(t_maximo, "vitoria", 0.6)
+    # cozinha: moedas na hora de recolher no caixa e o upgrade da máquina
+    for k in range(6):
+        som(b(COZINHA) + 0.3 + k * 0.12, "estouro", 0.35)  # a pilha crescendo
     # Doce Match: a bomba explode logo na primeira jogada
     t_bomba = match.quando(1.0)
-    FRENTE.append(Peca(adesivo("COMBO!", 130, AMARELO, ROSA, semente=15), 790, 330, t_bomba, b(FABRICA - 0.5),
+    FRENTE.append(Peca(adesivo("COMBO!", 130, AMARELO, ROSA, semente=15), 790, 330, t_bomba, b(PREMIOS - 0.5),
                        giro=-8, balanco=3))
     tremida(t_bomba, 18, 7)
     som(t_bomba, "explosao", 0.6)
     for k in range(5):  # cascatas
         som(t_bomba + 0.45 + k * 0.32, "estouro", 0.5)
-    # Fábrica: o PEDIDO (recorte ao vivo) fica em cima do cartão, maior
-    FRENTE.append(Destaque(fabrica, (478, 116, 801, 207), b(FABRICA) + 0.15, fabrica.fim - 0.25, largura=620, y=330,
-                           y_inicio=150, holofote=False))
-    som(b(FABRICA) + 0.15, "pulo", 0.6)
     # prêmios: fichas com os ícones do jogo e o baú abrindo
-    for i, (icone, valor, y, tp) in enumerate((("itens/moeda.png", "+20", 420, 0.5), ("itens/acucar.png", "+10", 590, 1.0),
-                                               ("itens/xp.png", "+50", 760, 1.5))):
+    for i, (icone, valor, y, tp) in enumerate((("itens/moeda.png", "+20", 420, 0.3), ("itens/acucar.png", "+10", 590, 0.7),
+                                               ("itens/xp.png", "+50", 760, 1.1))):
         FRENTE.append(Peca(ficha(icone, valor), 330, y, b(PREMIOS + tp), b(FINAL - 0.4), giro=-3 + i * 2.5, pulso=0.03))
         som(b(PREMIOS + tp), "moeda", 0.8)
     bau = sombra_de(carregar("itens/bau_ouro.png", altura=300), 10, 12, 140)
     bau_aberto = sombra_de(carregar("itens/bau_aberto_ouro.png", altura=330), 10, 12, 140)
-    FRENTE.append(Peca(bau, 790, 760, b(PREMIOS + 2), b(PREMIOS + 3), giro=6, balanco=4, saida=0.01))
-    FRENTE.append(Peca(bau_aberto, 790, 745, b(PREMIOS + 3), b(FINAL - 0.4), giro=6, entrada=0.2, pulso=0.03))
-    FRENTE.append(Explosao(b(PREMIOS + 3), 790, 700, 30, icones, 14, semente=5, para_cima=True, vel=(900, 1700), vida=1.6))
-    som(b(PREMIOS + 2), "caixa", 0.8)
+    FRENTE.append(Peca(bau, 790, 760, b(PREMIOS + 1.5), b(PREMIOS + 2.5), giro=6, balanco=4, saida=0.01))
+    FRENTE.append(Peca(bau_aberto, 790, 745, b(PREMIOS + 2.5), b(FINAL - 0.4), giro=6, entrada=0.2, pulso=0.03))
+    FRENTE.append(Explosao(b(PREMIOS + 2.5), 790, 700, 30, icones, 14, semente=5, para_cima=True, vel=(900, 1700), vida=1.6))
+    som(b(PREMIOS + 1.5), "caixa", 0.8)
     for k in range(4):
-        som(b(PREMIOS + 3) + k * 0.09, "moeda", 0.6)
-    som(b(PREMIOS + 3), "especial", 0.7)
+        som(b(PREMIOS + 2.5) + k * 0.09, "moeda", 0.6)
+    som(b(PREMIOS + 2.5), "especial", 0.7)
 
     # ---- tela final
     f = FINAL
@@ -1269,7 +1311,7 @@ def iniciar(pasta):
     CARTAO = Cartao()
     corrida, chefao, batalha = TRECHOS[5], TRECHOS[6], TRECHOS[7]
     LENTAS.extend([(corrida.ini + 1.95, corrida.quando(5.2)), (chefao.ini + 2.82, chefao.quando(4.0)),
-                   (batalha.quando(6.95), batalha.quando(7.1))])
+                   (batalha.quando(B_SUPER - 0.35), batalha.quando(B_SUPER))])
 
 
 def main():

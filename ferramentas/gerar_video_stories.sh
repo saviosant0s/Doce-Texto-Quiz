@@ -61,18 +61,22 @@ gravar() {
 
 REGIOES=--regioes=ilha,bosque,montanha
 if [ -z "$SO_MONTAR" ]; then
-	gravar 1_vila vila --video_vila --duracao=4.6
+	gravar 1_vila vila --video_vila --hora=17.4 --duracao=4.6
 	gravar 2_corrida corrida --trailer_corrida=6.6 --corrida_inicio=100
 	gravar 3_chefao vila --video_chefao --duracao=6.2
+	# golpes de luta: voadora, o SUPER (tornado com uppercut) que nocauteia, pirueta, cambalhota
 	gravar 4_batalha batalha --video_batalha --batalha_super --desafiante=1 --arena_vencidos=1 \
-		--nivel_doce=brigadeiro:6 --leitura=1.0 --duracao=11
+		--nivel_doce=brigadeiro:5 --leitura=0.8 --golpe_inicial=1 --duracao=16
 	gravar 6_final vila --abertura_final --abertura_sem_texto --duracao=5.4
 	# paisagens (ver VOOS em godot/scripts/ferramentas/captura.gd)
+	gravar por_do_sol vila --video_voo=por_do_sol --hora=18.2 --duracao=4.4 $REGIOES
 	gravar ilha vila --video_voo=ilha --hora=17.6 --duracao=4.4 $REGIOES
-	gravar montanha vila --video_voo=montanha --hora=15 --duracao=4.4 $REGIOES
 	gravar chuva vila --video_voo=chuva --hora=13 --chuva --duracao=4.4 $REGIOES
-	gravar noite vila --video_voo=noite --hora=21 --duracao=4.4 $REGIOES
+	gravar timelapse vila --video_voo=timelapse --hora=17.2 --hora_ate=20.6 --duracao=5.0 $REGIOES
+	# a cozinha da Confeitaria (o doce pega, vende e melhora a máquina)
+	gravar cozinha cozinha --confeitaria --video_cozinha --duracao=13
 	QUADRADO=1 gravar match doce_match --video_match=8 --duracao=8
-	QUADRADO=1 gravar fabrica fabrica --video_fabrica --duracao=8
+	# a maçã evoluindo do nível 1 ao 5 (vira maçã do amor)
+	QUADRADO=1 gravar evolucao colecao --video_evolucao=maca --duracao=11
 fi
 [ -n "$SO_GRAVAR" ] || python3 ferramentas/editar_video_stories.py "$SAIDA"

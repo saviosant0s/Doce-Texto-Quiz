@@ -1775,6 +1775,13 @@ func _testar_telas_baus_e_missoes() -> void:
 	verificar(melhorar.visible and not melhorar.disabled, "com pedaços e moedas, dá para melhorar")
 	melhorar.pressed.emit()
 	verificar(Companheiros.nivel("brigadeiro") == 2 and Companheiros.bonus("acucar") == 15.0, "melhorar pela tela sobe o nível e o bônus")
+	var visor_colecao: Doce3D = tela.find_child("Visor", true, false)
+	var limite_evolucao := Time.get_ticks_msec() + 3000
+	var nivel_novo := false
+	while not nivel_novo and Time.get_ticks_msec() < limite_evolucao:
+		nivel_novo = tela.find_child("NivelNovo", true, false) != null
+		await get_tree().process_frame
+	verificar(nivel_novo and visor_colecao.nivel == 2, "evolução: o doce gira, brilha e aparece no nível novo (NÍVEL 2!)")
 	# explicação de primeira vez: aparece uma vez só
 	var vistas: Array = Progresso.config.get("dicas_vistas", []).duplicate()
 	Progresso.config["dicas_vistas"] = []
@@ -2646,6 +2653,8 @@ func _testar_tela_batalha() -> void:
 		await get_tree().process_frame
 	verificar(int(tela.luta.deles()["vida"]) < vida, "acertou pela tela: o doce do desafiante perde vida")
 	verificar(palavra, "o golpe tem a palavra de quadrinho (POW!, BAM!...)")
+	verificar(tela.ultimo_golpe in tela.GOLPES and not tela._visor_meu.segurar_pose,
+		"cada acerto é um golpe de luta (socos, voadora, pirueta ou cambalhota) e o doce volta à pose normal")
 	verificar(tela._visor_meu.position == Vector2.ZERO and tela._visor_deles.position == Vector2.ZERO
 		and is_zero_approx(tela._visor_meu.rotation) and is_zero_approx(tela._visor_deles.rotation),
 		"depois do golpe os dois doces voltam para o lugar")
@@ -2667,6 +2676,7 @@ func _testar_tela_batalha() -> void:
 		await get_tree().process_frame
 	verificar(raios and tela.find_child("RaiosSuper", true, false) == null and tela.find_child("EscuroSuper", true, false) == null,
 		"SUPER: raios e arena escura durante o golpe, e somem depois")
+	verificar(tela.ultimo_golpe == "tornado", "o SUPER é o tornado com uppercut")
 	verificar(tela.luta.deles()["id"] != primeiro and is_equal_approx(tela._visor_deles.modulate.a, 1.0)
 		and tela._visor_deles.position == Vector2.ZERO and tela._visor_deles.scale == Vector2.ONE,
 		"nocaute: o próximo doce do desafiante entra e fica no lugar")

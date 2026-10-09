@@ -61,37 +61,22 @@ func comemorar() -> void:
 	tween.tween_property(_corpo, "position:y", 0.0, 0.25).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BOUNCE)
 
 
-## BATALHA: encolhe e puxa o braço para trás (antes do bote).
+## BATALHA: se encolhe antes do pulo (os braços ficam com as poses de luta).
 func preparar_golpe() -> void:
 	if not _corpo:
 		return
-	_acao_ate = _tempo + 0.6
-	var tween := create_tween().set_parallel()
-	tween.tween_property(_corpo, "scale", Vector3(1.14, 0.84, 1.14), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	if is_instance_valid(_aceno):
-		tween.tween_property(_aceno, "rotation:z", 1.4, 0.16)
-
-
-## BATALHA: o bote (estica o corpo) e o soco com o braço.
-func golpear() -> void:
-	if not _corpo:
-		return
-	_acao_ate = _tempo + 0.55
+	_acao_ate = maxf(_acao_ate, _tempo + 0.6)
 	var tween := create_tween()
-	tween.tween_property(_corpo, "scale", Vector3(0.86, 1.2, 0.86), 0.08)
-	tween.tween_property(_corpo, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	if is_instance_valid(_aceno):
-		var soco := create_tween()
-		soco.tween_property(_aceno, "rotation:z", -0.2, 0.07)
-		soco.tween_interval(0.15)
-		soco.tween_property(_aceno, "rotation:z", BRACO_ABAIXADO, 0.25)
+	tween.tween_property(_corpo, "scale", Vector3(1.14, 0.84, 1.14), 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_corpo, "scale", Vector3(0.88, 1.16, 0.88), 0.08)
+	tween.tween_property(_corpo, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
 ## BATALHA: apanhou (achata, aperta os olhos e balança até voltar).
 func apanhar(forte := false) -> void:
 	if not _corpo:
 		return
-	_acao_ate = _tempo + 0.75
+	_acao_ate = maxf(_acao_ate, _tempo + 0.75)
 	var tween := create_tween()
 	tween.tween_property(_corpo, "scale", Vector3(1.3, 0.62 if forte else 0.76, 1.3), 0.06)
 	tween.tween_property(_corpo, "scale", Vector3.ONE, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
@@ -105,26 +90,109 @@ func apanhar(forte := false) -> void:
 
 ## BATALHA: nocaute (olhos fechados; a queda é do visor).
 func desmaiar() -> void:
-	_acao_ate = _tempo + 2.0
+	_acao_ate = maxf(_acao_ate, _tempo + 2.0)
 	for olhos in _olhos:
 		if is_instance_valid(olhos):
 			create_tween().tween_property(olhos, "scale:y", 0.1, 0.08)
+
+
+## BATALHA: poses de luta dos braços e pernas, em `segundos`. Poses: "guarda"
+## (punhos para a frente), "soco_e"/"soco_d" (um braço esticado para a frente),
+## "voadora" (uma perna esticada, a outra e os braços para trás), "aberto"
+## (braços abertos, para a pirueta), "encolhido" (para a cambalhota),
+## "uppercut" (um braço para o alto) e "vitoria" (os dois braços para o alto).
+## "normal" volta tudo para o lugar. A pose fica até a próxima (ou "normal").
+func pose_luta(nome: String, segundos := 0.12) -> void:
+	if not _corpo:
+		return
+	var bracos := _bracos_em_ordem()
+	var alvos := {}
+	for b in bracos:
+		alvos[b] = Vector3(0, 0, _z_baixo(b))
+	for i in _pernas.size():
+		alvos[_pernas[i]] = Vector3.ZERO
+	var ultimo: Node3D = bracos[-1] if not bracos.is_empty() else null
+	var primeiro: Node3D = bracos[0] if not bracos.is_empty() else null
+	match nome:
+		"guarda":
+			for b in bracos:
+				alvos[b] = Vector3(-1.0, 0, _z_baixo(b) * 0.7)
+		"soco_e", "soco_d":
+			for b in bracos:
+				alvos[b] = Vector3(-0.9, 0, _z_baixo(b) * 0.7)
+			var braco: Node3D = primeiro if nome == "soco_e" else ultimo
+			if braco:
+				alvos[braco] = Vector3(-1.6, 0, _z_baixo(braco) * 0.9)
+		"voadora":
+			for b in bracos:
+				alvos[b] = Vector3(0.8, 0, _z_aberto(b) * 0.6)
+			for i in _pernas.size():
+				alvos[_pernas[i]] = Vector3(-1.4 if i == _pernas.size() - 1 else 0.6, 0, 0)
+		"aberto":
+			for b in bracos:
+				alvos[b] = Vector3(0, 0, _z_aberto(b))
+		"encolhido":
+			for b in bracos:
+				alvos[b] = Vector3(-1.1, 0, _z_baixo(b) * 0.6)
+			for perna in _pernas:
+				alvos[perna] = Vector3(-1.1, 0, 0)
+		"uppercut":
+			if ultimo:
+				alvos[ultimo] = Vector3(-2.8, 0, _z_baixo(ultimo) * 0.5)
+			if primeiro and primeiro != ultimo:
+				alvos[primeiro] = Vector3(0.5, 0, _z_baixo(primeiro))
+		"vitoria":
+			for b in bracos:
+				alvos[b] = Vector3(0, 0, _z_cima(b))
+	_acao_ate = _tempo + (0.1 if nome == "normal" else 999.0) + segundos
+	var tween := create_tween().set_parallel().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	for no in alvos:
+		if is_instance_valid(no):
+			tween.tween_property(no, "rotation", alvos[no], segundos)
+	if is_instance_valid(_corpo) and nome == "normal":
+		tween.tween_property(_corpo, "scale", Vector3.ONE, segundos)
+
+
+## Braços da esquerda para a direita (o do "oi" junto).
+func _bracos_em_ordem() -> Array[Node3D]:
+	var lista: Array[Node3D] = []
+	for b in _bracos:
+		if is_instance_valid(b):
+			lista.append(b)
+	if is_instance_valid(_aceno):
+		lista.append(_aceno)
+	lista.sort_custom(func(a: Node3D, b: Node3D): return a.position.x < b.position.x)
+	return lista
+
+
+## Giro no eixo z do braço abaixado, aberto para o lado e levantado (o do "oi"
+## é modelado levantado; os outros, abaixados).
+func _z_baixo(braco: Node3D) -> float:
+	return BRACO_ABAIXADO if braco == _aceno else 0.0
+
+
+func _z_aberto(braco: Node3D) -> float:
+	return -0.55 if braco == _aceno else 0.9 * signf(braco.position.x)
+
+
+func _z_cima(braco: Node3D) -> float:
+	return 0.15 if braco == _aceno else 1.5 * signf(braco.position.x)
 
 
 func _process(delta: float) -> void:
 	_tempo += delta
 	if not is_instance_valid(_corpo):
 		return
+	if is_instance_valid(_orbita) and Telas.animacoes_continuas:
+		_orbita.rotation.y += delta * 1.3
+	if _tempo < _acao_ate:
+		return  # golpe, pancada ou pose de luta da batalha em andamento
 	if andando:
 		_animar_passos(delta)
 	else:
 		_parar_passos(delta)
 	if not Telas.animacoes_continuas:
 		return
-	if is_instance_valid(_orbita):
-		_orbita.rotation.y += delta * 1.3
-	if _tempo < _acao_ate:
-		return  # golpe ou pancada da batalha em andamento
 	if not andando:
 		# respira: estica e achata de leve
 		var respiro := sin(_tempo * 2.6) * 0.025

@@ -13,6 +13,8 @@ const BRILHO := preload("res://assets/doce_match/brilho.svg")
 const RAIOS := preload("res://assets/itens/raios.svg")
 ## Palavra de história em quadrinhos no golpe (o SUPER tem a dele).
 const PALAVRAS_GOLPE := ["POW!", "TUM!", "BAM!", "PAF!", "TOMA!"]
+## Movimentos de luta, um por golpe, em rodízio (o SUPER é o "tornado").
+const GOLPES := ["socos", "voadora", "pirueta", "cambalhota"]
 const FOTOS := "res://assets/doces_3d/fotos/%s.png"
 const VERDE := Color("#7BE07B")
 const AMARELO := Color("#F4E038")
@@ -33,6 +35,9 @@ var _cor_tempo: StyleBoxFlat
 var _alternativas: GridContainer
 var _tempo_resta := 0.0
 var respondendo := false
+## O último movimento de luta usado (para os testes).
+var ultimo_golpe := ""
+var _proximo_golpe := randi() % GOLPES.size()
 var _escolha_time: Array = []
 
 
@@ -310,7 +315,7 @@ func _montar_lado(pai: Control, quem: String) -> Doce3D:
 	visor.name = "Doce_" + quem
 	visor.giravel = false
 	visor.distancia = 6.3  # cabe a coroa dos doces de nível alto
-	visor.angulo_inicial = -0.55 if quem == "meu" else 0.55
+	visor.angulo_inicial = 0.55 if quem == "meu" else -0.55  # um de frente para o outro
 	visor.set_anchors_preset(PRESET_FULL_RECT)
 	visor.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vaga.add_child(visor)
@@ -704,11 +709,12 @@ func responder(k: int) -> void:
 		_nova_pergunta()
 
 
-## O golpe: o atacante se prepara (encolhe e recua), dá o bote em arco até o
-## outro doce, o mundo para um instante no contato (raios, anel, POW!, faíscas e
-## tremida), o alvo é empurrado para trás achatado e volta balançando. No SUPER a
-## arena escurece, raios giram atrás do atacante e ele gira no ar deixando rastro.
-## Nocaute: o doce sai voando girando e o próximo do time cai do alto.
+## O golpe é um movimento de luta de verdade, variando a cada acerto (ver
+## GOLPES): combo de socos, voadora, pirueta ou cambalhota; o SUPER é o tornado
+## com uppercut (a arena escurece e raios giram atrás do atacante). No contato o
+## mundo para um instante (raios, anel, POW!, faíscas e tremida) e o alvo reage:
+## é empurrado (socos, voadora, pirueta), esmagado (cambalhota) ou lançado para
+## o alto (uppercut). Nocaute: sai voando girando e o próximo do time cai do alto.
 func _animar_golpe(r: Dictionary) -> void:
 	var meu_bate: bool = r["atacante"] == "meu"
 	var atacante := _visor_meu if meu_bate else _visor_deles
@@ -716,10 +722,17 @@ func _animar_golpe(r: Dictionary) -> void:
 	var quem_apanha := "deles" if meu_bate else "meu"
 	var lado := 1.0 if meu_bate else -1.0  # para onde o atacante vai
 	var forte: bool = r["super"]
-	var alcance: float = ((alvo.get_parent() as Control).get_global_rect().get_center().x
-		- (atacante.get_parent() as Control).get_global_rect().get_center().x) * 0.55
+	# até onde o atacante vai para encostar no outro (o doce ocupa ~40% da
+	# altura do visor; a câmera 3D segue a altura)
+	var distancia: float = ((alvo.get_parent() as Control).get_global_rect().get_center().x
+		- (atacante.get_parent() as Control).get_global_rect().get_center().x)
+	var alcance := distancia - signf(distancia) * alvo.size.y * 0.36
 	for visor in [atacante, alvo]:
 		visor.pivot_offset = Vector2(visor.size.x / 2.0, visor.size.y * 0.8)  # gira e achata pelos pés
+	var golpe: String = "tornado" if forte else GOLPES[_proximo_golpe % GOLPES.size()]
+	if not forte:
+		_proximo_golpe += 1
+	ultimo_golpe = golpe
 	var extras: Array[Node] = []
 	if forte:
 		extras = _carregar_super(atacante)
@@ -727,40 +740,30 @@ func _animar_golpe(r: Dictionary) -> void:
 		if luta == null:
 			_sumir(extras)
 			return
-	# antecipação: recua, inclina para trás e se encolhe
-	atacante.preparar_golpe()
-	var prepara := create_tween().set_parallel()
-	prepara.tween_property(atacante, "position:x", -40.0 * signf(alcance), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	prepara.tween_property(atacante, "rotation", deg_to_rad(-10.0 * lado), 0.16)
-	await prepara.finished
+	# de perfil, olhando para o outro doce
+	atacante.segurar_pose = true
+	create_tween().tween_property(atacante.pivo(), "rotation", Vector3(0, atacante.angulo_inicial * 2.3, 0), 0.12)
+	match golpe:
+		"socos":
+			await _golpe_socos(atacante, alvo, alcance)
+		"voadora":
+			await _golpe_voadora(atacante, alcance)
+		"pirueta":
+			await _golpe_pirueta(atacante, alcance)
+		"cambalhota":
+			await _golpe_cambalhota(atacante, alcance)
+		"tornado":
+			await _golpe_tornado(atacante, alcance)
 	if luta == null:
 		_sumir(extras)
 		return
-	# o bote: pula em arco até o outro doce (no SUPER, girando)
-	atacante.golpear()
-	Audio.tocar("pulo", 1.25, -4.0)
-	var bote := create_tween().set_parallel()
-	bote.tween_property(atacante, "position:x", alcance, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	bote.tween_property(atacante, "rotation", (TAU if forte else deg_to_rad(14.0)) * lado, 0.16)
-	var arco := create_tween()
-	arco.tween_property(atacante, "position:y", -60.0, 0.08).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	arco.tween_property(atacante, "position:y", 0.0, 0.08).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-	if forte:
-		for i in 3:
-			get_tree().create_timer(0.04 * (i + 1)).timeout.connect(_rastro.bind(atacante))
-	await bote.finished
-	if luta == null:
-		_sumir(extras)
-		return
-	if forte:
-		atacante.rotation = 0.0  # (a volta inteira acabou)
 	# contato: estouro, o alvo pisca branco e o mundo para um instante
 	var centro_alvo := alvo.get_global_rect().get_center()
 	var contato := centro_alvo - Vector2(alvo.size.x * 0.16 * signf(alcance), 0)
 	Audio.tocar("explosao" if forte else "estouro")
 	if forte:
 		Audio.tocar("explosao", 0.7, -4.0)
-	alvo.apanhar(forte)
+	alvo.apanhar(forte or golpe == "cambalhota")
 	alvo.modulate = Color(3, 3, 3)
 	_impacto(contato, forte)
 	_faiscas(contato, 44 if forte else 22, forte)
@@ -769,23 +772,39 @@ func _animar_golpe(r: Dictionary) -> void:
 	if luta == null:
 		_sumir(extras)
 		return
-	# o alvo é empurrado para trás, inclinado e vermelho, e volta balançando
-	var empurra := create_tween().set_parallel()
-	empurra.tween_property(alvo, "position:x", (95.0 if forte else 55.0) * signf(alcance), 0.12) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	empurra.tween_property(alvo, "rotation", deg_to_rad(16.0 * lado), 0.12)
-	empurra.tween_property(alvo, "modulate", Color(1, 0.45, 0.45), 0.08)
-	empurra.chain().tween_property(alvo, "position:x", 0.0, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	empurra.parallel().tween_property(alvo, "rotation", 0.0, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	empurra.parallel().tween_property(alvo, "modulate", Color.WHITE, 0.35)
-	# o atacante volta num pulinho
-	var volta := create_tween().set_parallel()
-	volta.tween_property(atacante, "position:x", 0.0, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	volta.tween_property(atacante, "rotation", 0.0, 0.32)
-	volta.tween_property(atacante, "modulate", Color.WHITE, 0.3)
-	var pulinho := create_tween()
-	pulinho.tween_property(atacante, "position:y", -28.0, 0.14).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	pulinho.tween_property(atacante, "position:y", 0.0, 0.14).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	var reacao := create_tween().set_parallel()
+	reacao.tween_property(alvo, "modulate", Color(1, 0.45, 0.45), 0.08)
+	reacao.chain().tween_property(alvo, "modulate", Color.WHITE, 0.35)
+	match golpe:
+		"cambalhota":
+			# esmagado pela pisada: achata e volta como mola
+			alvo.scale = Vector2(1.35, 0.55)
+			var mola := create_tween()
+			mola.tween_property(alvo, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		"tornado":
+			# lançado para o alto pelo uppercut, gira e cai quicando
+			alvo.pivot_offset = alvo.size / 2.0
+			var voo := create_tween()
+			voo.tween_property(alvo, "position:y", -260.0, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			voo.parallel().tween_property(alvo, "rotation", TAU * lado, 0.55)
+			voo.tween_property(alvo, "position:y", 0.0, 0.42).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+			voo.tween_callback(func():
+				alvo.rotation = 0.0
+				alvo.pivot_offset = Vector2(alvo.size.x / 2.0, alvo.size.y * 0.8))
+			get_tree().create_timer(0.62).timeout.connect(func():
+				if is_instance_valid(_palco):
+					Audio.tocar("chape", 1.1, -4.0)
+					_tremer(_palco, 8.0))
+	if golpe != "tornado":
+		# empurrado para trás, inclinado, e volta balançando
+		var empurra := create_tween().set_parallel()
+		empurra.tween_property(alvo, "position:x", (40.0 if golpe == "cambalhota" else 70.0) * signf(alcance), 0.12) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		empurra.tween_property(alvo, "rotation", deg_to_rad(16.0 * lado), 0.12)
+		empurra.chain().tween_property(alvo, "position:x", 0.0, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		empurra.parallel().tween_property(alvo, "rotation", 0.0, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	# o atacante volta para o lugar num pulo para trás
+	_voltar_para_o_lugar(atacante)
 	_sumir(extras)
 	var texto := "-%d" % r["dano"]
 	var cor := Color.WHITE
@@ -799,7 +818,8 @@ func _animar_golpe(r: Dictionary) -> void:
 	_texto_pulando(texto, onde, 56 if r["super"] else 46, cor)
 	_atualizar_vida(quem_apanha)
 	_atualizar_super()
-	await get_tree().create_timer(0.6).timeout  # (o alvo termina de balançar: 0,12 + 0,45 s)
+	# (o alvo termina de reagir: 0,12 + 0,45 s; lançado, 0,7 s)
+	await get_tree().create_timer(0.75 if golpe == "tornado" else 0.6).timeout
 	if luta == null:
 		return
 	if r["nocaute"]:
@@ -835,6 +855,149 @@ func _animar_golpe(r: Dictionary) -> void:
 					_tremer(_palco, 7.0))
 			await cai.finished
 	_atualizar_bancos()
+
+
+## COMBO DE SOCOS: corre até perto em guarda e solta três socos alternando os
+## braços (os dois primeiros com faisquinhas; o terceiro é o golpe).
+func _golpe_socos(atacante: Doce3D, alvo: Doce3D, alcance: float) -> void:
+	atacante.pose_luta("guarda", 0.1)
+	Audio.tocar("pulo", 1.3, -6.0)
+	var corre := create_tween().set_parallel()
+	corre.tween_property(atacante, "position:x", alcance * 0.88, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	_pulinho(atacante, 24.0, 0.18)
+	await corre.finished
+	for i in 3:
+		if luta == null:
+			return
+		atacante.pose_luta("soco_d" if i % 2 == 0 else "soco_e", 0.05)
+		var avanca := create_tween()
+		avanca.tween_property(atacante, "position:x", alcance * (0.94 + 0.03 * i), 0.05)
+		await get_tree().create_timer(0.06).timeout
+		if i < 2:
+			var ponto := alvo.get_global_rect().get_center() - Vector2(alvo.size.x * 0.16 * signf(alcance), randf_range(-40, 30))
+			_faiscas(ponto, 8, false)
+			Audio.tocar("estouro", 1.3 + 0.15 * i, -6.0)
+			_tremer(alvo, 5.0)
+			alvo.modulate = Color(2, 2, 2)
+			create_tween().tween_property(alvo, "modulate", Color.WHITE, 0.1)
+			atacante.pose_luta("guarda", 0.06)
+			await get_tree().create_timer(0.08).timeout
+
+
+## VOADORA: se agacha, pula alto com uma perna esticada e o corpo para trás.
+func _golpe_voadora(atacante: Doce3D, alcance: float) -> void:
+	atacante.preparar_golpe()
+	atacante.pose_luta("guarda", 0.1)
+	await get_tree().create_timer(0.14).timeout
+	if luta == null:
+		return
+	atacante.pose_luta("voadora", 0.1)
+	Audio.tocar("pulo", 1.0)
+	var pivo := atacante.pivo()
+	create_tween().tween_property(pivo, "rotation:x", -0.35, 0.12)
+	var pulo := create_tween().set_parallel()
+	pulo.tween_property(atacante, "position:x", alcance * 0.95, 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	pulo.tween_property(atacante, "rotation", deg_to_rad(12.0 * signf(alcance)), 0.3)
+	var arco := create_tween()
+	arco.tween_property(atacante, "position:y", -170.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	arco.tween_property(atacante, "position:y", -30.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await pulo.finished
+
+
+## PIRUETA: gira duas vezes com os braços abertos indo até o outro doce.
+func _golpe_pirueta(atacante: Doce3D, alcance: float) -> void:
+	atacante.pose_luta("aberto", 0.1)
+	Audio.tocar("pulo", 1.5, -4.0)
+	var pivo := atacante.pivo()
+	var frente := atacante.angulo_inicial * 2.3
+	var gira := create_tween().set_parallel()
+	gira.tween_property(pivo, "rotation:y", frente + TAU * 2.0, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	gira.tween_property(atacante, "position:x", alcance * 0.95, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_pulinho(atacante, 30.0, 0.34)
+	await gira.finished
+	pivo.rotation.y = frente  # (as voltas inteiras acabaram)
+
+
+## CAMBALHOTA: se agacha, dá um mortal para a frente no ar e cai pisando.
+func _golpe_cambalhota(atacante: Doce3D, alcance: float) -> void:
+	atacante.preparar_golpe()
+	await get_tree().create_timer(0.12).timeout
+	if luta == null:
+		return
+	atacante.pose_luta("encolhido", 0.1)
+	Audio.tocar("pulo", 0.9)
+	var pivo := atacante.pivo()
+	var pulo := create_tween().set_parallel()
+	pulo.tween_property(atacante, "position:x", alcance * 0.92, 0.38).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	pulo.tween_property(pivo, "rotation:x", TAU, 0.36).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	var arco := create_tween()
+	arco.tween_property(atacante, "position:y", -230.0, 0.19).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	arco.tween_property(atacante, "position:y", -40.0, 0.19).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await pulo.finished
+	pivo.rotation.x = 0.0
+	atacante.pose_luta("guarda", 0.06)
+
+
+## TORNADO (SUPER): gira três vezes de braços abertos, deixando rastro, e
+## termina num uppercut que lança o outro doce para o alto.
+func _golpe_tornado(atacante: Doce3D, alcance: float) -> void:
+	atacante.pose_luta("aberto", 0.08)
+	Audio.tocar("pulo", 1.6, -4.0)
+	var pivo := atacante.pivo()
+	var frente := atacante.angulo_inicial * 2.3
+	var gira := create_tween().set_parallel()
+	gira.tween_property(pivo, "rotation:y", frente + TAU * 3.0, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	gira.tween_property(atacante, "position:x", alcance * 0.88, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	for i in 4:
+		get_tree().create_timer(0.07 * (i + 1)).timeout.connect(_rastro.bind(atacante))
+	await gira.finished
+	if luta == null:
+		return
+	pivo.rotation.y = frente
+	atacante.pose_luta("uppercut", 0.06)
+	var sobe := create_tween()
+	sobe.tween_property(atacante, "position:y", -90.0, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await sobe.finished
+
+
+## Sobe e desce (um pulinho) em `segundos`.
+func _pulinho(visor: Control, altura: float, segundos: float) -> void:
+	var arco := create_tween()
+	arco.tween_property(visor, "position:y", -altura, segundos / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	arco.tween_property(visor, "position:y", 0.0, segundos / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+
+## Depois do golpe: pulo para trás até o lugar, pose normal e de frente de novo.
+func _voltar_para_o_lugar(visor: Doce3D) -> void:
+	visor.pose_luta("normal", 0.2)
+	var volta := create_tween().set_parallel()
+	volta.tween_property(visor, "position:x", 0.0, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	volta.tween_property(visor, "rotation", 0.0, 0.32)
+	volta.tween_property(visor, "modulate", Color.WHITE, 0.3)
+	volta.tween_property(visor.pivo(), "rotation", Vector3(0, visor.angulo_inicial, 0), 0.32)
+	var queda := create_tween()
+	queda.tween_property(visor, "position:y", -40.0, 0.12).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	queda.tween_property(visor, "position:y", 0.0, 0.18).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	volta.chain().tween_callback(func(): visor.segurar_pose = false)
+
+
+## Vitória: mortal para trás e os braços para o alto.
+func _vitoria(visor: Doce3D) -> void:
+	visor.segurar_pose = true
+	visor.pose_luta("encolhido", 0.1)
+	_pulinho(visor, 170.0, 0.5)
+	var mortal := create_tween()
+	mortal.tween_property(visor.pivo(), "rotation:x", -TAU, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await mortal.finished
+	if not is_instance_valid(visor):
+		return
+	visor.pivo().rotation.x = 0.0
+	visor.pose_luta("vitoria", 0.12)
+	visor.comemorar()
+	await get_tree().create_timer(1.4).timeout
+	if is_instance_valid(visor):
+		visor.pose_luta("normal", 0.3)
+		visor.segurar_pose = false
 
 
 ## SUPER: a arena escurece, raios dourados giram atrás do atacante e ele brilha
@@ -1034,10 +1197,10 @@ func _terminar() -> void:
 	var ganho := luta.concluir()
 	if venceu:
 		Audio.tocar("vitoria")
-		_visor_meu.comemorar()
+		_vitoria(_visor_meu)
 		_confete()
 	else:
-		_visor_deles.comemorar()
+		_vitoria(_visor_deles)
 	await get_tree().create_timer(0.8).timeout
 	if not is_instance_valid(_palco):
 		return

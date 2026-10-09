@@ -171,6 +171,23 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   mais força. NOCAUTE: sai voando girando e o próximo do time cai do alto.
 - Prêmios ao mesmo tempo (ex.: visita + missão) aparecem em fila, um cartão de
   cada vez (antes ficavam um em cima do outro).
+- GOLPES DE LUTA na batalha (pedido: "movimentos de luta mesmo, malabarismos"):
+  em rodízio a cada acerto, COMBO DE SOCOS (corre em guarda e solta três
+  socos alternando os braços), VOADORA (pulo alto com a perna esticada),
+  PIRUETA (gira duas vezes de braços abertos) e CAMBALHOTA (mortal no ar e cai
+  pisando: o outro fica esmagado); o SUPER é o TORNADO (três giros com rastro)
+  que termina num UPPERCUT e lança o outro para o alto. Vitória: mortal para
+  trás com os braços para cima. Os doces agora ficam de frente um para o outro
+  e viram de perfil no golpe. Poses dos braços e pernas em AnimacaoDoce
+  (pose_luta) e os giros/mortais no pivô do Visor3D (segurar_pose, pivo()).
+- EVOLUÇÃO na Coleção: ao melhorar, o doce gira cada vez mais rápido brilhando,
+  some num clarão e aparece com o visual novo, grande, voltando ao tamanho;
+  estrelinhas e "NÍVEL N!" pulam em cima (Doce3D.evoluir).
+- Vídeo v3 (pedido depois do v2): a cozinha da Confeitaria no lugar da Fábrica
+  (captura --video_cozinha: pega nas bandejas, atende a fila, recolhe as moedas
+  e melhora a máquina), a maçã evoluindo do nível 1 ao 5 (--video_evolucao),
+  pôr do sol de frente para o sol e TIMELAPSE do dia virando noite
+  (--video_voo=por_do_sol / timelapse, --hora_ate) e a batalha com os golpes.
 - Desempenho (docs/desempenho.md, com a pesquisa e as fontes): doces 3D das
   telas (Visor3D) juntados e com resolução/antisserrilhado pela qualidade;
   qualidade MÉDIA de início em placa integrada ou até 8 GB; vigia de

@@ -70,10 +70,14 @@ extends Node
 ##   --duracao=6   grava 6 s e fecha o jogo (em vez de tirar o print)
 ##   --video_vila  Vila sem interface, câmera descendo do alto até a praça
 ##   --video_voo=ilha  Vila sem interface: tomada de paisagem (ver VOOS), com o doce
-##                 andando em algumas; --voo_p=0.5 para a câmera no meio (para prints)
+##                 andando em algumas; --voo_p=0.5 para a câmera no meio (para prints);
+##                 --hora_ate=20.5 faz a hora correr de --hora até ela (timelapse)
 ##   --animacoes   (nos vídeos) os doces respiram, piscam e acenam mesmo sem placa de vídeo
 ##   --video_match=3  Doce Match: joga sozinho o nível 3 (com peças especiais e a bomba)
 ##   --video_fabrica  Fábrica de Chocolate: joga sozinha (pega os chocolates do pedido)
+##   --video_evolucao=maca  Coleção: o doce evolui do nível 1 ao máximo, um nível de cada vez
+##   --video_cozinha  Cozinha (com --confeitaria): o doce joga sozinho (pega nas bandejas,
+##                 atende a fila no balcão, recolhe as moedas e melhora a máquina de maçã)
 ##   --video_batalha / --video_chefao  luta jogando sozinha (responde certo depois de "ler"
 ##                 por --leitura=1.4 s); --batalha_super: o 2º acerto é o SUPER e nocauteia;
 ##                 --desafiante=1 luta contra esse desafiante (use com --arena_vencidos)
@@ -100,6 +104,10 @@ const VOOS := {
 		"doce": [Vector3(50.0, 0, 0.0), Vector3(0.55, 0, 0.25)]},
 	"lago": {"de": [Vector3(-18.0, 2.2, 15.8), Vector3(-30.5, 0.8, 10.4)], "ate": [Vector3(-21.5, 4.2, 18.0), Vector3(-33.0, 1.0, 8.5)]},
 	"noite": {"orbita": [Vector3(0, 1.5, 3.0), 30.0, 13.0, 55.0, 15.0]},
+	# de frente para o sol se pondo atrás da vila ("sol": metros atrás do centro,
+	# altura, quanto avança na direção do sol)
+	"por_do_sol": {"sol": [36.0, 13.0, 1.5]},
+	"timelapse": {"orbita": [Vector3(0, 2.0, 2.0), 30.0, 19.0, 130.0, 200.0]},
 	"chuva": {"de": [Vector3(5.6, 1.8, 10.6), Vector3(-0.6, 2.0, 21.0)], "ate": [Vector3(4.4, 2.6, 12.0), Vector3(-0.6, 2.4, 21.0)],
 		"doce": [Vector3(0.6, 0, 20.0), Vector3(0.12, 0, -0.34)]},
 }
@@ -582,20 +590,29 @@ func _ready() -> void:
 		vila_voo.camera_externa = true
 		vila_voo._interface.visible = false
 		Telas._camada_avisos.visible = false  # (o aviso do chefão na praça)
+		if is_instance_valid(vila_voo._chefao):
+			vila_voo._chefao.visible = false  # (o chefão aparece na cena dele)
 		var voo: Dictionary = VOOS[args["video_voo"]]
 		var segundos := float(args.get("duracao", "4"))
 		if voo.has("doce"):
 			vila_voo.set_physics_process(false)
 			vila_voo.jogador.global_position = voo["doce"][0]
+		var hora_de := float(args.get("hora", "14"))
+		var hora_ate := float(args.get("hora_ate", str(hora_de)))
 		if args.has("voo_p"):
 			var p_fixo := float(args["voo_p"])
 			if voo.has("doce"):
 				vila_voo.jogador.global_position += voo["doce"][1].normalized() * DoceAndante.VELOCIDADE * 0.7 * p_fixo * segundos
 				vila_voo.jogador.olhar_para(vila_voo.jogador.global_position + voo["doce"][1])
-			_posicionar_voo(vila_voo._camera, voo, p_fixo)
+			CicloDia.hora_fixa = lerpf(hora_de, hora_ate, p_fixo)
+			vila_voo.ceu.atualizar()
+			_posicionar_voo(vila_voo, voo, p_fixo)
 		else:
 			while _tempo_video < segundos:
-				_posicionar_voo(vila_voo._camera, voo, _tempo_video / segundos)
+				if hora_ate != hora_de:  # timelapse: o céu, o sol e as luzes a cada quadro
+					CicloDia.hora_fixa = lerpf(hora_de, hora_ate, _tempo_video / segundos)
+					vila_voo.ceu.atualizar()
+				_posicionar_voo(vila_voo, voo, _tempo_video / segundos)
 				if voo.has("doce"):
 					vila_voo.jogador.andar(voo["doce"][1], get_process_delta_time())
 				await get_tree().process_frame
@@ -646,12 +663,64 @@ func _ready() -> void:
 					tela_fabrica.tocar(item["id"])
 					mao = 0.0
 					break
+	if args.has("video_cozinha"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var coz: Cozinha = get_tree().current_scene
+		Progresso.confeitaria["carregar_nivel"] = 1
+		Progresso.confeitaria["maquinas"]["brigadeiro"]["bandeja"] = 10
+		Progresso.confeitaria["maquinas"]["maca"]["bandeja"] = 6
+		Progresso.moedas = 400
+		coz._atualizar_tudo()
+		for i in 3:
+			var cliente_video := coz.novo_cliente(["brigadeiro", "maca", "brigadeiro"][i], [3, 2, 2][i])
+			cliente_video["no"].global_position = Cozinha.FILA[i] + Vector3(0.4, 0, 0.2)
+		# caminho: [ponto, segundos parado lá]
+		# (a mesa do caixa e o balcão têm colisão: os pontos ficam do lado deles)
+		var caminho := [[Vector3(-5.5, 0, -2.3), 0.7], [Vector3(0.0, 0, -2.3), 0.45], [Vector3(0.6, 0, 0.5), 3.2],
+			[Vector3(-3.5, 0, 0.1), 0.5], [Vector3(2.3, 0, -2.6), 1.6]]
+		for passo in caminho:
+			var alvo: Vector3 = passo[0]
+			var andando_ha := 0.0
+			while _tempo_video < float(args.get("duracao", "99")) and andando_ha < 4.0:
+				var falta := alvo - coz.jogador.global_position
+				falta.y = 0.0
+				if falta.length() < 0.3:
+					break
+				andando_ha += get_process_delta_time()
+				coz._joystick.vetor = Vector2(falta.x, falta.z).normalized() * 0.8
+				await get_tree().process_frame
+				_tempo_video += get_process_delta_time()
+			coz._joystick.vetor = Vector2.ZERO
+			var parado := 0.0
+			while parado < float(passo[1]):
+				await get_tree().process_frame
+				parado += get_process_delta_time()
+				_tempo_video += get_process_delta_time()
+	if args.has("video_evolucao"):
+		var id_evolucao: String = args["video_evolucao"]
+		if not id_evolucao in Progresso.colecao["doces"]:
+			Progresso.colecao["doces"].append(id_evolucao)
+		Companheiros._colecao()["niveis"][id_evolucao] = 1
+		Companheiros.receber_fragmentos(id_evolucao, 999)
+		Progresso.moedas = 99999
+		await get_tree().create_timer(0.3).timeout
+		var colecao: Node = get_tree().current_scene
+		colecao.selecionar(id_evolucao)
+		await get_tree().create_timer(0.9).timeout
+		_tempo_video += 1.2
+		while Companheiros.nivel(id_evolucao) < Companheiros.NIVEL_MAXIMO and _tempo_video < float(args.get("duracao", "99")):
+			colecao._ao_melhorar()
+			await get_tree().create_timer(2.2).timeout
+			_tempo_video += 2.2
 	if args.has("video_batalha") or args.has("video_chefao"):
 		await get_tree().create_timer(0.3).timeout
 		var cena: Node = get_tree().current_scene
 		var luta_no: Node = cena
 		if args.has("video_batalha"):
 			cena.lutar(int(args.get("desafiante", "0")))
+			if args.has("golpe_inicial"):  # ordem fixa dos golpes (ver Batalha.GOLPES)
+				cena._proximo_golpe = int(args["golpe_inicial"])
 			if args.has("batalha_super"):
 				cena.luta.sequencia = Batalha.SUPER_COM - 2
 				cena.luta.deles()["vida"] = int(cena.luta.meu()["ataque"] * 2.6)
@@ -813,11 +882,19 @@ func _melhor_jogada(jogo: DoceMatch) -> Array:
 
 
 ## Câmera da tomada de paisagem no ponto p (0 a 1) do caminho, com início e fim suaves.
-func _posicionar_voo(camera: Camera3D, voo: Dictionary, p: float) -> void:
+func _posicionar_voo(vila: Vila, voo: Dictionary, p: float) -> void:
+	var camera: Camera3D = vila._camera
 	var k := smoothstep(0.0, 1.0, clampf(p, 0.0, 1.0))
 	var pos: Vector3
 	var olhar: Vector3
-	if voo.has("orbita"):
+	if voo.has("sol"):
+		# o sol fica na direção do eixo z da luz (é onde a lua é posta de noite)
+		var s: Array = voo["sol"]
+		var rumo: Vector3 = vila._sol.global_transform.basis.z
+		var plano := Vector3(rumo.x, 0, rumo.z).normalized()
+		pos = -plano * (float(s[0]) - float(s[2]) * k) + Vector3(0, float(s[1]) - 1.5 * k, 0)
+		olhar = plano * 80.0 + Vector3(0, 9.0, 0)
+	elif voo.has("orbita"):
 		var o: Array = voo["orbita"]
 		var ang := deg_to_rad(lerpf(o[3], o[4], k))
 		pos = o[0] + Vector3(sin(ang) * o[1], o[2], cos(ang) * o[1])

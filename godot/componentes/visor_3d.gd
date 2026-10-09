@@ -29,6 +29,9 @@ const ESCALA_MAXIMA := [1.0, 1.5, 2.0]
 @export var distancia := 5.6
 ## Se o dedo pode girar o modelo.
 @export var giravel := true
+## Quem usa o visor está animando a pose do modelo (giros e cambalhotas da
+## batalha): o visor não volta para a pose inicial nem flutua até soltar.
+var segurar_pose := false
 
 var _viewport: SubViewport
 var _imagem: TextureRect
@@ -123,6 +126,8 @@ func _ao_tocar() -> void:
 
 func _process(delta: float) -> void:
 	_tempo += delta
+	if segurar_pose:
+		return
 	if not _girando:
 		# embalo: continua girando e vai freando
 		_pivo.rotation.y += _velocidade * delta
@@ -161,3 +166,9 @@ func _montar_cena() -> void:
 	var mundo := WorldEnvironment.new()
 	mundo.environment = ambiente
 	_viewport.add_child(mundo)
+
+
+## O nó que gira e flutua (o modelo fica dentro dele): para animar a pose
+## (use com `segurar_pose`).
+func pivo() -> Node3D:
+	return _pivo

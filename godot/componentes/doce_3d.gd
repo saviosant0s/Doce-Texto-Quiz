@@ -61,13 +61,9 @@ func comemorar() -> void:
 	_animacao.comemorar()
 
 
-## BATALHA (ver AnimacaoDoce): prepara o golpe, golpeia, apanha e desmaia.
+## BATALHA (ver AnimacaoDoce): prepara o golpe, apanha, desmaia e as poses de luta.
 func preparar_golpe() -> void:
 	_animacao.preparar_golpe()
-
-
-func golpear() -> void:
-	_animacao.golpear()
 
 
 func apanhar(forte := false) -> void:
@@ -76,3 +72,30 @@ func apanhar(forte := false) -> void:
 
 func desmaiar() -> void:
 	_animacao.desmaiar()
+
+
+func pose_luta(nome: String, segundos := 0.12) -> void:
+	_animacao.pose_luta(nome, segundos)
+
+
+## Evolução (ao melhorar na coleção): gira cada vez mais rápido brilhando até
+## ficar branco, encolhe e, no clarão, aparece com o visual do nível novo,
+## grande, e volta ao tamanho balançando.
+func evoluir(novo_nivel: int) -> void:
+	segurar_pose = true
+	var gira := create_tween().set_parallel()
+	gira.tween_property(_pivo, "rotation:y", _pivo.rotation.y + TAU * 3.0, 0.75).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	gira.tween_property(self, "modulate", Color(3, 3, 3), 0.75).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	gira.tween_property(_pivo, "scale", Vector3.ONE * 0.7, 0.75).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	await gira.finished
+	if not is_inside_tree():
+		return
+	nivel = novo_nivel
+	remontar()
+	_pivo.scale = Vector3.ONE * 1.35
+	var aparece := create_tween().set_parallel()
+	aparece.tween_property(_pivo, "scale", Vector3.ONE, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	aparece.tween_property(self, "modulate", Color.WHITE, 0.5)
+	comemorar()
+	await aparece.finished
+	segurar_pose = false

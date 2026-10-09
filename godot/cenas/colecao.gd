@@ -225,17 +225,71 @@ func _atualizar_companheiro() -> void:
 func _ao_melhorar() -> void:
 	if not Companheiros.melhorar(_selecionado):
 		return
-	Audio.tocar("construir")
 	var nivel := Companheiros.nivel(_selecionado)
-	_visor.nivel = nivel
-	_visor.remontar()  # o visual novo do nível (brilhos, laço, coroa...)
-	_visor.comemorar()
-	var enfeite: String = Doces3D.NOMES_ENFEITES[nivel]
-	Telas.mostrar_aviso("%s AGORA É NÍVEL %d!%s" % [Colecao.dados(_selecionado)["nome"], nivel,
-		"  GANHOU: " + enfeite if enfeite != "" else ""])
+	var id := _selecionado
 	_atualizar_topo()
 	_atualizar_companheiro()
-	_atualizar_cartao(_selecionado)
+	_atualizar_cartao(id)
+	# a evolução: gira brilhando, clarão, e aparece com o visual novo (brilhos,
+	# laço, coroa; a maçã vira maçã do amor...)
+	_melhorar.disabled = true
+	Audio.tocar("especial", 0.8)
+	await _visor.evoluir(nivel)
+	if not is_inside_tree():
+		return
+	Audio.tocar("construir")
+	Audio.tocar("vitoria", 1.0, -6.0)
+	_estouro_evolucao(nivel)
+	var enfeite: String = Doces3D.NOMES_ENFEITES[nivel]
+	Telas.mostrar_aviso("%s AGORA É NÍVEL %d!%s" % [Colecao.dados(id)["nome"], nivel,
+		"  GANHOU: " + enfeite if enfeite != "" else ""])
+	if _selecionado == id:
+		_atualizar_companheiro()
+
+
+## Estrelinhas e "NÍVEL N!" pulando em cima do doce que acabou de evoluir.
+func _estouro_evolucao(nivel: int) -> void:
+	var centro := _visor.get_global_rect().get_center() - global_position
+	var estrelas := CPUParticles2D.new()
+	estrelas.position = centro
+	estrelas.one_shot = true
+	estrelas.explosiveness = 0.95
+	estrelas.amount = 36
+	estrelas.lifetime = 0.9
+	estrelas.texture = preload("res://assets/doce_match/brilho.svg")
+	estrelas.spread = 180.0
+	estrelas.initial_velocity_min = 260.0
+	estrelas.initial_velocity_max = 520.0
+	estrelas.gravity = Vector2(0, 500)
+	estrelas.scale_amount_min = 0.3
+	estrelas.scale_amount_max = 0.6
+	estrelas.hue_variation_min = -0.4
+	estrelas.hue_variation_max = 0.4
+	estrelas.color = Cores.AMARELO
+	add_child(estrelas)
+	estrelas.emitting = true
+	estrelas.finished.connect(estrelas.queue_free)
+	var rotulo := Label.new()
+	rotulo.name = "NivelNovo"
+	rotulo.theme_type_variation = &"TituloClaro"
+	rotulo.add_theme_font_size_override("font_size", 64)
+	rotulo.add_theme_color_override("font_color", Cores.AMARELO)
+	rotulo.add_theme_constant_override("outline_size", 16)
+	rotulo.add_theme_color_override("font_outline_color", Color("#3B2A5C"))
+	rotulo.text = "NÍVEL %d!" % nivel
+	rotulo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(rotulo)
+	rotulo.size = rotulo.get_combined_minimum_size()
+	rotulo.pivot_offset = rotulo.size / 2.0
+	rotulo.position = centro - rotulo.size / 2.0 - Vector2(0, _visor.size.y * 0.32)
+	rotulo.scale = Vector2.ONE * 0.2
+	rotulo.rotation = -0.08
+	var pulo := rotulo.create_tween()
+	pulo.tween_property(rotulo, "scale", Vector2.ONE * 1.25, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pulo.tween_property(rotulo, "scale", Vector2.ONE, 0.15)
+	pulo.tween_interval(0.9)
+	pulo.tween_property(rotulo, "modulate:a", 0.0, 0.3)
+	pulo.tween_callback(rotulo.queue_free)
 
 
 # --- Grade de doces ----------------------------------------------------------------
