@@ -1,7 +1,7 @@
 class_name Doce3D
 extends Visor3D
-## Um doce da coleção em 3D, vivo: respira, pisca, acena de vez em quando e
-## pula quando é tocado. Gira com o dedo (ver Visor3D).
+## Um doce da coleção em 3D, vivo (ver AnimacaoDoce): respira, pisca, acena
+## de vez em quando e pula quando é tocado. Gira com o dedo (ver Visor3D).
 
 ## Id do doce (ver Colecao.LISTA). Mude com `mostrar(id)`.
 @export var id := "brigadeiro"
@@ -9,15 +9,13 @@ extends Visor3D
 @export var silhueta := false
 ## Cor da silhueta (escura em fundo amarelo, clara em fundo roxo).
 @export var cor_silhueta := Color("#8C6BC0")
+## Nível do doce (Companheiros.nivel): a partir do 2 ganha enfeites (brilhos,
+## laço, coroa...). 0 = sem enfeites (personagens das telas do quiz).
+@export var nivel := 0
 
 const COR_SILHUETA := Color("#8C6BC0")
 
-var _corpo: Node3D
-var _olhos: Array[Node3D] = []
-var _aceno: Node3D
-var _proxima_piscada := randf_range(0.8, 2.0)
-var _acenando_ate := 0.0
-var _proximo_aceno := randf_range(0.6, 1.8)  # acena logo que aparece
+var _animacao := AnimacaoDoce.new()
 
 
 func _init() -> void:
@@ -35,6 +33,8 @@ func mostrar(novo_id: String, como_silhueta := false) -> void:
 
 func _montar(pivo: Node3D) -> void:
 	Doces3D.montar(id, pivo)
+	if not silhueta:
+		Doces3D.enfeitar(pivo, id, nivel)
 	if silhueta:
 		var cor := StandardMaterial3D.new()
 		cor.albedo_color = cor_silhueta
@@ -43,9 +43,13 @@ func _montar(pivo: Node3D) -> void:
 		cor.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		for malha in pivo.find_children("*", "MeshInstance3D", true, false):
 			malha.material_override = cor
-	_corpo = pivo.get_node_or_null("Corpo")
-	_olhos.assign(pivo.find_children("Olhos", "Node3D", true, false))
-	_aceno = pivo.find_child("Aceno", true, false)
+	# leve: as peças de cada parte (corpo, olhos, braços, granulado...) viram um
+	# bloco só (antes cada granulado era um desenho; a batalha tem dois doces)
+	JuntarMalhas.simplificar(pivo)
+	JuntarMalhas.juntar_boneco(pivo)
+	if not _animacao.is_inside_tree():
+		add_child(_animacao)
+	_animacao.configurar(pivo)
 
 
 func _ao_tocar() -> void:
@@ -54,36 +58,44 @@ func _ao_tocar() -> void:
 
 ## Pulinho com giro e aceno (ao tocar ou ao comprar).
 func comemorar() -> void:
-	if not _corpo:
-		return
-	_acenando_ate = _tempo + 1.2
-	var tween := create_tween()
-	tween.tween_property(_corpo, "position:y", 0.35, 0.18).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(_corpo, "position:y", 0.0, 0.25).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_BOUNCE)
+	_animacao.comemorar()
 
 
-func _process(delta: float) -> void:
-	super(delta)
-	if not _corpo or not Telas.animacoes_continuas:
+## BATALHA (ver AnimacaoDoce): prepara o golpe, apanha, desmaia e as poses de luta.
+func preparar_golpe() -> void:
+	_animacao.preparar_golpe()
+
+
+func apanhar(forte := false) -> void:
+	_animacao.apanhar(forte)
+
+
+func desmaiar() -> void:
+	_animacao.desmaiar()
+
+
+func pose_luta(nome: String, segundos := 0.12) -> void:
+	_animacao.pose_luta(nome, segundos)
+
+
+## Evolução (ao melhorar na coleção): gira cada vez mais rápido brilhando até
+## ficar branco, encolhe e, no clarão, aparece com o visual do nível novo,
+## grande, e volta ao tamanho balançando.
+func evoluir(novo_nivel: int) -> void:
+	segurar_pose = true
+	var gira := create_tween().set_parallel()
+	gira.tween_property(_pivo, "rotation:y", _pivo.rotation.y + TAU * 3.0, 0.75).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	gira.tween_property(self, "modulate", Color(3, 3, 3), 0.75).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	gira.tween_property(_pivo, "scale", Vector3.ONE * 0.7, 0.75).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	await gira.finished
+	if not is_inside_tree():
 		return
-	# respira: estica e achata de leve
-	var respiro := sin(_tempo * 2.6) * 0.025
-	_corpo.scale = Vector3(1.0 - respiro * 0.5, 1.0 + respiro, 1.0 - respiro * 0.5)
-	# pisca de vez em quando
-	if _tempo > _proxima_piscada:
-		for olhos in _olhos:
-			var tween := create_tween()
-			tween.tween_property(olhos, "scale:y", 0.08, 0.09)
-			tween.tween_interval(0.05)
-			tween.tween_property(olhos, "scale:y", 1.0, 0.12)
-			if randf() < 0.3:  # às vezes pisca duas vezes
-				tween.tween_property(olhos, "scale:y", 0.08, 0.09)
-				tween.tween_property(olhos, "scale:y", 1.0, 0.12)
-		_proxima_piscada = _tempo + randf_range(1.8, 3.5)
-	# acena de vez em quando (e quando é tocado)
-	if _tempo > _proximo_aceno:
-		_acenando_ate = _tempo + 1.6
-		_proximo_aceno = _tempo + randf_range(3.5, 6.0)
-	if _aceno:
-		var alvo := sin(_tempo * 12.0) * 0.6 if _tempo < _acenando_ate else 0.0
-		_aceno.rotation.z = lerpf(_aceno.rotation.z, alvo, minf(1.0, delta * 12.0))
+	nivel = novo_nivel
+	remontar()
+	_pivo.scale = Vector3.ONE * 1.35
+	var aparece := create_tween().set_parallel()
+	aparece.tween_property(_pivo, "scale", Vector3.ONE, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	aparece.tween_property(self, "modulate", Color.WHITE, 0.5)
+	comemorar()
+	await aparece.finished
+	segurar_pose = false

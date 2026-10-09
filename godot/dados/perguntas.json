@@ -264,6 +264,396 @@
           ],
           "resposta": 0,
           "explicacao": "O arquivo do Excel se chama pasta de trabalho. Cada aba dentro dela é uma planilha."
+        },
+        {
+          "id": "f21",
+          "assunto": "geral",
+          "enunciado": "No Office em português, qual atalho SALVA o arquivo?",
+          "alternativas": [
+            "Ctrl + B",
+            "Ctrl + S",
+            "Ctrl + G",
+            "Ctrl + P"
+          ],
+          "resposta": 0,
+          "explicacao": "No Word e no Excel em português, Ctrl + B salva. O Ctrl + S (que salva no inglês) aqui deixa o texto sublinhado."
+        },
+        {
+          "id": "f22",
+          "assunto": "word",
+          "enunciado": "No Word em português, qual atalho deixa o texto em NEGRITO?",
+          "alternativas": [
+            "Ctrl + B",
+            "Ctrl + N",
+            "Ctrl + G",
+            "Ctrl + O"
+          ],
+          "resposta": 1,
+          "explicacao": "Em português, Ctrl + N liga e desliga o negrito (N de Negrito)."
+        },
+        {
+          "id": "f23",
+          "assunto": "word",
+          "enunciado": "No Word em português, qual atalho deixa o texto em ITÁLICO?",
+          "alternativas": [
+            "Ctrl + T",
+            "Ctrl + L",
+            "Ctrl + I",
+            "Ctrl + K"
+          ],
+          "resposta": 2,
+          "explicacao": "Ctrl + I deixa o texto inclinado (itálico). Apertar de novo tira o itálico."
+        },
+        {
+          "id": "f24",
+          "assunto": "word",
+          "enunciado": "No Word em português, qual atalho SUBLINHA o texto?",
+          "alternativas": [
+            "Ctrl + U",
+            "Ctrl + B",
+            "Ctrl + N",
+            "Ctrl + S"
+          ],
+          "resposta": 3,
+          "explicacao": "Em português, Ctrl + S sublinha (S de Sublinhado)."
+        },
+        {
+          "id": "f25",
+          "assunto": "geral",
+          "enunciado": "Qual atalho abre a janela de IMPRIMIR?",
+          "alternativas": [
+            "Ctrl + P",
+            "Ctrl + I",
+            "Ctrl + M",
+            "Ctrl + E"
+          ],
+          "resposta": 0,
+          "explicacao": "Ctrl + P (de Print, imprimir em inglês) abre a impressão no Word, no Excel e na maioria dos programas."
+        },
+        {
+          "id": "f26",
+          "assunto": "geral",
+          "enunciado": "No Office em português, qual atalho SELECIONA TUDO?",
+          "alternativas": [
+            "Ctrl + A",
+            "Ctrl + T",
+            "Ctrl + S",
+            "Ctrl + Y"
+          ],
+          "resposta": 1,
+          "explicacao": "Em português, Ctrl + T seleciona tudo (T de Tudo). No inglês é Ctrl + A, que aqui abre um arquivo."
+        },
+        {
+          "id": "f27",
+          "assunto": "word",
+          "enunciado": "No Word, em qual guia ficam Salvar Como, Abrir e Imprimir?",
+          "alternativas": [
+            "Inserir",
+            "Exibir",
+            "Arquivo",
+            "Revisão"
+          ],
+          "resposta": 2,
+          "explicacao": "A guia Arquivo (o primeiro item) mostra as opções de salvar, abrir, imprimir e compartilhar o documento."
+        },
+        {
+          "id": "f28",
+          "assunto": "excel",
+          "enunciado": "Num arquivo novo do Excel, qual é o nome da aba da planilha, lá embaixo?",
+          "alternativas": [
+            "Folha1",
+            "Pasta1",
+            "Tabela1",
+            "Planilha1"
+          ],
+          "resposta": 3,
+          "explicacao": "As abas na parte de baixo começam como Planilha1. Dá para renomear com dois cliques na aba. Pasta1 é o nome do arquivo novo."
+        },
+        {
+          "id": "f29",
+          "assunto": "excel",
+          "enunciado": "Qual é a primeira célula de uma planilha do Excel?",
+          "alternativas": [
+            "A1",
+            "1A",
+            "AA",
+            "L1C1"
+          ],
+          "resposta": 0,
+          "explicacao": "A primeira coluna é a A e a primeira linha é a 1, então a primeira célula é A1."
+        },
+        {
+          "id": "f30",
+          "assunto": "excel",
+          "enunciado": "No Excel, onde aparece a fórmula da célula que está selecionada?",
+          "alternativas": [
+            "Na barra de status",
+            "Na barra de fórmulas",
+            "Na guia Arquivo",
+            "No nome da aba"
+          ],
+          "resposta": 1,
+          "explicacao": "A barra de fórmulas, acima das colunas, mostra o conteúdo real da célula, inclusive a fórmula, enquanto a célula mostra o resultado."
+        },
+        {
+          "id": "f31",
+          "assunto": "excel",
+          "enunciado": "O que significa quando uma célula do Excel mostra ##### ?",
+          "alternativas": [
+            "A fórmula tem um erro de digitação",
+            "A célula está bloqueada",
+            "A coluna é estreita demais para o número",
+            "O arquivo não foi salvo"
+          ],
+          "resposta": 2,
+          "explicacao": "##### aparece quando o número não cabe na largura da coluna. É só alargar a coluna (dois cliques na divisa entre as letras)."
+        },
+        {
+          "id": "f32",
+          "assunto": "geral",
+          "enunciado": "Qual tecla apaga a letra que está à ESQUERDA do cursor?",
+          "alternativas": [
+            "Delete",
+            "Esc",
+            "Tab",
+            "Backspace"
+          ],
+          "resposta": 3,
+          "explicacao": "Backspace (a seta comprida acima do Enter) apaga para trás, à esquerda. O Delete apaga para frente, à direita."
+        },
+        {
+          "id": "f33",
+          "assunto": "geral",
+          "enunciado": "Qual tecla apaga a letra que está à DIREITA do cursor?",
+          "alternativas": [
+            "Delete",
+            "Backspace",
+            "Home",
+            "Shift"
+          ],
+          "resposta": 0,
+          "explicacao": "Delete (ou Del) apaga o que está depois do cursor, à direita."
+        },
+        {
+          "id": "f34",
+          "assunto": "word",
+          "enunciado": "No Word, qual tecla começa um novo parágrafo?",
+          "alternativas": [
+            "Tab",
+            "Enter",
+            "Espaço",
+            "Ctrl"
+          ],
+          "resposta": 1,
+          "explicacao": "Enter termina o parágrafo e começa outro na linha de baixo."
+        },
+        {
+          "id": "f35",
+          "assunto": "geral",
+          "enunciado": "Qual tecla, quando ligada, deixa todas as letras MAIÚSCULAS?",
+          "alternativas": [
+            "Shift",
+            "Num Lock",
+            "Caps Lock",
+            "Alt"
+          ],
+          "resposta": 2,
+          "explicacao": "Caps Lock liga as maiúsculas até ser apertada de novo. O Shift só deixa maiúscula enquanto está apertado."
+        },
+        {
+          "id": "f36",
+          "assunto": "word",
+          "enunciado": "Qual recurso aproxima ou afasta a visão do documento sem mudar o tamanho da letra?",
+          "alternativas": [
+            "Tamanho da fonte",
+            "Margens",
+            "Orientação",
+            "Zoom"
+          ],
+          "resposta": 3,
+          "explicacao": "O Zoom (no canto de baixo ou na guia Exibir) só muda como vemos na tela; a impressão continua igual."
+        },
+        {
+          "id": "f37",
+          "assunto": "excel",
+          "enunciado": "Qual sinal é usado para MULTIPLICAR em uma fórmula do Excel?",
+          "alternativas": [
+            "*",
+            "x",
+            "·",
+            "#"
+          ],
+          "resposta": 0,
+          "explicacao": "No Excel o asterisco * multiplica: =A1*B1. A letra x não funciona como vezes."
+        },
+        {
+          "id": "f38",
+          "assunto": "excel",
+          "enunciado": "Qual sinal é usado para DIVIDIR em uma fórmula do Excel?",
+          "alternativas": [
+            "÷",
+            "/",
+            ":",
+            "\\"
+          ],
+          "resposta": 1,
+          "explicacao": "A barra / divide: =A1/B1."
+        },
+        {
+          "id": "f39",
+          "assunto": "excel",
+          "enunciado": "Qual é o resultado da fórmula =10-4 no Excel?",
+          "alternativas": [
+            "14",
+            "104",
+            "6",
+            "-6"
+          ],
+          "resposta": 2,
+          "explicacao": "O Excel faz a conta: 10 menos 4 dá 6."
+        },
+        {
+          "id": "f40",
+          "assunto": "word",
+          "enunciado": "No Word, para que serve o recurso Localizar?",
+          "alternativas": [
+            "Achar arquivos no computador",
+            "Mostrar o mapa da cidade",
+            "Corrigir a ortografia",
+            "Procurar uma palavra no texto"
+          ],
+          "resposta": 3,
+          "explicacao": "Localizar (na guia Página Inicial) procura uma palavra ou frase dentro do documento e mostra onde ela aparece."
+        },
+        {
+          "id": "f41",
+          "assunto": "word",
+          "enunciado": "Qual recurso do Word pinta o fundo atrás do texto, como uma caneta marca-texto?",
+          "alternativas": [
+            "Cor do Realce do Texto",
+            "Cor da Fonte",
+            "Sombreamento da página",
+            "Negrito"
+          ],
+          "resposta": 0,
+          "explicacao": "A Cor do Realce do Texto funciona como um marca-texto. A Cor da Fonte muda a cor das próprias letras."
+        },
+        {
+          "id": "f42",
+          "assunto": "excel",
+          "enunciado": "Para que serve a alça de preenchimento (o quadradinho no canto da célula selecionada)?",
+          "alternativas": [
+            "Apagar a célula",
+            "Arrastar para copiar ou continuar uma sequência",
+            "Mudar a cor da célula",
+            "Salvar a planilha"
+          ],
+          "resposta": 1,
+          "explicacao": "Arrastando a alça, o Excel copia o conteúdo ou continua sequências como 1, 2, 3 ou janeiro, fevereiro, março."
+        },
+        {
+          "id": "f43",
+          "assunto": "excel",
+          "enunciado": "No Excel, em qual guia fica o botão para criar um gráfico?",
+          "alternativas": [
+            "Fórmulas",
+            "Dados",
+            "Inserir",
+            "Exibir"
+          ],
+          "resposta": 2,
+          "explicacao": "Os gráficos ficam na guia Inserir, junto com tabelas e imagens."
+        },
+        {
+          "id": "f44",
+          "assunto": "geral",
+          "enunciado": "Qual programa do Office é usado para fazer apresentações de slides?",
+          "alternativas": [
+            "Word",
+            "Excel",
+            "Access",
+            "PowerPoint"
+          ],
+          "resposta": 3,
+          "explicacao": "O PowerPoint cria apresentações em slides. Word é para textos, Excel para planilhas e Access para bancos de dados."
+        },
+        {
+          "id": "f45",
+          "assunto": "word",
+          "enunciado": "No Word, como deixar a letra maior?",
+          "alternativas": [
+            "Aumentando o tamanho da fonte",
+            "Aumentando o zoom",
+            "Aumentando as margens",
+            "Mudando a orientação"
+          ],
+          "resposta": 0,
+          "explicacao": "O tamanho da fonte (na guia Página Inicial) muda a letra de verdade. O zoom só aproxima a visão na tela."
+        },
+        {
+          "id": "f46",
+          "assunto": "word",
+          "enunciado": "No Word, o que é a FONTE do texto?",
+          "alternativas": [
+            "A origem da informação usada no trabalho",
+            "O tipo de desenho das letras, como Arial ou Calibri",
+            "A cor do texto",
+            "O tamanho da página"
+          ],
+          "resposta": 1,
+          "explicacao": "Fonte é o estilo das letras: Arial, Calibri, Times New Roman... cada uma tem um desenho diferente."
+        },
+        {
+          "id": "f47",
+          "assunto": "excel",
+          "enunciado": "Quantas células há no intervalo A1:A5?",
+          "alternativas": [
+            "2",
+            "6",
+            "5",
+            "1"
+          ],
+          "resposta": 2,
+          "explicacao": "A1:A5 vai de A1 até A5: A1, A2, A3, A4 e A5, ou seja, 5 células."
+        },
+        {
+          "id": "f48",
+          "assunto": "geral",
+          "enunciado": "No Windows, qual atalho fecha o programa ou janela que está aberto?",
+          "alternativas": [
+            "Ctrl + C",
+            "Alt + Tab",
+            "Ctrl + Z",
+            "Alt + F4"
+          ],
+          "resposta": 3,
+          "explicacao": "Alt + F4 fecha a janela ativa. Alt + Tab só troca de janela."
+        },
+        {
+          "id": "f49",
+          "assunto": "geral",
+          "enunciado": "Para que serve a tecla Esc?",
+          "alternativas": [
+            "Cancelar ou sair do que está sendo feito",
+            "Apagar tudo",
+            "Salvar o arquivo",
+            "Desligar o computador"
+          ],
+          "resposta": 0,
+          "explicacao": "Esc (de Escape) cancela: fecha menus, sai da tela cheia ou desiste de editar uma célula."
+        },
+        {
+          "id": "f50",
+          "assunto": "excel",
+          "enunciado": "No Excel, em qual guia ficam os formatos de número como Moeda e Porcentagem?",
+          "alternativas": [
+            "Revisão",
+            "Página Inicial",
+            "Layout da Página",
+            "Exibir"
+          ],
+          "resposta": 1,
+          "explicacao": "Na guia Página Inicial, no grupo Número, ficam Moeda, Porcentagem, casas decimais e outros formatos."
         }
       ]
     },
@@ -530,6 +920,396 @@
           ],
           "resposta": 0,
           "explicacao": "O Cabeçalho, na guia Inserir, repete o mesmo conteúdo no topo de todas as páginas. O Rodapé faz o mesmo embaixo."
+        },
+        {
+          "id": "m21",
+          "assunto": "excel",
+          "enunciado": "Qual função do Excel arredonda um número para uma quantidade de casas decimais?",
+          "alternativas": [
+            "=ARRED()",
+            "=INT()",
+            "=TRUNCAR()",
+            "=ABS()"
+          ],
+          "resposta": 0,
+          "explicacao": "=ARRED(A1; 2) arredonda para 2 casas decimais. =INT() e =TRUNCAR() só cortam a parte decimal, sem arredondar."
+        },
+        {
+          "id": "m22",
+          "assunto": "excel",
+          "enunciado": "O que faz a função =CONT.NÚM()?",
+          "alternativas": [
+            "Soma os números",
+            "Conta as células que têm números",
+            "Conta as células vazias",
+            "Conta as palavras"
+          ],
+          "resposta": 1,
+          "explicacao": "=CONT.NÚM(A1:A10) conta só as células com números. Para contar tudo que não está vazio, use =CONT.VALORES()."
+        },
+        {
+          "id": "m23",
+          "assunto": "excel",
+          "enunciado": "Qual é o resultado da fórmula =(2+3)*4 no Excel?",
+          "alternativas": [
+            "14",
+            "24",
+            "20",
+            "9"
+          ],
+          "resposta": 2,
+          "explicacao": "Os parênteses são feitos primeiro: 2+3 = 5, e 5*4 = 20. Sem parênteses, a multiplicação viria antes."
+        },
+        {
+          "id": "m24",
+          "assunto": "excel",
+          "enunciado": "Se A1 a A4 têm 2, 4, 6 e 8, qual é o resultado de =MÉDIA(A1:A4)?",
+          "alternativas": [
+            "20",
+            "4",
+            "8",
+            "5"
+          ],
+          "resposta": 3,
+          "explicacao": "Soma: 2+4+6+8 = 20. Dividindo por 4 valores: 20/4 = 5."
+        },
+        {
+          "id": "m25",
+          "assunto": "excel",
+          "enunciado": "Na referência A$1, o que fica fixo quando a fórmula é copiada?",
+          "alternativas": [
+            "Só a linha 1",
+            "Só a coluna A",
+            "A coluna e a linha",
+            "Nada fica fixo"
+          ],
+          "resposta": 0,
+          "explicacao": "O $ trava o que vem logo depois dele. Em A$1 ele está antes do 1, então só a linha fica fixa (referência mista)."
+        },
+        {
+          "id": "m26",
+          "assunto": "excel",
+          "enunciado": "Enquanto edita uma fórmula, qual tecla alterna os $ da referência (A1, $A$1, A$1, $A1)?",
+          "alternativas": [
+            "F2",
+            "F4",
+            "F7",
+            "F12"
+          ],
+          "resposta": 1,
+          "explicacao": "Com o cursor na referência, F4 vai trocando entre os tipos de referência. F2 edita a célula."
+        },
+        {
+          "id": "m27",
+          "assunto": "excel",
+          "enunciado": "Qual recurso do Excel muda a cor da célula sozinho conforme o valor, como deixar vermelho as notas abaixo de 6?",
+          "alternativas": [
+            "Filtro",
+            "Validação de Dados",
+            "Formatação Condicional",
+            "Mesclar Células"
+          ],
+          "resposta": 2,
+          "explicacao": "A Formatação Condicional (guia Página Inicial) aplica cores, barras e ícones de acordo com regras."
+        },
+        {
+          "id": "m28",
+          "assunto": "excel",
+          "enunciado": "No Excel, qual recurso coloca uma lista de nomes em ordem alfabética?",
+          "alternativas": [
+            "Filtrar",
+            "Congelar Painéis",
+            "Agrupar",
+            "Classificar"
+          ],
+          "resposta": 3,
+          "explicacao": "Classificar de A a Z (guia Dados ou Página Inicial) ordena as linhas. O Filtro só esconde linhas."
+        },
+        {
+          "id": "m29",
+          "assunto": "excel",
+          "enunciado": "Qual é o operador \"diferente de\" nas fórmulas do Excel?",
+          "alternativas": [
+            "<>",
+            "!=",
+            "=/=",
+            "><"
+          ],
+          "resposta": 0,
+          "explicacao": "No Excel, <> significa diferente: =SE(A1<>0; \"tem valor\"; \"zero\")."
+        },
+        {
+          "id": "m30",
+          "assunto": "excel",
+          "enunciado": "Qual função do Excel junta vários textos em um só?",
+          "alternativas": [
+            "=SOMA()",
+            "=CONCATENAR()",
+            "=JUNTAR.CÉLULAS()",
+            "=UNIR.TUDO()"
+          ],
+          "resposta": 1,
+          "explicacao": "=CONCATENAR(A1; \" \"; B1) junta os textos. Nas versões novas também existe =CONCAT(), e o & faz o mesmo."
+        },
+        {
+          "id": "m31",
+          "assunto": "excel",
+          "enunciado": "Como uma fórmula busca a célula A1 de outra planilha chamada Vendas?",
+          "alternativas": [
+            "=Vendas.A1",
+            "=A1(Vendas)",
+            "=Vendas!A1",
+            "=Vendas:A1"
+          ],
+          "resposta": 2,
+          "explicacao": "O nome da planilha vem antes, seguido de ponto de exclamação: =Vendas!A1."
+        },
+        {
+          "id": "m32",
+          "assunto": "excel",
+          "enunciado": "O que faz o botão Mesclar e Centralizar?",
+          "alternativas": [
+            "Soma as células selecionadas",
+            "Centraliza a planilha na página",
+            "Copia a célula para o centro",
+            "Junta várias células em uma e centraliza o conteúdo"
+          ],
+          "resposta": 3,
+          "explicacao": "Mesclar e Centralizar é muito usado em títulos que ocupam várias colunas."
+        },
+        {
+          "id": "m33",
+          "assunto": "excel",
+          "enunciado": "O que faz a opção Quebrar Texto Automaticamente numa célula?",
+          "alternativas": [
+            "Mostra o texto em várias linhas dentro da mesma célula",
+            "Divide o texto em várias células",
+            "Apaga o texto que não cabe",
+            "Traduz o texto"
+          ],
+          "resposta": 0,
+          "explicacao": "O texto passa para a linha de baixo dentro da própria célula, e a altura da linha aumenta."
+        },
+        {
+          "id": "m34",
+          "assunto": "excel",
+          "enunciado": "No Excel, o que faz Alt + Enter enquanto você digita numa célula?",
+          "alternativas": [
+            "Vai para a célula de baixo",
+            "Começa uma nova linha dentro da mesma célula",
+            "Salva a planilha",
+            "Cancela a digitação"
+          ],
+          "resposta": 1,
+          "explicacao": "Alt + Enter quebra a linha dentro da célula. Só o Enter confirma e desce para a próxima célula."
+        },
+        {
+          "id": "m35",
+          "assunto": "word",
+          "enunciado": "No Word, qual opção muda o espaço entre as linhas de um parágrafo?",
+          "alternativas": [
+            "Recuo",
+            "Margens",
+            "Espaçamento entre linhas",
+            "Tabulação"
+          ],
+          "resposta": 2,
+          "explicacao": "O Espaçamento entre Linhas (1,0; 1,5; 2,0...) fica na guia Página Inicial, no grupo Parágrafo."
+        },
+        {
+          "id": "m36",
+          "assunto": "word",
+          "enunciado": "No Word, qual recurso numera as páginas automaticamente?",
+          "alternativas": [
+            "Numeração",
+            "Sumário",
+            "Quebra de Página",
+            "Número de Página"
+          ],
+          "resposta": 3,
+          "explicacao": "Número de Página (guia Inserir) coloca o número no cabeçalho ou rodapé de todas as páginas. Numeração é para listas."
+        },
+        {
+          "id": "m37",
+          "assunto": "word",
+          "enunciado": "No Word, em qual guia ficam Ortografia e Controlar Alterações?",
+          "alternativas": [
+            "Revisão",
+            "Referências",
+            "Layout",
+            "Correspondências"
+          ],
+          "resposta": 0,
+          "explicacao": "A guia Revisão reúne ortografia, comentários e controle de alterações."
+        },
+        {
+          "id": "m38",
+          "assunto": "word",
+          "enunciado": "O que é uma nota de rodapé?",
+          "alternativas": [
+            "O número da página",
+            "Uma observação no pé da página ligada a um número no texto",
+            "A assinatura do autor",
+            "A última linha do documento"
+          ],
+          "resposta": 1,
+          "explicacao": "A nota de rodapé (guia Referências) põe um numerozinho no texto e a explicação no fim da página."
+        },
+        {
+          "id": "m39",
+          "assunto": "word",
+          "enunciado": "Qual recurso copia só a FORMATAÇÃO de um texto para outro?",
+          "alternativas": [
+            "Copiar e Colar",
+            "Estilos",
+            "Pincel de Formatação",
+            "Localizar e Substituir"
+          ],
+          "resposta": 2,
+          "explicacao": "O Pincel de Formatação copia fonte, cor e tamanho de um trecho e aplica em outro, sem copiar as palavras."
+        },
+        {
+          "id": "m40",
+          "assunto": "word",
+          "enunciado": "No Word em português, o que faz o atalho Ctrl + E?",
+          "alternativas": [
+            "Seleciona tudo",
+            "Envia por e-mail",
+            "Apaga a linha",
+            "Centraliza o texto"
+          ],
+          "resposta": 3,
+          "explicacao": "Em português, Ctrl + E centraliza. Ctrl + Q alinha à esquerda, Ctrl + G à direita e Ctrl + J justifica."
+        },
+        {
+          "id": "m41",
+          "assunto": "word",
+          "enunciado": "No Word em português, qual atalho JUSTIFICA o texto?",
+          "alternativas": [
+            "Ctrl + J",
+            "Ctrl + E",
+            "Ctrl + G",
+            "Ctrl + Q"
+          ],
+          "resposta": 0,
+          "explicacao": "Ctrl + J justifica: o texto encosta nas duas margens."
+        },
+        {
+          "id": "m42",
+          "assunto": "word",
+          "enunciado": "No Word em português, qual atalho abre o Localizar e Substituir (trocar uma palavra por outra)?",
+          "alternativas": [
+            "Ctrl + L",
+            "Ctrl + U",
+            "Ctrl + H",
+            "Ctrl + R"
+          ],
+          "resposta": 1,
+          "explicacao": "Em português, Ctrl + U abre o Substituir e Ctrl + L abre o Localizar."
+        },
+        {
+          "id": "m43",
+          "assunto": "word",
+          "enunciado": "No Word, o que faz o recurso Colunas, da guia Layout?",
+          "alternativas": [
+            "Cria uma tabela",
+            "Coloca linhas na página",
+            "Divide o texto em colunas, como num jornal",
+            "Aumenta as margens"
+          ],
+          "resposta": 2,
+          "explicacao": "Colunas deixa o texto em duas ou mais colunas lado a lado, como em jornais e revistas."
+        },
+        {
+          "id": "m44",
+          "assunto": "word",
+          "enunciado": "No Word, qual atalho muda de linha SEM começar um novo parágrafo?",
+          "alternativas": [
+            "Ctrl + Enter",
+            "Alt + Enter",
+            "Tab",
+            "Shift + Enter"
+          ],
+          "resposta": 3,
+          "explicacao": "Shift + Enter faz uma quebra de linha simples. Ctrl + Enter faz uma quebra de página."
+        },
+        {
+          "id": "m45",
+          "assunto": "geral",
+          "enunciado": "No Word ou no Excel, o que faz Ctrl + Home?",
+          "alternativas": [
+            "Vai para o início do documento ou da planilha",
+            "Abre a página inicial da internet",
+            "Fecha o arquivo",
+            "Volta à guia Página Inicial"
+          ],
+          "resposta": 0,
+          "explicacao": "Ctrl + Home leva o cursor para o começo (no Excel, para a célula A1). Ctrl + End vai para o fim."
+        },
+        {
+          "id": "m46",
+          "assunto": "geral",
+          "enunciado": "No Windows, qual atalho troca entre os programas abertos?",
+          "alternativas": [
+            "Alt + F4",
+            "Alt + Tab",
+            "Ctrl + Tab",
+            "Shift + Tab"
+          ],
+          "resposta": 1,
+          "explicacao": "Alt + Tab mostra as janelas abertas e troca entre elas."
+        },
+        {
+          "id": "m47",
+          "assunto": "excel",
+          "enunciado": "No Excel, o que faz Ctrl + seta para baixo?",
+          "alternativas": [
+            "Desce uma linha",
+            "Apaga a linha",
+            "Pula até a última célula preenchida do bloco",
+            "Insere uma linha"
+          ],
+          "resposta": 2,
+          "explicacao": "Ctrl + seta pula até o fim do bloco de dados naquela direção. Ótimo para planilhas grandes."
+        },
+        {
+          "id": "m48",
+          "assunto": "excel",
+          "enunciado": "Qual função do Excel conta as células VAZIAS de um intervalo?",
+          "alternativas": [
+            "=CONT.VALORES()",
+            "=CONT.NÚM()",
+            "=VAZIO()",
+            "=CONTAR.VAZIO()"
+          ],
+          "resposta": 3,
+          "explicacao": "=CONTAR.VAZIO(A1:A10) conta as células sem nada. =CONT.VALORES() faz o contrário."
+        },
+        {
+          "id": "m49",
+          "assunto": "excel",
+          "enunciado": "Qual função do Excel mostra a data E a hora atuais?",
+          "alternativas": [
+            "=AGORA()",
+            "=HOJE()",
+            "=DATA()",
+            "=HORA()"
+          ],
+          "resposta": 0,
+          "explicacao": "=AGORA() traz data e hora e atualiza sozinha. =HOJE() traz só a data."
+        },
+        {
+          "id": "m50",
+          "assunto": "geral",
+          "enunciado": "Qual é a extensão padrão de uma apresentação do PowerPoint?",
+          "alternativas": [
+            ".docx",
+            ".pptx",
+            ".xlsx",
+            ".pdf"
+          ],
+          "resposta": 1,
+          "explicacao": "Apresentações do PowerPoint são salvas como .pptx."
         }
       ]
     },
@@ -796,6 +1576,396 @@
           ],
           "resposta": 0,
           "explicacao": "A quebra de seção divide o documento em partes com configurações próprias, por exemplo uma única página em paisagem no meio do texto."
+        },
+        {
+          "id": "d21",
+          "assunto": "excel",
+          "enunciado": "Qual função do Excel testa várias condições em sequência, sem precisar colocar um SE dentro do outro?",
+          "alternativas": [
+            "=SES()",
+            "=SE()",
+            "=E()",
+            "=ESCOLHER()"
+          ],
+          "resposta": 0,
+          "explicacao": "=SES(A1>=9; \"Ótimo\"; A1>=6; \"Bom\"; VERDADEIRO; \"Estude mais\") testa as condições em ordem. Existe nas versões mais novas do Excel."
+        },
+        {
+          "id": "d22",
+          "assunto": "excel",
+          "enunciado": "Quando =E(A1>5; B1>5) mostra VERDADEIRO?",
+          "alternativas": [
+            "Quando pelo menos uma é verdadeira",
+            "Quando as duas condições são verdadeiras",
+            "Quando as duas são falsas",
+            "Sempre"
+          ],
+          "resposta": 1,
+          "explicacao": "A função E só dá VERDADEIRO se TODAS as condições forem verdadeiras."
+        },
+        {
+          "id": "d23",
+          "assunto": "excel",
+          "enunciado": "Quando =OU(A1>5; B1>5) mostra VERDADEIRO?",
+          "alternativas": [
+            "Só quando as duas são verdadeiras",
+            "Quando as duas são falsas",
+            "Quando pelo menos uma condição é verdadeira",
+            "Nunca"
+          ],
+          "resposta": 2,
+          "explicacao": "A função OU dá VERDADEIRO se QUALQUER uma das condições for verdadeira."
+        },
+        {
+          "id": "d24",
+          "assunto": "excel",
+          "enunciado": "Qual função mais nova do Excel procura um valor em qualquer direção e substitui o PROCV?",
+          "alternativas": [
+            "=PROCH()",
+            "=PROC()",
+            "=BUSCAR()",
+            "=PROCX()"
+          ],
+          "resposta": 3,
+          "explicacao": "=PROCX() procura para a esquerda ou para a direita e não precisa do número da coluna, como o PROCV."
+        },
+        {
+          "id": "d25",
+          "assunto": "excel",
+          "enunciado": "O que a função =CORRESP() retorna?",
+          "alternativas": [
+            "A posição de um valor dentro de um intervalo",
+            "O valor que está numa posição",
+            "A soma dos valores iguais",
+            "Quantas vezes o valor aparece"
+          ],
+          "resposta": 0,
+          "explicacao": "=CORRESP() diz em que posição o valor está. Junto com =ÍNDICE() forma uma busca muito usada."
+        },
+        {
+          "id": "d26",
+          "assunto": "excel",
+          "enunciado": "O que significa o erro #N/D no Excel?",
+          "alternativas": [
+            "Divisão por zero",
+            "O valor procurado não foi encontrado",
+            "Nome de função errado",
+            "A coluna é estreita demais"
+          ],
+          "resposta": 1,
+          "explicacao": "#N/D (não disponível) aparece, por exemplo, quando o PROCV não encontra o valor procurado."
+        },
+        {
+          "id": "d27",
+          "assunto": "excel",
+          "enunciado": "O que significa o erro #REF! no Excel?",
+          "alternativas": [
+            "O valor não foi encontrado",
+            "O número é grande demais",
+            "A fórmula aponta para uma célula que não existe mais",
+            "Falta um parêntese"
+          ],
+          "resposta": 2,
+          "explicacao": "#REF! costuma aparecer quando uma linha ou coluna usada pela fórmula foi apagada."
+        },
+        {
+          "id": "d28",
+          "assunto": "excel",
+          "enunciado": "O que costuma causar o erro #VALOR! no Excel?",
+          "alternativas": [
+            "Dividir por zero",
+            "Uma célula vazia",
+            "Um nome de função errado",
+            "Um tipo de dado errado na conta, como somar texto com número usando +"
+          ],
+          "resposta": 3,
+          "explicacao": "#VALOR! aparece quando a fórmula recebe um dado do tipo errado, como =\"doce\"+1."
+        },
+        {
+          "id": "d29",
+          "assunto": "excel",
+          "enunciado": "O que é uma referência circular no Excel?",
+          "alternativas": [
+            "Uma fórmula que depende do resultado da própria célula",
+            "Uma fórmula que usa outra planilha",
+            "Um gráfico de pizza",
+            "Uma célula mesclada"
+          ],
+          "resposta": 0,
+          "explicacao": "Por exemplo, em A1 escrever =A1+1. O Excel avisa, porque a conta nunca termina."
+        },
+        {
+          "id": "d30",
+          "assunto": "excel",
+          "enunciado": "Qual função do Excel soma valores que atendem a VÁRIAS condições ao mesmo tempo?",
+          "alternativas": [
+            "=SOMASE()",
+            "=SOMASES()",
+            "=SOMA()",
+            "=SOMARPRODUTO()"
+          ],
+          "resposta": 1,
+          "explicacao": "=SOMASES() aceita vários critérios (ex.: vendas do mês 3 E da loja B). =SOMASE() aceita só um."
+        },
+        {
+          "id": "d31",
+          "assunto": "excel",
+          "enunciado": "Qual função do Excel calcula a média só dos valores que atendem a uma condição?",
+          "alternativas": [
+            "=MÉDIA()",
+            "=CONT.SE()",
+            "=MÉDIASE()",
+            "=MED()"
+          ],
+          "resposta": 2,
+          "explicacao": "=MÉDIASE(B2:B20; \">=6\") faz a média só das notas maiores ou iguais a 6."
+        },
+        {
+          "id": "d32",
+          "assunto": "excel",
+          "enunciado": "Qual é o resultado de =ESQUERDA(\"Brigadeiro\"; 4)?",
+          "alternativas": [
+            "eiro",
+            "Brigadeiro",
+            "4",
+            "Brig"
+          ],
+          "resposta": 3,
+          "explicacao": "=ESQUERDA() pega os primeiros caracteres da esquerda: as 4 primeiras letras são Brig."
+        },
+        {
+          "id": "d33",
+          "assunto": "excel",
+          "enunciado": "Qual é o resultado de =NÚM.CARACT(\"Doce\")?",
+          "alternativas": [
+            "4",
+            "1",
+            "5",
+            "Doce"
+          ],
+          "resposta": 0,
+          "explicacao": "=NÚM.CARACT() conta quantos caracteres o texto tem. \"Doce\" tem 4 letras."
+        },
+        {
+          "id": "d34",
+          "assunto": "excel",
+          "enunciado": "O que faz a função =MAIÚSCULA()?",
+          "alternativas": [
+            "Mostra o maior valor",
+            "Deixa todas as letras do texto maiúsculas",
+            "Aumenta o tamanho da fonte",
+            "Coloca só a primeira letra maiúscula"
+          ],
+          "resposta": 1,
+          "explicacao": "=MAIÚSCULA(\"doce\") vira DOCE. Para deixar só a primeira letra de cada palavra maiúscula, existe =PRI.MAIÚSCULA()."
+        },
+        {
+          "id": "d35",
+          "assunto": "excel",
+          "enunciado": "Qual recurso do Excel limita o que pode ser digitado numa célula, como uma lista suspensa?",
+          "alternativas": [
+            "Formatação Condicional",
+            "Proteger Planilha",
+            "Validação de Dados",
+            "Filtro"
+          ],
+          "resposta": 2,
+          "explicacao": "A Validação de Dados (guia Dados) cria listas suspensas e bloqueia valores fora da regra."
+        },
+        {
+          "id": "d36",
+          "assunto": "excel",
+          "enunciado": "Para que serve o Atingir Meta do Excel?",
+          "alternativas": [
+            "Mostrar as metas em um gráfico",
+            "Contar quantas metas foram cumpridas",
+            "Proteger a planilha com senha",
+            "Descobrir qual valor usar para a fórmula chegar a um resultado desejado"
+          ],
+          "resposta": 3,
+          "explicacao": "O Atingir Meta (guia Dados, Teste de Hipóteses) muda um valor de entrada até a fórmula dar o resultado que você quer."
+        },
+        {
+          "id": "d37",
+          "assunto": "excel",
+          "enunciado": "Como o Excel guarda as datas por dentro?",
+          "alternativas": [
+            "Como números (a quantidade de dias desde 1900)",
+            "Como texto",
+            "Como imagens",
+            "Em outro arquivo"
+          ],
+          "resposta": 0,
+          "explicacao": "Cada data é um número de dias, por isso dá para fazer contas como =B1-A1 para saber quantos dias se passaram."
+        },
+        {
+          "id": "d38",
+          "assunto": "excel",
+          "enunciado": "Se A1 tem uma data, o que mostra a fórmula =A1+30?",
+          "alternativas": [
+            "O número 30",
+            "A data 30 dias depois",
+            "Um erro",
+            "A mesma data"
+          ],
+          "resposta": 1,
+          "explicacao": "Como datas são números de dias, somar 30 avança 30 dias."
+        },
+        {
+          "id": "d39",
+          "assunto": "excel",
+          "enunciado": "Qual recurso do Excel apaga as linhas repetidas de uma tabela?",
+          "alternativas": [
+            "Filtro",
+            "Classificar",
+            "Remover Duplicatas",
+            "Localizar"
+          ],
+          "resposta": 2,
+          "explicacao": "Remover Duplicatas fica na guia Dados e deixa só uma de cada linha igual."
+        },
+        {
+          "id": "d40",
+          "assunto": "excel",
+          "enunciado": "Para que serve o recurso Texto para Colunas?",
+          "alternativas": [
+            "Transformar a planilha em texto do Word",
+            "Mudar a largura das colunas",
+            "Juntar colunas em uma",
+            "Separar o conteúdo de uma célula em várias colunas usando um separador"
+          ],
+          "resposta": 3,
+          "explicacao": "Por exemplo, separar \"Maria;Silva\" em duas colunas usando o ponto e vírgula. Fica na guia Dados."
+        },
+        {
+          "id": "d41",
+          "assunto": "excel",
+          "enunciado": "Qual tipo de gráfico é melhor para mostrar as partes de um todo, como porcentagens?",
+          "alternativas": [
+            "Pizza",
+            "Linhas",
+            "Dispersão",
+            "Área"
+          ],
+          "resposta": 0,
+          "explicacao": "O gráfico de pizza mostra quanto cada parte representa do total."
+        },
+        {
+          "id": "d42",
+          "assunto": "excel",
+          "enunciado": "Qual tipo de gráfico é melhor para mostrar como um valor muda ao longo do tempo?",
+          "alternativas": [
+            "Pizza",
+            "Linhas",
+            "Rosca",
+            "Radar"
+          ],
+          "resposta": 1,
+          "explicacao": "O gráfico de linhas mostra bem subidas e descidas mês a mês, ano a ano."
+        },
+        {
+          "id": "d43",
+          "assunto": "word",
+          "enunciado": "O que faz a Hifenização no Word?",
+          "alternativas": [
+            "Coloca traços entre os parágrafos",
+            "Numera as linhas",
+            "Divide palavras no fim da linha com hífen",
+            "Apaga os hífens do texto"
+          ],
+          "resposta": 2,
+          "explicacao": "A Hifenização (guia Layout) quebra palavras longas no fim da linha, deixando o texto mais uniforme."
+        },
+        {
+          "id": "d44",
+          "assunto": "word",
+          "enunciado": "No Word, qual recurso marca um ponto do texto para ir direto a ele depois, por um link?",
+          "alternativas": [
+            "Comentário",
+            "Nota de rodapé",
+            "Cabeçalho",
+            "Indicador"
+          ],
+          "resposta": 3,
+          "explicacao": "O Indicador (guia Inserir, Links) marca um lugar do documento; depois dá para criar um link que leva até ele."
+        },
+        {
+          "id": "d45",
+          "assunto": "word",
+          "enunciado": "No Word, qual recurso numera figuras e tabelas automaticamente (Figura 1, Figura 2...)?",
+          "alternativas": [
+            "Inserir Legenda",
+            "Numeração",
+            "Número de Página",
+            "Sumário"
+          ],
+          "resposta": 0,
+          "explicacao": "Inserir Legenda (guia Referências) numera sozinho e permite montar um índice de figuras."
+        },
+        {
+          "id": "d46",
+          "assunto": "word",
+          "enunciado": "No Word, qual recurso aplica de uma vez fonte, tamanho, cor e espaçamento salvos com um nome?",
+          "alternativas": [
+            "Pincel de Formatação",
+            "Estilos",
+            "Temas de página",
+            "Modelos de tabela"
+          ],
+          "resposta": 1,
+          "explicacao": "Os Estilos (Normal, Título 1...) guardam várias formatações juntas e mudam todo o documento de uma vez."
+        },
+        {
+          "id": "d47",
+          "assunto": "word",
+          "enunciado": "No Word, qual recurso deixa o documento só para leitura ou só para comentários?",
+          "alternativas": [
+            "Controlar Alterações",
+            "Marcar como Final",
+            "Restringir Edição",
+            "Ortografia"
+          ],
+          "resposta": 2,
+          "explicacao": "Restringir Edição (guia Revisão) limita o que outras pessoas podem mudar, com senha opcional."
+        },
+        {
+          "id": "d48",
+          "assunto": "geral",
+          "enunciado": "Os arquivos .odt são documentos de texto de qual formato?",
+          "alternativas": [
+            "Word antigo",
+            "PDF",
+            "Bloco de Notas",
+            "OpenDocument (LibreOffice)"
+          ],
+          "resposta": 3,
+          "explicacao": "O .odt é o formato aberto de texto usado pelo LibreOffice Writer. O Word também consegue abrir."
+        },
+        {
+          "id": "d49",
+          "assunto": "word",
+          "enunciado": "Qual modo de exibição do Word mostra só os títulos, para reorganizar as partes do documento?",
+          "alternativas": [
+            "Estrutura de Tópicos",
+            "Layout de Impressão",
+            "Modo de Leitura",
+            "Layout da Web"
+          ],
+          "resposta": 0,
+          "explicacao": "No modo Estrutura de Tópicos (guia Exibir) dá para arrastar títulos e mover capítulos inteiros."
+        },
+        {
+          "id": "d50",
+          "assunto": "excel",
+          "enunciado": "Na fórmula =SE(A1>=6; \"Aprovado\"; \"Reprovado\"), o que aparece se A1 for 5?",
+          "alternativas": [
+            "Aprovado",
+            "Reprovado",
+            "FALSO",
+            "5"
+          ],
+          "resposta": 1,
+          "explicacao": "5 não é maior ou igual a 6, então a condição é falsa e aparece o terceiro argumento: \"Reprovado\"."
         }
       ]
     }

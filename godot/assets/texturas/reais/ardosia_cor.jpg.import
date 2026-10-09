@@ -2,20 +2,22 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d1xb77gor47hs"
-path="res://.godot/imported/moeda.svg-2f9a5b702185b2d3599dc5669ff8b788.ctex"
+uid="uid://c58vwptltleu5"
+path.s3tc="res://.godot/imported/ardosia_cor.jpg-93bede9f3a04c873ff9fd39a362b6b62.s3tc.ctex"
+path.etc2="res://.godot/imported/ardosia_cor.jpg-93bede9f3a04c873ff9fd39a362b6b62.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
-source_file="res://assets/icones/moeda.svg"
-dest_files=["res://.godot/imported/moeda.svg-2f9a5b702185b2d3599dc5669ff8b788.ctex"]
+source_file="res://assets/texturas/reais/ardosia_cor.jpg"
+dest_files=["res://.godot/imported/ardosia_cor.jpg-93bede9f3a04c873ff9fd39a362b6b62.s3tc.ctex", "res://.godot/imported/ardosia_cor.jpg-93bede9f3a04c873ff9fd39a362b6b62.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -36,8 +38,5 @@ process/premult_alpha=false
 process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
-process/size_limit=0
+process/size_limit=512
 detect_3d/compress_to=1
-svg/scale=2.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

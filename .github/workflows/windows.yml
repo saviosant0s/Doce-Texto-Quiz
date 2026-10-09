@@ -32,7 +32,7 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          Start-Process jogo\DoceTextoQuiz.exe -ArgumentList "--rendering-driver","opengl3_angle","--","--capturar=inicio","--saida=$pwd\inicio_windows.png","--espera=3" -Wait
+          Start-Process jogo\DoceTextoQuiz.exe -ArgumentList "--rendering-method","gl_compatibility","--rendering-driver","opengl3_angle","--","--capturar=inicio","--saida=$pwd\inicio_windows.png","--espera=3" -Wait
           Get-ChildItem inicio_windows.png
 
       - uses: actions/upload-artifact@v4

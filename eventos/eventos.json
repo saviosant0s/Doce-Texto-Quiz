@@ -1,0 +1,14 @@
+{
+  "versao": 1,
+  "eventos": [
+    {
+      "id": "criancas",
+      "tema": "criancas",
+      "inicio": "2026-10-06",
+      "fim": "2026-10-19",
+      "nome": "Semana das Crianças",
+      "ficha": "Balões",
+      "texto": "Feliz Dia das Crianças! A vila está cheia de balões e brinquedos. Junte balões para ganhar o trem de brinquedo!"
+    }
+  ]
+}

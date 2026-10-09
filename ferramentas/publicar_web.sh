@@ -44,10 +44,31 @@ if [ ! -d build/gh-pages/.git ]; then
 fi
 cd build/gh-pages
 git pull -q origin gh-pages
-find . -mindepth 1 -maxdepth 1 ! -name .git ! -name apk ! -name windows -exec rm -rf {} +
+find . -mindepth 1 -maxdepth 1 ! -name .git ! -name apk ! -name windows ! -name entrega -exec rm -rf {} +
 cp -r "$RAIZ/build/web/." . && touch .nojekyll
+cp "$RAIZ/eventos/eventos.json" eventos.json  # calendário de eventos (docs/eventos.md)
 if [ -n "$KEYSTORE" ]; then
-	mkdir -p apk && cp "$RAIZ/build/android/doce-texto-quiz.apk" apk/
+	mkdir -p apk && cp "$RAIZ/build/android/doce-texto-quiz.apk" "$RAIZ/build/android/doce-texto-quiz-32bits.apk" apk/
+	# cópia com a versão no nome: o celular não reaproveita o arquivo antigo
+	# do cache (o git guarda o mesmo conteúdo uma vez só, não pesa)
+	VERSAO_APK=$(sed -n 's/^config\/version="\(.*\)"/\1/p' "$RAIZ/godot/project.godot")
+	rm -f apk/doce-texto-quiz-v*.apk
+	cp apk/doce-texto-quiz.apk "apk/doce-texto-quiz-v$VERSAO_APK.apk"
+	cp apk/doce-texto-quiz-32bits.apk "apk/doce-texto-quiz-v$VERSAO_APK-32bits.apk"
+	# página de download (modelo em ferramentas/pagina_download.html), com as
+	# imagens e o trailer de ferramentas/gerar_divulgacao.sh, se gerados
+	sed -e "s/__VERSAO__/$VERSAO_APK/g" -e "s/__APK__/doce-texto-quiz-v$VERSAO_APK.apk/g" \
+		-e "s/__APK32__/doce-texto-quiz-v$VERSAO_APK-32bits.apk/g" "$RAIZ/ferramentas/pagina_download.html" > apk/index.html
+	mkdir -p apk/imagens
+	cp "$RAIZ/godot/assets/abertura.png" apk/imagens/logo.png
+	if [ -d "$RAIZ/build/divulgacao/imagens" ]; then
+		cp "$RAIZ"/build/divulgacao/imagens/*.jpg apk/imagens/
+		[ -f "$RAIZ/build/divulgacao/trailer.mp4" ] && cp "$RAIZ/build/divulgacao/trailer.mp4" apk/
+	fi
+fi
+# Pacote de entrega (ferramentas/gerar_entrega.sh), se tiver sido gerado
+if ls "$RAIZ"/build/entrega/Doce_Texto_Quiz_*.zip >/dev/null 2>&1; then
+	rm -rf entrega && mkdir -p entrega && cp "$RAIZ"/build/entrega/Doce_Texto_Quiz_* entrega/
 fi
 if [ -f "$RAIZ/build/windows/DoceTextoQuiz.zip" ]; then
 	mkdir -p windows && cp "$RAIZ/build/windows/DoceTextoQuiz.zip" windows/

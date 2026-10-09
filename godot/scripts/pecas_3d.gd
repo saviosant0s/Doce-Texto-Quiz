@@ -61,6 +61,12 @@ static func listras(cores: Array, quantidade: int, largura := 256) -> ImageTextu
 
 # --- Formas --------------------------------------------------------------------
 
+## Quantos lados uma forma redonda precisa pelo tamanho (em metros): bolas
+## grandes lisinhas, granulado e confeitos com poucas faces (mais leve).
+static func lados_para(tamanho: float) -> int:
+	return clampi(roundi(8 + tamanho * 16.0), 8, 40)
+
+
 static func _no(pai: Node3D, malha: Mesh, mat: Material, posicao: Vector3, escala: Vector3, rotacao: Vector3) -> MeshInstance3D:
 	var no := MeshInstance3D.new()
 	no.mesh = malha
@@ -77,8 +83,9 @@ static func esfera(pai: Node3D, raio: float, posicao: Vector3, mat: Material,
 	var malha := SphereMesh.new()
 	malha.radius = raio
 	malha.height = raio * 2.0
-	malha.radial_segments = 40
-	malha.rings = 20
+	var lados := lados_para(raio * 2.0 * maxf(escala.x, maxf(escala.y, escala.z)))
+	malha.radial_segments = lados
+	malha.rings = maxi(4, lados / 2)
 	return _no(pai, malha, mat, posicao, escala, rotacao)
 
 
@@ -88,7 +95,8 @@ static func cilindro(pai: Node3D, raio_topo: float, raio_base: float, altura: fl
 	malha.top_radius = raio_topo
 	malha.bottom_radius = raio_base
 	malha.height = altura
-	malha.radial_segments = 40
+	malha.radial_segments = lados_para(maxf(raio_topo, raio_base) * 2.0 * maxf(escala.x, escala.z))
+	malha.rings = 0  # sem anéis no meio da altura (não mudam nada na forma; eram 4 a mais em cada cilindro)
 	return _no(pai, malha, mat, posicao, escala, rotacao)
 
 
@@ -97,8 +105,9 @@ static func rosquinha(pai: Node3D, raio_interno: float, raio_externo: float, pos
 	var malha := TorusMesh.new()
 	malha.inner_radius = raio_interno
 	malha.outer_radius = raio_externo
-	malha.rings = 48
-	malha.ring_segments = 24
+	var lados := lados_para(raio_externo * 2.0 * maxf(escala.x, maxf(escala.y, escala.z)))
+	malha.rings = lados + 8
+	malha.ring_segments = maxi(6, lados / 2)
 	return _no(pai, malha, mat, posicao, escala, rotacao)
 
 
@@ -232,10 +241,14 @@ static func braco(pai: Node3D, ombro: Vector3, lado: int, mat: Material, tamanho
 static func pernas(pai: Node3D, quadril: Vector3, abertura: float, comprimento: float, mat: Material,
 		mat_sapato: Material, tamanho := 1.0) -> void:
 	for lado in [-1, 1]:
-		var topo := quadril + Vector3(lado * abertura, 0, 0)
-		var pe := topo + Vector3(lado * 0.03, -comprimento, 0.02)
-		cano(pai, topo, pe, 0.06 * tamanho, mat)
-		esfera(pai, 0.1 * tamanho, pe + Vector3(lado * 0.02, -0.03, 0.06) * tamanho, mat_sapato, Vector3(1.0, 0.65, 1.45))
+		# cada perna gira no quadril (nós "PernaE"/"PernaD"), para a animação de andar
+		var perna := Node3D.new()
+		perna.name = "PernaE" if lado < 0 else "PernaD"  # nomes diferentes: o Godot renomearia a 2ª
+		perna.position = quadril + Vector3(lado * abertura, 0, 0)
+		pai.add_child(perna)
+		var pe := Vector3(lado * 0.03, -comprimento, 0.02)
+		cano(perna, Vector3.ZERO, pe, 0.06 * tamanho, mat)
+		esfera(perna, 0.1 * tamanho, pe + Vector3(lado * 0.02, -0.03, 0.06) * tamanho, mat_sapato, Vector3(1.0, 0.65, 1.45))
 
 
 ## Carrega um modelo .glb, centraliza e ajusta a altura.

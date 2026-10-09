@@ -28,9 +28,27 @@ var estatisticas := {}
 var conquistas := {}
 ## Coleção de doces 3D: {"doces": [ids comprados], "companheiro": id} (ver Colecao).
 var colecao := {}
+## Minha Confeitaria: açúcar, máquinas, estoque e encomendas (ver Confeitaria).
+var confeitaria := {}
+## Laboratório do Office: {"estrelas": {id_fase: 1..3}, "baus": {id_bau: true}} (ver Laboratorio).
+var laboratorio := {}
+## Baús surpresa fechados e garantia (ver Baus).
+var baus := {}
+## Missões do dia/semana e prêmio por entrar (ver Missoes).
+var missoes := {}
+## Nível e experiência do jogador (ver Experiencia).
+var jogador := {}
+## Doce Match: {"estrelas": {"1": 3, ...}} por nível (ver DoceMatch).
+var doce_match := {}
+var vila := {}  # terrenos e presentes da Vila dos Doces (ver Terrenos)
 
 ## Quando verdadeiro, nada é gravado em disco (usado ao gerar prints e em testes).
 var somente_memoria := false
+## Visitando a vila de um amigo: o progresso em memória é o "de mentira" da
+## visita (Amigos.aplicar_visita) e o de verdade fica guardado à parte; nada é
+## gravado em disco até voltar (terminar_visita).
+var visitando := false
+var _guardado := {}
 
 
 func _ready() -> void:
@@ -51,10 +69,17 @@ func _zerar() -> void:
 	perguntas = {}
 	estatisticas = {
 		"partidas": 0, "revisoes": 0, "respostas": 0, "acertos": 0, "tempo_total": 0.0,
-		"melhor_sequencia": 0, "moedas_ganhas": 0,
+		"melhor_sequencia": 0, "moedas_ganhas": 0, "match_recorde": 0, "match_partidas": 0,
 	}
 	conquistas = {}
-	colecao = {"doces": [], "companheiro": ""}
+	colecao = {"doces": [], "companheiro": "", "fragmentos": {}, "niveis": {}}
+	confeitaria = Confeitaria.padrao()
+	laboratorio = {"estrelas": {}, "baus": {}}
+	baus = Baus.padrao()
+	missoes = Missoes.padrao()
+	jogador = {"xp": 0, "nivel": 1}
+	doce_match = {"estrelas": {}}
+	vila = Terrenos.padrao()
 
 
 # --- Consultas ---------------------------------------------------------------
@@ -158,9 +183,16 @@ func apagar() -> void:
 
 func salvar() -> void:
 	alterado.emit()
-	if somente_memoria:
+	if somente_memoria or visitando:
 		return
-	var dados := {
+	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
+	if arquivo:
+		arquivo.store_string(JSON.stringify(_dados(), "  "))
+
+
+## Tudo o que é salvo (menos a configuração, que é do aparelho).
+func _dados() -> Dictionary:
+	return {
 		"versao": VERSAO,
 		"niveis": niveis,
 		"titulos": titulos,
@@ -170,10 +202,54 @@ func salvar() -> void:
 		"estatisticas": estatisticas,
 		"conquistas": conquistas,
 		"colecao": colecao,
+		"confeitaria": confeitaria,
+		"laboratorio": laboratorio,
+		"baus": baus,
+		"missoes": missoes,
+		"jogador": jogador,
+		"doce_match": doce_match,
+		"vila": vila,
 	}
-	var arquivo := FileAccess.open(CAMINHO, FileAccess.WRITE)
-	if arquivo:
-		arquivo.store_string(JSON.stringify(dados, "  "))
+
+
+## Começa a visita à vila de um amigo (dados de Amigos.decodificar): guarda o
+## progresso de verdade e monta o da visita. A configuração continua a mesma.
+func comecar_visita(amigo: Dictionary) -> void:
+	if visitando:
+		terminar_visita()
+	_guardado = _dados().duplicate(true)
+	visitando = true
+	var config_atual := config
+	_zerar()
+	config = config_atual
+	Amigos.aplicar_visita(amigo)
+	alterado.emit()
+
+
+## Volta da visita: o progresso de verdade volta inteiro.
+func terminar_visita() -> void:
+	if not visitando:
+		return
+	var d := _guardado
+	niveis.clear()
+	for n in d["niveis"]:
+		niveis.append(n)
+	titulos = d["titulos"]
+	moedas = d["moedas"]
+	perguntas = d["perguntas"]
+	estatisticas = d["estatisticas"]
+	conquistas = d["conquistas"]
+	colecao = d["colecao"]
+	confeitaria = d["confeitaria"]
+	laboratorio = d["laboratorio"]
+	baus = d["baus"]
+	missoes = d["missoes"]
+	jogador = d["jogador"]
+	doce_match = d["doce_match"]
+	vila = d["vila"]
+	_guardado = {}
+	visitando = false
+	alterado.emit()
 
 
 func carregar() -> void:
@@ -207,6 +283,26 @@ func carregar() -> void:
 			estatisticas[chave] = int(estatisticas[chave])
 	conquistas = dados.get("conquistas", {})
 	colecao.merge(dados.get("colecao", {}), true)
+	var confeitaria_salva: Dictionary = dados.get("confeitaria", {})
+	confeitaria.merge(confeitaria_salva, true)
+	if not confeitaria_salva.is_empty() and not confeitaria_salva.has("presente_inicial"):
+		# save de antes do presente de açúcar: ganha agora, uma vez só
+		confeitaria["acucar"] = int(confeitaria["acucar"]) + Confeitaria.ACUCAR_INICIAL
+	laboratorio.merge(dados.get("laboratorio", {}), true)
+	for id in laboratorio["estrelas"]:
+		laboratorio["estrelas"][id] = int(laboratorio["estrelas"][id])
+	baus.merge(dados.get("baus", {}), true)
+	for tipo in baus["fechados"]:
+		baus["fechados"][tipo] = int(baus["fechados"][tipo])
+	missoes.merge(dados.get("missoes", {}), true)
+	jogador.merge(dados.get("jogador", {}), true)
+	doce_match.merge(dados.get("doce_match", {}), true)
+	vila.merge(dados.get("vila", {}), true)
+	jogador["xp"] = int(jogador["xp"])
+	jogador["nivel"] = int(jogador["nivel"])
+	for chave in ["fragmentos", "niveis"]:
+		for id in colecao[chave]:
+			colecao[chave][id] = int(colecao[chave][id])
 	alterado.emit()
 
 
