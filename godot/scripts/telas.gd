@@ -156,7 +156,7 @@ func _vigiar_lentidao(delta: float) -> void:
 	viewport.scaling_3d_scale = Qualidade.ESCALA_3D[novo]
 	for luz in cena.find_children("*", "DirectionalLight3D", true, false):
 		(luz as DirectionalLight3D).shadow_enabled = luz.shadow_enabled and Qualidade.sombras()
-	if Qualidade.ultra_ativo():
+	if Qualidade.forward_plus():
 		for mundo in cena.find_children("*", "WorldEnvironment", true, false):
 			if (mundo as WorldEnvironment).environment:
 				VisualRealista.desligar_ultra((mundo as WorldEnvironment).environment)

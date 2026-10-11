@@ -98,9 +98,10 @@ func _criar_qualidade() -> void:
 		botao.add_theme_font_size_override("font_size", 24)
 		botao.theme_type_variation = &"BotaoRoxo" if i == Qualidade.escolhida() else &"BotaoSecundario"
 		if i == Qualidade.ULTRA:
-			botao.tooltip_text = "Super realista: sombras de contato, reflexo na água e raios de sol. Para placa de vídeo forte; o jogo reinicia."
+			botao.tooltip_text = "Super realista: sombras de contato, reflexo na água e raios de sol. Para placa de vídeo forte; o jogo reinicia." \
+				if Qualidade.ultra_reinicia() else "Tudo no máximo e o carro de F1 realista. Para celular forte."
 		botao.pressed.connect(func():
-			if i == Qualidade.ULTRA and not Qualidade.ultra_ativo():
+			if i == Qualidade.ULTRA and Qualidade.ultra_reinicia() and not Qualidade.forward_plus():
 				if not await Telas.confirmar("GRÁFICOS ULTRA", "Super realista: sombra de contato, reflexo dos prédios na água e raios de sol na névoa. Precisa de placa de vídeo forte (se ficar lento, ele volta sozinho para ALTA). O jogo vai reiniciar.", "REINICIAR", "CANCELAR"):
 					_marcar_qualidade(linha, Qualidade.escolhida())
 					return

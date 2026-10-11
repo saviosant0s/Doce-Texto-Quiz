@@ -120,9 +120,10 @@ static func camera(camera: Camera3D) -> void:
 static func ambiente(ambiente: Environment) -> void:
 	if not ligado():
 		return
-	RenderingServer.directional_soft_shadow_filter_set_quality(
-		RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM if Qualidade.nivel() >= Qualidade.ALTA else RenderingServer.SHADOW_QUALITY_SOFT_LOW)
-	if Qualidade.nivel() == Qualidade.ULTRA and Qualidade.ultra_ativo():
+	RenderingServer.directional_soft_shadow_filter_set_quality([RenderingServer.SHADOW_QUALITY_SOFT_LOW,
+		RenderingServer.SHADOW_QUALITY_SOFT_LOW, RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM,
+		RenderingServer.SHADOW_QUALITY_SOFT_HIGH][Qualidade.nivel()])
+	if Qualidade.nivel() == Qualidade.ULTRA and Qualidade.forward_plus():
 		_ultra(ambiente)
 
 
@@ -165,15 +166,20 @@ static func desligar_ultra(ambiente: Environment) -> void:
 		RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM if Qualidade.nivel() >= Qualidade.ALTA else RenderingServer.SHADOW_QUALITY_SOFT_LOW)
 
 
-## O sol: no ULTRA, sombra que fica mais suave quanto mais longe do objeto
-## (como a de verdade) e quatro faixas de sombra (nítida perto, até longe).
+## O sol no ULTRA: a sombra em faixas (nítida perto, até longe): quatro no
+## computador (Forward+), com a sombra que fica mais suave quanto mais longe do
+## objeto (como a de verdade); duas no celular (cada faixa desenha a cena de novo
+## para a sombra: com quatro, a corrida passava de 280 para 620 mil triângulos).
 static func sol(luz: DirectionalLight3D) -> void:
-	if Qualidade.nivel() != Qualidade.ULTRA or not Qualidade.ultra_ativo():
+	if Qualidade.nivel() != Qualidade.ULTRA:
 		return
-	luz.light_angular_distance = 0.6
-	luz.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	luz.directional_shadow_max_distance = 70.0
 	luz.shadow_blur = 1.0
+	if Qualidade.forward_plus():
+		luz.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+		luz.directional_shadow_max_distance = 70.0
+		luz.light_angular_distance = 0.6
+	else:
+		luz.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 
 
 static func _nuvens() -> NoiseTexture2D:

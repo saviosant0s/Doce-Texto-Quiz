@@ -56,7 +56,8 @@ extends Node
 ##   --batalha_time    Arena: abre a escolha do time; --arena_vencidos=3 já venceu os 3 primeiros
 ##   --corrida=120  Corrida: já correndo, com o seu kart a 120 m da largada (os rivais em volta);
 ##                 --corrida_turbo com turbo; --corrida_pergunta perto do 1º portal (a pergunta
-##                 na tela); --corrida_escolha=2 toca na resposta; --corrida_fim corre até o fim
+##                 na tela); --corrida_escolha=2 toca na resposta; --corrida_fim corre até o fim;
+##                 --vitrine=30 câmera parada perto do seu carro (0 de trás, 90 da direita, 180 de frente)
 ##   --abertura    Vila: passa a abertura animada (--abertura_final vai direto para o
 ##                 nome do jogo); --trailer grava até o fim da abertura e fecha o jogo
 ##                 (use com o --write-movie do Godot: ver ferramentas/gerar_divulgacao.sh)
@@ -84,7 +85,8 @@ extends Node
 ##   --corrida_inicio=120  com o --trailer_corrida, já larga a 120 m
 ##   --abertura_sem_texto  a abertura sem legendas, faixas nem logo (só a câmera)
 ##   --premio      mostra o cartão de prêmio (ícones) e um aviso com prêmio
-##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1) ou ALTA (2)
+##   --qualidade=1  gráficos BAIXA (0), MÉDIA (1), ALTA (2) ou ULTRA (3, com --ultra_celular:
+##                 o ULTRA do celular, sem trocar de renderizador)
 ##   --painel_desempenho  liga o indicador de FPS e memória
 ##   --desempenho  imprime objetos, chamadas de desenho, triângulos e nós da tela
 ##   --travadas    no fim, imprime os quadros mais lentos (tempo real, em ms) e quando
@@ -165,8 +167,10 @@ func _ready() -> void:
 	if args.has("painel_desempenho"):
 		Progresso.config["desempenho"] = true
 		Telas.mostrar_desempenho(true)
+	if args.has("ultra_celular"):  # ULTRA como no celular (sem trocar de renderizador)
+		Qualidade.simular_celular = true
 	if args.has("qualidade"):
-		Progresso.config["qualidade"] = int(args["qualidade"])  # 0 baixa, 1 média, 2 alta
+		Progresso.config["qualidade"] = int(args["qualidade"])  # 0 baixa, 1 média, 2 alta, 3 ultra
 	# dia e noite: --hora=21 (fixa a hora), --chuva (chuva de granulado)
 	CicloDia.hora_fixa = float(args.get("hora", "14"))
 	CicloDia.chuva_fixa = 1 if args.has("chuva") else 0
@@ -531,6 +535,17 @@ func _ready() -> void:
 			if i % 10 == 0:
 				await get_tree().process_frame
 		pista.set_process(false)
+		if args.has("vitrine"):
+			# câmera parada em volta do seu carro: 0 = de trás, 90 = da direita, 180 = de frente
+			var meu: Node3D = pista._karts[0]
+			var ang := deg_to_rad(float(args["vitrine"]))
+			var base := meu.global_transform.basis
+			var fora := (base.z * cos(ang) + base.x * sin(ang)).normalized()
+			var alvo := meu.global_position + Vector3.UP * 0.45
+			pista._camera.global_position = alvo + fora * 4.6 + Vector3.UP * 1.1
+			pista._camera.look_at(alvo)
+			pista._quadro.visible = false
+			pista._hud.visible = false
 		if args.has("corrida_escolha"):
 			for i in 30:
 				await get_tree().process_frame

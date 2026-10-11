@@ -122,6 +122,22 @@ primeira versão tinha 53,7 mil; os sidepods e a cobertura com menos subdivisão
 rodas de 40 lados e asas com menos segmentos baixaram para 37,8 mil quase sem
 diferença na imagem.
 
+## ULTRA no celular (11/10/2026)
+
+No celular o ULTRA usa o mesmo renderizador (Mobile), com tudo no máximo e o F1
+realista. Medido com `--ultra_celular --desempenho`:
+
+| Tela | ALTA | ULTRA (celular) |
+|---|---|---|
+| Corrida | 278 desenhos, 279 mil triângulos | 292 desenhos, 382 mil triângulos |
+| Vila (câmera perto) | 647 desenhos, 861 mil triângulos | 647 desenhos, 891 mil triângulos |
+
+Na corrida, a diferença vem quase toda da sombra do sol: cada faixa de sombra
+desenha a cena de novo. Com 4 faixas (como no ULTRA do computador), a corrida ia a
+623 mil triângulos; com 2 faixas no celular, fica em 382 mil. O F1 do ULTRA tem 65
+mil triângulos (o normal, 38 mil) e a sonda de reflexo é tirada uma vez só, na
+largada. Se ficar lento, o vigia de lentidão desce para a ALTA.
+
 ## Próximos passos possíveis
 
 - Vila: menos triângulos nos blocos da vila (versões simplificadas dos prédios

@@ -154,6 +154,23 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   rodas giram e as da frente viram na curva; o fogo do turbo sai do escape. Por
   enquanto só o carro do jogador é F1 (os rivais continuam de kart). Sem nome,
   logo ou pintura igual de equipe de verdade (marcas registradas).
+- ULTRA NO CELULAR (pedido: "meu celular tem 8 GB e roda de boa no alto"): aparece
+  nas Configurações em celular com 6 GB ou mais (Qualidade.tem_ultra) e vale na hora,
+  sem reiniciar: o mesmo renderizador Mobile com tudo no máximo (mais grama e flores,
+  sombra macia HIGH, sombra do sol em 2 faixas) e o F1 realista. Não troca para o
+  Forward+ no celular de propósito: se o celular não aguentasse, o jogo travaria na
+  abertura antes de poder voltar sozinho. No computador continua igual (reinicia no
+  Forward+). Prints do ULTRA do celular aqui: captura --ultra_celular --qualidade=3.
+- F1 REALISTA NO ULTRA (pedido: "tirar o aspecto de desenho do carro"): modelo
+  carro_f1_ultra.glb (ferramentas/gerar_carro_f1.sh gera os dois; 65 mil triângulos):
+  mais liso, sidepods com o "undercut" (que o normal também ganhou), aletas de
+  refrigeração, defletores em cima das rodas da frente, dutos de freio, borda do
+  assoalho, câmeras e pitot no bico, atuador do DRS, porca vermelha e letras
+  "DOCE TEXTO · MACIO" no pneu. Pintura tema/pintura_f1_ultra.gdshader: verniz,
+  adesivos de patrocínio inventados (folha assets/carros/f1_adesivos.png: DOCE TEXTO,
+  QUIZ, número 1 no bico) e a parte de baixo mais escura; carbono com relevo da trama e
+  verniz; uma sonda de reflexo (ReflectionProbe, tirada uma vez na largada) dá o reflexo
+  da pista e do céu só no carro. Captura --vitrine=35 mostra o carro de perto.
 - 0.16.1 (11/10, Windows e navegador): o Sávio escolheu ULTRA no notebook, clicou em
   REINICIAR e o jogo não abriu mais. Causa: erro de script ao montar os
   argumentos do reinício (`Array(PackedStringArray, TYPE_STRING...)`), num

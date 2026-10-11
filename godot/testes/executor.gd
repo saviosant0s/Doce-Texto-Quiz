@@ -1223,6 +1223,15 @@ func _testar_configuracoes() -> void:
 		and args_ultra.has("--") and args_ultra[args_ultra.size() - 1] == Qualidade.MARCA_REINICIO
 		and args_ultra.find("--") > i_metodo,
 		"reinício do ULTRA: abre no Forward+ com os mesmos argumentos e a marca de que já reiniciou")
+	Qualidade.simular_celular = true  # celular de 6 GB ou mais (aqui a memória é do computador dos testes)
+	verificar(Qualidade.tem_ultra() == (Qualidade.memoria_gb() >= 5.5) and not Qualidade.ultra_reinicia(),
+		"ULTRA no celular com 6 GB ou mais, sem reiniciar o jogo")
+	if Qualidade.tem_ultra():
+		Qualidade.escolher(Qualidade.ULTRA)
+		verificar(Qualidade.nivel() == Qualidade.ULTRA and not Qualidade.reiniciar_se_precisar(get_tree()),
+			"no celular o ULTRA vale na hora, no renderizador de sempre")
+	Qualidade.simular_celular = false
+	Qualidade.escolher(Qualidade.ALTA)
 	var ambiente_ultra := Environment.new()
 	ambiente_ultra.ssao_enabled = true
 	ambiente_ultra.ssr_enabled = true
@@ -3194,6 +3203,25 @@ func _testar_tela_corrida() -> void:
 	verificar(roda_frente.rotation.x < -3.0 and roda_frente.rotation.y < -0.3 and is_zero_approx(meu.rodas[2].rotation.y),
 		"as rodas do F1 giram andando e as da frente viram na curva")
 	meu.virar(0.0)
+	# no ULTRA (celular): o modelo detalhado, com a pintura de verniz e adesivos e o reflexo
+	Qualidade.simular_celular = true
+	if Qualidade.tem_ultra():
+		Qualidade.escolher(Qualidade.ULTRA)
+		var ultra := Kart3D.new()
+		ultra.modelo = "f1"
+		tela.add_child(ultra)
+		var carroceria := ultra.find_child("Carroceria", true, false) as MeshInstance3D
+		var shader_ultra := false
+		for i in carroceria.mesh.get_surface_count():
+			var mat := carroceria.get_surface_override_material(i) as ShaderMaterial
+			shader_ultra = shader_ultra or (mat != null and mat.shader == Kart3D.PINTURA_F1_ULTRA)
+		var roda_ultra := ultra.rodas[0] as MeshInstance3D
+		verificar(shader_ultra and ultra.find_child("Reflexo", false, false) is ReflectionProbe
+			and roda_ultra.mesh.get_surface_count() == 5,
+			"F1 no ULTRA: modelo detalhado (letras no pneu, porca colorida), verniz e adesivos e reflexo do lugar")
+		ultra.queue_free()
+	Qualidade.simular_celular = false
+	Qualidade.escolher(Qualidade.ALTA)
 	var pecas := tela.find_children("*", "MeshInstance3D", true, false).filter(
 		func(m): return not tela._karts_no.is_ancestor_of(m)).size()
 	verificar(pecas < 120, "pista juntada em poucos blocos (leve: %d)" % pecas)

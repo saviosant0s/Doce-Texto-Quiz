@@ -18,9 +18,16 @@ Frente do carro: +Y no Blender (vira -Z no Godot). Rodas em objetos separados
 (Roda_FE, Roda_FD, Roda_TE, Roda_TD), com a origem no cubo da roda; o resto
 fica junto em "Carroceria".
 
+Com --detalhe ultra, gera a versão da qualidade ULTRA (carro_f1_ultra.glb): mais
+lisa (mais subdivisão e rodas de 64 lados) e com mais peças (defletores em cima
+das rodas da frente, dutos de freio, borda do assoalho, aletas de refrigeração
+nos sidepods, câmeras e pitot no bico, atuador do DRS, porca colorida e letras
+na lateral do pneu). Também desenha a folha de adesivos que o Godot cola no
+carro no ULTRA (godot/assets/carros/f1_adesivos.png).
+
 Uso:
   blender -b -P ferramentas/blender/carro_f1.py -- --saida godot/assets/carros/carro_f1.glb \
-      [--previa build/prints/f1_previa]   (renderiza duas fotos no Cycles para conferir)
+      [--detalhe ultra] [--previa build/prints/f1_previa]   (--previa: três fotos no Cycles)
 """
 
 import math
@@ -54,7 +61,10 @@ CORES = {  # (cor sRGB, metálico, aspereza)
 	"Escape": ("#B08A62", 1.0, 0.35),
 	"Espelho": ("#D8DCE2", 1.0, 0.05),
 	"AsaTexto": ("#FFFFFF", 0.3, 0.4),
+	"PneuTexto": ("#FFFFFF", 0.0, 0.85),
 }
+
+ULTRA = False  # versão da qualidade ULTRA (--detalhe ultra)
 
 
 def rgb(hexa: str) -> tuple:
@@ -98,8 +108,8 @@ def material(nome: str) -> bpy.types.Material:
 	if nome == "Luz":
 		bsdf.inputs["Emission Color"].default_value = (1.0, 0.05, 0.05, 1.0)
 		bsdf.inputs["Emission Strength"].default_value = 4.0
-	if nome == "AsaTexto":
-		imagem = bpy.data.images.load(textura_asa())
+	if nome in ("AsaTexto", "PneuTexto"):
+		imagem = bpy.data.images.load(textura_asa() if nome == "AsaTexto" else textura_pneu())
 		no = mat.node_tree.nodes.new("ShaderNodeTexImage")
 		no.image = imagem
 		mat.node_tree.links.new(no.outputs["Color"], bsdf.inputs["Base Color"])
@@ -107,24 +117,74 @@ def material(nome: str) -> bpy.types.Material:
 	return mat
 
 
+def pil():
+	"""Pillow (o Python do Blender não traz: usa o do sistema, que é da mesma versão)."""
+	try:
+		import PIL.Image
+	except ImportError:
+		sys.path.append(f"/usr/local/lib/python{sys.version_info.major}.{sys.version_info.minor}/dist-packages")
+		sys.path.append("/usr/lib/python3/dist-packages")
+	from PIL import Image, ImageDraw, ImageFont
+	return Image, ImageDraw, ImageFont
+
+
+def fonte(tamanho: int):
+	return pil()[2].truetype(os.path.join(RAIZ, "godot", "assets", "fontes", "BebasNeue-Regular.ttf"), tamanho)
+
+
+def textura_pneu() -> str:
+	"""Letras brancas em volta da lateral do pneu (o anel dá a volta na roda: duas vezes o texto)."""
+	Image, ImageDraw, _ = pil()
+	caminho = os.path.join(RAIZ, "build", "f1_pneu.png")
+	os.makedirs(os.path.dirname(caminho), exist_ok=True)
+	largura, altura = 2048, 96
+	img = Image.new("RGB", (largura, altura), rgb(CORES["Pneu"][0]))
+	d = ImageDraw.Draw(img)
+	letra = fonte(78)
+	for metade in (0, 1):
+		x = metade * largura / 2
+		for texto, desloc in (("DOCE TEXTO", 60), ("MACIO", 560)):
+			d.text((x + desloc, 6), texto, font=letra, fill=(236, 236, 236))
+	img.save(caminho)
+	return caminho
+
+
+def adesivos() -> str:
+	"""Folha de adesivos (patrocínios inventados) que o shader da pintura do ULTRA cola
+	no carro: [0] DOCE TEXTO (cobertura do motor), [1] QUIZ (sidepod), [2] o número
+	do bico. Letras brancas com contorno escuro, fundo transparente (ver
+	godot/tema/pintura_f1_ultra.gdshader, ADESIVOS)."""
+	Image, ImageDraw, _ = pil()
+	caminho = os.path.join(RAIZ, "godot", "assets", "carros", "f1_adesivos.png")
+	os.makedirs(os.path.dirname(caminho), exist_ok=True)
+	img = Image.new("RGBA", (1024, 512), (255, 255, 255, 0))
+	d = ImageDraw.Draw(img)
+	def escrever(texto, caixa, tamanho):
+		letra = fonte(tamanho)
+		b = d.textbbox((0, 0), texto, font=letra, stroke_width=6)
+		x = caixa[0] + (caixa[2] - caixa[0] - (b[2] - b[0])) / 2 - b[0]
+		y = caixa[1] + (caixa[3] - caixa[1] - (b[3] - b[1])) / 2 - b[1]
+		d.text((x, y), texto, font=letra, fill=(255, 255, 255, 255), stroke_width=6, stroke_fill=(20, 24, 48, 255))
+	escrever("DOCE TEXTO", (0, 0, 1024, 256), 230)
+	escrever("QUIZ", (0, 256, 512, 512), 220)
+	escrever("1", (512, 256, 768, 512), 230)
+	img.save(caminho)
+	return caminho
+
+
 def textura_asa() -> str:
 	"""A faixa da aba de cima da asa traseira: fundo da cor da equipe e o nome do jogo."""
-	try:
-		from PIL import Image, ImageDraw, ImageFont
-	except ImportError:  # o Python do Blender não traz o Pillow: usa o do sistema (mesma versão)
-		sys.path.append(f"/usr/local/lib/python{sys.version_info.major}.{sys.version_info.minor}/dist-packages")
-		sys.path.append(f"/usr/lib/python3/dist-packages")
-		from PIL import Image, ImageDraw, ImageFont
+	Image, ImageDraw, ImageFont = pil()
 	caminho = os.path.join(RAIZ, "build", "f1_asa.png")
 	os.makedirs(os.path.dirname(caminho), exist_ok=True)
 	largura, altura = 1024, 160
 	cor = rgb(CORES["Pintura"][0])
 	img = Image.new("RGB", (largura, altura), cor)
 	d = ImageDraw.Draw(img)
-	fonte = ImageFont.truetype(os.path.join(RAIZ, "godot", "assets", "fontes", "BebasNeue-Regular.ttf"), 92)
+	letra = fonte(92)
 	texto = "DOCE TEXTO QUIZ"
-	caixa = d.textbbox((0, 0), texto, font=fonte)
-	d.text(((largura - (caixa[2] - caixa[0])) / 2, 32 - caixa[1] + 16), texto, font=fonte, fill=(255, 255, 255))
+	caixa = d.textbbox((0, 0), texto, font=letra)
+	d.text(((largura - (caixa[2] - caixa[0])) / 2, 32 - caixa[1] + 16), texto, font=letra, fill=(255, 255, 255))
 	vermelho = rgb(CORES["Destaque"][0])
 	d.rectangle((0, altura - 22, largura, altura - 12), fill=vermelho)
 	d.rectangle((0, 12, largura, 22), fill=vermelho)
@@ -216,10 +276,11 @@ def perfil_asa(espessura: float, curvatura: float, pontos=12) -> list:
 
 
 def asa(nome: str, de_x: float, ate_x: float, corda: float, y_ataque: float, z_ataque: float,
-		angulo: float, espessura=0.1, curvatura=0.05, mat="Pintura", curva=None, estacoes=16,
+		angulo: float, espessura=0.1, curvatura=0.05, mat="Pintura", curva=None, estacoes=0,
 		uv_texto=False) -> bpy.types.Object:
 	"""Elemento de asa reto ao longo de x. angulo > 0: o bordo de fuga sobe (asa de
 	downforce). curva(x) -> (dy, dz) entorta o elemento ao longo da envergadura."""
+	estacoes = estacoes or (24 if ULTRA else 16)
 	perfil = perfil_asa(espessura, curvatura)
 	bm = bmesh.new()
 	uv = bm.loops.layers.uv.new("UVMap")
@@ -339,30 +400,60 @@ def torno(bm: bmesh.types.BMesh, perfil: list, segmentos: int, sinal: float, ind
 			f.material_index = indice
 
 
+def anel_texto(bm: bmesh.types.BMesh, r1: float, r2: float, a: float, segmentos: int, sinal: float,
+		indice: int) -> None:
+	"""Anel chato na lateral do pneu (no plano x = a), com UV: u dá a volta na roda, v
+	vai de dentro para fora (para as letras da textura do pneu)."""
+	uv = bm.loops.layers.uv.verify()
+	colunas = []
+	for k in range(segmentos + 1):  # (a última coluna repete a primeira, com u = 1)
+		ang = 2 * math.pi * k / segmentos
+		c, s_ = math.cos(ang), math.sin(ang)
+		colunas.append([bm.verts.new((sinal * a, r * c, r * s_)) for r in (r1, r2)])
+	for k in range(segmentos):
+		a0, a1 = colunas[k], colunas[k + 1]
+		f = bm.faces.new((a0[0], a0[1], a1[1], a1[0]))
+		f.material_index = indice
+		for laco, (u, v) in zip(f.loops, ((k, 0), (k, 1), (k + 1, 1), (k + 1, 0))):
+			# (vista de fora, as letras andam no sentido do relógio: nas rodas da
+			# direita o ângulo cresce ao contrário, então o u é invertido)
+			laco[uv].uv = (1.0 - u / segmentos if sinal > 0 else u / segmentos, v)
+
+
 def roda(nome: str, centro: tuple, largura: float, sinal: float) -> bpy.types.Object:
 	"""Pneu de perfil baixo (aro de 18") com a faixa colorida na lateral e a
 	calota lisa por fora. sinal: +1 se o lado de fora é +x (direita)."""
 	bm = bmesh.new()
 	w = largura / 2
 	rc = 0.04
-	perfil = [(RAIO_ARO, -w + 0.012)]
+	perfil = [(RAIO_ARO, -w + 0.003)]
 	for k in range(7):  # ombro de dentro
 		ang = math.pi / 2 * k / 6
 		perfil.append((RAIO_RODA - rc + math.sin(ang) * rc, -w + rc - math.cos(ang) * rc))
 	for k in range(7):  # ombro de fora
 		ang = math.pi / 2 * k / 6
 		perfil.append((RAIO_RODA - rc + math.cos(ang) * rc, w - rc + math.sin(ang) * rc))
-	perfil.append((RAIO_ARO, w - 0.012))
-	torno(bm, perfil, 40, sinal, 0)
+	perfil.append((RAIO_ARO, w - 0.003))
+	lados = 64 if ULTRA else 40
+	torno(bm, perfil, lados, sinal, 0)
 	# faixa colorida nos dois lados do pneu
 	for lado in (-1, 1):
 		a = lado * (w + 0.0015)
-		torno(bm, [(0.188, a), (0.200, a), (0.200, a + lado * 0.002), (0.188, a + lado * 0.002)], 40, sinal, 1)
+		torno(bm, [(0.188, a), (0.200, a), (0.200, a + lado * 0.002), (0.188, a + lado * 0.002)], lados, sinal, 1)
 	# aro e calota (disco por fora, um pouco para dentro) e o miolo
 	torno(bm, [(0.0, w - 0.004), (RAIO_ARO + 0.004, w - 0.004), (RAIO_ARO + 0.004, -w + 0.004), (0.0, -w + 0.004)],
-		32, sinal, 2, fechado=False)
-	torno(bm, [(0.0, w + 0.012), (0.035, w + 0.012), (0.035, w - 0.004)], 16, sinal, 2, fechado=False)
-	obj = objeto(nome, bm, ["Pneu", "Faixa", "Aro"], angulo=30.0)
+		48 if ULTRA else 32, sinal, 2, fechado=False)
+	mats = ["Pneu", "Faixa", "Aro"]
+	if ULTRA:
+		# letras na lateral de fora, a borda do aro (magnésio) e a porca colorida
+		anel_texto(bm, 0.163, 0.186, w + 0.0012, 64, sinal, 3)
+		torno(bm, [(RAIO_ARO - 0.012, w + 0.002), (RAIO_ARO + 0.006, w + 0.002), (RAIO_ARO + 0.006, w - 0.01),
+			(RAIO_ARO - 0.012, w - 0.01)], 48, sinal, 2)
+		torno(bm, [(0.0, w + 0.03), (0.022, w + 0.03), (0.03, w + 0.014), (0.03, w - 0.004)], 12, sinal, 4, fechado=False)
+		mats += ["PneuTexto", "Destaque"]
+	else:
+		torno(bm, [(0.0, w + 0.012), (0.035, w + 0.012), (0.035, w - 0.004)], 16, sinal, 2, fechado=False)
+	obj = objeto(nome, bm, mats, angulo=30.0)
 	obj.location = centro
 	return obj
 
@@ -418,7 +509,7 @@ def montar() -> list:
 		(-1.50, 0, 0.060, 0.130, 0.260, 2.4),
 		(-1.70, 0, 0.040, 0.160, 0.225, 2.2),
 		(-1.88, 0, 0.026, 0.172, 0.212, 2.2),
-	], pontos=28, mats=("Pintura",))
+	], pontos=32 if ULTRA else 28, mats=("Pintura",))
 	# cockpit: o buraco onde o doce senta (as paredes de dentro ficam escuras)
 	cortador = loft("Cortador", [
 		(0.36, 0, 0.06, 0.30, 0.75, 4),
@@ -445,19 +536,21 @@ def montar() -> list:
 		(-0.90, 0, 0.095, 0.290, 0.460, 2.6),
 		(-1.20, 0, 0.068, 0.230, 0.370, 2.4),
 		(-1.48, 0, 0.040, 0.190, 0.285, 2.2),
-	], pontos=24, mats=("Pintura", "Interior"), tampa_frente=1, subdividir=1))
+	], pontos=24, mats=("Pintura", "Interior"), tampa_frente=1, subdividir=2 if ULTRA else 1))
 	partes.append(placa("Barbatana", [(-0.33, 0.615), (-1.08, 0.455), (-1.10, 0.40), (-0.36, 0.55)], "x", 0.0, 0.012))
 	partes.append(caixa("Camera", (0, -0.13, 0.646), (0.07, 0.03, 0.022), "Detalhe", 0.005))
-	# sidepods (entrada de ar escura na frente) com a "garrafa de coca" para trás
+	# sidepods: entrada de ar larga e baixinha no alto (a parte de baixo da frente é
+	# cavada, o "undercut") e a "garrafa de coca" estreitando para trás
 	for lado in (-1, 1):
 		partes.append(loft("Sidepod", [
-			(0.30, lado * 0.355, 0.125, 0.075, 0.335, 4.0),
-			(0.18, lado * 0.375, 0.150, 0.065, 0.350, 4.0),
+			(0.32, lado * 0.360, 0.130, 0.200, 0.335, 5.0),
+			(0.25, lado * 0.372, 0.148, 0.130, 0.348, 4.5),
+			(0.12, lado * 0.378, 0.155, 0.070, 0.350, 4.0),
 			(-0.10, lado * 0.368, 0.158, 0.062, 0.340, 3.5),
 			(-0.40, lado * 0.330, 0.138, 0.062, 0.300, 3.0),
 			(-0.70, lado * 0.272, 0.098, 0.064, 0.250, 2.8),
 			(-0.95, lado * 0.215, 0.050, 0.070, 0.190, 2.5),
-		], pontos=24, mats=("Pintura", "Interior"), tampa_frente=1, subdividir=1))
+		], pontos=24, mats=("Pintura", "Interior"), tampa_frente=1, subdividir=2 if ULTRA else 1))
 		# retrovisor na haste em cima do sidepod (com o espelho virado para trás)
 		partes.append(tubo("Haste", [(lado * 0.27, 0.30, 0.345), (lado * 0.31, 0.31, 0.43), (lado * 0.34, 0.32, 0.47)],
 			0.008, "Pintura", lados=6, passos=4))
@@ -523,6 +616,8 @@ def montar() -> list:
 		braco(bm, (lado * fx, EIXO_FRENTE, 0.17), (lado * 0.13, EIXO_FRENTE - 0.05, 0.33), 0.009)
 		braco(bm, (lado * tx, EIXO_TRAS, 0.31), (lado * 0.09, EIXO_TRAS + 0.08, 0.18), 0.009)
 	partes.append(objeto("Suspensao", bm, ["Carbono"], angulo=30.0))
+	if ULTRA:
+		partes += detalhes_ultra()
 	# juntar tudo (menos as rodas) numa malha só: menos desenhos por quadro no jogo
 	bpy.ops.object.select_all(action="DESELECT")
 	for p in partes:
@@ -538,6 +633,43 @@ def montar() -> list:
 		roda("Roda_TD", (RODA_TRAS[0], EIXO_TRAS, RAIO_RODA), RODA_TRAS[1], 1),
 	]
 	return [carroceria] + rodas
+
+
+def detalhes_ultra() -> list:
+	"""As peças a mais da versão ULTRA."""
+	partes = []
+	fx = RODA_FRENTE[0] - RODA_FRENTE[1] / 2  # lado de dentro dos pneus
+	tx = RODA_TRAS[0] - RODA_TRAS[1] / 2
+	bm = bmesh.new()
+	for lado in (-1, 1):
+		# dutos de freio (o tambor dentro de cada roda)
+		braco(bm, (lado * (fx - 0.06), EIXO_FRENTE, RAIO_RODA), (lado * (fx - 0.008), EIXO_FRENTE, RAIO_RODA), 0.115, 24)
+		braco(bm, (lado * (tx - 0.06), EIXO_TRAS, RAIO_RODA), (lado * (tx - 0.008), EIXO_TRAS, RAIO_RODA), 0.125, 24)
+		# haste do defletor da roda da frente
+		braco(bm, (lado * (fx - 0.03), EIXO_FRENTE + 0.02, RAIO_RODA + 0.1), (lado * (fx + 0.01), EIXO_FRENTE + 0.04,
+			2 * RAIO_RODA + 0.018), 0.007)
+		# antena e câmeras do bico
+		partes.append(caixa("CameraBico", (lado * 0.105, 1.22, 0.272), (0.032, 0.065, 0.026), "Carbono", 0.006))
+	braco(bm, (0, -0.55, 0.552), (0, -0.585, 0.625), 0.003)
+	partes.append(objeto("Freios", bm, ["Carbono"], angulo=30.0))
+	for lado in (-1, 1):
+		# defletor em cima da roda da frente (desvia o ar que a roda joga)
+		de, ate = (fx - 0.01, fx + RODA_FRENTE[1] + 0.01) if lado > 0 else (-fx - RODA_FRENTE[1] - 0.01, -fx + 0.01)
+		partes.append(asa("Defletor", de, ate, 0.075, EIXO_FRENTE + 0.08, 2 * RAIO_RODA + 0.02, 22, 0.08, 0.05,
+			"Carbono", lambda x: (0.0, -0.025 * ((x - (de + ate) / 2) / ((ate - de) / 2)) ** 2), estacoes=8))
+		# borda do assoalho (lâmina que sobe um pouco para trás)
+		partes.append(placa("BordaAssoalho", [(0.15, 0.045), (0.15, 0.07), (-0.85, 0.10), (-0.85, 0.045)], "x",
+			lado * 0.548, 0.008, "Carbono", suavizar=1))
+		# aletas de refrigeração em cima do sidepod
+		for k in range(5):
+			y = -0.16 - k * 0.06
+			z = 0.340 + (y + 0.10) * (0.04 / 0.30) - 0.004
+			x = 0.368 + (y + 0.10) * (0.038 / 0.30)
+			partes.append(caixa("Guelra", (lado * x, y, z), (0.10, 0.012, 0.012), "Interior", 0.002))
+	partes.append(tubo("Pitot", [(0, 1.69, 0.132), (0, 1.80, 0.135)], 0.004, "Carbono", lados=6, passos=2))
+	partes.append(placa("AtuadorDRS", [(-1.69, 0.505), (-1.69, 0.585), (-1.79, 0.60), (-1.80, 0.55)], "x", 0.0, 0.022,
+		"Carbono"))
+	return partes
 
 
 # --- Prévia (Cycles) -----------------------------------------------------------------------
@@ -584,10 +716,15 @@ def previa(caminho: str) -> None:
 
 
 def main() -> None:
+	global ULTRA
 	args = argumentos()
+	ULTRA = args.get("detalhe", "") == "ultra"
 	bpy.ops.wm.read_factory_settings(use_empty=True)
 	objetos = montar()
-	saida = args.get("saida", os.path.join(RAIZ, "godot", "assets", "carros", "carro_f1.glb"))
+	if ULTRA:
+		adesivos()
+	saida = args.get("saida", os.path.join(RAIZ, "godot", "assets", "carros",
+		"carro_f1_ultra.glb" if ULTRA else "carro_f1.glb"))
 	os.makedirs(os.path.dirname(saida), exist_ok=True)
 	bpy.ops.object.select_all(action="DESELECT")
 	for o in objetos:
