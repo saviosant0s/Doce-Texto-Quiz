@@ -123,8 +123,37 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
+### Bugs relatados pelo Sávio (11/10/2026) — corrigir quando ele pedir
+
+1. **Botão ENFRENTAR O CHEFÃO atrapalha na vila:** andando pela vila (ex.: para
+   entrar na Confeitaria), o botão de lutar com o chefão fica por cima e ele acaba
+   entrando na luta em vez de no prédio. Pedido: o botão só aparecer quando chegar
+   bem perto do chefão.
+2. **Cozinha da Confeitaria trava:** ele encheu a mão de brigadeiro, mas nenhum
+   cliente da fila pedia brigadeiro; não dá para jogar fora nem vender, e o jogo
+   fica parado. Ideia dele: poder atender qualquer cliente da fila que pediu o que
+   está na mão, mesmo com outro na frente (ou outra solução esperta: lixeira,
+   clientes pedirem o que existe no estoque...).
+
 ### Rodada de 08/10/2026 — publicado na 0.16.0 (11/10/2026)
 
+- CARRO DE FÓRMULA 1 na Corrida de Doces (pedido do Sávio: "carros realistas,
+  inspirados na F1"; o primeiro é inspirado na Red Bull). Modelado no BLENDER por
+  script (ferramentas/blender/carro_f1.py; gerar com ferramentas/gerar_carro_f1.sh,
+  Blender 4.5 LTS): F1 moderno com as medidas reais reduzidas (66% e mais 25% no
+  jogo, para ficar do tamanho dos karts): bico, asa dianteira de 4 elementos,
+  halo, retrovisores, sidepods com entrada de ar, tomada de ar com câmera
+  amarela, barbatana, assoalho com difusor, asa traseira com DRS ("DOCE TEXTO
+  QUIZ" na aba) e beam wing, luz de chuva, escape, suspensão e rodas de 18" com
+  a faixa vermelha no pneu. Exporta godot/assets/carros/carro_f1.glb (37,8 mil
+  triângulos). No jogo (Kart3D, modelo "f1"): a pintura é o shader
+  tema/pintura_f1.gdshader (azul-escuro fosco, faixa vermelha com filete amarelo
+  subindo pelo sidepod, ponta do bico amarela, pontas das placas vermelhas),
+  então as próximas equipes (Ferrari, McLaren...) usam o mesmo modelo trocando as
+  três cores em Kart3D.EQUIPES_F1; carbono com trama; o doce vai no cockpit; as
+  rodas giram e as da frente viram na curva; o fogo do turbo sai do escape. Por
+  enquanto só o carro do jogador é F1 (os rivais continuam de kart). Sem nome,
+  logo ou pintura igual de equipe de verdade (marcas registradas).
 - 0.16.1 (11/10, Windows e navegador): o Sávio escolheu ULTRA no notebook, clicou em
   REINICIAR e o jogo não abriu mais. Causa: erro de script ao montar os
   argumentos do reinício (`Array(PackedStringArray, TYPE_STRING...)`), num

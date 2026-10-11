@@ -658,6 +658,8 @@ func _criar_karts() -> void:
 		kart.doce = c["doce"]
 		kart.nivel = Companheiros.nivel(c["doce"]) if c["jogador"] else 0
 		kart.cor = Color(CORES_KARTS[i % CORES_KARTS.size()])
+		if c["jogador"]:  # o seu é o carro de Fórmula 1 (Kart3D, modelo "f1")
+			kart.modelo = "f1"
 		_karts_no.add_child(kart)
 		kart.otimizar()
 		var placa := Label3D.new()
@@ -695,6 +697,7 @@ func _posicionar_karts(dt: float) -> void:
 		kart.corpo.rotation.z = _giros[i] * 0.08
 		kart.corpo.position.y = sin(_relogio * 30.0 + i) * 0.025 * minf(1.0, c["v"] / 10.0)
 		kart.rodar(c["v"] * dt)
+		kart.virar(_giros[i])
 		kart.turbo(c["turbo"] > 0.0)
 		# o nome dos rivais só aparece a uma distância boa de ler
 		var distancia := kart.global_position.distance_to(_camera.global_position)

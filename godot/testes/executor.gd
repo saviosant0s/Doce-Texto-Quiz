@@ -3179,6 +3179,21 @@ func _testar_tela_corrida() -> void:
 	await get_tree().create_timer(0.3).timeout
 	verificar(tela.find_child("Correr", true, false) is Button and tela._karts.size() == 4,
 		"início: 4 karts no grid e o botão CORRER")
+	var meu: Kart3D = tela._karts[0]
+	var pintura := (meu.find_child("Carroceria", true, false) as MeshInstance3D)
+	var pintado := false
+	if pintura:
+		for i in pintura.mesh.get_surface_count():
+			pintado = pintado or pintura.get_surface_override_material(i) is ShaderMaterial
+	verificar(meu.modelo == "f1" and meu.find_child("F1", true, false) != null and meu.rodas.size() == 4
+		and meu.piloto != null and pintado and tela._karts[1].modelo == "kart",
+		"o seu é o carro de F1 (modelo do Blender, 4 rodas, o doce no cockpit e a pintura da equipe)")
+	var roda_frente: Node3D = meu.rodas[0]
+	meu.rodar(1.0)
+	meu.virar(1.0)
+	verificar(roda_frente.rotation.x < -3.0 and roda_frente.rotation.y < -0.3 and is_zero_approx(meu.rodas[2].rotation.y),
+		"as rodas do F1 giram andando e as da frente viram na curva")
+	meu.virar(0.0)
 	var pecas := tela.find_children("*", "MeshInstance3D", true, false).filter(
 		func(m): return not tela._karts_no.is_ancestor_of(m)).size()
 	verificar(pecas < 120, "pista juntada em poucos blocos (leve: %d)" % pecas)

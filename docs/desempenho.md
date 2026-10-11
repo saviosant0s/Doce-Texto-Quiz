@@ -105,6 +105,23 @@ das duas ligada, os postes, as pedrinhas e a forminha do doce perdiam a luz do
 sol e ficavam arroxeados (achado comparando pixels dos prints com cada ajuste
 ligado e desligado).
 
+## Carro de F1 na corrida (11/10/2026)
+
+O carro do jogador virou um F1 feito no Blender (assets/carros/carro_f1.glb,
+37,8 mil triângulos; o Godot gera versões mais leves para longe). Medido na
+corrida com `--desempenho` (os números variam um pouco com a posição dos rivais):
+
+| Qualidade | Kart (antes) | F1 |
+|---|---|---|
+| MÉDIA | 307 desenhos, 183 mil triângulos | 278 desenhos, 215 mil triângulos |
+| ALTA | 303 desenhos, 265 mil triângulos | 284 desenhos, 290 mil triângulos |
+
+Menos desenhos (o kart era feito de muitas peças; o F1 é uma malha com um
+material por cor, mais as quatro rodas) e uns 30 mil triângulos a mais. A
+primeira versão tinha 53,7 mil; os sidepods e a cobertura com menos subdivisão,
+rodas de 40 lados e asas com menos segmentos baixaram para 37,8 mil quase sem
+diferença na imagem.
+
 ## Próximos passos possíveis
 
 - Vila: menos triângulos nos blocos da vila (versões simplificadas dos prédios
