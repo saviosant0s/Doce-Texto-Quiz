@@ -7,7 +7,7 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.15.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
+- Versão atual: 0.16.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
@@ -122,7 +122,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-### Rodada de 08/10/2026 — no código, falta publicar (0.16.0)
+### Rodada de 08/10/2026 — publicado na 0.16.0 (11/10/2026)
 
 - VILA DOS AMIGOS E RANKING DA SEMANA, sem servidor (scripts/amigos.gd,
   componentes/vila/painel_amigos.gd): botão AMIGOS na vila (embaixo do
