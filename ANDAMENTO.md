@@ -161,6 +161,11 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 14. **Minimapa da vila feio e embolado:** refazer, mais bonito e mais limpo.
 15. **URGENTE: tela de carregamento demora muito** e aparece várias vezes (o jogo
    troca muito de tela). Otimizar o carregamento (vila, cozinha, corrida...).
+16. **URGENTE: no ULTRA do celular a tela fica toda embaçada** (0.17.1). Suspeitas
+   para investigar: o desfoque do fundo (DOF da câmera, VisualRealista.camera, ligado
+   na ALTA e no ULTRA) forte demais na tela do celular; o vigia de lentidão descendo a
+   qualidade e reduzindo a resolução 3D (ESCALA_3D); a sombra macia HIGH. Pedir um
+   print ao Sávio se não der para reproduzir.
 2. **Cozinha da Confeitaria trava:** ele encheu a mão de brigadeiro, mas nenhum
    cliente da fila pedia brigadeiro; não dá para jogar fora nem vender, e o jogo
    fica parado. Ideia dele: poder atender qualquer cliente da fila que pediu o que
