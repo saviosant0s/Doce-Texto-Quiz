@@ -7,7 +7,7 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.16.1 no Windows e no navegador; Android 0.16.0 (a 0.16.1 só
+- Versão atual: 0.17.0 (Android, Windows e navegador; ULTRA no celular, F1). Antes: 0.16.1 só
   conserta o ULTRA, que não existe no celular). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
