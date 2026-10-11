@@ -3248,6 +3248,8 @@ func _testar_tela_corrida() -> void:
 		if c.jogador()["proximo_portal"] > 0:
 			break
 	verificar(c.jogador()["acertos"] == 1 and c.jogador()["turbo"] > 0.0, "passou pela faixa certa: TURBO")
+	var moedas_corrida := Progresso.moedas
+	var acucar_corrida := Confeitaria.acucar()
 	for i in 6000:
 		if c.portal_ativo >= 0 and c.escolha < 0:
 			tela.escolher(int(c.pergunta()["resposta"]))
@@ -3255,6 +3257,8 @@ func _testar_tela_corrida() -> void:
 		if tela.estado == "fim":
 			break
 	verificar(tela.estado == "fim" and c.acabou, "chegou ao fim das 2 voltas")
+	verificar(Progresso.moedas > moedas_corrida and Confeitaria.acucar() > acucar_corrida,
+		"o prêmio da corrida entra nas moedas e no açúcar")
 	await get_tree().create_timer(2.2).timeout
 	verificar(tela.find_child("DeNovo", true, false) is Button, "fim: resultado com CORRER DE NOVO")
 	tela.find_child("DeNovo", true, false).pressed.emit()

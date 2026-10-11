@@ -123,12 +123,34 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-### Bugs relatados pelo Sávio (11/10/2026) — corrigir quando ele pedir
+### Bugs e pedidos do Sávio (11/10/2026) — fazer quando ele pedir
 
 1. **Botão ENFRENTAR O CHEFÃO atrapalha na vila:** andando pela vila (ex.: para
    entrar na Confeitaria), o botão de lutar com o chefão fica por cima e ele acaba
    entrando na luta em vez de no prédio. Pedido: o botão só aparecer quando chegar
    bem perto do chefão.
+3. **Confeitaria → JOGAR QUIZ:** no fim do quiz não tem botão para voltar à
+   confeitaria (só para o início/mapa). E em vez de só "jogar quiz", oferecer a
+   escolha de jogos que dão açúcar/moedas (quiz, corrida, Doce Match...).
+4. **Perguntas repetidas** na corrida e na batalha de doces (mesmas perguntas
+   sempre): variar/sortear sem repetir.
+5. **Batalha de doces como luta de verdade** (planejamento, depois): botões de
+   golpe; perguntas entre os golpes; o GOLPE SUPREMO depende da pergunta (acertou,
+   acerta; errou, erra) — mesma lógica do turbo na corrida.
+6. **Confeitaria (o que ele mais joga):** poucos clientes, moeda demora. Pedidos:
+   MESAS onde os clientes deixam gorjeta; melhoria de "ganhar mais moedas" FIXA num
+   lugar da confeitaria (paga moedas, preço sobe a cada nível), não aparecendo do nada.
+7. **Telas com texto demais:** Missões diárias (só o que é + a recompensa, pegar
+   fácil), Eventos (ex.: Semana das Crianças: botões só de texto). Menos texto,
+   mais visual/interativo. Ele pode mostrar tela por tela.
+8. **Missão no topo da vila clicável:** tocar em "Fale com a Dona Bala" / "venda
+   para 5 clientes" faz o doce ANDAR SOZINHO até o lugar (se ele mexer, para).
+9. **XP de cada personagem:** quanto mais usa o doce, mais XP dele, sobe de nível e
+   fica mais forte na arena (separado do nível do jogador).
+10. **Moedas da corrida "não somam":** conferido em 11/10 com teste novo — ao CHEGAR
+   no fim, moedas e açúcar entram no saldo. Quem sai no meio (voltar) não ganha
+   nada, nem os cubos pegos. Perguntar ao Sávio se foi isso; talvez dar os cubos
+   pegos mesmo saindo no meio.
 2. **Cozinha da Confeitaria trava:** ele encheu a mão de brigadeiro, mas nenhum
    cliente da fila pedia brigadeiro; não dá para jogar fora nem vender, e o jogo
    fica parado. Ideia dele: poder atender qualquer cliente da fila que pediu o que
