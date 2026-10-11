@@ -151,6 +151,11 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
    no fim, moedas e açúcar entram no saldo. Quem sai no meio (voltar) não ganha
    nada, nem os cubos pegos. Perguntar ao Sávio se foi isso; talvez dar os cubos
    pegos mesmo saindo no meio.
+11. **Confeitaria gasta açúcar demais:** melhoria paga com MOEDAS que faz cada
+   doce gastar menos açúcar (fixa, preço subindo por nível).
+12. **Corrida curta e limitada (futuro):** mais longa, mais moedas/açúcar; várias
+   PISTAS/GPs do Brasil (GP da Bahia, de São Paulo, de cidades: Valença, Salvador,
+   Ouro Preto...) e carros diferentes para escolher.
 2. **Cozinha da Confeitaria trava:** ele encheu a mão de brigadeiro, mas nenhum
    cliente da fila pedia brigadeiro; não dá para jogar fora nem vender, e o jogo
    fica parado. Ideia dele: poder atender qualquer cliente da fila que pediu o que
