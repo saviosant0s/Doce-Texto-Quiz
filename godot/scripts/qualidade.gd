@@ -89,7 +89,9 @@ static func tem_ultra() -> bool:
 	if OS.has_feature("web") or (DisplayServer.get_name() == "headless" and not simular_celular):
 		return false
 	if celular():
-		return memoria_gb() >= 5.5  # (um celular de 6 GB mostra uns 5,6 GB)
+		# (um celular de 6 GB mostra uns 5,6 GB; se o Android não informar a memória, mostra)
+		var gb := memoria_gb()
+		return gb <= 0.0 or gb >= 5.5
 	return OS.has_feature("pc") and not computador_simples()
 
 

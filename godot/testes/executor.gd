@@ -1224,7 +1224,7 @@ func _testar_configuracoes() -> void:
 		and args_ultra.find("--") > i_metodo,
 		"reinício do ULTRA: abre no Forward+ com os mesmos argumentos e a marca de que já reiniciou")
 	Qualidade.simular_celular = true  # celular de 6 GB ou mais (aqui a memória é do computador dos testes)
-	verificar(Qualidade.tem_ultra() == (Qualidade.memoria_gb() >= 5.5) and not Qualidade.ultra_reinicia(),
+	verificar(Qualidade.tem_ultra() == (Qualidade.memoria_gb() <= 0.0 or Qualidade.memoria_gb() >= 5.5) and not Qualidade.ultra_reinicia(),
 		"ULTRA no celular com 6 GB ou mais, sem reiniciar o jogo")
 	if Qualidade.tem_ultra():
 		Qualidade.escolher(Qualidade.ULTRA)

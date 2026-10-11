@@ -7,7 +7,7 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.17.0 (Android, Windows e navegador; ULTRA no celular, F1). Antes: 0.16.1 só
+- Versão atual: 0.17.1 (Android, Windows e navegador; ULTRA no celular, F1). Antes: 0.16.1 só
   conserta o ULTRA, que não existe no celular). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
@@ -184,6 +184,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   rodas giram e as da frente viram na curva; o fogo do turbo sai do escape. Por
   enquanto só o carro do jogador é F1 (os rivais continuam de kart). Sem nome,
   logo ou pintura igual de equipe de verdade (marcas registradas).
+- (0.17.1: o ULTRA também aparece se o Android não informar a memória; na 0.17.0 não aparecia no celular do Sávio.)
 - ULTRA NO CELULAR (pedido: "meu celular tem 8 GB e roda de boa no alto"): aparece
   nas Configurações em celular com 6 GB ou mais (Qualidade.tem_ultra) e vale na hora,
   sem reiniciar: o mesmo renderizador Mobile com tudo no máximo (mais grama e flores,
