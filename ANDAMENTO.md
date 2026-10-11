@@ -172,7 +172,10 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 18. **Confeitaria acaba:** ele já melhorou as 3 coisas e não tem mais o que upar.
    Precisa de progressão quase infinita (viciante): mais máquinas/doces para
    destravar, níveis sem fim com preço crescente, ampliar a loja (mesas, balcões,
-   funcionários), novas receitas, etc.
+   funcionários), novas receitas, etc. O MAIS IMPORTANTE (palavra do Sávio): a
+   evolução tem que APARECER NO VISUAL — ao evoluir, a confeitaria muda de cara,
+   fica maior, ganha decoração, até um visual "premium" bem diferente da de
+   iniciante (não só números de moeda/açúcar/venda subindo).
 2. **Cozinha da Confeitaria trava:** ele encheu a mão de brigadeiro, mas nenhum
    cliente da fila pedia brigadeiro; não dá para jogar fora nem vender, e o jogo
    fica parado. Ideia dele: poder atender qualquer cliente da fila que pediu o que
