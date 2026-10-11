@@ -93,7 +93,7 @@ voltar o lag. A escolha foi gastar onde quase não custa (`scripts/visual_realis
 | Líquidos com ondinhas e céu refletido (`tema/liquido_doce.gdshader`) | 1 shader para os 5 líquidos; o reflexo é a cor do céu calculada no próprio shader (sem câmera extra nem SSR) | MÉDIA e acima |
 | Sol que anda (baixo e dourado de manhã e no fim da tarde, sombras compridas) | nenhum: a luz já era atualizada a cada 2 s | todas |
 | Sombra macia (filtro MEDIUM) e fundo longe desfocado | um passe de desfoque | ALTA |
-| SSAO, SSIL, SSR, névoa volumétrica, sombra de 4 faixas | pesado (renderizador Forward+, o jogo reinicia) | ULTRA (só computador) |
+| SSAO, SSIL, SSR, névoa volumétrica, sombra de 4 faixas | pesado (renderizador Forward+, o jogo reinicia) | ULTRA (só computador com placa dedicada e mais de 8 GB) |
 
 Desenhos por quadro na vila: 632 → 636. O ULTRA não aparece no celular nem
 no navegador, e sem o Forward+ ele vale como ALTA; se o jogo ficar lento no

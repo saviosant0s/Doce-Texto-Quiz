@@ -58,7 +58,7 @@ signal por_cima_fechou
 
 
 func _ready() -> void:
-	(func(): Qualidade.reiniciar_se_precisar(get_tree())).call_deferred()  # (gráficos ULTRA)
+	_conferir_ultra.call_deferred()
 	_ajustar_fisica()
 	_detectar_renderizacao()
 	_criar_cortina()
@@ -67,6 +67,17 @@ func _ready() -> void:
 	(func(): mostrar_desempenho(bool(Progresso.config.get("desempenho", false)))).call_deferred()
 	_baixar_eventos.call_deferred()
 	_vila_do_link.call_deferred()
+
+
+## Gráficos ULTRA: reinicia no Forward+ se precisar, confirma que abriu ou
+## avisa que não deu certo neste computador (ver Qualidade.reiniciar_se_precisar).
+func _conferir_ultra() -> void:
+	if Qualidade.reiniciar_se_precisar(get_tree()):
+		return
+	Qualidade.confirmar_ultra(get_tree())
+	if Qualidade.desistiu:
+		await get_tree().create_timer(4.0).timeout  # (depois da abertura)
+		mostrar_aviso("O ULTRA NÃO FUNCIONOU NESTE COMPUTADOR: GRÁFICOS EM %s" % Qualidade.NOMES[Qualidade.escolhida()])
 
 
 ## Jogo no navegador aberto pelo link de um amigo (...?vila=CÓDIGO, ver

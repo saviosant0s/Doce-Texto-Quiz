@@ -7,7 +7,8 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.16.0 (Android 64 e 32 bits, Windows e navegador). O pacote do INPI
+- Versão atual: 0.16.1 no Windows e no navegador; Android 0.16.0 (a 0.16.1 só
+  conserta o ULTRA, que não existe no celular). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
@@ -123,6 +124,19 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 ## Onde parou
 
 ### Rodada de 08/10/2026 — publicado na 0.16.0 (11/10/2026)
+
+- 0.16.1 (11/10, Windows e navegador): o Sávio escolheu ULTRA no notebook, clicou em
+  REINICIAR e o jogo não abriu mais. Causa: erro de script ao montar os
+  argumentos do reinício (`Array(PackedStringArray, TYPE_STRING...)`), num
+  caminho que os testes não executavam. Agora: argumentos em PackedStringArray
+  (Qualidade.argumentos_ultra, com teste); antes de reiniciar, marca
+  "ultra_testando" no salvamento e o jogo no Forward+ desmarca depois de 12 s
+  aberto (Qualidade.confirmar_ultra); se a marca sobra (fechou, travou, não
+  abriu) ou o Forward+ não ligou, volta para o padrão do aparelho e avisa, em
+  vez de tentar de novo toda vez. O ULTRA só aparece em computador com placa
+  dedicada e mais de 8 GB (Qualidade.tem_ultra); ULTRA já salvo num aparelho
+  sem ULTRA vale como o padrão dele (MÉDIA no notebook do Sávio). Testado de
+  verdade: reinício no Forward+ com confirmação e a volta depois de falhar.
 
 - VILA DOS AMIGOS E RANKING DA SEMANA, sem servidor (scripts/amigos.gd,
   componentes/vila/painel_amigos.gd): botão AMIGOS na vila (embaixo do

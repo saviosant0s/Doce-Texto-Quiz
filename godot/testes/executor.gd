@@ -1212,10 +1212,17 @@ func _testar_configuracoes() -> void:
 	verificar(tela.find_child("Qualidade3", true, false) == null and Qualidade.escolhida() == Qualidade.ALTA,
 		"ULTRA só aparece no computador (aqui, sem tela, não)")
 	Progresso.config["qualidade"] = Qualidade.ULTRA
-	verificar(Qualidade.nivel() == Qualidade.ALTA and not Qualidade.ultra_ativo(),
-		"sem o renderizador Forward+, o ULTRA vale como ALTA (até o jogo reiniciar)")
+	verificar(Qualidade.nivel() == Qualidade.padrao() and Qualidade.escolhida() == Qualidade.padrao(),
+		"ULTRA salvo num aparelho sem ULTRA vale como o padrão do aparelho (e não reinicia)")
+	verificar(not Qualidade.reiniciar_se_precisar(get_tree()), "sem ULTRA no aparelho, o jogo não tenta reiniciar")
 	Qualidade.escolher(Qualidade.ALTA)
 	verificar(not Qualidade.reiniciar_se_precisar(get_tree()), "na ALTA o jogo não reinicia")
+	var args_ultra := Qualidade.argumentos_ultra()
+	var i_metodo := args_ultra.find("--rendering-method")
+	verificar(i_metodo >= 0 and args_ultra[i_metodo + 1] == "forward_plus" and args_ultra.count("--rendering-method") == 1
+		and args_ultra.has("--") and args_ultra[args_ultra.size() - 1] == Qualidade.MARCA_REINICIO
+		and args_ultra.find("--") > i_metodo,
+		"reinício do ULTRA: abre no Forward+ com os mesmos argumentos e a marca de que já reiniciou")
 	var ambiente_ultra := Environment.new()
 	ambiente_ultra.ssao_enabled = true
 	ambiente_ultra.ssr_enabled = true

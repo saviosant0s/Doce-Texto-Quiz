@@ -105,7 +105,9 @@ func _criar_qualidade() -> void:
 					_marcar_qualidade(linha, Qualidade.escolhida())
 					return
 				Qualidade.escolher(i)
-				Qualidade.reiniciar_se_precisar(get_tree())
+				if not Qualidade.reiniciar_se_precisar(get_tree()):
+					_marcar_qualidade(linha, Qualidade.escolhida())
+					Telas.mostrar_aviso("NÃO DEU PARA LIGAR O ULTRA NESTE COMPUTADOR")
 				return
 			Qualidade.escolher(i)
 			Telas._ajustar_fisica()
