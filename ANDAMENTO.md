@@ -169,6 +169,10 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 17. **Botão de CONFIGURAÇÕES dentro da vila** (e telas de jogo): mudar os gráficos
    ali mesmo; se não der para aplicar na hora, a vila recarrega sozinha (volta pela
    tela de carregamento) já com a qualidade nova.
+18. **Confeitaria acaba:** ele já melhorou as 3 coisas e não tem mais o que upar.
+   Precisa de progressão quase infinita (viciante): mais máquinas/doces para
+   destravar, níveis sem fim com preço crescente, ampliar a loja (mesas, balcões,
+   funcionários), novas receitas, etc.
 2. **Cozinha da Confeitaria trava:** ele encheu a mão de brigadeiro, mas nenhum
    cliente da fila pedia brigadeiro; não dá para jogar fora nem vender, e o jogo
    fica parado. Ideia dele: poder atender qualquer cliente da fila que pediu o que
