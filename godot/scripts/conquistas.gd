@@ -30,7 +30,7 @@ const LISTA := [
 	{"id": "dedicado", "nome": "DEDICADO", "descricao": "Jogue 25 partidas.",
 		"moedas": 40, "icone": "camadas"},
 	{"id": "colecionador", "nome": "COFRINHO CHEIO", "descricao": "Ganhe 500 moedas no total.",
-		"moedas": 30, "icone": "moeda"},
+		"moedas": 30, "icone": "cofrinho"},
 	{"id": "primeira_compra", "nome": "DOCE NOVO", "descricao": "Compre um doce na sua coleção.",
 		"moedas": 20, "icone": "doce"},
 	{"id": "colecao_completa", "nome": "CONFEITARIA DOS SONHOS", "descricao": "Tenha todos os doces da coleção.",
@@ -117,7 +117,9 @@ static func alcancou(id: String, partida: Dictionary) -> bool:
 		"primeira_compra":
 			return not Progresso.colecao["doces"].is_empty()
 		"colecao_completa":
-			return Colecao.quantidade() == Colecao.LISTA.size()
+			# os doces dos eventos da temporada não contam (só saem em certas épocas)
+			var normais := Colecao.LISTA.filter(func(d): return not d.has("evento"))
+			return normais.all(func(d): return Colecao.tem(d["id"]))
 		"enciclopedia":
 			return Progresso.perguntas.size() >= Jogo.total_de_perguntas()
 	return false

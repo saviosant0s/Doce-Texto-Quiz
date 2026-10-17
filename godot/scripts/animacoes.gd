@@ -9,6 +9,8 @@ static func flutuar(no: Control, altura := 10.0, duracao := 1.4) -> void:
 		pular(no)
 		return
 	await no.get_tree().process_frame  # espera o container posicionar o nó
+	if not is_instance_valid(no):
+		return  # a tela foi trocada antes
 	var y := no.position.y
 	var tween := no.create_tween().set_loops().set_trans(Tween.TRANS_SINE)
 	tween.tween_property(no, "position:y", y - altura, duracao)
@@ -18,6 +20,8 @@ static func flutuar(no: Control, altura := 10.0, duracao := 1.4) -> void:
 ## Dá um pulinho no nó (ex.: mascotes). Animação curta, que não pesa.
 static func pular(no: Control, altura := 18.0, atraso := 0.5) -> void:
 	await no.get_tree().process_frame  # espera o container posicionar o nó
+	if not is_instance_valid(no):
+		return  # a tela foi trocada antes
 	var y := no.position.y
 	var tween := no.create_tween().set_trans(Tween.TRANS_QUAD)
 	tween.tween_interval(atraso)
@@ -29,6 +33,8 @@ static func pular(no: Control, altura := 18.0, atraso := 0.5) -> void:
 static func entrar(no: Control, deslocamento := Vector2(0, 40), atraso := 0.0) -> void:
 	no.modulate.a = 0.0
 	await no.get_tree().process_frame
+	if not is_instance_valid(no):
+		return  # a tela foi trocada antes
 	var destino := no.position
 	no.position += deslocamento
 	var tween := no.create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

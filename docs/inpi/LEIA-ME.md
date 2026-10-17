@@ -12,3 +12,14 @@ Na hora de fazer o pedido de registro de programa de computador:
    e o hash SHA-512 que vai no formulário.
 2. Guarde o `.zip` exatamente como foi gerado (é a prova de autoria).
 3. Veja as pendências na seção 11.3 do memorial e no `PENDENCIAS.md`.
+
+## Pacote de entrega (para a professora / INPI)
+
+```bash
+KEYSTORE=... KEYSTORE_SENHA=... ferramentas/gerar_entrega.sh
+```
+
+Gera em `build/entrega/` o `Doce_Texto_Quiz_v<versão>.zip` (pasta "1 - Executaveis"
+com o .exe do Windows e o APK de 64 bits, pasta "2 - Codigo-fonte" com o pacote do
+código e o hash, e o LEIA-ME.txt) e o PDF do memorial, que vai **fora** do zip.
+O LEIA-ME do pacote vem de `LEIA-ME_entrega.txt`.

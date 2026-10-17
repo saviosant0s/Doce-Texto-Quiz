@@ -11,11 +11,17 @@ extends Control
 ## Toque rápido (sem arrastar): quem usa o visor dentro de um botão (ex.: o
 ## cartão do nível) liga este sinal à mesma ação do botão.
 signal tocado
+## A cena 3D já foi desenhada pelo menos uma vez (até lá, quem usa o visor
+## pode deixar a foto do personagem no lugar, para não ficar um buraco vazio).
+signal pronto
 
 const SENSIBILIDADE := 0.012  # radianos por pixel arrastado
 const LIMITE_TOQUE := 14.0  # px: mexeu menos que isso, foi um toque (não um giro)
 const ATRITO := 3.0  # quanto o giro "de embalo" freia por segundo
 const ESPERA_PARA_VOLTAR := 1.5  # segundos parado até voltar para a pose inicial
+## Resolução máxima da cena 3D em relação ao tamanho lógico, por qualidade
+## (BAIXA, MÉDIA, ALTA): numa tela grande, a ALTA desenha mais nítido.
+const ESCALA_MAXIMA := [1.0, 1.5, 2.0, 2.0]
 
 ## Ângulo (em radianos, no eixo Y) da pose inicial.
 @export var angulo_inicial := -0.5
@@ -23,6 +29,9 @@ const ESPERA_PARA_VOLTAR := 1.5  # segundos parado até voltar para a pose inici
 @export var distancia := 5.6
 ## Se o dedo pode girar o modelo.
 @export var giravel := true
+## Quem usa o visor está animando a pose do modelo (giros e cambalhotas da
+## batalha): o visor não volta para a pose inicial nem flutua até soltar.
+var segurar_pose := false
 
 var _viewport: SubViewport
 var _imagem: TextureRect
@@ -40,7 +49,9 @@ func _ready() -> void:
 	_viewport = SubViewport.new()
 	_viewport.transparent_bg = true
 	_viewport.own_world_3d = true
-	_viewport.msaa_3d = Viewport.MSAA_4X
+	# serrilhado e resolução conforme a qualidade dos gráficos (antes: sempre 4x
+	# e até 3x o tamanho da tela; a batalha, com dois doces grandes, pesava)
+	_viewport.msaa_3d = Qualidade.ANTISSERRILHADO[Qualidade.nivel()]
 	add_child(_viewport)
 	_imagem = TextureRect.new()
 	_imagem.texture = _viewport.get_texture()
@@ -56,6 +67,16 @@ func _ready() -> void:
 	_pivo.rotation.y = angulo_inicial
 	_viewport.add_child(_pivo)
 	_montar(_pivo)
+	_avisar_quando_desenhar()
+
+
+func _avisar_quando_desenhar() -> void:
+	# dois quadros desenhados: o primeiro às vezes sai vazio (tamanho ainda 1x1)
+	for i in 2:
+		await Telas.quadro_desenhado()
+		if not is_instance_valid(self) or not is_inside_tree():
+			return
+	pronto.emit()
 
 
 ## Sobrescreva para colocar o modelo dentro de `pivo`.
@@ -75,7 +96,7 @@ func remontar() -> void:
 
 ## Tamanho em pixels de verdade = tamanho na tela x escala da janela.
 func _ajustar_resolucao() -> void:
-	var escala := clampf(get_tree().root.get_final_transform().get_scale().x, 1.0, 3.0)
+	var escala := clampf(get_tree().root.get_final_transform().get_scale().x, 1.0, ESCALA_MAXIMA[Qualidade.nivel()])
 	_viewport.size = Vector2i((size * escala).round()).maxi(1)
 
 
@@ -105,6 +126,8 @@ func _ao_tocar() -> void:
 
 func _process(delta: float) -> void:
 	_tempo += delta
+	if segurar_pose:
+		return
 	if not _girando:
 		# embalo: continua girando e vai freando
 		_pivo.rotation.y += _velocidade * delta
@@ -143,3 +166,9 @@ func _montar_cena() -> void:
 	var mundo := WorldEnvironment.new()
 	mundo.environment = ambiente
 	_viewport.add_child(mundo)
+
+
+## O nó que gira e flutua (o modelo fica dentro dele): para animar a pose
+## (use com `segurar_pose`).
+func pivo() -> Node3D:
+	return _pivo

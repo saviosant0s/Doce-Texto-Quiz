@@ -7,3 +7,6 @@
 
 # Gerado ao publicar a versão web
 /dados/build.json
+
+# ajuste temporário da gravação do vídeo vertical (ferramentas/gerar_video_stories.sh)
+override.cfg

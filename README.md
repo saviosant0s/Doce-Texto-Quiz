@@ -19,7 +19,7 @@ personagens, fontes) é a mesma da versão original.
 
 ### Regras
 
-- Cada partida sorteia 10 das 20 perguntas do nível (primeiro as nunca vistas
+- Cada partida sorteia 10 das 50 perguntas do nível (primeiro as nunca vistas
   e as erradas da última vez) e embaralha as alternativas.
 - Com 6 acertos ou mais, você passa no nível: ganha o título dele (Fácil →
   Noob, Médio → Pro, Difícil → Mestre) e libera o próximo.
@@ -32,9 +32,62 @@ personagens, fontes) é a mesma da versão original.
   da última vez (de todos os níveis). Não muda os níveis, mas dá moedas.
 - Troféus: títulos, 16 conquistas com recompensa em moedas
   (`scripts/conquistas.gd`) e estatísticas (acerto por assunto, mais erradas).
-- Minha Coleção: 13 doces em 3D (giram com o dedo, piscam, acenam). O
-  brigadeiro vem de graça, 3 vêm com os títulos e 9 são comprados com moedas
-  (100 a 600). O doce escolhido como companheiro aparece no carregamento.
+- Vila dos Doces: o "JOGAR" leva a uma vila 3D onde o jogador anda com o seu
+  doce (joystick na tela ou setas/WASD) e entra na Escola (quiz), Confeitaria
+  (Minha Confeitaria), Troféus, Fliperama (Doce Match) e Laboratório do Office. Em aparelhos sem placa
+  de vídeo, vai direto para os níveis.
+  Três câmeras (botão no topo ou tecla C): aérea, perto e primeira pessoa.
+  O doce acelera e freia aos poucos, corre (joystick até o fim ou Shift) e
+  pula (botão na tela ou Espaço); Enter/E entra (a porta abre e o doce
+  entra, com animação). Visual de desenho animado
+  (luz em degraus, contorno, sombras) e cada prédio tem o seu jeito: Escola
+  de biscoito com torre do sino, Confeitaria-cupcake, torre dos Troféus e
+  Fliperama em forma de máquina.
+- Minha Confeitaria (`scripts/confeitaria.gd`): uma cozinha 3D no estilo
+  Pizza Ready (`cenas/cozinha.*`), aberta pelo prédio da Confeitaria na vila.
+  Cada acerto no quiz dá 10 de açúcar; as máquinas (panela de brigadeiro,
+  tacho de maçã do amor, forno de cupcake, liberadas passando nos níveis)
+  fazem doces na bandeja; o jogador pega os doces, atende os clientes no
+  balcão, recolhe as moedas no caixa e para nos círculos do chão para
+  construir e melhorar. Com o jogo fechado, as máquinas produzem no máximo
+  2 horas. Sem placa de vídeo, abre um painel 2D simples.
+- Texturas reais do cenário (grama, pedra, reboco, telhado, madeira): fotos
+  CC0 do Poly Haven e ambientCG (`godot/assets/texturas/reais/LEIA-ME.md`).
+- Baús surpresa, companheiros e missões: partidas, missões do dia/semana,
+  prêmio por entrar e subir de nível dão baús com pedaços de doces (raridades
+  comum a lendário). Cada doce companheiro dá um bônus que cresce com o nível
+  (`scripts/baus.gd`, `companheiros.gd`, `missoes.gd`, `experiencia.gd`).
+- Laboratório do Office (prédio da vila e menu dos níveis): mapa de aventura
+  com 40 fases práticas (5 capítulos) de Excel (planilha com fórmulas de verdade, calculadas
+  por `scripts/formulas.gd`) e de Word (formatar uma página), chefes, estrelas
+  e baús. Fases em `godot/dados/laboratorio.json`.
+- Bairro dos Terrenos, Lago de Chocolate e Mirante do Sorvete na vila:
+  lotes para comprar e construir (moinho de açúcar, cofre de moedas, casa,
+  jardim, fonte), que evoluem até o nível 5 com obras que levam tempo, e
+  presentes diários (`scripts/terrenos.gd`).
+- Dia e noite na vila pelo relógio do aparelho (céu, lua, estrelas, janelas e
+  luzes acesas), estrela cadente para pegar à noite e chuva de granulado com
+  gotas que dão açúcar (`scripts/ciclo_dia.gd`, `componentes/vila/ceu_vila.gd`).
+- Minha Casa: casa do jogador na vila com a sala para decorar (móveis, papel
+  de parede, piso, conforto com prêmios; `scripts/casa.gd`, `cenas/minha_casa.*`).
+- Histórias da vila: missões dos moradores em capítulos, com conversas,
+  pistas pela vila e perguntas do quiz (`scripts/historia.gd`,
+  `componentes/vila/dialogo.gd`).
+- Eventos da temporada (Flores, Abóboras, Natal, Carnaval, Páscoa, Junina):
+  vila decorada, fichas, trilha de prêmios com móvel e doce exclusivos
+  (`scripts/eventos.gd`, `componentes/vila/evento_vila.gd`).
+- Torre de Doces (prédio de bolo na vila): empilhar andares, com pergunta
+  bônus do quiz a cada 10 (`scripts/torre.gd`, `cenas/torre.*`).
+- Fábrica de Chocolate (galpão na vila): tocar nos chocolates do pedido
+  na esteira, com pedido especial do quiz (`scripts/fabrica.gd`, `cenas/fabrica.*`).
+- Doce Match (Fliperama da vila): jogo de combinar 3 com peças de informática
+  desenhadas por nós, 30 níveis com objetivos (pontos, juntar peças, limpar
+  gelatina) e peças especiais (listrada, embrulhada, bomba)
+  (`scripts/doce_match.gd`, `cenas/doce_match.*`, níveis em
+  `godot/dados/doce_match.json`).
+- Minha Coleção: 25 doces em 3D (giram com o dedo, piscam, acenam). O
+  brigadeiro vem de graça, 3 vêm com os títulos e 21 são comprados com moedas
+  (100 a 800). O doce escolhido como companheiro aparece no carregamento.
 - Personagens: todos são 3D, montados por código (`scripts/doces_3d.gd`). As
   telas que mostram personagens parados usam fotos deles em
   `assets/doces_3d/fotos`. **Mudou um modelo? Rode `ferramentas/gerar_fotos_3d.sh`.**
@@ -60,7 +113,7 @@ godot/
 │   ├── progresso.gd     # salvamento (com versão/migração), recordes, histórico
 │   ├── conquistas.gd    # lista de conquistas e quando cada uma é desbloqueada
 │   ├── colecao.gd       # catálogo da coleção: preços, compras, companheiro
-│   ├── doces_3d.gd      # os 13 doces 3D, montados por código
+│   ├── doces_3d.gd      # os 25 doces 3D, montados por código
 │   ├── pecas_3d.gd      # peças 3D: formas, materiais, rosto, braços e pernas
 │   ├── telas.gd         # navegação, avisos, caixa de confirmação
 │   ├── audio.gd         # música e efeitos em canais separados
@@ -89,8 +142,10 @@ godot/
 KEYSTORE=/caminho/doce_texto_quiz.keystore KEYSTORE_SENHA=... ferramentas/gerar_apk.sh
 ```
 
-Gera `build/android/doce-texto-quiz.apk` (Android 7 ou mais novo, celulares
-32 e 64 bits, sempre deitado, sem nenhuma permissão). O script explica o que
+Gera `build/android/doce-texto-quiz.apk` (celulares de hoje, 64 bits) e
+`doce-texto-quiz-32bits.apk` (celulares antigos/baratos) — Android 7 ou mais
+novo, sempre deitado, sem nenhuma permissão. Separados, cada um tem cerca de
+metade do tamanho. Página para baixar: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/ O script explica o que
 precisa estar instalado. A keystore e a senha **não ficam no repositório**:
 guarde-as em lugar seguro, porque toda atualização do app precisa ser assinada
 com a mesma chave. Os ícones do app ficam em `godot/assets/android/`.

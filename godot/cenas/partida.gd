@@ -10,7 +10,7 @@ const ICONE_CERTO := preload("res://assets/icones/certo.svg")
 const ICONE_ERRADO := preload("res://assets/icones/errado.svg")
 const ICONE_METADE := preload("res://assets/icones/metade.svg")
 const ICONE_RELOGIO_MAIS := preload("res://assets/icones/relogio_mais.svg")
-const ICONE_MOEDA := preload("res://assets/icones/moeda.svg")
+const ICONE_MOEDA := Itens.MOEDA
 
 var _perguntas: Array
 var _indice := 0
@@ -73,8 +73,8 @@ func _mostrar_pergunta() -> void:
 		botao.remove_theme_stylebox_override("disabled")
 		botao.remove_theme_color_override("font_disabled_color")
 		botao.remove_theme_color_override("icon_disabled_color")
-	_tempo_restante = Jogo.TEMPO_POR_PERGUNTA
-	%BarraTempo.max_value = Jogo.TEMPO_POR_PERGUNTA
+	_tempo_restante = Jogo.tempo_por_pergunta()
+	%BarraTempo.max_value = Jogo.tempo_por_pergunta()
 	_usou_eliminar = false
 	_usou_tempo = false
 	_respondendo = true
@@ -174,7 +174,6 @@ func _valor_em_moedas(texto: String, tamanho_icone: int, tamanho_texto: int) -> 
 	linha.add_theme_constant_override("separation", 3)
 	var icone := TextureRect.new()
 	icone.texture = ICONE_MOEDA
-	icone.modulate = Cores.AMARELO
 	icone.custom_minimum_size = Vector2(tamanho_icone, tamanho_icone)
 	icone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -207,7 +206,11 @@ func _criar_botao_ajuda(icone: Texture2D, custo: int, dica: String) -> Button:
 func _atualizar_ajudas() -> void:
 	var moedas := Progresso.moedas
 	_saldo.text = Jogo.formatar(moedas)
-	_ajuda_eliminar.disabled = not _respondendo or _usou_eliminar or moedas < Jogo.CUSTO_ELIMINAR
+	var gratis := Jogo.eliminar_gratis()
+	_ajuda_eliminar.disabled = not _respondendo or _usou_eliminar or (moedas < Jogo.CUSTO_ELIMINAR and not gratis)
+	# com ajuda grátis do companheiro, o preço vira "GRÁTIS"
+	var preco: Label = _ajuda_eliminar.get_parent().find_children("*", "Label", true, false)[0]
+	preco.text = "GRÁTIS" if gratis else str(Jogo.CUSTO_ELIMINAR)
 	_ajuda_tempo.disabled = not _respondendo or _usou_tempo or moedas < Jogo.CUSTO_MAIS_TEMPO
 
 
@@ -257,9 +260,17 @@ func _comemorar_pontos(botao: Button) -> void:
 
 ## Destaca uma alternativa (verde = correta, vermelho = escolha errada).
 func _pintar(botao: Button, cor: Color, cor_borda: Color, icone: Texture2D) -> void:
-	var estilo: StyleBoxFlat = botao.get_theme_stylebox("normal").duplicate()
+	# (os botões do tema são texturas de bala; aqui é uma caixa lisa da cor)
+	var estilo := StyleBoxFlat.new()
 	estilo.bg_color = cor
 	estilo.border_color = cor_borda
+	estilo.border_width_bottom = 7
+	estilo.set_corner_radius_all(18)
+	estilo.corner_detail = 10
+	estilo.content_margin_left = 22
+	estilo.content_margin_right = 22
+	estilo.content_margin_top = 11
+	estilo.content_margin_bottom = 11
 	botao.add_theme_stylebox_override("disabled", estilo)
 	botao.add_theme_color_override("font_disabled_color", Color.WHITE)
 	botao.add_theme_color_override("icon_disabled_color", Color.WHITE)
