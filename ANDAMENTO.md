@@ -186,6 +186,15 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   por GP (`Progresso.vila["gps"]`). Escolha nos cartões do início da corrida (com o
   mapinha da pista); trocar de GP monta a pista nova (`Telas.recarregar`). Peças do
   cenário em `componentes/corrida/cenario_gp.gd`.
+- **Pistas com o desenho das cidades de verdade** (pedido depois do print: "muito
+  redondas"): VALENÇA, o Rio Una cortando a cidade, com a ponte do centro e a ponte
+  nova; SALVADOR, a península entre a Baía de Todos os Santos e o mar (Avenida Sete,
+  a ponta do Farol da Barra, a orla com as enseadas de Ondina e do Rio Vermelho, as
+  ladeiras do Pelourinho e o Elevador Lacerda perto da baía); OURO PRETO, o
+  zigue-zague das ladeiras até a Praça Tiradentes, a descida pela serra e mais
+  ladeiras (Rua Direita, Ladeira de São Francisco); SÃO PAULO, um traçado como o de
+  Interlagos, no sentido anti-horário (reta dos boxes, S do Senna, reta oposta,
+  Descida do Lago, Pinheirinho, Junção; arquibancada do lado direito).
 - (13) **Minimapa na corrida** (`componentes/corrida/mapa_pista.gd`): a pista de
   cima, os portais e os 4 karts nas cores deles (o seu maior, com borda branca).
 - (6, 11, 18) **Confeitaria que não acaba** (`scripts/confeitaria.gd`):

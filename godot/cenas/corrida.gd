@@ -439,7 +439,8 @@ func _livre(p: Vector3, folga: float) -> bool:
 	var perto := corrida.curva.get_closest_point(p)
 	if Vector2(p.x - perto.x, p.z - perto.z).length() < Corrida.MEIA_LARGURA + 1.5 + folga:
 		return false
-	if p.x > -26.0 - folga and p.x < -6.0 and p.z > -34.0 - folga and p.z < -2.0 + folga:
+	var x := p.x * _lado_arquibancada()  # (como se a arquibancada fosse à esquerda)
+	if x < 26.0 + folga and x > 6.0 and p.z > -34.0 - folga and p.z < -2.0 + folga:
 		return false  # arquibancada
 	return _na_agua(p, 4.0) > 1.0
 
@@ -564,6 +565,11 @@ func _montar_cenario() -> void:
 	_arquibancada(cenario)
 
 
+## -1 = arquibancada à esquerda da reta dos boxes (o normal); 1 = à direita.
+func _lado_arquibancada() -> int:
+	return int(corrida.gp.get("arquibancada", -1))
+
+
 func _livre_da_pista(p: Vector3, folga: float) -> bool:
 	var perto := corrida.curva.get_closest_point(p)
 	return Vector2(p.x - perto.x, p.z - perto.z).length() >= Corrida.MEIA_LARGURA + 1.5 + folga
@@ -662,8 +668,9 @@ func _montanhas(pai: Node3D) -> void:
 func _arquibancada(pai: Node3D) -> void:
 	var no := Node3D.new()
 	no.name = "Arquibancada"
-	no.position = Vector3(-15.5, 0, -18)
-	no.rotation.y = PI / 2.0  # de frente para a pista (leste)
+	var lado := _lado_arquibancada()
+	no.position = Vector3(15.5 * lado, 0, -18)
+	no.rotation.y = -PI / 2.0 * lado  # de frente para a pista
 	pai.add_child(no)
 	var degraus := [Pecas3D.material(Color("#FFF6EE"), 0.6), Pecas3D.material(Color("#FFB3D1"), 0.6)]
 	for k in 4:
