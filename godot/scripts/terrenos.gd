@@ -284,10 +284,8 @@ static func abrir_presente(lugar: String) -> Dictionary:
 	return PRESENTE.duplicate()
 
 
-## Estágio da Confeitaria por fora (cresce com as máquinas): 1 = só o
-## cupcake, 2 = + terraço com mesinhas, 3 = + a segunda torre.
+## Estágio da Confeitaria por fora (o mesmo de dentro, Confeitaria.estagio): 1 = só o
+## cupcake, 2 = + terraço com mesinhas, 3 = + a segunda torre, 4 = + luzes e tapete
+## vermelho, 5 = + a coroa dourada e as bandeirinhas (ver BairroVila.anexos_confeitaria).
 static func estagio_confeitaria() -> int:
-	var soma := 0
-	for m in Confeitaria.MAQUINAS:
-		soma += Confeitaria.nivel(m["id"])
-	return 1 if soma <= 2 else (2 if soma <= 5 else 3)
+	return Confeitaria.estagio()

@@ -125,15 +125,12 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ### Bugs e pedidos do Sávio (11/10/2026) — o que ainda falta
 
-(Os números são os da lista original; 1, 2, 3, 4, 10, 12, 13, 15, 16 e 17 foram feitos em
+(Os números são os da lista original; 1, 2, 3, 4, 6, 10, 11, 12, 13, 15, 16, 17 e 18 foram feitos em
 17/10, ver a seção abaixo.)
 
 5. **Batalha de doces como luta de verdade** (planejamento, depois): botões de
    golpe; perguntas entre os golpes; o GOLPE SUPREMO depende da pergunta (acertou,
    acerta; errou, erra) — mesma lógica do turbo na corrida.
-6. **Confeitaria (o que ele mais joga):** poucos clientes, moeda demora. Pedidos:
-   MESAS onde os clientes deixam gorjeta; melhoria de "ganhar mais moedas" FIXA num
-   lugar da confeitaria (paga moedas, preço sobe a cada nível), não aparecendo do nada.
 7. **Telas com texto demais:** Missões diárias (só o que é + a recompensa, pegar
    fácil), Eventos (ex.: Semana das Crianças: botões só de texto). Menos texto,
    mais visual/interativo. Ele pode mostrar tela por tela.
@@ -141,8 +138,6 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
    para 5 clientes" faz o doce ANDAR SOZINHO até o lugar (se ele mexer, para).
 9. **XP de cada personagem:** quanto mais usa o doce, mais XP dele, sobe de nível e
    fica mais forte na arena (separado do nível do jogador).
-11. **Confeitaria gasta açúcar demais:** melhoria paga com MOEDAS que faz cada
-   doce gastar menos açúcar (fixa, preço subindo por nível).
 12. (feito em 17/10: 5 GPs) **Corrida:** falta, se ele quiser, CARROS diferentes para
    escolher e mais GPs (ex.: São Luís, Recife, Rio, Belo Horizonte, Curitiba...).
 14. **Minimapa da vila feio e embolado:** refazer, mais bonito e mais limpo.
@@ -151,13 +146,8 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
    guardar a cozinha também (ida e volta Confeitaria ↔ jogos).
 16. (feito em parte) **ULTRA embaçado no celular:** ver abaixo; perguntar ao Sávio
    se, depois de embaçar, a qualidade nas Configurações tinha descido sozinha.
-18. **Confeitaria acaba:** ele já melhorou as 3 coisas e não tem mais o que upar.
-   Precisa de progressão quase infinita (viciante): mais máquinas/doces para
-   destravar, níveis sem fim com preço crescente, ampliar a loja (mesas, balcões,
-   funcionários), novas receitas, etc. O MAIS IMPORTANTE (palavra do Sávio): a
-   evolução tem que APARECER NO VISUAL — ao evoluir, a confeitaria muda de cara,
-   fica maior, ganha decoração, até um visual "premium" bem diferente da de
-   iniciante (não só números de moeda/açúcar/venda subindo).
+18. (feito em 17/10, ver abaixo) Falta, se ele quiser: mais MÁQUINAS (pudim,
+   brownie...) e a cozinha crescer de tamanho (hoje só muda de cara e ganha mesas).
 
 ### Rodada de 17/10/2026 — correções (lote 1: bugs e urgentes), ainda não publicada
 
@@ -206,12 +196,27 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   cenário em `componentes/corrida/cenario_gp.gd`.
 - (13) **Minimapa na corrida** (`componentes/corrida/mapa_pista.gd`): a pista de
   cima, os portais e os 4 karts nas cores deles (o seu maior, com borda branca).
+- (6, 11, 18) **Confeitaria que não acaba** (`scripts/confeitaria.gd`):
+  - Máquinas com níveis até 30 (depois do 3: mais rápida, bandeja maior, doce mais
+    valioso; preço sobe 45% por nível).
+  - MELHORIAS FIXAS, cada uma no seu círculo da cozinha (preço sobe 60% por nível):
+    VITRINE DE OURO (+12% de moedas por doce, até 20), LIVRO DE RECEITAS (-10% de
+    açúcar por doce, até 7 = 30%), LETREIRO (clientes chegam mais rápido, até 10) e
+    MESAS (até 4: o cliente atendido senta, come e deixa GORJETA na mesa; passar perto
+    pega). No painel simples (sem placa de vídeo): vitrine e receitas.
+  - ESTÁGIOS da confeitaria pelos pontos (níveis das máquinas + das melhorias):
+    SIMPLES, CHARMOSA (3), ELEGANTE (6, como antes), PREMIUM (15) e DE LUXO (28). Cada
+    estágio muda a cozinha (cores, letreiro "CONFEITARIA PREMIUM"..., vasos,
+    bandeirinhas, quadros, lustres, rodapé dourado, tapete vermelho, colunas douradas,
+    fonte de chocolate) e o prédio na vila (terraço, 2ª torre, tapete e luzinhas,
+    coroa e bandeiras). Subiu de estágio: festa e a loja é montada de novo.
+  - O topo da cozinha mostra o estágio e quantas melhorias faltam para o próximo.
 - A vila guardada continua guardada entre outras telas (ex.: cozinha -> corrida).
 - Corrigido: a lista de perguntas recentes fazia o save parar de carregar no
   meio (erro ao converter em número); nunca chegou a ser publicado.
 - Testes novos (cozinha atende o 2º da fila, cliente desiste, janela de jogos,
   volta para a confeitaria, corrida sem perguntas repetidas, cubos ao desistir,
-  engrenagem da vila, vila guardada, save com a lista, GPs e minimapa): 2131 verificações passando.
+  engrenagem da vila, vila guardada, save com a lista, GPs e minimapa, confeitaria sem fim): 2143 verificações passando.
 
 ### Rodada de 08/10/2026 — publicado na 0.16.0 (11/10/2026)
 

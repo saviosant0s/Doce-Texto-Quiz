@@ -93,6 +93,7 @@ extends Node
 ##                 aconteceram: as travadas de montar shader aparecem como picos
 ##   --espera=1.2  segundos até tirar o print
 ##   --gp=salvador  corrida no GP dessa cidade (libera todos os GPs; ver GPs)
+##   --estagio_confeitaria=5  (com --confeitaria) a loja nesse estágio (SIMPLES a DE LUXO)
 
 
 ## Segundos já gravados nos modos de vídeo que jogam sozinhos (ver --duracao).
@@ -194,6 +195,21 @@ func _ready() -> void:
 		Progresso.confeitaria["maquinas"]["maca"]["bandeja"] = 4
 		Progresso.confeitaria["atendidos"] = 5
 		Progresso.moedas = 180
+		# --estagio_confeitaria=5: máquinas e melhorias até esse estágio (com as mesas)
+		if args.has("estagio_confeitaria"):
+			Progresso.niveis[1]["aprovado"] = true
+			var alvo := int(args["estagio_confeitaria"])
+			var ids := ["brigadeiro", "maca", "cupcake", "vitrine", "receita", "letreiro", "mesas"]
+			var k := 0
+			while Confeitaria.estagio() < alvo and k < 200:
+				Progresso.moedas = 9999999
+				var id: String = ids[k % ids.size()]
+				if Confeitaria.melhoria(id).is_empty():
+					Confeitaria.construir_ou_melhorar(id)
+				else:
+					Confeitaria.comprar_melhoria(id)
+				k += 1
+			Progresso.moedas = 5000
 	if args.has("lab"):
 		# --lab=N: as N primeiras fases do laboratório feitas (3, 2, 3, 1... estrelas)
 		var fases := Laboratorio.fases()

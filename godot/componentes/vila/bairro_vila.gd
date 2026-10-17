@@ -484,7 +484,8 @@ static func placa_direcoes(pai: Node3D, posicao: Vector3) -> void:
 # --- Confeitaria que cresce ------------------------------------------------------
 
 ## Anexos da Confeitaria (no nó do prédio; +z é a frente): estágio 2 ganha um
-## terraço com mesinhas e guarda-sóis; estágio 3, uma segunda torre-cupcake.
+## terraço com mesinhas e guarda-sóis; estágio 3, uma segunda torre-cupcake; 4 (PREMIUM),
+## tapete vermelho e luzinhas; 5 (DE LUXO), coroa dourada e bandeiras (ver Confeitaria.estagio).
 static func anexos_confeitaria(no: Node3D, estagio: int) -> void:
 	if estagio >= 2:
 		var cores := ["#FF6FAE", "#6FD3FF", "#FFD23F"]
@@ -508,3 +509,27 @@ static func anexos_confeitaria(no: Node3D, estagio: int) -> void:
 		Pecas3D.cano(no, torre + Vector3(0, 3.9, 0), torre + Vector3(0, 5.2, 0), 0.05, _m("#FFFFFF", 0.4))
 		Pecas3D.cilindro(no, 0.0, 0.4, 0.8, torre + Vector3(0.35, 4.9, 0), _m("#E8364F", 0.4), Vector3(1, 1, 0.15), Vector3(0, 0, -90))
 		CenarioVila._poste(no, 1.4, 3.5, torre)
+	if estagio >= 4:
+		# tapete vermelho na porta e cordão de luzinhas em volta
+		Pecas3D.caixa(no, Vector3(2.0, 0.03, 3.0), Vector3(0, 0.02, 4.6), _m("#B31B34", 0.8))
+		var luz := _m("#FFE27A", 0.3)
+		luz.emission_enabled = true
+		luz.emission = Color("#FFD23F")
+		luz.emission_energy_multiplier = 1.0
+		for k in 16:
+			var a := k * TAU / 16.0
+			Pecas3D.esfera(no, 0.09, Vector3(cos(a) * 3.3, 3.2 + 0.15 * sin(k * 1.7), sin(a) * 3.3), luz)
+	if estagio >= 5:
+		# coroa dourada no alto do cupcake e bandeirinhas
+		var dourado := _m("#E6C35A", 0.25, 0.8)
+		var coroa := Vector3(0, 7.2, 0)
+		Pecas3D.cilindro(no, 1.0, 0.9, 0.6, coroa, dourado)
+		for k in 5:
+			var a := k * TAU / 5.0
+			Pecas3D.cilindro(no, 0.0, 0.22, 0.6, coroa + Vector3(cos(a) * 0.85, 0.55, sin(a) * 0.85), dourado)
+			Pecas3D.esfera(no, 0.1, coroa + Vector3(cos(a) * 0.85, 0.9, sin(a) * 0.85), _m("#E8364F", 0.2))
+		var cores := ["#FF6FAE", "#6FD3FF", "#FFD23F", "#7BE07B"]
+		for lado in [-1, 1]:  # mastros com bandeiras dos dois lados da porta
+			Pecas3D.cilindro(no, 0.05, 0.05, 4.0, Vector3(lado * 3.0, 2.0, 4.3), _m("#FFFFFF", 0.4))
+			Pecas3D.caixa(no, Vector3(0.05, 0.6, 0.9), Vector3(lado * 3.0, 3.6, 4.8), _m(cores[1 if lado < 0 else 2], 0.5))
+			CenarioVila._poste(no, 0.15, 4.0, Vector3(lado * 3.0, 0, 4.3))

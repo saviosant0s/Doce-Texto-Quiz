@@ -865,6 +865,33 @@ func _testar_confeitaria() -> void:
 	verificar(Confeitaria.aumentar_carregar() and Confeitaria.carregar() == 8, "carrega mais doces")
 	Progresso.niveis[0]["aprovado"] = true
 	verificar(Confeitaria.liberada("maca") and not Confeitaria.construir_ou_melhorar("maca"), "passou no fácil: libera a maçã (mas custa moedas)")
+	# níveis quase sem fim: depois do 3, mais rápida, mais valiosa e mais cara
+	Progresso.moedas = 999999
+	while Confeitaria.nivel("brigadeiro") < 3:
+		Confeitaria.construir_ou_melhorar("brigadeiro")
+	var tempo3 := Confeitaria.tempo("brigadeiro")
+	var valor3 := Confeitaria.valor("brigadeiro")
+	var preco3 := Confeitaria.preco("brigadeiro")
+	verificar(preco3 > 250 and Confeitaria.construir_ou_melhorar("brigadeiro") and Confeitaria.construir_ou_melhorar("brigadeiro")
+		and Confeitaria.nivel("brigadeiro") == 5 and Confeitaria.tempo("brigadeiro") < tempo3 and Confeitaria.valor("brigadeiro") > valor3
+		and Confeitaria.preco("brigadeiro") > preco3, "máquina passa do nível 3: mais rápida, mais valiosa, preço subindo")
+	# melhorias fixas da loja
+	var valor_antes := Confeitaria.valor("brigadeiro")
+	var acucar_antes := Confeitaria.acucar_por_doce("brigadeiro")
+	var intervalo_antes := Confeitaria.intervalo_clientes()
+	var preco_vitrine := Confeitaria.preco_melhoria("vitrine")
+	verificar(Confeitaria.comprar_melhoria("vitrine") and Confeitaria.valor("brigadeiro") > valor_antes
+		and Confeitaria.preco_melhoria("vitrine") > preco_vitrine, "VITRINE DE OURO: mais moedas por doce (e fica mais cara)")
+	for i in 7:
+		Confeitaria.comprar_melhoria("receita")
+	verificar(Confeitaria.acucar_por_doce("brigadeiro") < acucar_antes and Confeitaria.acucar_por_doce("brigadeiro") >= 1
+		and Confeitaria.preco_melhoria("receita") == -1, "LIVRO DE RECEITAS: menos açúcar por doce, até o máximo")
+	verificar(Confeitaria.comprar_melhoria("letreiro") and Confeitaria.intervalo_clientes().x < intervalo_antes.x, "LETREIRO: clientes chegam mais rápido")
+	verificar(Confeitaria.comprar_melhoria("mesas") and Confeitaria.mesas() == 1 and Confeitaria.gorjeta_mesa() > 0, "MESAS: uma mesa com gorjeta")
+	verificar(Confeitaria.estagio() >= 3 and Confeitaria.nome_estagio() == Confeitaria.ESTAGIOS[Confeitaria.estagio() - 1]["nome"],
+		"a confeitaria sobe de estágio com as melhorias (%s)" % Confeitaria.nome_estagio())
+	Progresso.apagar()
+	verificar(Confeitaria.estagio() == 1 and Confeitaria.nome_estagio() == "SIMPLES", "começa SIMPLES")
 	# o quiz dá açúcar: 10 por acerto
 	Progresso.apagar()
 	Jogo.preparar_partida(0)
@@ -959,6 +986,28 @@ func _testar_cozinha() -> void:
 	cozinha._unhandled_input(olhar)
 	verificar(is_equal_approx(cozinha._inclinacao, Cozinha.INCLINACAO_1P.x), "...e para baixo, até um limite")
 	cozinha.usar_camera(Cozinha.Camera.DE_CIMA)
+	# melhorias fixas da loja e mesas com gorjeta
+	verificar(cozinha._circulos.has("vitrine") and cozinha._circulos.has("letreiro") and cozinha._circulos.has("mesas")
+		and cozinha.find_child("Estacao_receita", true, false) != null, "círculos das melhorias da loja (vitrine, receitas, letreiro, mesas)")
+	verificar(cozinha.find_child("Estagio", true, false).text.begins_with("SIMPLES"), "o topo mostra o estágio da confeitaria")
+	Progresso.moedas = 5000
+	cozinha._comprar("mesas")
+	verificar(Confeitaria.mesas() == 1 and cozinha._mesas.size() == 1 and cozinha.find_child("Mesa_0", true, false) != null,
+		"comprar MESA põe a mesa na loja")
+	var sentou := cozinha.novo_cliente("brigadeiro", 1)
+	sentou["estado"] = "indo_mesa"
+	sentou["mesa"] = 0
+	cozinha._mesas[0]["ocupada"] = true
+	sentou["no"].global_position = Cozinha.MESAS[0]["lugar"] + Cozinha.MESAS[0]["lado"]
+	cozinha._mover_cliente(sentou, 0.1)
+	var comendo: bool = sentou["estado"] == "comendo"
+	cozinha._mover_cliente(sentou, Cozinha.TEMPO_NA_MESA + 0.1)
+	verificar(comendo and sentou["estado"] == "saindo" and cozinha._mesas[0]["gorjeta"] == Confeitaria.gorjeta_mesa()
+		and not cozinha._mesas[0]["ocupada"], "o cliente senta, come e deixa gorjeta na mesa")
+	var moedas_mesa := Progresso.moedas
+	jogador.global_position = cozinha._mesas[0]["no"].global_position + Vector3(-1.3, 0, 0)
+	await get_tree().create_timer(0.3).timeout
+	verificar(cozinha._mesas[0]["gorjeta"] == 0 and Progresso.moedas > moedas_mesa, "passando perto da mesa, pega a gorjeta")
 	jogador.global_position = Cozinha.SAIDA
 	verificar(await _esperar_tela("Inicio"), "o tapete SAIR volta (sem histórico: início)")
 	verificar(Confeitaria.bandeja("brigadeiro") == 1, "o doce que sobrou nas mãos volta para a bandeja")

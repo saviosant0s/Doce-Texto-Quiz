@@ -11,7 +11,12 @@ extends Node3D
 ##   primeiro da fila; quem espera demais vai embora). Quem é atendido paga, e as moedas ficam na mesinha do
 ##   caixa até o jogador passar lá.
 ## - Parando em cima de um círculo amarelo, constrói ou melhora a máquina (ou
-##   aumenta quantos doces carrega), se tiver as moedas.
+##   aumenta quantos doces carrega), se tiver as moedas. Outros círculos fixos
+##   compram as melhorias da loja (vitrine, livro de receitas, letreiro, mesas).
+## - Com MESAS, parte dos clientes atendidos senta, come e deixa gorjeta na
+##   mesa (o jogador passa perto para pegar).
+## - A loja muda de cara com o estágio da confeitaria (Confeitaria.estagio):
+##   cores, letreiro, vasos, bandeirinhas, quadros, lustres, tapete vermelho...
 ## - Uma seta mostra o próximo passo. O tapete "SAIR" volta para a vila.
 ## - Três câmeras (botão no alto ou tecla C; a escolha fica salva): DE CIMA
 ##   (a padrão, como nos jogos de loja), PERTO (atrás do doce; arrastar o dedo
@@ -39,7 +44,20 @@ const RITMO_ENTREGAR := 0.16
 ## Segundos parado no círculo para construir/melhorar.
 const TEMPO_CIRCULO := 1.2
 ## Chegada de clientes: um a cada tantos segundos (se a fila não estiver cheia).
-const INTERVALO_CLIENTES := Vector2(4.0, 7.0)
+## Mesas dos clientes (as compradas, na ordem) e por onde quem sentou vai embora.
+const MESAS := [
+	{"lugar": Vector3(7.3, 0, -0.7), "lado": Vector3(0.95, 0, 0), "saida": "porta"},
+	{"lugar": Vector3(7.3, 0, 1.5), "lado": Vector3(0.95, 0, 0), "saida": "porta"},
+	{"lugar": Vector3(-3.6, 0, 4.7), "lado": Vector3(0, 0, 0.9), "saida": "frente"},
+	{"lugar": Vector3(-1.2, 0, 4.7), "lado": Vector3(0, 0, 0.9), "saida": "frente"},
+]
+const TEMPO_NA_MESA := 5.0
+const CHANCE_MESA := 0.7  # dos atendidos, quantos sentam (se houver mesa livre)
+## Círculos das melhorias fixas da loja (ver Confeitaria.MELHORIAS).
+const CIRCULOS_MELHORIAS := {
+	"vitrine": Vector3(-7.3, 0, 0.9), "receita": Vector3(-7.3, 0, 2.7),
+	"letreiro": Vector3(8.1, 0, 3.0), "mesas": Vector3(5.4, 0, 0.3),
+}
 ## Cliente que espera tanto tempo sem ser atendido vai embora (e libera a fila).
 const PACIENCIA := 45.0
 ## Clientes que vêm sempre (os mascotes dos níveis); os doces da coleção
@@ -89,6 +107,9 @@ var _tempo := 0.0
 var _saindo := false
 var _qualidade_antes := {}
 var _botao_quiz: Button
+var _mesas: Array[Dictionary] = []  # {"no", "moedas", "gorjeta", "ocupada"}
+var _estagio := 1
+var _rotulo_estagio: Label
 var modo_camera := Camera.DE_CIMA
 ## Para onde a câmera olha nas câmeras de perto (radianos no eixo Y; 0 = fundo da cozinha).
 var _giro := 0.0
@@ -103,10 +124,12 @@ var _olhar := Vector3.ZERO
 
 func _ready() -> void:
 	Confeitaria.atualizar()
+	_estagio = Confeitaria.estagio()
 	_criar_ambiente()
-	CenarioCozinha.sala(self, MEIA_LARGURA, MEIO_FUNDO, PORTA_Z)
+	CenarioCozinha.sala(self, MEIA_LARGURA, MEIO_FUNDO, PORTA_Z, _estagio)
+	CenarioCozinha.decorar(self, _estagio, MEIA_LARGURA, MEIO_FUNDO)
 	CenarioCozinha.tapete_saida(self, SAIDA)
-	_paredes_altas = CenarioCozinha.paredes_altas(self, MEIA_LARGURA, MEIO_FUNDO, PORTA_Z, SAIDA.x)
+	_paredes_altas = CenarioCozinha.paredes_altas(self, MEIA_LARGURA, MEIO_FUNDO, PORTA_Z, SAIDA.x, _estagio)
 	for i in Confeitaria.MAQUINAS.size():
 		_criar_maquina(Confeitaria.MAQUINAS[i], MAQUINAS_X[i])
 	CenarioCozinha.balcao(self, BALCAO, LARGURA_BALCAO)
@@ -117,12 +140,20 @@ func _ready() -> void:
 	add_child(_moedas_visiveis)
 	_circulos["carregar"] = CenarioCozinha.circulo(self, CIRCULO_CARREGAR)
 	_circulos["carregar"]["tempo"] = 0.0
+	for id in CIRCULOS_MELHORIAS:
+		var lugar: Vector3 = CIRCULOS_MELHORIAS[id]
+		_circulos[id] = CenarioCozinha.circulo(self, lugar)
+		_circulos[id]["tempo"] = 0.0
+		_circulos[id]["no"].name = "Circulo_" + id
+		CenarioCozinha.estacao_melhoria(self, id, lugar)
+	for i in Confeitaria.mesas():
+		_criar_mesa(i)
 	_criar_jogador()
 	CenarioVila.estilo_desenho(self)
 	_seta = CenarioCozinha.seta(self)
 	# leve para o celular: o que não se mexe vira poucos blocos
 	JuntarMalhas.simplificar(self)
-	JuntarMalhas.juntar(self, ["Maquina_", "Bandeja_", "Moedas", "Circulo", "Seta", "ParedesAltas"])
+	JuntarMalhas.juntar(self, ["Maquina_", "Bandeja_", "Moedas", "Circulo", "Seta", "ParedesAltas", "Gorjeta"])
 	JuntarMalhas.juntar(_paredes_altas, [])
 	jogador.otimizar()
 	_qualidade_antes = CenarioVila.qualidade_3d(get_viewport())
@@ -142,6 +173,9 @@ func _exit_tree() -> void:
 	carregando.clear()
 	Confeitaria.receber(caixa)
 	caixa = 0
+	for mesa in _mesas:
+		Confeitaria.receber_gorjeta(mesa["gorjeta"])  # gorjeta esquecida na mesa vai junto
+		mesa["gorjeta"] = 0
 	Confeitaria.atualizar()
 	Progresso.salvar()
 
@@ -194,14 +228,16 @@ func _process(delta: float) -> void:
 			for m in Confeitaria.MAQUINAS:
 				var feitos: int = Confeitaria.bandeja(m["id"]) - int(antes[m["id"]])
 				if feitos > 0 and _maquinas.has(m["id"]):
-					_acucar_gasto(_maquinas[m["id"]]["no"].global_position, feitos * int(m["acucar"]))
+					_acucar_gasto(_maquinas[m["id"]]["no"].global_position, feitos * Confeitaria.acucar_por_doce(m["id"]))
 		_atualizar_maquinas()
 	_pegar_das_bandejas(delta)
 	_entregar_no_balcao(delta)
 	_recolher_moedas()
+	_recolher_gorjetas()
 	_pisar_nos_circulos(delta)
 	_chegar_clientes(delta)
 	_girar_maquinas(delta)
+	_textos_dos_circulos()
 	_mostrar_dica()
 	if not _saindo and _perto(SAIDA, 0.9):
 		_saindo = true
@@ -272,16 +308,17 @@ func _chegar_clientes(delta: float) -> void:
 	if not Confeitaria.alguma_construida():
 		return
 	_proximo_cliente -= delta
-	var na_fila := clientes.filter(func(c): return c["estado"] != "saindo").size()
+	var na_fila := clientes.filter(_na_fila).size()
 	if _proximo_cliente > 0.0 or na_fila >= FILA.size():
 		return
-	_proximo_cliente = randf_range(INTERVALO_CLIENTES.x, INTERVALO_CLIENTES.y)
+	var intervalo := Confeitaria.intervalo_clientes()  # o letreiro chama mais gente
+	_proximo_cliente = randf_range(intervalo.x, intervalo.y)
 	var feitos: Array = Confeitaria.MAQUINAS.filter(func(m): return Confeitaria.construida(m["id"]))
 	var m: Dictionary = feitos.pick_random()
 	# está com um doce na mão que ninguém da fila pediu: o próximo cliente pede esse
 	# (antes dava para ficar travado com a mão cheia de um doce que ninguém queria)
 	for carregado in carregando:
-		var alguem_quer := clientes.any(func(c): return c["estado"] != "saindo" and c["doce"] == carregado)
+		var alguem_quer := clientes.any(func(c): return _na_fila(c) and c["doce"] == carregado)
 		var maquina: Array = feitos.filter(func(f): return f["doce"] == carregado)
 		if not alguem_quer and not maquina.is_empty():
 			m = maquina[0]
@@ -322,12 +359,16 @@ func _atualizar_balao(cliente: Dictionary) -> void:
 	cliente["balao"].text = "   x%d" % cliente["falta"]
 
 
+func _na_fila(cliente: Dictionary) -> bool:
+	return cliente["estado"] in ["chegando", "esperando"]
+
+
 func _lugar_na_fila(cliente: Dictionary) -> int:
 	var i := 0
 	for outro in clientes:
 		if outro == cliente:
 			return i
-		if outro["estado"] != "saindo":
+		if _na_fila(outro):
 			i += 1
 	return i
 
@@ -335,8 +376,14 @@ func _lugar_na_fila(cliente: Dictionary) -> int:
 func _mover_cliente(cliente: Dictionary, delta: float) -> void:
 	var no: DoceAndante = cliente["no"]
 	var alvo: Vector3
+	var mesa: int = cliente.get("mesa", -1)
 	if cliente["estado"] == "saindo":
-		alvo = Vector3(no.global_position.x, 0, MEIO_FUNDO + 3.0)
+		if mesa >= 0 and MESAS[mesa]["saida"] == "porta":
+			alvo = ENTRADA_CLIENTES + Vector3(1.5, 0, 0)
+		else:
+			alvo = Vector3(no.global_position.x, 0, MEIO_FUNDO + 3.0)
+	elif cliente["estado"] in ["indo_mesa", "comendo"]:
+		alvo = MESAS[mesa]["lugar"] + MESAS[mesa]["lado"]
 	else:
 		alvo = FILA[mini(_lugar_na_fila(cliente), FILA.size() - 1)]
 	var caminho := alvo - no.global_position
@@ -347,12 +394,23 @@ func _mover_cliente(cliente: Dictionary, delta: float) -> void:
 		no.andar(Vector3.ZERO, delta)
 		if cliente["estado"] == "chegando":
 			cliente["estado"] = "esperando"
-		no.olhar_para(no.global_position + Vector3(0, 0, -1))  # de frente para o balcão
+		if cliente["estado"] == "indo_mesa":
+			cliente["estado"] = "comendo"
+			cliente["comendo"] = 0.0
+		if cliente["estado"] == "comendo":
+			no.olhar_para(MESAS[mesa]["lugar"])
+		else:
+			no.olhar_para(no.global_position + Vector3(0, 0, -1))  # de frente para o balcão
+	if cliente["estado"] == "comendo":
+		cliente["comendo"] += delta
+		if cliente["comendo"] >= TEMPO_NA_MESA:
+			_deixar_gorjeta(cliente)
 	if cliente["estado"] == "esperando":
 		cliente["espera"] += delta
 		if cliente["espera"] > PACIENCIA and cliente["falta"] == cliente["total"]:
 			_desistir(cliente)
-	if cliente["estado"] == "saindo" and no.global_position.z > MEIO_FUNDO + 2.5:
+	var foi_embora := no.global_position.z > MEIO_FUNDO + 2.5 or no.global_position.x > ENTRADA_CLIENTES.x + 1.0
+	if cliente["estado"] == "saindo" and foi_embora:
 		clientes.erase(cliente)
 		no.queue_free()
 
@@ -402,6 +460,62 @@ func _pagar(cliente: Dictionary) -> void:
 	cliente["foto"].visible = false
 	cliente["no"].comemorar()
 	Audio.tocar("moeda")
+	# com mesa livre, a maioria senta para comer (e deixa gorjeta na mesa)
+	var livre := -1
+	for i in _mesas.size():
+		if not _mesas[i]["ocupada"]:
+			livre = i
+			break
+	if livre >= 0 and randf() < CHANCE_MESA:
+		_mesas[livre]["ocupada"] = true
+		cliente["mesa"] = livre
+		cliente["estado"] = "indo_mesa"
+
+
+## Acabou de comer: deixa a gorjeta na mesa e vai embora.
+func _deixar_gorjeta(cliente: Dictionary) -> void:
+	var mesa: Dictionary = _mesas[cliente["mesa"]]
+	var gorjeta := Confeitaria.gorjeta_mesa()
+	mesa["gorjeta"] += gorjeta
+	mesa["ocupada"] = false
+	_mostrar_gorjeta(mesa)
+	cliente["estado"] = "saindo"
+	cliente["balao"].text = "OBRIGADO!"
+	cliente["no"].comemorar()
+	Audio.tocar("moeda", 1.3, -4.0)
+
+
+func _mostrar_gorjeta(mesa: Dictionary) -> void:
+	var moedas: Node3D = mesa["moedas"]
+	var quantas := mini(int(mesa["gorjeta"] / 3.0) + (1 if mesa["gorjeta"] > 0 else 0), 18)
+	while moedas.get_child_count() > quantas:
+		moedas.get_child(moedas.get_child_count() - 1).free()
+	while moedas.get_child_count() < quantas:
+		var moeda := CenarioCozinha.moeda(moedas)
+		moeda.position = CenarioCozinha.lugar_da_moeda(moedas.get_child_count() - 1) * Vector3(0.6, 1, 0.6)
+
+
+## Passando perto de uma mesa com gorjeta, pega as moedas.
+func _recolher_gorjetas() -> void:
+	for mesa in _mesas:
+		if mesa["gorjeta"] <= 0 or not _perto(mesa["no"].global_position, 1.7):
+			continue
+		var ganho: int = mesa["gorjeta"]
+		for moeda in mesa["moedas"].get_children():
+			_voar_ate(moeda, moeda.global_position, jogador.global_position + Vector3(0, 1.0, 0), 0.25)
+		mesa["gorjeta"] = 0
+		Confeitaria.receber_gorjeta(ganho)
+		Audio.tocar("caixa")
+		Telas.mostrar_aviso("+%d DE GORJETA" % ganho)
+		_atualizar_tudo()
+
+
+func _criar_mesa(i: int) -> void:
+	var dados := CenarioCozinha.mesa_cliente(self, MESAS[i]["lugar"], _estagio)
+	dados["no"].name = "Mesa_%d" % i
+	dados["gorjeta"] = 0
+	dados["ocupada"] = false
+	_mesas.append(dados)
 
 
 func _recolher_moedas() -> void:
@@ -442,9 +556,9 @@ func _pisar_nos_circulos(delta: float) -> void:
 		var c: Dictionary = _circulos[chave]
 		if not c["no"].visible:
 			continue
-		var custo := Confeitaria.preco_carregar() if chave == "carregar" else Confeitaria.preco(chave)
+		var custo := _custo(chave)
 		var pode: bool = custo >= 0 and Progresso.moedas >= custo \
-			and (chave == "carregar" or Confeitaria.liberada(chave))
+			and (chave == "carregar" or CIRCULOS_MELHORIAS.has(chave) or Confeitaria.liberada(chave))
 		if pode and _perto(c["no"].global_position, 0.8):
 			c["tempo"] += delta
 		else:
@@ -456,10 +570,29 @@ func _pisar_nos_circulos(delta: float) -> void:
 			_comprar(chave)
 
 
+## Preço do círculo (-1 = nada a comprar).
+func _custo(chave: String) -> int:
+	if chave == "carregar":
+		return Confeitaria.preco_carregar()
+	if CIRCULOS_MELHORIAS.has(chave):
+		return Confeitaria.preco_melhoria(chave)
+	return Confeitaria.preco(chave)
+
+
 func _comprar(chave: String) -> void:
+	var estagio_antes := Confeitaria.estagio()
 	if chave == "carregar":
 		if Confeitaria.aumentar_carregar():
 			Telas.mostrar_aviso("AGORA CARREGA %d DOCES!" % Confeitaria.carregar())
+	elif CIRCULOS_MELHORIAS.has(chave):
+		if Confeitaria.comprar_melhoria(chave):
+			var m := Confeitaria.melhoria(chave)
+			Telas.mostrar_aviso("%s NÍVEL %d: %s" % [m["nome"], Confeitaria.nivel_melhoria(chave), m["efeito"]])
+			if chave == "mesas":
+				_criar_mesa(_mesas.size())
+				var no: Node3D = _mesas[-1]["no"]
+				no.scale = Vector3.ONE * 0.5
+				no.create_tween().tween_property(no, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	else:
 		var nova := not Confeitaria.construida(chave)
 		var presente_antes: bool = Progresso.confeitaria["presente"]
@@ -477,6 +610,18 @@ func _comprar(chave: String) -> void:
 	Audio.tocar("construir")
 	jogador.comemorar()
 	_atualizar_tudo()
+	if Confeitaria.estagio() > estagio_antes:
+		_subiu_de_estagio()
+
+
+## A confeitaria subiu de estágio: festa e a loja é montada de novo com a cara nova.
+func _subiu_de_estagio() -> void:
+	Audio.tocar("vitoria")
+	Telas.mostrar_aviso("SUA CONFEITARIA FICOU %s!" % Confeitaria.nome_estagio())
+	await get_tree().create_timer(1.6).timeout
+	if is_inside_tree() and not _saindo:
+		_saindo = true
+		Telas.recarregar()
 
 
 # --- Atualização visual ---------------------------------------------------------------------------
@@ -484,6 +629,8 @@ func _comprar(chave: String) -> void:
 func _atualizar_tudo() -> void:
 	_rotulo_acucar.text = Jogo.formatar(Confeitaria.acucar())
 	_rotulo_moedas.text = Jogo.formatar(Progresso.moedas)
+	var falta := Confeitaria.falta_proximo_estagio()
+	_rotulo_estagio.text = Confeitaria.nome_estagio() + ("" if falta == 0 else "  ·  %d MELHORIAS PARA A PRÓXIMA" % falta)
 	_atualizar_maquinas()
 	_atualizar_bandejas()
 	_atualizar_circulos()
@@ -502,7 +649,7 @@ func _atualizar_maquinas() -> void:
 		var placa: Label3D = dados["placa"]
 		placa.visible = construida
 		if construida:
-			var nivel := "NÍVEL %d/%d" % [Confeitaria.nivel(id), Confeitaria.NIVEL_MAXIMO]
+			var nivel := "NÍVEL %d" % Confeitaria.nivel(id)
 			placa.text = "%s\n%s" % [m["nome"], parada if not parada.is_empty() else nivel]
 			placa.modulate = Color("#FF8A8A") if not parada.is_empty() else Color.WHITE
 
@@ -536,6 +683,10 @@ func _atualizar_circulos() -> void:
 		if chave == "carregar":
 			custo = Confeitaria.preco_carregar()
 			titulo = "CARREGAR MAIS (%d)" % Confeitaria.carregar()
+		elif CIRCULOS_MELHORIAS.has(chave):
+			custo = Confeitaria.preco_melhoria(chave)
+			var melhoria := Confeitaria.melhoria(chave)
+			titulo = "%s %d" % [melhoria["nome"], Confeitaria.nivel_melhoria(chave) + 1]
 		else:
 			custo = Confeitaria.preco(chave)
 			var m := Confeitaria.maquina(chave)
@@ -562,6 +713,14 @@ func _girar_maquinas(delta: float) -> void:
 			_maquinas[id]["gira"].rotation.y += delta * 2.0
 
 
+## Nas câmeras de perto, só o texto dos círculos perto do doce aparece (os
+## outros, grandes e na frente de tudo, tapariam a visão).
+func _textos_dos_circulos() -> void:
+	for chave in _circulos:
+		var c: Dictionary = _circulos[chave]
+		c["texto"].visible = modo_camera == Camera.DE_CIMA or _perto(c["no"].global_position, 4.5)
+
+
 ## Dica do próximo passo (texto no alto e seta em cima do lugar).
 func _mostrar_dica() -> void:
 	var alvo := Vector3.INF
@@ -572,6 +731,12 @@ func _mostrar_dica() -> void:
 	elif caixa > 0 and carregando.is_empty():
 		alvo = CAIXA
 		texto = "PEGUE AS MOEDAS NA MESINHA DO CAIXA"
+	elif carregando.is_empty() and _mesas.any(func(m): return m["gorjeta"] > 0):
+		for mesa in _mesas:
+			if mesa["gorjeta"] > 0:
+				alvo = mesa["no"].global_position
+				break
+		texto = "PEGUE A GORJETA NA MESA"
 	elif not carregando.is_empty() and clientes.any(func(c): return c["estado"] == "esperando" and c["doce"] in carregando):
 		alvo = BALCAO + Vector3(0, 0, -1.0)
 		texto = "ATENDA OS CLIENTES ATRÁS DO BALCÃO"
@@ -585,7 +750,7 @@ func _mostrar_dica() -> void:
 			alvo = CAIXA
 			texto = "PEGUE AS MOEDAS NA MESINHA DO CAIXA"
 		if alvo == Vector3.INF and carregando.is_empty():
-			var tem_acucar := Confeitaria.MAQUINAS.any(func(m): return Confeitaria.construida(m["id"]) and Confeitaria.acucar() >= m["acucar"])
+			var tem_acucar := Confeitaria.MAQUINAS.any(func(m): return Confeitaria.construida(m["id"]) and Confeitaria.acucar() >= Confeitaria.acucar_por_doce(m["id"]))
 			if not tem_acucar:
 				texto = "SEM AÇÚCAR! TOQUE EM GANHAR AÇÚCAR E ESCOLHA UM JOGO"
 	# sem açúcar: o botão do quiz pulsa, chamando para jogar
@@ -779,6 +944,10 @@ func _criar_interface() -> void:
 	voltar.focus_mode = Control.FOCUS_NONE
 	voltar.pressed.connect(Telas.voltar)
 	topo.add_child(voltar)
+	_rotulo_estagio = _etiqueta(topo, Itens.ESTRELA, Color.WHITE)
+	_rotulo_estagio.name = "Estagio"
+	_rotulo_estagio.add_theme_font_size_override("font_size", 22)
+	_rotulo_estagio.get_parent().get_parent().tooltip_text = "Estágio da confeitaria: melhore as máquinas e a loja para ela mudar de cara"
 	var espaco := Control.new()
 	espaco.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	espaco.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -12,7 +12,14 @@ class_name Confeitaria
 ##   leva ao balcão e os clientes pagam em moedas. No painel simples, vende a
 ##   bandeja direto.
 ## - Construir e melhorar custa moedas: cada melhoria deixa a máquina mais
-##   rápida, a bandeja maior e o doce mais valioso.
+##   rápida, a bandeja maior e o doce mais valioso. Os níveis vão até
+##   NIVEL_MAXIMO (depois do 3, por conta: ver _nivel_alto), com o preço subindo.
+## - MELHORIAS fixas da loja (cada uma num círculo da cozinha, preço subindo a
+##   cada nível): VITRINE DE OURO (mais moedas por doce), LIVRO DE RECEITAS
+##   (menos açúcar por doce), LETREIRO (clientes chegam mais rápido) e MESAS
+##   (clientes atendidos sentam e deixam gorjeta na mesa).
+## - ESTÁGIO da confeitaria (1 SIMPLES a 5 DE LUXO): sobe com os níveis das
+##   máquinas e das melhorias, e muda a cara da loja (cozinha e prédio na vila).
 ## - Com o jogo fechado, as máquinas continuam, mas só por até LIMITE_FORA
 ##   segundos (para as moedas não crescerem sem jogar o quiz).
 ##
@@ -37,7 +44,34 @@ const MAQUINAS := [
 		"construir": 300, "acucar": 12, "tempo": [12.0, 9.0, 6.5], "valor": [7, 10, 13],
 		"bandeja": [6, 10, 15], "melhoria": [300, 600]},
 ]
-const NIVEL_MAXIMO := 3
+const NIVEL_MAXIMO := 30
+## Depois do nível 3: cada nível multiplica o tempo por FATOR_TEMPO (até
+## TEMPO_MINIMO do tempo do nível 3), soma 2 doces na bandeja (até BANDEJA_MAXIMA)
+## e ~25% do valor do nível 3; o preço sobe AUMENTO_PRECO a cada nível.
+const FATOR_TEMPO := 0.94
+const TEMPO_MINIMO := 0.4
+const BANDEJA_MAXIMA := 40
+const AUMENTO_PRECO := 1.45
+## Melhorias fixas da loja: preço do 1º nível (sobe PRECO_MELHORIAS a cada nível) e o máximo.
+const MELHORIAS := [
+	{"id": "vitrine", "nome": "VITRINE DE OURO", "efeito": "+12% DE MOEDAS POR DOCE", "preco": 200, "maximo": 20},
+	{"id": "receita", "nome": "LIVRO DE RECEITAS", "efeito": "-10% DE AÇÚCAR POR DOCE", "preco": 250, "maximo": 7},
+	{"id": "letreiro", "nome": "LETREIRO", "efeito": "CLIENTES CHEGAM MAIS RÁPIDO", "preco": 180, "maximo": 10},
+	{"id": "mesas", "nome": "MESA COM GORJETA", "efeito": "+1 MESA: O CLIENTE SENTA E DEIXA GORJETA", "preco": 300, "maximo": 4},
+]
+const PRECO_MELHORIAS := 1.6
+const BONUS_VITRINE := 0.12
+const ECONOMIA_RECEITA := 0.1
+const ACUCAR_MINIMO := 0.3  # o livro de receitas não baixa de 30% do açúcar
+const RITMO_LETREIRO := 0.88  # intervalo entre clientes multiplicado a cada nível
+const INTERVALO_CLIENTES := Vector2(4.0, 7.0)
+## Estágios da confeitaria: pontos = níveis das máquinas + níveis das melhorias
+## (os 3 primeiros batem com os de antes das melhorias: quem já tinha tudo no
+## nível 3 continua ELEGANTE).
+const ESTAGIOS := [
+	{"nome": "SIMPLES", "pontos": 0}, {"nome": "CHARMOSA", "pontos": 3}, {"nome": "ELEGANTE", "pontos": 6},
+	{"nome": "PREMIUM", "pontos": 15}, {"nome": "DE LUXO", "pontos": 28},
+]
 ## Quantos doces o jogador carrega de uma vez, e o preço de cada aumento.
 const CARREGAR := [4, 8, 12]
 const PRECO_CARREGAR := [120, 300]
@@ -52,7 +86,7 @@ const ACUCAR_INICIAL := 100
 static func padrao() -> Dictionary:
 	return {
 		"acucar": ACUCAR_INICIAL, "acucar_ganho": 0, "presente_inicial": true, "maquinas": {}, "carregar_nivel": 0,
-		"atualizado": 0.0, "feitos": 0, "atendidos": 0, "presente": false,
+		"atualizado": 0.0, "feitos": 0, "atendidos": 0, "presente": false, "melhorias": {}, "gorjetas": 0,
 	}
 
 
@@ -89,19 +123,33 @@ static func nivel(id: String) -> int:
 
 
 static func _do_nivel(id: String, chave: String) -> Variant:
-	return maquina(id)[chave][maxi(nivel(id), 1) - 1]
+	return maquina(id)[chave][mini(maxi(nivel(id), 1), 3) - 1]
+
+
+## Quantos níveis acima do 3 (os da tabela) a máquina está.
+static func _nivel_alto(id: String) -> int:
+	return maxi(0, nivel(id) - 3)
 
 
 static func tempo(id: String) -> float:
-	return _do_nivel(id, "tempo")
+	return float(_do_nivel(id, "tempo")) * maxf(TEMPO_MINIMO, pow(FATOR_TEMPO, _nivel_alto(id)))
 
 
+## Moedas por doce (com a vitrine).
 static func valor(id: String) -> int:
-	return _do_nivel(id, "valor")
+	var base: int = _do_nivel(id, "valor")
+	base += _nivel_alto(id) * maxi(1, roundi(base / 4.0))
+	return roundi(base * (1.0 + BONUS_VITRINE * nivel_melhoria("vitrine")))
 
 
 static func capacidade_bandeja(id: String) -> int:
-	return _do_nivel(id, "bandeja")
+	return mini(BANDEJA_MAXIMA, int(_do_nivel(id, "bandeja")) + 2 * _nivel_alto(id))
+
+
+## Açúcar gasto por doce da máquina (com o livro de receitas).
+static func acucar_por_doce(id: String) -> int:
+	var base: int = maquina(id)["acucar"]
+	return maxi(1, roundi(base * maxf(ACUCAR_MINIMO, 1.0 - ECONOMIA_RECEITA * nivel_melhoria("receita"))))
 
 
 ## Doces prontos na bandeja da máquina.
@@ -121,7 +169,12 @@ static func preco(id: String) -> int:
 	var n := nivel(id)
 	if n == 0:
 		return maquina(id)["construir"]
-	return maquina(id)["melhoria"][n - 1] if n < NIVEL_MAXIMO else -1
+	if n >= NIVEL_MAXIMO:
+		return -1
+	var tabela: Array = maquina(id)["melhoria"]
+	if n - 1 < tabela.size():
+		return tabela[n - 1]
+	return snappedi(roundi(float(tabela[tabela.size() - 1]) * pow(AUMENTO_PRECO, n - tabela.size())), 10)
 
 
 static func acucar() -> int:
@@ -143,7 +196,7 @@ static func parada(id: String) -> String:
 		return ""
 	if bandeja(id) >= capacidade_bandeja(id):
 		return "BANDEJA CHEIA"
-	if acucar() < maquina(id)["acucar"]:
+	if acucar() < acucar_por_doce(id):
 		return "SEM AÇÚCAR"
 	return ""
 
@@ -154,6 +207,94 @@ static func maquina_do_doce(doce: String) -> String:
 		if m["doce"] == doce:
 			return m["id"]
 	return ""
+
+
+# --- Melhorias fixas e estágio --------------------------------------------------------
+
+static func melhoria(id: String) -> Dictionary:
+	for m in MELHORIAS:
+		if m["id"] == id:
+			return m
+	return {}
+
+
+static func nivel_melhoria(id: String) -> int:
+	return int(_estado().get("melhorias", {}).get(id, 0))
+
+
+## Preço do próximo nível da melhoria (-1 = no máximo).
+static func preco_melhoria(id: String) -> int:
+	var m := melhoria(id)
+	var n := nivel_melhoria(id)
+	if m.is_empty() or n >= int(m["maximo"]):
+		return -1
+	return snappedi(roundi(float(m["preco"]) * pow(PRECO_MELHORIAS, n)), 10)
+
+
+static func comprar_melhoria(id: String) -> bool:
+	var custo := preco_melhoria(id)
+	if custo < 0 or Progresso.moedas < custo:
+		return false
+	atualizar()
+	var e := _estado()
+	if not e.has("melhorias"):
+		e["melhorias"] = {}
+	e["melhorias"][id] = nivel_melhoria(id) + 1
+	Progresso.gastar_moedas(custo)  # também salva
+	return true
+
+
+## Segundos entre um cliente e outro (com o letreiro).
+static func intervalo_clientes() -> Vector2:
+	return INTERVALO_CLIENTES * pow(RITMO_LETREIRO, nivel_melhoria("letreiro"))
+
+
+static func mesas() -> int:
+	return nivel_melhoria("mesas")
+
+
+## Gorjeta que um cliente deixa na mesa (cresce com o estágio e a vitrine).
+static func gorjeta_mesa() -> int:
+	return roundi((3 + 2 * estagio()) * (1.0 + BONUS_VITRINE * nivel_melhoria("vitrine")))
+
+
+static func pontos_estagio() -> int:
+	var pontos := 0
+	for m in MAQUINAS:
+		pontos += nivel(m["id"])
+	for m in MELHORIAS:
+		pontos += nivel_melhoria(m["id"])
+	return pontos
+
+
+## Estágio da confeitaria (1 a ESTAGIOS.size()).
+static func estagio() -> int:
+	var pontos := pontos_estagio()
+	var atual := 1
+	for i in ESTAGIOS.size():
+		if pontos >= int(ESTAGIOS[i]["pontos"]):
+			atual = i + 1
+	return atual
+
+
+static func nome_estagio(n := -1) -> String:
+	return ESTAGIOS[clampi(n if n > 0 else estagio(), 1, ESTAGIOS.size()) - 1]["nome"]
+
+
+## Pontos que faltam para o próximo estágio (0 = já no último).
+static func falta_proximo_estagio() -> int:
+	var n := estagio()
+	if n >= ESTAGIOS.size():
+		return 0
+	return int(ESTAGIOS[n]["pontos"]) - pontos_estagio()
+
+
+## Gorjeta deixada numa mesa: vai direto para as moedas quando o jogador pega.
+static func receber_gorjeta(moedas: int) -> void:
+	if moedas <= 0:
+		return
+	_estado()["gorjetas"] = int(_estado().get("gorjetas", 0)) + moedas
+	Progresso.ganhar_moedas(moedas)
 
 
 # --- Ações -------------------------------------------------------------------
@@ -266,11 +407,12 @@ static func atualizar(agora := -1.0) -> int:
 		var t := tempo(id)
 		dados["progresso"] = float(dados["progresso"]) + passou
 		while float(dados["progresso"]) >= t:
-			if bandeja(id) >= capacidade_bandeja(id) or int(e["acucar"]) < m["acucar"]:
+			var gasto := acucar_por_doce(id)
+			if bandeja(id) >= capacidade_bandeja(id) or int(e["acucar"]) < gasto:
 				dados["progresso"] = t  # parada, com o próximo doce "quase pronto"
 				break
 			dados["progresso"] = float(dados["progresso"]) - t
-			e["acucar"] = int(e["acucar"]) - m["acucar"]
+			e["acucar"] = int(e["acucar"]) - gasto
 			dados["bandeja"] = bandeja(id) + 1
 			e["feitos"] = int(e["feitos"]) + 1
 			prontos += 1

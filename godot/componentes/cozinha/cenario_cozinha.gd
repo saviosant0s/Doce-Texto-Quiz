@@ -44,12 +44,29 @@ static func rotulo(pai: Node3D, texto: String, posicao: Vector3, tamanho := 64, 
 
 # --- Sala --------------------------------------------------------------------------
 
+## Cor do papel de parede, do piso, do rodapé e o nome no letreiro em cada
+## estágio da confeitaria (Confeitaria.ESTAGIOS: SIMPLES a DE LUXO).
+const VISUAL_ESTAGIOS := [
+	{"parede": "#CFF0E0", "piso": "#FFE9F1", "rodape": "#7E57B1", "letreiro": "MINHA CONFEITARIA", "cor_letreiro": "#7E57B1"},
+	{"parede": "#FFE3EE", "piso": "#FFE9F1", "rodape": "#7E57B1", "letreiro": "MINHA CONFEITARIA", "cor_letreiro": "#C2417A"},
+	{"parede": "#F3E6FF", "piso": "#F7F0FF", "rodape": "#5E3D8E", "letreiro": "CONFEITARIA ELEGANTE", "cor_letreiro": "#5E3D8E"},
+	{"parede": "#FFF0F6", "piso": "#FFFFFF", "rodape": "#C9932E", "letreiro": "CONFEITARIA PREMIUM", "cor_letreiro": "#B8862A"},
+	{"parede": "#FFF4D6", "piso": "#FFF8EC", "rodape": "#C9932E", "letreiro": "CONFEITARIA DE LUXO", "cor_letreiro": "#B8862A"},
+]
+
+
+static func visual(estagio: int) -> Dictionary:
+	return VISUAL_ESTAGIOS[clampi(estagio, 1, VISUAL_ESTAGIOS.size()) - 1]
+
+
 ## Sala da confeitaria: x de -`meia_largura` a +`meia_largura`, z de
 ## -`meio_fundo` (parede do fundo) a +`meio_fundo` (aberta para a câmera).
 ## A parede da direita tem a porta dos clientes (z entre `porta_z` ± 1).
-static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: float) -> void:
+## As cores e o letreiro mudam com o `estagio` da confeitaria.
+static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: float, estagio := 1) -> void:
+	var aparencia := visual(estagio)
 	# piso de mármore (textura real), levemente rosado
-	var piso := Texturas.real("piso_cozinha", "#FFE9F1", 0.08)
+	var piso := Texturas.real("piso_cozinha", aparencia["piso"], 0.08)
 	var plano := PlaneMesh.new()
 	plano.size = Vector2(meia_largura * 2 + 1, meio_fundo * 2 + 1)
 	var chao := MeshInstance3D.new()
@@ -60,8 +77,8 @@ static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: f
 	_parede(pai, Vector3(meia_largura * 4, 1, meio_fundo * 4), Vector3(0, -0.5, 0))
 	# papel de parede listrado, rodapé e faixa no alto
 	var altura := 4.0
-	var papel := Texturas.real("reboco", "#CFF0E0", 0.5)
-	var rodape := Texturas.real("madeira_pintada", "#7E57B1", 1.2)
+	var papel := Texturas.real("reboco", aparencia["parede"], 0.5)
+	var rodape := Texturas.real("metal", aparencia["rodape"], 1.2, 0.8) if estagio >= 4 else Texturas.real("madeira_pintada", aparencia["rodape"], 1.2)
 	Pecas3D.caixa(pai, Vector3(meia_largura * 2 + 0.6, altura, 0.3), Vector3(0, altura / 2, -meio_fundo - 0.15), papel)
 	Pecas3D.caixa(pai, Vector3(meia_largura * 2 + 0.6, 0.35, 0.36), Vector3(0, 0.17, -meio_fundo - 0.1), rodape)
 	_parede(pai, Vector3(meia_largura * 2 + 1, altura, 0.4), Vector3(0, altura / 2, -meio_fundo - 0.2))
@@ -101,11 +118,12 @@ static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: f
 			Pecas3D.cilindro(pai, 0.19, 0.19, 0.08, pote + Vector3(0, altura_pote - 0.22, 0), _m("#FFFFFF", 0.4))
 	# letreiro no alto da parede do fundo
 	var placa := Label3D.new()
-	placa.text = "MINHA CONFEITARIA"
+	placa.name = "Letreiro"
+	placa.text = aparencia["letreiro"]
 	placa.font = FONTE
 	placa.font_size = 180
 	placa.pixel_size = 0.006
-	placa.modulate = Color("#7E57B1")
+	placa.modulate = Color(aparencia["cor_letreiro"])
 	placa.outline_size = 0
 	placa.position = Vector3(0, 3.55, -meio_fundo + 0.02)
 	pai.add_child(placa)
@@ -113,11 +131,12 @@ static func sala(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: f
 
 ## Paredes altas (frente e o alto dos lados), só para as câmeras de perto: na
 ## câmera de cima elas tapariam a visão, então a cozinha aparece aberta.
-static func paredes_altas(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: float, saida_x: float) -> Node3D:
+static func paredes_altas(pai: Node3D, meia_largura: float, meio_fundo: float, porta_z: float, saida_x: float,
+		estagio := 1) -> Node3D:
 	var no := Node3D.new()
 	no.name = "ParedesAltas"
 	pai.add_child(no)
-	var papel := Texturas.real("reboco", "#CFF0E0", 0.5)
+	var papel := Texturas.real("reboco", visual(estagio)["parede"], 0.5)
 	var roxo := Texturas.real("madeira_pintada", "#7E57B1", 1.2)
 	var altura := 4.0
 	# frente, com a porta de saída em cima do tapete SAIR
@@ -138,7 +157,150 @@ static func paredes_altas(pai: Node3D, meia_largura: float, meio_fundo: float, p
 		Pecas3D.caixa(no, Vector3(0.3, altura - 1.3, meio_fundo * 2), Vector3(x, 1.3 + (altura - 1.3) / 2, 0), papel)
 	# teto branquinho
 	Pecas3D.caixa(no, Vector3(meia_largura * 2 + 0.6, 0.1, meio_fundo * 2 + 0.6), Vector3(0, altura, 0), _m("#FFF6EC", 0.9))
+	# lustres pendurados (só nas câmeras de perto: de cima taparia a visão)
+	if estagio >= 3:
+		var dourado := Texturas.real("metal", "#E6C35A", 1.5, 0.9)
+		var cristal := _m("#FFFFFF", 0.05)
+		cristal.emission_enabled = true
+		cristal.emission = Color("#FFF2C8")
+		cristal.emission_energy_multiplier = 0.8 if estagio >= 5 else 0.4
+		for x in [-5.0, 0.0, 5.0]:
+			var topo := Vector3(x, altura, 0.5)
+			Pecas3D.cano(no, topo, topo - Vector3(0, 0.6, 0), 0.03, dourado)
+			Pecas3D.rosquinha(no, 0.45, 0.55, topo - Vector3(0, 0.7, 0), dourado)
+			for k in 6:
+				var a := k * TAU / 6.0
+				Pecas3D.esfera(no, 0.1, topo - Vector3(-cos(a) * 0.5, 0.82, -sin(a) * 0.5), cristal)
+			Pecas3D.esfera(no, 0.18, topo - Vector3(0, 0.95, 0), cristal)
 	return no
+
+
+## Enfeites que aparecem com o estágio da confeitaria (vasos, bandeirinhas,
+## quadros, tapete vermelho, colunas douradas, fonte de chocolate...).
+static func decorar(pai: Node3D, estagio: int, meia_largura: float, meio_fundo: float) -> void:
+	var no := Node3D.new()
+	no.name = "Decoracao"
+	pai.add_child(no)
+	if estagio >= 2:
+		# vasos de planta nos cantos do fundo e bandeirinhas no alto
+		for x in [-meia_largura + 0.6, meia_largura - 0.6]:
+			if x < 0.0 or estagio < 5:  # no DE LUXO, a fonte de chocolate fica nesse canto
+				_vaso(no, Vector3(x, 0, -meio_fundo + 0.6))
+		_vaso(no, Vector3(-meia_largura + 0.6, 0, meio_fundo - 2.6))
+		var cores := ["#FF6FAE", "#6FD3FF", "#FFD23F", "#7BE07B", "#B07CFF"]
+		var x := -meia_largura + 0.6
+		var k := 0
+		while x < meia_largura - 0.6:
+			var prisma := PrismMesh.new()
+			prisma.size = Vector3(0.5, 0.55, 0.04)
+			var bandeira := MeshInstance3D.new()
+			bandeira.mesh = prisma
+			bandeira.material_override = _m(cores[k % cores.size()], 0.6)
+			bandeira.position = Vector3(x, 3.75 - 0.08 * sin(k * 0.9), -meio_fundo + 0.05)
+			bandeira.rotation_degrees = Vector3(0, 0, 180)
+			no.add_child(bandeira)
+			x += 0.7
+			k += 1
+	if estagio >= 3:
+		# quadros de doces na parede do fundo (entre as prateleiras)
+		for qx in [-4.5, 4.5]:
+			Pecas3D.caixa(no, Vector3(1.3, 1.0, 0.08), Vector3(qx, 3.1, -meio_fundo + 0.05), Texturas.real("metal", "#E6C35A", 1.5, 0.9))
+			Pecas3D.caixa(no, Vector3(1.1, 0.8, 0.06), Vector3(qx, 3.1, -meio_fundo + 0.09), _m("#FFE3EE", 0.6))
+			var doce := mini_doce(no, "cupcake" if qx < 0 else "maca")
+			doce.position = Vector3(qx, 2.88, -meio_fundo + 0.16)
+			doce.scale = Vector3.ONE * 2.2
+	if estagio >= 4:
+		# tapete vermelho da porta dos clientes até o balcão, com borda dourada
+		Pecas3D.caixa(no, Vector3(9.6, 0.02, 1.3), Vector3(5.2, 0.012, 3.8), _m("#B31B34", 0.8))
+		Pecas3D.caixa(no, Vector3(9.8, 0.015, 1.5), Vector3(5.2, 0.006, 3.8), _m("#E6C35A", 0.3, 0.7))
+	if estagio >= 5:
+		# colunas douradas na parede do fundo e a fonte de chocolate
+		var dourado := Texturas.real("metal", "#E6C35A", 1.5, 0.9)
+		for cx in [-8.2, -2.75, 2.75, 8.2]:
+			Pecas3D.cilindro(no, 0.22, 0.26, 4.0, Vector3(cx, 2.0, -meio_fundo + 0.35), dourado)
+			Pecas3D.caixa(no, Vector3(0.7, 0.2, 0.7), Vector3(cx, 3.95, -meio_fundo + 0.35), dourado)
+		var fonte := Vector3(meia_largura - 1.0, 0, -meio_fundo + 1.3)
+		Pecas3D.cilindro(no, 0.7, 0.8, 0.8, fonte + Vector3(0, 0.4, 0), _m("#FFFFFF", 0.4))
+		var chocolate := _m("#5A2E17", 0.2)
+		for nivel in 3:
+			var r := 0.6 - nivel * 0.17
+			Pecas3D.cilindro(no, r, r, 0.12, fonte + Vector3(0, 0.95 + nivel * 0.35, 0), chocolate)
+			Pecas3D.cilindro(no, 0.05, 0.05, 0.35, fonte + Vector3(0, 1.1 + nivel * 0.35, 0), dourado)
+		Pecas3D.esfera(no, 0.12, fonte + Vector3(0, 2.05, 0), dourado)
+		_poste(no, 0.8, 1.0, fonte)
+
+
+static func _vaso(pai: Node3D, p: Vector3) -> void:
+	Pecas3D.cilindro(pai, 0.35, 0.28, 0.6, p + Vector3(0, 0.3, 0), Texturas.real("madeira_pintada", "#FFFFFF", 1.2))
+	var folha := _m("#3E9B4A", 0.7)
+	Pecas3D.esfera(pai, 0.45, p + Vector3(0, 0.95, 0), folha, Vector3(1, 1.2, 1))
+	Pecas3D.esfera(pai, 0.3, p + Vector3(0.25, 1.35, 0.1), folha)
+	for k in 3:
+		Pecas3D.esfera(pai, 0.08, p + Vector3(cos(k * 2.1) * 0.35, 1.2, sin(k * 2.1) * 0.35), _m(["#FF6FAE", "#FFD23F", "#FFFFFF"][k], 0.4))
+	_poste(pai, 0.4, 1.0, p)
+
+
+## Mesa redonda para os clientes, com duas cadeiras (topo em y = 0.8).
+## Retorna {"no", "moedas": Node3D onde ficam as gorjetas}.
+static func mesa_cliente(pai: Node3D, posicao: Vector3, estagio := 1) -> Dictionary:
+	var no := Node3D.new()
+	no.name = "Mesa"
+	no.position = posicao
+	pai.add_child(no)
+	var tampo := _m("#FFFFFF", 0.3) if estagio < 4 else Texturas.real("metal", "#E6C35A", 1.5, 0.8)
+	Pecas3D.cilindro(no, 0.08, 0.1, 0.78, Vector3(0, 0.39, 0), Texturas.real("metal", "#6E4AA8", 1.5, 0.5))
+	Pecas3D.cilindro(no, 0.6, 0.6, 0.06, Vector3(0, 0.8, 0), tampo)
+	Pecas3D.cilindro(no, 0.62, 0.62, 0.02, Vector3(0, 0.84, 0), _m("#FFD1E3" if estagio < 3 else "#F3E6FF", 0.6))
+	for lado in [-1, 1]:
+		var cadeira := Vector3(lado * 0.95, 0, 0)
+		Pecas3D.cilindro(no, 0.26, 0.26, 0.08, cadeira + Vector3(0, 0.48, 0), _m("#FF8FB8", 0.5))
+		Pecas3D.cilindro(no, 0.04, 0.04, 0.46, cadeira + Vector3(0, 0.23, 0), _m("#DDDDDD", 0.4, 0.5))
+		Pecas3D.caixa(no, Vector3(0.08, 0.55, 0.5), cadeira + Vector3(lado * 0.24, 0.78, 0), _m("#FF8FB8", 0.5))
+	Pecas3D.cilindro(no, 0.05, 0.1, 0.25, Vector3(0.2, 0.96, 0.15), _m("#FFFFFF", 0.2))  # vasinho com flor
+	Pecas3D.esfera(no, 0.07, Vector3(0.2, 1.12, 0.15), _m("#FF6FAE", 0.4))
+	_poste(no, 0.65, 0.85, Vector3.ZERO)
+	var moedas := Node3D.new()
+	moedas.name = "Gorjeta"
+	moedas.position = Vector3(-0.15, -0.05, -0.1)
+	no.add_child(moedas)
+	return {"no": no, "moedas": moedas}
+
+
+## O que fica ao lado do círculo de cada melhoria fixa da loja: a vitrine de
+## ouro (com doces), o livro de receitas num pedestal e o letreiro luminoso.
+static func estacao_melhoria(pai: Node3D, id: String, posicao: Vector3) -> void:
+	var no := Node3D.new()
+	no.name = "Estacao_" + id
+	no.position = posicao
+	pai.add_child(no)
+	match id:
+		"vitrine":
+			var dourado := Texturas.real("metal", "#E6C35A", 1.5, 0.9)
+			Pecas3D.caixa(no, Vector3(0.9, 0.7, 0.7), Vector3(-0.85, 0.35, 0), dourado)
+			var vidro := _m("#CFEFFF", 0.05)
+			vidro.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			vidro.albedo_color.a = 0.35
+			Pecas3D.caixa(no, Vector3(0.85, 0.55, 0.65), Vector3(-0.85, 0.98, 0), vidro)
+			for k in 3:
+				var doce := mini_doce(no, ["brigadeiro", "cupcake", "maca"][k])
+				doce.position = Vector3(-1.1 + k * 0.25, 0.72, 0)
+			_parede(no, Vector3(0.9, 1.3, 0.7), Vector3(-0.85, 0.65, 0))
+		"receita":
+			Pecas3D.cilindro(no, 0.12, 0.18, 1.0, Vector3(-0.85, 0.5, 0), Texturas.real("madeira", "#FFFFFF", 0.8))
+			Pecas3D.caixa(no, Vector3(0.6, 0.06, 0.45), Vector3(-0.85, 1.03, 0), _m("#B31B34", 0.6), Vector3(-25, 90, 0))
+			Pecas3D.caixa(no, Vector3(0.55, 0.03, 0.4), Vector3(-0.85, 1.07, 0), _m("#FFF6E8", 0.8), Vector3(-25, 90, 0))
+			_poste(no, 0.25, 1.1, Vector3(-0.85, 0, 0))
+		"letreiro":
+			Pecas3D.cilindro(no, 0.06, 0.06, 2.4, Vector3(0.9, 1.2, 0), _m("#DDDDDD", 0.3, 0.6))
+			var luz := _m("#FF6FAE", 0.3)
+			luz.emission_enabled = true
+			luz.emission = Color("#FF6FAE")
+			luz.emission_energy_multiplier = 0.6
+			Pecas3D.caixa(no, Vector3(0.12, 0.8, 1.4), Vector3(0.9, 2.5, 0), luz)
+			var texto := rotulo(no, "ABERTO", Vector3(0.82, 2.5, 0), 70, Color.WHITE)
+			texto.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+			texto.rotation_degrees = Vector3(0, -90, 0)
+			_poste(no, 0.15, 2.4, Vector3(0.9, 0, 0))
 
 
 ## Tapete na frente, onde o jogador sai de volta para a vila.

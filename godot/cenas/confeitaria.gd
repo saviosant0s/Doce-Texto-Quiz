@@ -16,6 +16,7 @@ const INTERVALO := 0.2  # segundos entre uma conta e outra das máquinas
 var _rotulo_acucar: Label
 var _rotulo_moedas: Label
 var _cartoes := {}  # id da máquina -> {cartao, imagem, barra, ...}
+var _melhorias := {}  # id da melhoria -> Button
 var _relogio := 0.0
 
 
@@ -166,14 +167,18 @@ func _criar_cartao(m: Dictionary) -> PanelContainer:
 	coluna.add_child(nome)
 	var estrelas := HBoxContainer.new()
 	estrelas.alignment = BoxContainer.ALIGNMENT_CENTER
-	estrelas.add_theme_constant_override("separation", 2)
-	for i in Confeitaria.NIVEL_MAXIMO:
-		var estrela := TextureRect.new()
-		estrela.texture = ICONE_ESTRELA
-		estrela.custom_minimum_size = Vector2(24, 24)
-		estrela.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		estrela.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		estrelas.add_child(estrela)
+	estrelas.add_theme_constant_override("separation", 6)
+	var estrela := TextureRect.new()
+	estrela.texture = ICONE_ESTRELA
+	estrela.custom_minimum_size = Vector2(24, 24)
+	estrela.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	estrela.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	estrelas.add_child(estrela)
+	var nivel := Label.new()
+	nivel.name = "Nivel"
+	nivel.theme_type_variation = &"Subtitulo"
+	nivel.add_theme_font_size_override("font_size", 22)
+	estrelas.add_child(nivel)
 	coluna.add_child(estrelas)
 	var imagem := TextureRect.new()
 	imagem.name = "Imagem"
@@ -222,10 +227,21 @@ func _botao_acao(nome: String, variacao := &"") -> Button:
 	return botao
 
 
-## Parte de baixo: dica de como ganhar açúcar e o aumento do "carregar".
+## Parte de baixo: as melhorias fixas da loja e a dica de como ganhar açúcar.
 func _criar_baixo() -> HBoxContainer:
 	var baixo := HBoxContainer.new()
 	baixo.add_theme_constant_override("separation", 16)
+	for m in Confeitaria.MELHORIAS:
+		if m["id"] in ["mesas", "letreiro"]:
+			continue  # mesas e letreiro são da cozinha 3D (com os clientes)
+		var botao := _botao_acao("Melhoria_" + str(m["id"]), &"BotaoRoxo")
+		botao.add_theme_font_size_override("font_size", 18)
+		botao.custom_minimum_size = Vector2(230, 64)
+		botao.size_flags_horizontal = Control.SIZE_FILL
+		botao.tooltip_text = m["efeito"]
+		botao.pressed.connect(_comprar_melhoria.bind(m["id"]))
+		baixo.add_child(botao)
+		_melhorias[m["id"]] = botao
 	var painel := PanelContainer.new()
 	painel.theme_type_variation = &"PainelEscuro"
 	painel.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -246,14 +262,21 @@ func _atualizar_tudo() -> void:
 	_rotulo_moedas.text = Jogo.formatar(Progresso.moedas)
 	for m in Confeitaria.MAQUINAS:
 		_atualizar_cartao(m)
+	for id in _melhorias:
+		var botao: Button = _melhorias[id]
+		var m := Confeitaria.melhoria(id)
+		var preco := Confeitaria.preco_melhoria(id)
+		var nivel := Confeitaria.nivel_melhoria(id)
+		botao.text = "%s %d\n%s" % [m["nome"], nivel, "NO MÁXIMO" if preco < 0 else Jogo.formatar(preco) + " MOEDAS"]
+		botao.disabled = preco < 0 or Progresso.moedas < preco
 
 
 func _atualizar_cartao(m: Dictionary) -> void:
 	var id: String = m["id"]
 	var c: Dictionary = _cartoes[id]
 	var nivel := Confeitaria.nivel(id)
-	for i in c["estrelas"].get_child_count():
-		c["estrelas"].get_child(i).modulate = Color.WHITE if i < nivel else Itens.ESTRELA_APAGADA
+	c["estrelas"].get_node("Nivel").text = "NÍVEL %d" % nivel if nivel > 0 else "NOVA"
+	c["estrelas"].get_child(0).modulate = Color.WHITE if nivel > 0 else Itens.ESTRELA_APAGADA
 	var imagem: TextureRect = c["imagem"]
 	var vender: Button = c["vender"]
 	var principal: Button = c["principal"]
@@ -273,7 +296,7 @@ func _atualizar_cartao(m: Dictionary) -> void:
 	barra.visible = Confeitaria.construida(id)
 	if not Confeitaria.construida(id):
 		imagem.modulate = Color(1, 1, 1, 0.55)
-		situacao.text = "%d DE AÇÚCAR POR DOCE" % m["acucar"]
+		situacao.text = "%d DE AÇÚCAR POR DOCE" % Confeitaria.acucar_por_doce(id)
 		principal.text = "CONSTRUIR GRÁTIS" if m["construir"] == 0 else "CONSTRUIR · %s" % Jogo.formatar(m["construir"])
 		principal.disabled = Progresso.moedas < m["construir"]
 		return
@@ -284,7 +307,7 @@ func _atualizar_cartao(m: Dictionary) -> void:
 	elif not parada.is_empty():
 		situacao.text = "BANDEJA CHEIA: VENDA"
 	else:
-		situacao.text = "1 A CADA %ss · %d DE AÇÚCAR" % [String.num(Confeitaria.tempo(id), 1).trim_suffix(".0"), m["acucar"]]
+		situacao.text = "1 A CADA %ss · %d DE AÇÚCAR" % [String.num(Confeitaria.tempo(id), 1).trim_suffix(".0"), Confeitaria.acucar_por_doce(id)]
 	situacao.add_theme_color_override("font_color", Cores.VERMELHO if not parada.is_empty() else Cores.ROXO)
 	var quantos := Confeitaria.bandeja(id)
 	vender.text = "VENDER %d/%d · +%d" % [quantos, Confeitaria.capacidade_bandeja(id), quantos * Confeitaria.valor(id)]
@@ -307,6 +330,13 @@ func _acao_principal(m: Dictionary) -> void:
 		Audio.tocar("construir")
 		Telas.mostrar_aviso(("%s CONSTRUÍDA!" % m["nome"]) if nova else ("%s: NÍVEL %d!" % [m["nome"], Confeitaria.nivel(id)]))
 		Animacoes.pular(_cartoes[id]["imagem"], 18.0, 0.0)
+	_atualizar_tudo()
+
+
+func _comprar_melhoria(id: String) -> void:
+	if Confeitaria.comprar_melhoria(id):
+		Audio.tocar("construir")
+		Telas.mostrar_aviso("%s: NÍVEL %d!" % [Confeitaria.melhoria(id)["nome"], Confeitaria.nivel_melhoria(id)])
 	_atualizar_tudo()
 
 
