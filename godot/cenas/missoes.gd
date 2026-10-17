@@ -7,6 +7,16 @@ const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
 const ICONE_MOEDA := Itens.MOEDA
 const ICONE_ACUCAR := Itens.ACUCAR
 const ICONE_CERTO := preload("res://assets/icones/certo.svg")
+const ICONE_IR := preload("res://assets/icones/avancar.svg")
+const ICONE_XP := Itens.XP
+## Ícone do jogo de cada tipo de missão.
+const ICONES_TIPO := {
+	"acertos": preload("res://assets/icones/interrogacao.svg"), "partidas": preload("res://assets/icones/interrogacao.svg"),
+	"estrelas": preload("res://assets/icones/estrela.svg"), "lab_fases": preload("res://assets/icones/laboratorio.svg"),
+	"clientes": preload("res://assets/icones/confeitaria.svg"), "match": preload("res://assets/icones/controle.svg"),
+	"baus": Itens.BAU_PRATA, "torre": preload("res://assets/icones/torre.svg"),
+	"fabrica": preload("res://assets/icones/fabrica.svg"), "corrida": preload("res://assets/icones/bandeira.svg"),
+}
 const TEXTURAS_BAU := {
 	"doce": Itens.BAU_DOCE,
 	"prata": Itens.BAU_PRATA,
@@ -25,7 +35,7 @@ func _ready() -> void:
 	_montar()
 	_atualizar()
 	Telas.dica_primeira_vez("missoes", "MISSÕES",
-		"Todo dia tem 3 missões novas e toda semana mais 3. Cumpriu? Toque em RESGATAR. Completando as 3, você ganha um baú! E volte todo dia: o prêmio por entrar vai crescendo.")
+		"3 missões por dia e 3 por semana. IR leva ao jogo; cumpriu, toque em PEGAR. As 3 dão um baú!")
 
 
 func ao_voltar() -> void:
@@ -116,7 +126,7 @@ func _montar() -> void:
 	var titulo_entrada := Label.new()
 	titulo_entrada.theme_type_variation = &"SubtituloClaro"
 	titulo_entrada.add_theme_font_size_override("font_size", 22)
-	titulo_entrada.text = "PRÊMIO POR ENTRAR · VOLTE TODO DIA PARA O PRÊMIO CRESCER"
+	titulo_entrada.text = "PRÊMIO POR ENTRAR (VOLTE TODO DIA)"
 	dentro.add_child(titulo_entrada)
 	_entrada = HBoxContainer.new()
 	_entrada.name = "Entrada"
@@ -202,33 +212,53 @@ func _montar_lista(periodo: String) -> void:
 		var linha := HBoxContainer.new()
 		linha.add_theme_constant_override("separation", 10)
 		lista.add_child(linha)
+		var icone := TextureRect.new()
+		icone.texture = ICONES_TIPO.get(m["tipo"], ICONE_MOEDA)
+		icone.custom_minimum_size = Vector2(52, 52)
+		icone.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icone.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icone.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		linha.add_child(icone)
 		var textos := VBoxContainer.new()
 		textos.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		textos.add_theme_constant_override("separation", 2)
+		textos.add_theme_constant_override("separation", 4)
 		linha.add_child(textos)
 		var nome := Label.new()
-		nome.theme_type_variation = &"TextoClaro"
-		nome.add_theme_font_size_override("font_size", 18)
-		nome.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		nome.text = Missoes.texto(m)
+		nome.theme_type_variation = &"TituloClaro"
+		nome.add_theme_font_size_override("font_size", 22)
+		nome.text = Missoes.texto_curto(m)
+		nome.tooltip_text = Missoes.texto(m)
 		textos.add_child(nome)
+		# barra com o número dentro e o prêmio em ícones
+		var baixo := HBoxContainer.new()
+		baixo.add_theme_constant_override("separation", 8)
+		textos.add_child(baixo)
 		var barra := ProgressBar.new()
 		barra.theme_type_variation = &"BarraClara"
 		barra.show_percentage = false
-		barra.custom_minimum_size = Vector2(0, 14)
+		barra.custom_minimum_size = Vector2(0, 24)
+		barra.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		barra.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		barra.max_value = int(m["meta"])
-		barra.value = int(m["progresso"])
-		textos.add_child(barra)
-		var detalhe := Label.new()
-		detalhe.theme_type_variation = &"TextoClaro"
-		detalhe.add_theme_font_size_override("font_size", 15)
-		detalhe.text = "%d/%d · %d MOEDAS + %d XP" % [int(m["progresso"]), int(m["meta"]), premio["moedas"], premio["xp"]]
-		textos.add_child(detalhe)
+		barra.value = mini(int(m["progresso"]), int(m["meta"]))
+		baixo.add_child(barra)
+		var numero := Label.new()
+		numero.theme_type_variation = &"TituloClaro"
+		numero.add_theme_font_size_override("font_size", 17)
+		numero.add_theme_color_override("font_outline_color", Color("#2E1D4A"))
+		numero.add_theme_constant_override("outline_size", 6)
+		numero.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		numero.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		numero.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		numero.text = "%d/%d" % [mini(int(m["progresso"]), int(m["meta"])), int(m["meta"])]
+		barra.add_child(numero)
+		baixo.add_child(Itens.ficha(ICONE_MOEDA, str(premio["moedas"]), 20))
+		baixo.add_child(Itens.ficha(ICONE_XP, str(premio["xp"]), 20))
 		var botao := Button.new()
 		botao.name = "Resgatar_%s_%d" % [periodo, i]
-		botao.custom_minimum_size = Vector2(150, 60)
+		botao.custom_minimum_size = Vector2(120, 60)
 		botao.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		botao.add_theme_font_size_override("font_size", 20)
+		botao.add_theme_font_size_override("font_size", 22)
 		botao.focus_mode = Control.FOCUS_NONE
 		if m["resgatada"]:
 			botao.text = "FEITO!"
@@ -237,15 +267,20 @@ func _montar_lista(periodo: String) -> void:
 			botao.theme_type_variation = &"BotaoRoxo"
 			botao.disabled = true
 		elif Missoes.cumprida(m):
-			botao.text = "RESGATAR"
+			botao.text = "PEGAR!"
 			botao.theme_type_variation = &"BotaoPremio"
 			botao.pressed.connect(resgatar.bind(periodo, i))
 			if Telas.animacoes_continuas:
 				_pulsar(botao)
 		else:
-			botao.text = "FAZENDO"
-			botao.theme_type_variation = &"BotaoRoxo"
-			botao.disabled = true
+			# ainda fazendo: IR leva direto para o jogo da missão
+			botao.text = "IR"
+			botao.icon = ICONE_IR
+			botao.add_theme_constant_override("icon_max_width", 22)
+			botao.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			botao.theme_type_variation = &"BotaoAzul"
+			botao.tooltip_text = "Ir jogar: " + Missoes.texto(m)
+			botao.pressed.connect(ir_para_missao.bind(m))
 		linha.add_child(botao)
 	var bonus := HBoxContainer.new()
 	bonus.add_theme_constant_override("separation", 8)
@@ -261,7 +296,7 @@ func _montar_lista(periodo: String) -> void:
 	texto_bonus.theme_type_variation = &"SubtituloClaro"
 	texto_bonus.add_theme_font_size_override("font_size", 18)
 	texto_bonus.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	texto_bonus.text = ("BAÚ GANHO!" if ganho else "RESGATE AS 3 E GANHE UM %s" % Baus.NOMES["prata" if periodo == "dia" else "ouro"])
+	texto_bonus.text = ("BAÚ GANHO!" if ganho else "AS 3 = 1 %s" % Baus.NOMES["prata" if periodo == "dia" else "ouro"])
 	bonus.add_child(texto_bonus)
 
 
@@ -277,6 +312,12 @@ func resgatar(periodo: String, indice: int) -> void:
 	Telas.mostrar_premio(premio, "MISSÃO CUMPRIDA!")
 	Experiencia.anunciar()
 	_atualizar()
+
+
+## Botão IR: abre o jogo da missão (na vila, a tela de missões está por cima).
+func ir_para_missao(m: Dictionary) -> void:
+	Audio.tocar("estouro", 1.1, -4.0)
+	Telas.abrir(Missoes.cena(m))
 
 
 func resgatar_entrada() -> void:

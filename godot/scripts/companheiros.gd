@@ -8,7 +8,13 @@ class_name Companheiros
 ##   doce sobem o nível dele (até NIVEL_MAXIMO), e o bônus cresce.
 ## - Raridade maior = bônus mais forte (MULTIPLICADOR), mas cai menos nos baús.
 ##
-## Estado em Progresso.colecao: "fragmentos" {id: n} e "niveis" {id: n}.
+## - XP DE CADA DOCE (separado do nível do jogador e do nível dos fragmentos):
+##   o doce companheiro ganha a mesma XP que o jogador (quiz, jogos, missões...)
+##   e os doces do time ganham XP nas lutas. Juntando XP, o doce sobe de "nível
+##   de luta" (até NIVEL_XP_MAXIMO) e fica mais forte na arena (FORCA_POR_NIVEL_XP
+##   a mais de vida e ataque por nível).
+##
+## Estado em Progresso.colecao: "fragmentos" {id: n}, "niveis" {id: n} e "xp" {id: total}.
 
 enum Raridade { COMUM, RARO, EPICO, LENDARIO }
 const NOMES_RARIDADE := ["COMUM", "RARO", "ÉPICO", "LENDÁRIO"]
@@ -18,6 +24,10 @@ const FRAGMENTOS_PARA_GANHAR := 10
 const NIVEL_MAXIMO := 5
 ## Para ir do nível n ao n+1: [fragmentos, moedas].
 const MELHORIA := [[10, 50], [20, 100], [30, 200], [50, 400]]
+const NIVEL_XP_MAXIMO := 30
+const FORCA_POR_NIVEL_XP := 0.04
+## Subidas de nível de luta ainda não mostradas: [{"id", "nivel"}].
+static var subidas_xp: Array = []
 
 ## Bônus: "acucar" (% a mais de açúcar no quiz), "moedas_quiz" (% de moedas
 ## no quiz), "tempo" (segundos a mais por pergunta), "dica_gratis" (tirar 2
@@ -83,6 +93,8 @@ static func _colecao() -> Dictionary:
 		c["fragmentos"] = {}
 	if not c.has("niveis"):
 		c["niveis"] = {}
+	if not c.has("xp"):
+		c["xp"] = {}
 	return c
 
 
@@ -95,6 +107,49 @@ static func nivel(id: String) -> int:
 	if not Colecao.tem(id):
 		return 0
 	return maxi(1, int(_colecao()["niveis"].get(id, 1)))
+
+
+# --- XP de cada doce (nível de luta) ---------------------------------------------
+
+## XP total que o doce já juntou.
+static func xp_total(id: String) -> int:
+	return int(_colecao()["xp"].get(id, 0))
+
+
+## XP para ir do nível de luta n ao n+1.
+static func xp_para_nivel(n: int) -> int:
+	return 60 + 30 * (n - 1)
+
+
+## Nível de luta do doce (1 a NIVEL_XP_MAXIMO) e a XP dentro dele: {"nivel", "xp", "falta"}.
+static func nivel_xp_detalhe(id: String) -> Dictionary:
+	var resto := xp_total(id)
+	var n := 1
+	while n < NIVEL_XP_MAXIMO and resto >= xp_para_nivel(n):
+		resto -= xp_para_nivel(n)
+		n += 1
+	return {"nivel": n, "xp": resto, "falta": 0 if n >= NIVEL_XP_MAXIMO else xp_para_nivel(n) - resto}
+
+
+static func nivel_xp(id: String) -> int:
+	return nivel_xp_detalhe(id)["nivel"]
+
+
+## Vida e ataque na arena multiplicados por isto (nível de luta).
+static func forca_xp(id: String) -> float:
+	return 1.0 + FORCA_POR_NIVEL_XP * (nivel_xp(id) - 1)
+
+
+## Dá XP ao doce. Retorna quantos níveis de luta ele subiu (e guarda o aviso).
+static func ganhar_xp(id: String, quantidade: int) -> int:
+	if id == "" or quantidade <= 0:
+		return 0
+	var antes := nivel_xp(id)
+	_colecao()["xp"][id] = xp_total(id) + quantidade
+	var depois := nivel_xp(id)
+	if depois > antes:
+		subidas_xp.append({"id": id, "nivel": depois})
+	return depois - antes
 
 
 ## Quantos fragmentos faltam para o próximo passo (ganhar ou melhorar); 0 no máximo.

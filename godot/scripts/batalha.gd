@@ -27,6 +27,9 @@ const TEMPO := 20.0  # segundos por pergunta
 const RAPIDO := 6.0  # respondeu em até 6 s: ataque RÁPIDO (+25%)
 const REVANCHE := 0.3  # parte do prêmio nas revanches
 const ACUCAR_DERROTA := 5  # perdeu: um pouquinho de açúcar pelo esforço
+## XP de cada doce do time no fim da luta (nível de luta, ver Companheiros.ganhar_xp).
+const XP_LUTA_VITORIA := 30
+const XP_LUTA_DERROTA := 10
 
 ## "time": [[id do doce, nível]]; "perguntas": nível do quiz (0 fácil, 1
 ## médio, 2 difícil); "premio": {"moedas", "acucar", "bau"?, "movel"?}.
@@ -98,7 +101,7 @@ static func time() -> Array:
 
 static func time_padrao() -> Array:
 	var meus: Array = Colecao.LISTA.map(func(d): return d["id"]).filter(func(id): return Colecao.tem(id))
-	meus.sort_custom(func(a, b): return forca(a, Companheiros.nivel(a)) > forca(b, Companheiros.nivel(b)))
+	meus.sort_custom(func(a, b): return minha_forca(a) > minha_forca(b))
 	var lista := []
 	var companheiro := Colecao.companheiro()
 	if companheiro != "" and Colecao.tem(companheiro):
@@ -127,17 +130,23 @@ static func _raridade(id: String) -> int:
 	return Companheiros.raridade(id)
 
 
-static func vida(id: String, nivel: int) -> int:
-	return roundi(VIDA_BASE[_raridade(id)] * (1.0 + VIDA_POR_NIVEL * (maxi(1, nivel) - 1)))
+## `extra` multiplica tudo: o nível de luta (XP) dos seus doces (Companheiros.forca_xp).
+static func vida(id: String, nivel: int, extra := 1.0) -> int:
+	return roundi(VIDA_BASE[_raridade(id)] * (1.0 + VIDA_POR_NIVEL * (maxi(1, nivel) - 1)) * extra)
 
 
-static func ataque(id: String, nivel: int) -> int:
-	return roundi(ATAQUE_BASE[_raridade(id)] * (1.0 + ATAQUE_POR_NIVEL * (maxi(1, nivel) - 1)))
+static func ataque(id: String, nivel: int, extra := 1.0) -> int:
+	return roundi(ATAQUE_BASE[_raridade(id)] * (1.0 + ATAQUE_POR_NIVEL * (maxi(1, nivel) - 1)) * extra)
 
 
 ## Força para comparar doces (vida + 3x ataque).
-static func forca(id: String, nivel: int) -> int:
-	return vida(id, nivel) + ataque(id, nivel) * 3
+static func forca(id: String, nivel: int, extra := 1.0) -> int:
+	return vida(id, nivel, extra) + ataque(id, nivel, extra) * 3
+
+
+## Força de um doce seu (com o nível dos fragmentos e o nível de luta).
+static func minha_forca(id: String) -> int:
+	return forca(id, Companheiros.nivel(id), Companheiros.forca_xp(id))
 
 
 static func nome_doce(id: String) -> String:
@@ -147,8 +156,9 @@ static func nome_doce(id: String) -> String:
 	return {"milho_doce": "SEU MILHO", "bala_verde": "BALA VERDE"}.get(id, id.to_upper())
 
 
-static func _lutador(id: String, nivel: int) -> Dictionary:
-	return {"id": id, "nivel": maxi(1, nivel), "vida": vida(id, nivel), "vida_max": vida(id, nivel), "ataque": ataque(id, nivel)}
+static func _lutador(id: String, nivel: int, extra := 1.0) -> Dictionary:
+	return {"id": id, "nivel": maxi(1, nivel), "vida": vida(id, nivel, extra), "vida_max": vida(id, nivel, extra),
+		"ataque": ataque(id, nivel, extra)}
 
 
 # --- A luta -------------------------------------------------------------------------
@@ -176,7 +186,7 @@ func _init(indice_desafiante := 0, ids_time: Array = [], semente := -1) -> void:
 		_sorteio.randomize()
 	var ids := ids_time if not ids_time.is_empty() else time()
 	for id in ids.slice(0, TAMANHO_TIME):
-		meu_time.append(_lutador(id, Companheiros.nivel(id)))
+		meu_time.append(_lutador(id, Companheiros.nivel(id), Companheiros.forca_xp(id)))
 	for par in desafiante["time"]:
 		time_deles.append(_lutador(par[0], int(par[1])))
 
@@ -280,6 +290,9 @@ func responder(escolha: int, tempo: float) -> Dictionary:
 func concluir() -> Dictionary:
 	if not acabou():
 		return {}
+	# os doces do time aprendem lutando (mais na vitória)
+	for lutador in meu_time:
+		Companheiros.ganhar_xp(lutador["id"], XP_LUTA_DERROTA if perdeu() else XP_LUTA_VITORIA)
 	if perdeu():
 		Confeitaria.ganhar_acucar(ACUCAR_DERROTA)
 		return {"moedas": 0, "acucar": ACUCAR_DERROTA, "primeira": false}

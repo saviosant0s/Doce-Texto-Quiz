@@ -11,6 +11,15 @@ extends Control
 const FONTE := preload("res://assets/fontes/BebasNeue-Regular.ttf")
 const GRAMA := Color("#86C96F")
 const CAMINHO := Color("#F4C888")
+const BORDA_CAMINHO := Color("#D9A35E")
+## Ícone de cada prédio no mapa (bolinha da cor do telhado com o ícone branco).
+const ICONES_PREDIOS := {
+	"escola": preload("res://assets/icones/interrogacao.svg"), "confeitaria": preload("res://assets/icones/confeitaria.svg"),
+	"trofeus": preload("res://assets/icones/coroa.svg"), "fliperama": preload("res://assets/icones/controle.svg"),
+	"laboratorio": preload("res://assets/icones/laboratorio.svg"), "casa": preload("res://assets/icones/casa.svg"),
+	"torre": preload("res://assets/icones/torre.svg"), "fabrica": preload("res://assets/icones/fabrica.svg"),
+	"arena": preload("res://assets/icones/coracao.svg"), "corrida": preload("res://assets/icones/bandeira.svg"),
+}
 
 ## Ponto do mundo (x, z) no meio do controle e pixels por metro.
 var centro := Vector2.ZERO
@@ -99,34 +108,48 @@ func _vila() -> void:
 	var v := Regioes.VILA
 	draw_rect(_ret(v), Color("#8FD179"))
 	draw_rect(_ret(v), Color("#FF8FB8"), false, maxf(1.0, escala * 0.5))
-	# caminhos
+	# caminhos (com bordinha, para destacar da grama)
 	var largura := maxf(2.0, 2.4 * escala)
+	var trechos := []
 	for dados in Vila.PREDIOS:
 		var porta: Vector3 = dados["posicao"] - dados["posicao"].normalized() * 4.5
-		draw_line(_v(porta.normalized() * 4.3), _v(porta), CAMINHO, largura)
-	for c in Vila.CAMINHOS_EXTRA:
-		draw_line(_v(c[0]), _v(c[1]), CAMINHO, largura)
-	for c in Vila.CAMINHOS_REGIOES:
-		draw_line(_v(c[0]), _v(c[1]), CAMINHO, largura)
+		trechos.append([porta.normalized() * 4.3, porta])
+	trechos.append_array(Vila.CAMINHOS_EXTRA)
+	trechos.append_array(Vila.CAMINHOS_REGIOES)
+	for t in trechos:
+		draw_line(_v(t[0]), _v(t[1]), BORDA_CAMINHO, largura + 2.0)
+		draw_circle(_v(t[0]), (largura + 2.0) / 2.0, BORDA_CAMINHO)
+		draw_circle(_v(t[1]), (largura + 2.0) / 2.0, BORDA_CAMINHO)
+	for t in trechos:
+		draw_line(_v(t[0]), _v(t[1]), CAMINHO, largura)
+		draw_circle(_v(t[0]), largura / 2.0, CAMINHO)
+		draw_circle(_v(t[1]), largura / 2.0, CAMINHO)
 	# praça e fonte
+	draw_circle(_v(Vector3.ZERO), 4.6 * escala, BORDA_CAMINHO)
 	draw_circle(_v(Vector3.ZERO), 4.2 * escala, Color("#FFF3E0"))
 	draw_circle(_v(Vector3.ZERO), 2.0 * escala, Color("#5A2E17"))
-	# lotes, lago de chocolate e mirante
+	# lotes (os vazios bem clarinhos, para não embolar), lago de chocolate e mirante
 	for l in Terrenos.LOTES:
 		var p: Vector3 = l["posicao"]
-		var cor := Color("#D9A35E") if Terrenos.comprado(l["id"]) else Color("#FFFFFF", 0.7)
-		draw_rect(Rect2(_v(p) - Vector2.ONE * 3.0 * escala, Vector2.ONE * 6.0 * escala), cor)
+		var comprado := Terrenos.comprado(l["id"])
+		var lado := (5.0 if comprado else 4.0) * escala
+		var cor := Color("#D9A35E") if comprado else Color(1, 1, 1, 0.22)
+		draw_rect(Rect2(_v(p) - Vector2.ONE * lado / 2.0, Vector2.ONE * lado), cor)
 	draw_circle(_v(Terrenos.LUGARES["lago"]["posicao"]), 6.5 * escala, Color("#5A2E17"))
 	draw_circle(_v(Terrenos.LUGARES["mirante"]["posicao"]), 4.2 * escala, Color("#FFF3E0"))
-	# prédios: quadradinho da cor do prédio com a sombra
+	# prédios: bolinha da cor do telhado, borda branca e o ícone do que tem dentro
 	for dados in Vila.PREDIOS:
 		var p := _v(dados["posicao"])
-		var lado := 5.0 * escala
-		draw_rect(Rect2(p - Vector2(lado, lado) / 2.0 + Vector2(2, 2), Vector2(lado, lado)), Color(0, 0, 0, 0.2))
-		draw_rect(Rect2(p - Vector2(lado, lado) / 2.0, Vector2(lado, lado)), Color(dados["parede"]))
-		draw_rect(Rect2(p - Vector2(lado, lado) / 2.0, Vector2(lado, lado * 0.35)), Color(dados["telhado"]))
+		var raio := 3.4 * escala
+		draw_circle(p + Vector2(1.5, 2), raio + 1.5, Color(0, 0, 0, 0.22))
+		draw_circle(p, raio + maxf(1.5, 0.35 * escala), Color.WHITE)
+		draw_circle(p, raio, Color(dados["telhado"]))
+		var icone: Texture2D = ICONES_PREDIOS.get(dados["id"])
+		if icone:
+			var lado := raio * 1.25
+			draw_texture_rect(icone, Rect2(p - Vector2.ONE * lado / 2.0, Vector2.ONE * lado), false)
 		if cheio:
-			_texto(str(dados["nome"]), p + Vector2(0, lado * 0.5 + 12), 13, Color("#3B2A5C"))
+			_texto(str(dados["nome"]), p + Vector2(0, raio + 12), 13, Color("#3B2A5C"))
 
 
 func _ilha() -> void:

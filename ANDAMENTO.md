@@ -125,22 +125,14 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ### Bugs e pedidos do Sávio (11/10/2026) — o que ainda falta
 
-(Os números são os da lista original; 1, 2, 3, 4, 6, 10, 11, 12, 13, 15, 16, 17 e 18 foram feitos em
+(Os números são os da lista original; só falta o 5 (e o que está anotado nos itens 12, 15, 16 e 18); o resto foi feito em
 17/10, ver a seção abaixo.)
 
 5. **Batalha de doces como luta de verdade** (planejamento, depois): botões de
    golpe; perguntas entre os golpes; o GOLPE SUPREMO depende da pergunta (acertou,
    acerta; errou, erra) — mesma lógica do turbo na corrida.
-7. **Telas com texto demais:** Missões diárias (só o que é + a recompensa, pegar
-   fácil), Eventos (ex.: Semana das Crianças: botões só de texto). Menos texto,
-   mais visual/interativo. Ele pode mostrar tela por tela.
-8. **Missão no topo da vila clicável:** tocar em "Fale com a Dona Bala" / "venda
-   para 5 clientes" faz o doce ANDAR SOZINHO até o lugar (se ele mexer, para).
-9. **XP de cada personagem:** quanto mais usa o doce, mais XP dele, sobe de nível e
-   fica mais forte na arena (separado do nível do jogador).
 12. (feito em 17/10: 5 GPs) **Corrida:** falta, se ele quiser, CARROS diferentes para
    escolher e mais GPs (ex.: São Luís, Recife, Rio, Belo Horizonte, Curitiba...).
-14. **Minimapa da vila feio e embolado:** refazer, mais bonito e mais limpo.
 15. (feito em 17/10, ver abaixo) **Tela de carregamento demora muito.** Falta, se
    ainda achar lento: a primeira montagem da vila (juntar malhas em disco) e
    guardar a cozinha também (ida e volta Confeitaria ↔ jogos).
@@ -149,7 +141,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 18. (feito em 17/10, ver abaixo) Falta, se ele quiser: mais MÁQUINAS (pudim,
    brownie...) e a cozinha crescer de tamanho (hoje só muda de cara e ganha mesas).
 
-### Rodada de 17/10/2026 — correções (lote 1: bugs e urgentes), ainda não publicada
+### Rodada de 17/10/2026 — correções e pedidos do Sávio, ainda não publicada
 
 - (1) **Botão ENFRENTAR O CHEFÃO:** a área que mostra o botão ficou bem menor
   (8x8 m em volta do chefão, era 17x17): só aparece quando o doce chega perto
@@ -211,12 +203,26 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
     fonte de chocolate) e o prédio na vila (terraço, 2ª torre, tapete e luzinhas,
     coroa e bandeiras). Subiu de estágio: festa e a loja é montada de novo.
   - O topo da cozinha mostra o estágio e quantas melhorias faltam para o próximo.
+- (7) **Menos texto nas telas:** MISSÕES com o ícone do jogo, texto curto ("5 PEDIDOS
+  NA FÁBRICA"), barra com o número dentro, prêmio em ícones e o botão IR (abre o jogo
+  da missão) / PEGAR! / FEITO!. EVENTO com cartões de prêmio desenhados (quantas
+  fichas, o ícone do prêmio com a quantidade e PEGAR!/FALTAM N/✓).
+- (8) **Missão clicável:** tocar no quadro da história (com ▶) faz o doce ANDAR
+  SOZINHO até o morador, o lugar ou a porta do prédio do passo (contorna a praça;
+  travou, pula; mexeu no controle, para). O minimapa mostra a estrela da missão.
+- (9) **XP de cada doce (nível de luta):** o doce companheiro ganha a mesma XP do
+  jogador e os doces do time ganham XP nas lutas (30 na vitória, 10 na derrota);
+  cada nível de luta (até 30) dá +4% de vida e ataque na arena. Aparece nos cartões
+  da arena ("LUTA NV 3") e na coleção; subir de nível avisa.
+- (14) **Minimapa da vila mais limpo:** prédios como bolinhas com o ícone de cada
+  um, caminhos com borda, terrenos vazios bem clarinhos, minimapa maior e com mais
+  zoom, e a estrela da missão da história.
 - A vila guardada continua guardada entre outras telas (ex.: cozinha -> corrida).
 - Corrigido: a lista de perguntas recentes fazia o save parar de carregar no
   meio (erro ao converter em número); nunca chegou a ser publicado.
 - Testes novos (cozinha atende o 2º da fila, cliente desiste, janela de jogos,
   volta para a confeitaria, corrida sem perguntas repetidas, cubos ao desistir,
-  engrenagem da vila, vila guardada, save com a lista, GPs e minimapa, confeitaria sem fim): 2143 verificações passando.
+  engrenagem da vila, vila guardada, save com a lista, GPs e minimapa, confeitaria sem fim, missão clicável, XP dos doces): 2150 verificações passando.
 
 ### Rodada de 08/10/2026 — publicado na 0.16.0 (11/10/2026)
 

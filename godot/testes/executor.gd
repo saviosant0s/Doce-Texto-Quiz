@@ -1910,8 +1910,8 @@ func _testar_telas_baus_e_missoes() -> void:
 	tela = get_tree().current_scene
 	await get_tree().process_frame
 	var resgatar: Button = tela.find_child("Resgatar_dia_0", true, false)
-	verificar(resgatar != null and resgatar.text == "RESGATAR", "missão cumprida mostra RESGATAR")
-	verificar(tela.find_child("Resgatar_dia_1", true, false).disabled, "missão não cumprida fica esperando")
+	verificar(resgatar != null and resgatar.text == "PEGAR!", "missão cumprida mostra PEGAR!")
+	verificar(tela.find_child("Resgatar_dia_1", true, false).text == "IR", "missão não cumprida: IR (leva ao jogo dela)")
 	var moedas := Progresso.moedas
 	resgatar.pressed.emit()
 	await get_tree().process_frame
@@ -1922,6 +1922,11 @@ func _testar_telas_baus_e_missoes() -> void:
 	dia1.pressed.emit()
 	await get_tree().process_frame
 	verificar(not Missoes.entrada_disponivel() and tela.find_child("Dia1", true, false).disabled, "prêmio por entrar pego")
+	tela.find_child("Resgatar_dia_1", true, false).pressed.emit()
+	verificar(Telas._destino == Telas.CENAS[Missoes.cena(d[1])], "IR abre o jogo da missão (%s)" % Missoes.cena(d[1]))
+	await get_tree().create_timer(1.5).timeout
+	while Telas._trocando:
+		await get_tree().process_frame
 	Missoes.dia_fixo = -1
 	# coleção: raridade e melhorar
 	Progresso.moedas = 500
@@ -2371,6 +2376,19 @@ func _testar_batalha() -> void:
 	Progresso.vila.erase("arena")
 	verificar(Batalha.vida("chocolate", 1) > Batalha.vida("brigadeiro", 1) and Batalha.ataque("brigadeiro", 3) > Batalha.ataque("brigadeiro", 1),
 		"raridade e nível deixam o doce mais forte")
+	# XP de cada doce (nível de luta): o companheiro aprende junto com o jogador
+	Progresso.colecao["xp"] = {}
+	Companheiros.subidas_xp.clear()
+	var vida_sem_xp: int = Batalha.new(0, ["brigadeiro"], 7).meu()["vida"]
+	var companheiro_xp := Colecao.companheiro() if Colecao.companheiro() != "" else "brigadeiro"
+	var xp_antes := Companheiros.xp_total(companheiro_xp)
+	Experiencia.ganhar(10)
+	verificar(Companheiros.xp_total(companheiro_xp) > xp_antes, "o doce companheiro ganha XP junto com o jogador")
+	Companheiros.ganhar_xp("brigadeiro", Companheiros.xp_para_nivel(1) + Companheiros.xp_para_nivel(2))
+	verificar(Companheiros.nivel_xp("brigadeiro") == 3 and not Companheiros.subidas_xp.is_empty()
+		and Batalha.new(0, ["brigadeiro"], 7).meu()["vida"] > vida_sem_xp, "XP do doce: sobe o nível de luta e fica mais forte na arena")
+	Progresso.colecao["xp"] = {}
+	Companheiros.subidas_xp.clear()
 	# time: só doces que tem; padrão = companheiro e os mais fortes
 	verificar(Batalha.time().size() >= 1 and Batalha.time().all(func(id): return Colecao.tem(id)), "o time padrão usa doces da coleção")
 	verificar(not Batalha.escolher_time([]) and not Batalha.escolher_time(["chocolate_que_nao_tenho"]), "time vazio ou com doce que não tem não vale")
@@ -2405,9 +2423,11 @@ func _testar_batalha() -> void:
 		luta.responder(int(p["resposta"]), 3.0)
 	verificar(luta.venceu() and not luta.perdeu() and not repetiu, "acertando tudo, vence a luta (sem repetir pergunta)")
 	var moedas := Progresso.moedas
+	var xp_brigadeiro := Companheiros.xp_total("brigadeiro")
 	var ganho := luta.concluir()
 	verificar(ganho["primeira"] and Progresso.moedas == moedas + int(Batalha.DESAFIANTES[0]["premio"]["moedas"])
 		and Batalha.vencido(0) and Batalha.liberado(1), "a primeira vitória dá o prêmio e libera o próximo desafiante")
+	verificar(Companheiros.xp_total("brigadeiro") == xp_brigadeiro + Batalha.XP_LUTA_VITORIA, "os doces do time ganham XP na luta")
 	var revanche := Batalha.premio(0)
 	verificar(revanche["moedas"] < int(Batalha.DESAFIANTES[0]["premio"]["moedas"]) and not revanche.has("bau"), "revanche dá um prêmio menor")
 	# luta perdida errando tudo (com 2 doces no time: o segundo entra)
@@ -2661,7 +2681,7 @@ func _testar_vila_evento() -> void:
 	vila.abrir_evento()
 	await get_tree().process_frame
 	var premio: Button = vila.find_child("Premio0", true, false)
-	verificar(premio != null and premio.text.contains("RESGATAR"), "painel mostra a trilha com o prêmio pronto")
+	verificar(premio != null and premio.find_child("Estado", true, false).text == "PEGAR!", "painel mostra a trilha com o prêmio pronto")
 	premio.pressed.emit()
 	await get_tree().process_frame
 	verificar(Eventos.resgatado(0), "resgata pelo painel")
@@ -2684,6 +2704,23 @@ func _testar_vila_historia() -> void:
 	var milho: Node3D = vila._moradores_historia["milho_doce"]
 	verificar(milho.get_node("Exclamacao").visible and vila.find_child("TextoHistoria", true, false).text.contains("SEU MILHO"),
 		"o Seu Milho tem o \"!\" e o quadro diz o que fazer")
+	# tocar no quadro: o doce vai sozinho até o Seu Milho; mexer no controle para
+	vila.jogador.global_position = Vector3(0, 0, 11)
+	await get_tree().physics_frame
+	verificar(vila.andar_ate_missao() and vila.andando_sozinho(), "tocar no quadro da história: o doce anda sozinho")
+	for i in 200:
+		await get_tree().create_timer(0.1).timeout
+		if not vila.andando_sozinho():
+			break
+	verificar(not vila.andando_sozinho() and vila.jogador.global_position.distance_to(milho.global_position) < 2.6,
+		"...e para do lado do Seu Milho (%.1f m)" % vila.jogador.global_position.distance_to(milho.global_position))
+	vila.jogador.global_position = Vector3(0, 0, 11)
+	vila.andar_ate_missao()
+	vila._joystick.vetor = Vector2(1, 0)
+	for i in 3:
+		await get_tree().physics_frame
+	vila._joystick.vetor = Vector2.ZERO
+	verificar(not vila.andando_sozinho(), "mexer no controle: para de andar sozinho")
 	vila.jogador.global_position = milho.global_position + Vector3(0, 0, 1.5)
 	await get_tree().create_timer(0.4).timeout
 	verificar(vila._ponto_atual == "morador" and vila._botao_entrar.text == "FALAR COM SEU MILHO", "perto dele: botão FALAR")

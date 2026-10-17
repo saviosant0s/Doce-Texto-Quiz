@@ -14,17 +14,19 @@ class_name Missoes
 ## Estado em Progresso.missoes.
 
 ## Tipos de missão: texto (com %d) e quantidade no dia e na semana.
+## "curto" = o texto da tela de missões (com o ícone do jogo ao lado); "cena" =
+## a tela que o botão IR abre.
 const TIPOS := {
-	"acertos": {"texto": "ACERTE %d PERGUNTAS NO QUIZ", "dia": 15, "semana": 70},
-	"partidas": {"texto": "JOGUE %d PARTIDAS DO QUIZ", "dia": 2, "semana": 10},
-	"estrelas": {"texto": "GANHE %d ESTRELAS NO QUIZ", "dia": 3, "semana": 15},
-	"lab_fases": {"texto": "FAÇA %d FASES NO LABORATÓRIO", "dia": 2, "semana": 8},
-	"clientes": {"texto": "ATENDA %d CLIENTES NA CONFEITARIA", "dia": 6, "semana": 40},
-	"match": {"texto": "JOGUE %d PARTIDAS DO DOCE MATCH", "dia": 1, "semana": 5},
-	"baus": {"texto": "ABRA %d BAÚS SURPRESA", "dia": 2, "semana": 8},
-	"torre": {"texto": "SUBA %d ANDARES NA TORRE DE DOCES", "dia": 15, "semana": 80},
-	"fabrica": {"texto": "COMPLETE %d PEDIDOS NA FÁBRICA DE CHOCOLATE", "dia": 5, "semana": 25},
-	"corrida": {"texto": "TERMINE %d CORRIDAS DE DOCES", "dia": 2, "semana": 8},
+	"acertos": {"texto": "ACERTE %d PERGUNTAS NO QUIZ", "curto": "%d ACERTOS NO QUIZ", "cena": "niveis", "dia": 15, "semana": 70},
+	"partidas": {"texto": "JOGUE %d PARTIDAS DO QUIZ", "curto": "%d PARTIDAS DO QUIZ", "cena": "niveis", "dia": 2, "semana": 10},
+	"estrelas": {"texto": "GANHE %d ESTRELAS NO QUIZ", "curto": "%d ESTRELAS NO QUIZ", "cena": "niveis", "dia": 3, "semana": 15},
+	"lab_fases": {"texto": "FAÇA %d FASES NO LABORATÓRIO", "curto": "%d FASES DO LAB", "cena": "laboratorio", "dia": 2, "semana": 8},
+	"clientes": {"texto": "ATENDA %d CLIENTES NA CONFEITARIA", "curto": "%d CLIENTES", "cena": "cozinha", "dia": 6, "semana": 40},
+	"match": {"texto": "JOGUE %d PARTIDAS DO DOCE MATCH", "curto": "%d DOCE MATCH", "cena": "doce_match", "dia": 1, "semana": 5},
+	"baus": {"texto": "ABRA %d BAÚS SURPRESA", "curto": "ABRA %d BAÚS", "cena": "baus", "dia": 2, "semana": 8},
+	"torre": {"texto": "SUBA %d ANDARES NA TORRE DE DOCES", "curto": "%d ANDARES NA TORRE", "cena": "torre", "dia": 15, "semana": 80},
+	"fabrica": {"texto": "COMPLETE %d PEDIDOS NA FÁBRICA DE CHOCOLATE", "curto": "%d PEDIDOS NA FÁBRICA", "cena": "fabrica", "dia": 5, "semana": 25},
+	"corrida": {"texto": "TERMINE %d CORRIDAS DE DOCES", "curto": "%d CORRIDAS", "cena": "corrida", "dia": 2, "semana": 8},
 }
 const QUANTAS := 3
 const PREMIO_DIA := {"moedas": 20, "xp": 25}
@@ -101,6 +103,18 @@ static func semanais() -> Array:
 
 static func texto(m: Dictionary) -> String:
 	return TIPOS[m["tipo"]]["texto"] % int(m["meta"])
+
+
+static func texto_curto(m: Dictionary) -> String:
+	return TIPOS[m["tipo"]]["curto"] % int(m["meta"])
+
+
+## Tela do jogo da missão (o botão IR).
+static func cena(m: Dictionary) -> String:
+	var nome: String = TIPOS[m["tipo"]]["cena"]
+	if nome == "cozinha" and not Telas.placa_rapida:
+		return "confeitaria"
+	return nome
 
 
 static func cumprida(m: Dictionary) -> bool:

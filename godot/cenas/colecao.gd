@@ -209,6 +209,10 @@ func _atualizar_companheiro() -> void:
 	_raridade.text = Companheiros.nome_raridade(id) + ("  ·  NÍVEL %d" % n if n > 0 else "")
 	_raridade.add_theme_color_override("font_color", Companheiros.cor(id))
 	_bonus.text = "BÔNUS: " + Companheiros.descrever_bonus(id)
+	if Colecao.tem(id):
+		var xp := Companheiros.nivel_xp_detalhe(id)
+		_bonus.text += "\nNÍVEL DE LUTA %d (%s)  ·  MAIS FORTE NA ARENA" % [xp["nivel"],
+			"MÁXIMO" if xp["falta"] == 0 else "FALTAM %d XP" % xp["falta"]]
 	var precisa := Companheiros.fragmentos_precisos(id)
 	_pedacos.max_value = maxi(precisa, 1)
 	_pedacos.value = mini(Companheiros.fragmentos(id), maxi(precisa, 1))

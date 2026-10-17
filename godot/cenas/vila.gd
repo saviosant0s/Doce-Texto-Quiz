@@ -366,6 +366,12 @@ func _mover(delta: float) -> void:
 	# no teclado anda; com Shift corre (no joystick, corre empurrando até o fim)
 	direcao = (direcao + teclas).limit_length(1.0) * (1.0 if Input.is_key_pressed(KEY_SHIFT) else 0.8)
 	direcao = (direcao + _joystick.vetor).limit_length(1.0)
+	if not _auto.is_empty():
+		if direcao.length() > 0.1:
+			parar_de_andar_sozinho()  # mexeu no controle: o jogador assume
+		else:
+			_andar_sozinho(delta)
+			return
 	if modo_camera == Camera.PRIMEIRA_PESSOA:
 		# para os lados vira; para cima/baixo anda para frente/trás
 		_giro -= direcao.x * GIRO_JOYSTICK * delta
@@ -854,6 +860,7 @@ func reaparecer() -> void:
 	_entrando = false
 	_cena_entrando = ""
 	_passos_entrada.clear()
+	parar_de_andar_sozinho()
 	_porta_atual = ""
 	_botao_entrar.visible = false
 	_dedos_em_botao.clear()
@@ -1313,10 +1320,10 @@ func _criar_botao_amigos() -> void:
 	botao.focus_mode = Control.FOCUS_NONE
 	botao.tooltip_text = "Código da vila, amigos e ranking da semana"
 	botao.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	botao.offset_left = -172
+	botao.offset_left = -196
 	botao.offset_right = -18
-	botao.offset_top = 248
-	botao.offset_bottom = 300
+	botao.offset_top = 272
+	botao.offset_bottom = 324
 	botao.pressed.connect(abrir_amigos)
 	_interface.add_child(botao)
 
@@ -1497,6 +1504,9 @@ func sair_da_luta_chefao() -> void:
 
 
 ## Painel do evento: quanto falta, como ganhar fichas e a trilha de prêmios.
+const ICONE_MOVEL := preload("res://assets/icones/casa.svg")
+
+
 func abrir_evento() -> void:
 	var dados := Eventos.dados()
 	var coluna := _abrir_painel_lote(dados["nome"])
@@ -1509,8 +1519,9 @@ func abrir_evento() -> void:
 	var quando := "O TEMA MUDA SOZINHO EM %d DIAS DO JOGO (~%d H)" % [Eventos.dias_restantes(), Eventos.horas_restantes()]
 	if Eventos.fim_texto() != "":
 		quando = "EVENTO %s (FALTAM %d DIAS)" % [Eventos.fim_texto(), Eventos.dias_restantes()]
-	info.text = "VOCÊ TEM %d %s · %s\nGANHE JOGANDO QUALQUER JOGO E PEGANDO AS %s PELA VILA (%d POR DIA DO JOGO)." % [
-		Eventos.fichas(), dados["ficha"], quando, dados["ficha"], Eventos.ITENS_POR_DIA]
+	info.text = "%d %s  ·  %s" % [Eventos.fichas(), dados["ficha"], quando]
+	info.tooltip_text = "Ganhe %s jogando qualquer jogo e pegando as que aparecem pela vila (%d por dia do jogo)." % [
+		str(dados["ficha"]).to_lower(), Eventos.ITENS_POR_DIA]
 	coluna.add_child(info)
 	var grade := GridContainer.new()
 	grade.name = "Trilha"
@@ -1519,42 +1530,82 @@ func abrir_evento() -> void:
 	grade.add_theme_constant_override("v_separation", 10)
 	coluna.add_child(grade)
 	for i in Eventos.TRILHA.size():
-		var premio := Eventos.premio(i)
-		var texto := ""
-		if premio.has("moedas"):
-			texto = "%d MOEDAS" % premio["moedas"]
-		elif premio.has("acucar"):
-			texto = "%d AÇÚCAR" % premio["acucar"]
-		elif premio.has("bau"):
-			texto = "BAÚ DE DOCE"
-		elif premio.has("movel"):
-			texto = "MÓVEL: " + Casa.MOVEIS[premio["movel"]]["nome"]
-		elif premio.has("doce"):
-			texto = "DOCE: " + Colecao.dados(premio["doce"])["nome"]
-		var b := Button.new()
-		b.name = "Premio%d" % i
-		b.custom_minimum_size = Vector2(215, 92)
-		b.add_theme_font_size_override("font_size", 18)
-		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		b.focus_mode = Control.FOCUS_NONE
-		var meta := int(Eventos.TRILHA[i][0])
-		if Eventos.resgatado(i):
-			b.text = "%d · %s\nRESGATADO ✓" % [meta, texto]
-			b.disabled = true
-		elif Eventos.pode_resgatar(i):
-			b.text = "%d · %s\nRESGATAR!" % [meta, texto]
-			b.theme_type_variation = &"BotaoPremio"
-			b.pressed.connect(func():
-				if not Eventos.resgatar(i).is_empty():
-					Audio.tocar("vitoria")
-					jogador.comemorar()
-					Telas.mostrar_aviso("PRÊMIO DO EVENTO: " + texto)
-					_atualizar_topo()
-					abrir_evento())
-		else:
-			b.text = "%d · %s\nFALTAM %d" % [meta, texto, meta - Eventos.fichas()]
-			b.theme_type_variation = &"BotaoSecundario"
-		grade.add_child(b)
+		grade.add_child(_cartao_premio_evento(i, dados))
+
+
+## Cartão de um prêmio da trilha do evento: quantas fichas pede, o desenho do
+## prêmio com a quantidade e o estado (PEGAR!, ✓ ou quanto falta).
+func _cartao_premio_evento(i: int, dados: Dictionary) -> Button:
+	var premio := Eventos.premio(i)
+	var icone: Texture2D = Itens.MOEDA
+	var quantidade := ""
+	var nome := ""
+	if premio.has("moedas"):
+		quantidade = str(premio["moedas"])
+		nome = "%d MOEDAS" % premio["moedas"]
+	elif premio.has("acucar"):
+		icone = Itens.ACUCAR
+		quantidade = str(premio["acucar"])
+		nome = "%d AÇÚCAR" % premio["acucar"]
+	elif premio.has("bau"):
+		icone = Itens.BAU_DOCE
+		nome = "BAÚ DE DOCE"
+	elif premio.has("movel"):
+		icone = ICONE_MOVEL
+		quantidade = Casa.MOVEIS[premio["movel"]]["nome"]
+		nome = "MÓVEL: " + quantidade
+	elif premio.has("doce"):
+		icone = Personagens.textura(premio["doce"])
+		quantidade = Colecao.dados(premio["doce"])["nome"]
+		nome = "DOCE: " + quantidade
+	var b := Button.new()
+	b.name = "Premio%d" % i
+	b.custom_minimum_size = Vector2(205, 128)
+	b.focus_mode = Control.FOCUS_NONE
+	b.tooltip_text = nome
+	var meta := int(Eventos.TRILHA[i][0])
+	var coluna := VBoxContainer.new()
+	coluna.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	coluna.alignment = BoxContainer.ALIGNMENT_CENTER
+	coluna.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coluna.add_theme_constant_override("separation", 0)
+	b.add_child(coluna)
+	var pede := Label.new()
+	pede.text = "%d %s" % [meta, dados["ficha"]]
+	pede.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pede.add_theme_font_size_override("font_size", 15)
+	pede.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coluna.add_child(pede)
+	var ficha := Itens.ficha(icone, quantidade, 34 if quantidade.length() < 6 else 18)
+	ficha.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coluna.add_child(ficha)
+	var estado := Label.new()
+	estado.name = "Estado"
+	estado.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	estado.add_theme_font_size_override("font_size", 20)
+	estado.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coluna.add_child(estado)
+	if Eventos.resgatado(i):
+		estado.text = "✓ PEGO"
+		b.disabled = true
+	elif Eventos.pode_resgatar(i):
+		estado.text = "PEGAR!"
+		b.theme_type_variation = &"BotaoPremio"
+		b.pressed.connect(func():
+			if not Eventos.resgatar(i).is_empty():
+				Audio.tocar("vitoria")
+				jogador.comemorar()
+				Telas.mostrar_aviso("PRÊMIO DO EVENTO: " + nome)
+				_atualizar_topo()
+				abrir_evento())
+	else:
+		estado.text = "FALTAM %d" % (meta - Eventos.fichas())
+		b.theme_type_variation = &"BotaoSecundario"
+	# as cores de texto do botão valem para os rótulos de dentro
+	var cor := b.get_theme_color("font_color", b.theme_type_variation if b.theme_type_variation != &"" else &"Button")
+	for rotulo in [pede, estado]:
+		rotulo.add_theme_color_override("font_color", cor)
+	return b
 
 
 # --- Histórias da vila (ver Historia e Dialogo) ------------------------------------
@@ -1566,7 +1617,14 @@ func _criar_historia() -> void:
 	_quadro_historia.position = Vector2(18, 86)
 	_quadro_historia.custom_minimum_size = Vector2(300, 0)
 	_quadro_historia.modulate.a = 0.92
-	_quadro_historia.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_quadro_historia.mouse_filter = Control.MOUSE_FILTER_STOP
+	_quadro_historia.tooltip_text = "Toque para o seu doce ir até lá"
+	_quadro_historia.gui_input.connect(func(evento: InputEvent):
+		var toque: bool = (evento is InputEventMouseButton and evento.button_index == MOUSE_BUTTON_LEFT and not evento.pressed) \
+			or (evento is InputEventScreenTouch and not evento.pressed)
+		if toque:
+			_quadro_historia.accept_event()
+			andar_ate_missao())
 	_texto_historia = Label.new()
 	_texto_historia.name = "TextoHistoria"
 	_texto_historia.theme_type_variation = &"TituloClaro"
@@ -1594,6 +1652,129 @@ func _criar_historia() -> void:
 	_mostrar_pendentes.call_deferred()
 
 
+# --- Andar sozinho até a missão ---------------------------------------------------------
+# Tocar no quadro da história leva o doce até o morador, o lugar ou a porta do
+# prédio do passo de agora (contornando a praça). Mexer no controle para.
+
+## Prédio de cada evento dos passos "fazer" (ver Missoes.registrar).
+const PREDIO_DO_EVENTO := {
+	"partidas": "escola", "acertos": "escola", "clientes": "confeitaria", "torre": "torre", "fabrica": "fabrica",
+	"match": "fliperama", "corrida": "corrida", "lab_fases": "laboratorio", "estrelas": "laboratorio",
+}
+const RAIO_ANEL := 6.0  # contorno da praça, por fora da fonte
+var _auto: Array = []  # pontos até o destino (o último é o destino)
+var _auto_morador := ""  # indo até um morador (que anda): segue ele
+var _auto_relogio := 0.0
+var _auto_ultimo := Vector3.ZERO
+var _auto_travou := 0
+
+
+## Destino do passo da história de agora: {"ponto", "morador" (o que procurar,
+## ou "")}; {} se não há para onde ir.
+func destino_da_missao() -> Dictionary:
+	var passo := Historia.passo_atual()
+	if passo.is_empty():
+		return {}
+	match str(passo["tipo"]):
+		"falar", "pergunta", "entregar":
+			var quem: String = passo.get("quem", "")
+			if _moradores_historia.has(quem):
+				return {"ponto": _moradores_historia[quem].global_position, "morador": quem}
+		"ir":
+			return {"ponto": Historia.LUGARES[passo["onde"]][0], "morador": ""}
+		"fazer":
+			var predio: String = PREDIO_DO_EVENTO.get(str(passo.get("evento", "")), "")
+			if _portas.has(predio):
+				return {"ponto": _portas[predio]["porta"], "morador": ""}
+	return {}
+
+
+## Começa a andar sozinho até o destino da missão. Falso se não há destino.
+func andar_ate_missao() -> bool:
+	if _entrando or fotografando != "" or camera_externa or (dialogo and dialogo.aberto):
+		return false
+	var destino := destino_da_missao()
+	if destino.is_empty():
+		return false
+	_auto_morador = destino["morador"]
+	_auto = _caminho_ate(destino["ponto"])
+	_auto_relogio = 0.0
+	_auto_travou = 0
+	_auto_ultimo = jogador.global_position
+	Audio.tocar("pulo", 1.3, -8.0)
+	return true
+
+
+func parar_de_andar_sozinho() -> void:
+	_auto.clear()
+	_auto_morador = ""
+
+
+func andando_sozinho() -> bool:
+	return not _auto.is_empty()
+
+
+## Pontos do caminho: perto da praça, contorna a fonte pelo anel (de 45 em 45 graus).
+func _caminho_ate(destino: Vector3) -> Array:
+	var de := jogador.global_position
+	var lista := []
+	var r_de := Vector2(de.x, de.z).length()
+	var r_ate := Vector2(destino.x, destino.z).length()
+	if r_de < 45.0 and r_ate < 45.0 and Vector2(de.x - destino.x, de.z - destino.z).length() > RAIO_ANEL:
+		var a0 := atan2(de.z, de.x)
+		var a1 := atan2(destino.z, destino.x)
+		var diferenca := wrapf(a1 - a0, -PI, PI)
+		var passos := maxi(1, ceili(absf(diferenca) / (PI / 4.0)))
+		for k in passos + 1:
+			var a := a0 + diferenca * k / passos
+			var ponto := Vector3(cos(a), 0, sin(a)) * RAIO_ANEL
+			# não volta para o anel se já está por fora dele, na direção certa
+			if (k == 0 and r_de > RAIO_ANEL + 2.0 and absf(diferenca) < 0.5) or (k == passos and r_ate < RAIO_ANEL):
+				continue
+			lista.append(ponto)
+	lista.append(destino)
+	return lista
+
+
+func _andar_sozinho(delta: float) -> void:
+	var p := jogador.global_position
+	var alvo: Vector3 = _auto[0]
+	var ultimo := _auto.size() == 1
+	if ultimo and _auto_morador != "" and _moradores_historia.has(_auto_morador):
+		alvo = _moradores_historia[_auto_morador].global_position
+	var falta := Vector2(alvo.x - p.x, alvo.z - p.z)
+	var chegou := falta.length() < (1.8 if ultimo and _auto_morador != "" else (1.2 if ultimo else 1.0))
+	if chegou:
+		_auto.pop_front()
+		if _auto.is_empty():
+			jogador.andar(Vector3.ZERO, delta)
+			_auto_morador = ""
+			return
+		return
+	var direcao := Vector3(falta.x, 0, falta.y).normalized()
+	jogador.andar(direcao * 0.85, delta)
+	if modo_camera == Camera.PERTO:
+		var costas := atan2(-direcao.x, -direcao.z)
+		_giro = lerp_angle(_giro, costas, minf(1.0, 2.0 * delta))
+	elif modo_camera == Camera.PRIMEIRA_PESSOA:
+		_giro = lerp_angle(_giro, atan2(-direcao.x, -direcao.z), minf(1.0, 4.0 * delta))
+		jogador.virar_para_angulo(_giro + PI)
+	# travou (morador, banco, mureta): pula; travou de novo, desiste
+	_auto_relogio += delta
+	if _auto_relogio >= 1.0:
+		_auto_relogio = 0.0
+		if p.distance_to(_auto_ultimo) < 0.4:
+			_auto_travou += 1
+			if _auto_travou >= 3:
+				parar_de_andar_sozinho()
+				Telas.mostrar_aviso("SIGA A SETA!")
+				return
+			jogador.pular()
+		else:
+			_auto_travou = 0
+		_auto_ultimo = p
+
+
 ## Quadro do objetivo, "!" em cima do morador da vez e a seta do lugar.
 func _atualizar_historia() -> void:
 	_quadro_historia.visible = not Historia.terminou_tudo()
@@ -1603,6 +1784,8 @@ func _atualizar_historia() -> void:
 	if not Historia.terminou_tudo():
 		var cap: Dictionary = Historia.CAPITULOS[Historia.capitulo()]
 		_texto_historia.text = "HISTÓRIA %d · %s\n%s" % [Historia.capitulo() + 1, cap["titulo"], Historia.texto_meta().to_upper()]
+		if not destino_da_missao().is_empty():
+			_texto_historia.text += "  ▶"  # tocar no quadro leva até lá
 	var vez := Historia.morador_da_vez()
 	for id in _moradores_historia:
 		var morador: Node3D = _moradores_historia[id]
@@ -2134,7 +2317,7 @@ var _mapa_imagem: TextureRect
 var _mapa_origem := Vector2.ZERO  # ponto do mundo no canto da imagem
 var _seta_minimapa: Control
 var _mapa_cheio: CanvasLayer
-const ESCALA_MINIMAPA := 1.7  # pixels por metro no minimapa
+const ESCALA_MINIMAPA := 2.1  # pixels por metro no minimapa
 const ESCALA_IMAGEM_MAPA := 3.0  # pixels por metro na imagem do mapa
 
 
@@ -2228,10 +2411,10 @@ func _criar_minimapa() -> void:
 	moldura.add_theme_stylebox_override("panel", estilo)
 	moldura.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
 	moldura.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	moldura.offset_left = -172
+	moldura.offset_left = -196
 	moldura.offset_right = -18
 	moldura.offset_top = 84
-	moldura.offset_bottom = 238
+	moldura.offset_bottom = 262
 	moldura.tooltip_text = "Abrir o mapa (M)"
 	moldura.gui_input.connect(func(evento: InputEvent):
 		if evento is InputEventMouseButton and evento.button_index == MOUSE_BUTTON_LEFT and not evento.pressed:
@@ -2264,8 +2447,17 @@ func _criar_minimapa() -> void:
 	_seta_minimapa.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_seta_minimapa.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_seta_minimapa.draw.connect(func():
+		var meio := _seta_minimapa.size / 2.0
+		# estrela amarela: para onde fica a missão da história (na borda, se longe)
+		if visita.is_empty() and is_instance_valid(_quadro_historia):
+			var destino := destino_da_missao()
+			if not destino.is_empty():
+				var ponto: Vector3 = destino["ponto"]
+				var falta := Vector2(ponto.x - jogador.global_position.x, ponto.z - jogador.global_position.z) * ESCALA_MINIMAPA
+				falta = falta.limit_length(meio.x - 12.0)
+				_estrela_minimapa(meio + falta)
 		var frente := jogador.frente()
-		MapaVila.desenhar_seta(_seta_minimapa, _seta_minimapa.size / 2.0, atan2(frente.x, frente.z), 9.0))
+		MapaVila.desenhar_seta(_seta_minimapa, meio, atan2(frente.x, frente.z), 10.0))
 	moldura.add_child(_seta_minimapa)
 	var aro := Panel.new()
 	aro.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2289,6 +2481,19 @@ func _criar_minimapa() -> void:
 	rotulo.offset_top = -30
 	rotulo.offset_bottom = -6
 	moldura.add_child(rotulo)
+
+
+func _estrela_minimapa(p: Vector2) -> void:
+	var pontos := PackedVector2Array()
+	for i in 10:
+		var a := -PI / 2.0 + i * TAU / 10.0
+		pontos.append(p + Vector2(cos(a), sin(a)) * (9.0 if i % 2 == 0 else 4.0))
+	var borda := PackedVector2Array()
+	for i in 10:
+		var a := -PI / 2.0 + i * TAU / 10.0
+		borda.append(p + Vector2(cos(a), sin(a)) * (11.5 if i % 2 == 0 else 5.5))
+	_seta_minimapa.draw_colored_polygon(borda, Color("#3B2A5C"))
+	_seta_minimapa.draw_colored_polygon(pontos, Color("#FFD23F"))
 
 
 ## O mapa inteiro, com as regiões exploradas, as não exploradas (névoa) e as

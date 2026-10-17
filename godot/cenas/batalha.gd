@@ -370,7 +370,7 @@ func mostrar_arena() -> void:
 	var forca_time := 0
 	for id in Batalha.time():
 		linha_time.add_child(_moldura(id, 70, Companheiros.nivel(id)))
-		forca_time += Batalha.forca(id, Companheiros.nivel(id))
+		forca_time += Batalha.minha_forca(id)
 	_texto(linha_time, "FORÇA %d" % forca_time, 24).name = "ForcaTime"
 	var trocar := _botao("TrocarTime", "TROCAR TIME", &"BotaoAzul", mostrar_time)
 	trocar.custom_minimum_size = Vector2(220, 60)
@@ -460,8 +460,9 @@ func mostrar_time() -> void:
 	var maior_ataque := 1
 	for doce in Colecao.LISTA:
 		if Colecao.tem(doce["id"]):
-			maior_vida = maxi(maior_vida, Batalha.vida(doce["id"], Companheiros.nivel(doce["id"])))
-			maior_ataque = maxi(maior_ataque, Batalha.ataque(doce["id"], Companheiros.nivel(doce["id"])))
+			var extra := Companheiros.forca_xp(doce["id"])
+			maior_vida = maxi(maior_vida, Batalha.vida(doce["id"], Companheiros.nivel(doce["id"]), extra))
+			maior_ataque = maxi(maior_ataque, Batalha.ataque(doce["id"], Companheiros.nivel(doce["id"]), extra))
 	for doce in Colecao.LISTA:
 		var id: String = doce["id"]
 		if not Colecao.tem(id):
@@ -536,7 +537,19 @@ func _cartao_doce(id: String, nivel: int, maior_vida: int, maior_ataque: int) ->
 	estrelas_nivel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	estrelas_nivel.text = estrelas(nivel)
 	coluna.add_child(estrelas_nivel)
-	for par in [["♥", Batalha.vida(id, nivel), maior_vida, Color("#FF6F8E")], ["⚔", Batalha.ataque(id, nivel), maior_ataque, Color("#FFC83D")]]:
+	# nível de luta (XP do doce): quanto mais ele joga, mais forte fica
+	var xp := Companheiros.nivel_xp_detalhe(id)
+	var luta := Label.new()
+	luta.name = "NivelLuta"
+	luta.theme_type_variation = &"TituloClaro"
+	luta.add_theme_font_size_override("font_size", 15)
+	luta.add_theme_color_override("font_color", Color("#7BE07B"))
+	luta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	luta.text = "LUTA NV %d" % xp["nivel"]
+	luta.tooltip_text = "Nível de luta: o doce ganha XP jogando com você (falta %d XP)" % xp["falta"]
+	coluna.add_child(luta)
+	var extra := Companheiros.forca_xp(id)
+	for par in [["♥", Batalha.vida(id, nivel, extra), maior_vida, Color("#FF6F8E")], ["⚔", Batalha.ataque(id, nivel, extra), maior_ataque, Color("#FFC83D")]]:
 		var linha := HBoxContainer.new()
 		linha.add_theme_constant_override("separation", 4)
 		coluna.add_child(linha)

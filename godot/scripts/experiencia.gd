@@ -4,7 +4,8 @@ class_name Experiencia
 ##
 ## XP: acerto no quiz 5 (revisão 3), fase do laboratório 30 (chefe 60; repetir
 ## 10), partida do Doce Match 15, cliente na cozinha 2, missões (ver Missoes).
-## O companheiro com bônus "xp" aumenta tudo isso.
+## O companheiro com bônus "xp" aumenta tudo isso. O doce companheiro ganha a
+## mesma XP (nível de luta dele, ver Companheiros.ganhar_xp).
 ##
 ## Estado em Progresso.jogador ({"xp": total no nível atual, "nivel": n}).
 
@@ -42,6 +43,8 @@ static func ganhar(quantidade: int) -> int:
 	if quantidade <= 0:
 		return 0
 	quantidade = Companheiros.com_bonus("xp", quantidade)
+	var companheiro := Colecao.companheiro()
+	Companheiros.ganhar_xp(companheiro if companheiro != "" else "brigadeiro", quantidade)  # o doce também aprende
 	var j := Progresso.jogador
 	j["xp"] = xp() + quantidade
 	j["nivel"] = nivel()
@@ -63,3 +66,6 @@ static func anunciar() -> void:
 		Audio.tocar("construir")
 		Telas.mostrar_aviso("NÍVEL %d! GANHOU UM %s" % [s["nivel"], Baus.NOMES[s["bau"]]])
 	subidas_pendentes.clear()
+	for s in Companheiros.subidas_xp:
+		Telas.mostrar_aviso("%s CHEGOU AO NÍVEL DE LUTA %d: MAIS FORTE NA ARENA!" % [Batalha.nome_doce(s["id"]), s["nivel"]])
+	Companheiros.subidas_xp.clear()
