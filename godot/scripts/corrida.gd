@@ -2,10 +2,10 @@ class_name Corrida
 extends RefCounted
 ## Regras da CORRIDA DE DOCES (minigame da Pista, na vila).
 ##
-## Quatro karts de doce dão VOLTAS voltas numa pista fechada que passa pela
-## vila, pela ponte do Lago de Morango, pelo Bosque de Pirulitos e pela
-## Montanha de Sorvete. Os karts andam sozinhos pela pista; o jogador só vira
-## para os lados (◀ ▶, joystick ou teclado).
+## Quatro karts de doce dão `voltas` voltas numa pista fechada: a do GP
+## escolhido (GPs: o da Vila dos Doces, o de Valença (BA), o de Salvador (BA)...,
+## cada um com o seu desenho, trechos, portais e prêmio). Os karts andam
+## sozinhos pela pista; o jogador só vira para os lados (◀ ▶, joystick ou teclado).
 ## - PORTAIS DO QUIZ: um pouco antes de cada portal tudo fica em câmera lenta
 ##   e aparece uma pergunta; cada alternativa é uma faixa colorida do portal
 ##   (A, B, C, D). Passou pela faixa certa: TURBO; pela errada: fica lento.
@@ -23,7 +23,6 @@ extends RefCounted
 ## Estado em Progresso.estatisticas: corrida_partidas, corrida_vitorias e
 ## corrida_recorde (segundos; 0 = nenhuma ainda).
 
-const VOLTAS := 2
 const MEIA_LARGURA := 6.0
 const FAIXAS := [-4.5, -1.5, 1.5, 4.5]  # das alternativas A, B, C, D (nos portais)
 const VELOCIDADE := 25.0  # metros por segundo
@@ -47,24 +46,6 @@ const PREMIOS := [{"moedas": 40, "acucar": 30}, {"moedas": 25, "acucar": 20},
 	{"moedas": 15, "acucar": 15}, {"moedas": 5, "acucar": 10}]
 const CORES_FAIXAS := ["#E8364F", "#2E9BE8", "#F2C230", "#4CC36B"]
 
-## O desenho da pista (os pontos por onde ela passa; y = altura). Fecha no
-## primeiro. Ver ZONAS.
-const PONTOS := [
-	Vector3(0, 0, 0), Vector3(0, 0, -45), Vector3(8, 0, -75), Vector3(32, 0, -90),
-	Vector3(60, 1.6, -92), Vector3(95, 1.6, -92), Vector3(122, 0, -84), Vector3(134, 0, -62),
-	Vector3(126, 0, -38), Vector3(136, 0, -14), Vector3(126, 0, 10), Vector3(108, 3, 30),
-	Vector3(82, 7, 42), Vector3(56, 7, 42), Vector3(32, 3, 38), Vector3(10, 0, 26), Vector3(1, 0, 12),
-]
-## Trechos da pista: começam no ponto `de` (índice em PONTOS).
-const ZONAS := [
-	{"id": "vila", "nome": "VILA DOS DOCES", "de": 0},
-	{"id": "lago", "nome": "LAGO DE MORANGO", "de": 3},
-	{"id": "bosque", "nome": "BOSQUE DE PIRULITOS", "de": 6},
-	{"id": "montanha", "nome": "MONTANHA DE SORVETE", "de": 10},
-	{"id": "vila", "nome": "VILA DOS DOCES", "de": 14},
-]
-## Portais do quiz (em cada volta): no fim da ponte e no alto da montanha.
-const PORTAIS_EM := [Vector3(95, 1.6, -92), Vector3(66, 7, 42)]
 ## Coisas na pista: [fração da volta, x].
 const SETAS := [[0.07, 0.0], [0.19, -3.0], [0.45, 3.0], [0.6, -2.5], [0.92, 2.5]]
 const POCAS := [[0.13, 2.5], [0.41, -3.5], [0.52, -1.0], [0.64, 3.5], [0.97, -3.0]]
@@ -73,6 +54,12 @@ const BLOCOS := [[0.21, -2.0], [0.48, 0.5], [0.57, 2.0], [0.88, -1.5]]
 const CUBOS := [[0.03, 0.0, 0.0], [0.1, -4.0, 4.0], [0.16, 3.5, 3.5], [0.4, 4.0, -4.0],
 	[0.5, -4.5, -4.5], [0.62, 0.0, 0.0], [0.85, -3.0, 3.0], [0.94, 4.5, 4.5]]
 
+## O GP desta corrida (ver GPs) e o que vem dele.
+var gp: Dictionary
+var voltas := 2
+var pontos: Array = []
+var zonas: Array = []
+var portais_em: Array = []
 var curva: Curve3D
 var comprimento := 0.0
 ## Corredores (o 0 é o jogador): {"doce", "nome", "jogador", "s", "x", "v",
@@ -100,15 +87,20 @@ var cubos_pista: Array = []
 var _sorteio := RandomNumberGenerator.new()
 
 
-func _init(semente := -1, rivais: Array = []) -> void:
+func _init(semente := -1, rivais: Array = [], gp_id := "vila") -> void:
 	if semente >= 0:
 		_sorteio.seed = semente
 	else:
 		_sorteio.randomize()
-	curva = montar_curva()
+	gp = GPs.dados(gp_id)
+	voltas = gp["voltas"]
+	pontos = gp["pontos"]
+	zonas = gp["zonas"]
+	portais_em = gp["portais"]
+	curva = montar_curva(pontos)
 	comprimento = curva.get_baked_length()
-	for volta in VOLTAS:
-		for p in PORTAIS_EM:
+	for volta in voltas:
+		for p in portais_em:
 			portais.append(volta * comprimento + curva.get_closest_offset(p))
 	_sortear_perguntas()
 	_espalhar_coisas()
@@ -119,7 +111,7 @@ func _init(semente := -1, rivais: Array = []) -> void:
 		rivais = sortear_rivais(meu, _sorteio)
 	var nivel := Companheiros.nivel(meu)
 	_novo_corredor(meu, true, 0.0, 1.0 + BONUS_NIVEL * (nivel - 1))
-	var base := 0.35 + 0.1 * mini(vitorias(), 5)
+	var base := 0.35 + 0.1 * mini(vitorias(), 5) + float(gp["dificuldade"])
 	for i in rivais.size():
 		_novo_corredor(rivais[i], false, clampf(base + 0.07 * i, 0.0, 0.95), 0.0)
 	# largada em fila dupla atrás da linha (o jogador por último, para ultrapassar)
@@ -132,14 +124,14 @@ func _init(semente := -1, rivais: Array = []) -> void:
 		c["alvo_x"] = grade[k][1]
 
 
-## A pista como curva suave que passa por PONTOS (fechada).
-static func montar_curva() -> Curve3D:
+## A pista como curva suave que passa pelos `pontos` (fechada).
+static func montar_curva(pontos_gp: Array) -> Curve3D:
 	var c := Curve3D.new()
 	c.bake_interval = 0.5
-	var n := PONTOS.size()
+	var n := pontos_gp.size()
 	for i in n + 1:
-		var p: Vector3 = PONTOS[i % n]
-		var tangente: Vector3 = (PONTOS[(i + 1) % n] - PONTOS[(i - 1 + n) % n]) / 6.0
+		var p: Vector3 = pontos_gp[i % n]
+		var tangente: Vector3 = (pontos_gp[(i + 1) % n] - pontos_gp[(i - 1 + n) % n]) / 6.0
 		c.add_point(p, -tangente, tangente)
 	return c
 
@@ -211,7 +203,7 @@ func _colocar(lista: Array, fracao: float, x: float) -> void:
 
 
 func _livre(s: float) -> bool:
-	for p in portais.slice(0, PORTAIS_EM.size()):
+	for p in portais.slice(0, portais_em.size()):
 		if s > p - AVISO_PORTAL - 4.0 and s < p + 10.0:
 			return false
 	return s > 10.0  # a largada também fica limpa
@@ -238,12 +230,12 @@ func lado(s: float) -> Vector3:
 	return Vector3(-f.z, 0, f.x).normalized()
 
 
-## Trecho da pista em `s` (ver ZONAS).
+## Trecho da pista em `s` (ver as zonas do GP).
 func zona(s: float) -> Dictionary:
 	var o := fposmod(s, comprimento)
-	var atual: Dictionary = ZONAS[0]
-	for z in ZONAS:
-		if o >= curva.get_closest_offset(PONTOS[z["de"]]) - 0.01:
+	var atual: Dictionary = zonas[0]
+	for z in zonas:
+		if o >= curva.get_closest_offset(pontos[z["de"]]) - 0.01:
 			atual = z
 	return atual
 
@@ -268,9 +260,9 @@ func jogador() -> Dictionary:
 	return corredores[0]
 
 
-## Volta em que o corredor está (1 a VOLTAS).
+## Volta em que o corredor está (1 a `voltas`).
 func volta(i := 0) -> int:
-	return clampi(floori(corredores[i]["s"] / comprimento) + 1, 1, VOLTAS)
+	return clampi(floori(corredores[i]["s"] / comprimento) + 1, 1, voltas)
 
 
 ## Lugar do corredor agora (1 = primeiro).
@@ -387,9 +379,9 @@ func _mover(i: int, dt: float, eventos: Array) -> void:
 	_passar_portal(i, eventos)
 	# volta completa e chegada
 	if c["fim"] < 0.0:
-		if floori(c["s"] / comprimento) > floori(antes / comprimento) and antes >= 0.0 and c["s"] < VOLTAS * comprimento:
+		if floori(c["s"] / comprimento) > floori(antes / comprimento) and antes >= 0.0 and c["s"] < voltas * comprimento:
 			eventos.append({"tipo": "volta", "quem": i, "volta": volta(i)})
-		if c["s"] >= VOLTAS * comprimento:
+		if c["s"] >= voltas * comprimento:
 			c["fim"] = tempo
 			eventos.append({"tipo": "chegada", "quem": i, "lugar": colocacao(i)})
 			if c["jogador"]:
@@ -517,14 +509,15 @@ func _terminar() -> void:
 	acabou = true
 	for c in corredores:
 		if c["fim"] < 0.0:
-			var falta: float = VOLTAS * comprimento - c["s"]
+			var falta: float = voltas * comprimento - c["s"]
 			c["fim"] = tempo + falta / maxf(VELOCIDADE * 0.8, c["v"])
 
 
 # --- Fim da corrida ---------------------------------------------------------------------
 
-static func recorde() -> float:
-	return float(Progresso.estatisticas.get("corrida_recorde", 0.0))
+## Recorde do GP (o da Vila, sem dizer qual).
+static func recorde(gp_id := "vila") -> float:
+	return GPs.recorde(gp_id)
 
 
 static func vitorias() -> int:
@@ -532,19 +525,18 @@ static func vitorias() -> int:
 
 
 ## Prêmio pelo lugar + 1 açúcar por cubo; ganhar com tempo recorde dá um baú
-## de doce. Retorna {"lugar", "tempo", "moedas", "acucar", "bau", "recorde_novo"}.
+## de doce. Retorna {"lugar", "tempo", "moedas", "acucar", "bau", "recorde_novo",
+## "liberou" (o GP que o pódio liberou, ou "")}.
 func concluir() -> Dictionary:
 	if not acabou:
 		return {}
 	var lugar := colocacao(0)
 	var meu_tempo: float = jogador()["fim"]
-	var premio: Dictionary = PREMIOS[lugar - 1]
+	var premio := premio_do_lugar(lugar)
 	var acucar := Companheiros.com_bonus("acucar", int(premio["acucar"]) + cubos)
 	var moedas: int = premio["moedas"]
-	var antes := recorde()
-	var recorde_novo := antes <= 0.0 or meu_tempo < antes
-	if recorde_novo:
-		Progresso.estatisticas["corrida_recorde"] = snappedf(meu_tempo, 0.01)
+	var liberava := _proximo_liberado()
+	var recorde_novo := GPs.registrar(gp["id"], lugar, meu_tempo)
 	var bau := ""
 	if lugar == 1 and recorde_novo:
 		bau = "doce"
@@ -556,8 +548,22 @@ func concluir() -> Dictionary:
 	Missoes.registrar("corrida", 1)
 	Experiencia.ganhar(Experiencia.XP_MATCH)
 	Progresso.ganhar_moedas(moedas)  # também salva
+	var liberou := ""
+	if not liberava and _proximo_liberado():
+		liberou = GPs.LISTA[GPs.indice(gp["id"]) + 1]["id"]
 	return {"lugar": lugar, "tempo": meu_tempo, "moedas": moedas, "acucar": acucar, "bau": bau,
-		"recorde_novo": recorde_novo}
+		"recorde_novo": recorde_novo, "liberou": liberou}
+
+
+## O prêmio do lugar (1 a 4) neste GP: {"moedas", "acucar"}.
+func premio_do_lugar(lugar: int) -> Dictionary:
+	var base: Dictionary = PREMIOS[lugar - 1]
+	return {"moedas": roundi(base["moedas"] * float(gp["premio"])), "acucar": roundi(base["acucar"] * float(gp["premio"]))}
+
+
+func _proximo_liberado() -> bool:
+	var i := GPs.indice(gp["id"])
+	return i + 1 < GPs.LISTA.size() and GPs.liberado(GPs.LISTA[i + 1]["id"])
 
 
 ## Saiu no meio da corrida: sem prêmio de lugar, mas leva o açúcar dos cubos que

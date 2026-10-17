@@ -19,12 +19,15 @@ const CAMERA_ATRAS := 7.2
 const CAMERA_ALTURA := 3.0
 const FOV := 64.0
 const FOV_TURBO := 78.0
-const LAGO := Vector3(78, 0, -93)
-const LAGO_RAIOS := Vector2(34, 19)
+## Trechos com ponte sobre a água (ver GPs).
+const TRECHOS_PONTE := ["lago", "rio"]
 const VERDE := Color("#7BE07B")
 const VERMELHO := Color("#FF5A5A")
 
 var corrida: Corrida
+## O GP desta pista (ver GPs); trocar de GP monta a tela de novo.
+var gp_id := "vila"
+var _mapa: MapaPista
 var estado := "inicio"  # "inicio", "correndo", "fim"
 var _karts: Array[Kart3D] = []
 var _x_antes: Array[float] = []
@@ -61,7 +64,8 @@ var _painel: Control
 
 
 func _ready() -> void:
-	corrida = Corrida.new()
+	gp_id = GPs.escolhido()
+	corrida = Corrida.new(-1, [], gp_id)
 	_criar_ambiente()
 	_montar_pista()
 	_montar_cenario()
@@ -105,7 +109,7 @@ func ao_voltar() -> void:
 
 func _criar_ambiente() -> void:
 	var ambiente := Environment.new()
-	var ceu := VisualRealista.ceu(Color("#6FB8F0"), Color("#FFD9EC"), Color("#86C96F"))
+	var ceu := VisualRealista.ceu(Color(corrida.gp["ceu"][0]), Color(corrida.gp["ceu"][1]), Color("#86C96F"))
 	var sky := Sky.new()
 	sky.sky_material = ceu
 	ambiente.background_mode = Environment.BG_SKY
@@ -115,7 +119,7 @@ func _criar_ambiente() -> void:
 	ambiente.ambient_light_energy = 0.5 if CenarioVila.modo_leve() else 0.65
 	# névoa rosada ao longe (esconde a borda do mundo)
 	ambiente.fog_enabled = true
-	ambiente.fog_light_color = Color("#FFE1EE")
+	ambiente.fog_light_color = Color(corrida.gp["nevoa"])
 	ambiente.fog_density = 0.0035
 	ambiente.fog_sky_affect = 0.0
 	CenarioVila.acabamento(ambiente)
@@ -186,7 +190,7 @@ func _saia(pai: Node3D, lado: int, mat: Material, minimo: float, profundidade: f
 		var s1 := s0 + passo
 		var t0 := corrida.ponto(s0, x) + Vector3.UP * 0.1
 		var t1 := corrida.ponto(s1, x) + Vector3.UP * 0.1
-		if minf(t0.y, t1.y) < minimo or (corrida.zona(s0)["id"] == "lago") != so_lago:
+		if minf(t0.y, t1.y) < minimo or (corrida.zona(s0)["id"] in TRECHOS_PONTE) != so_lago:
 			continue
 		algum = true
 		var f0 := Vector3(t0.x, maxf(-0.3, t0.y - profundidade), t0.z)
@@ -244,7 +248,7 @@ func _montar_pista() -> void:
 	var s := 0.0
 	var antes := {}
 	while s < corrida.comprimento:
-		if corrida.zona(s)["id"] == "lago":
+		if corrida.zona(s)["id"] in TRECHOS_PONTE:
 			for lado in [-1, 1]:
 				var topo := corrida.ponto(s, lado * (w + 0.6))
 				if topo.y > 0.35:
@@ -256,24 +260,38 @@ func _montar_pista() -> void:
 				else:
 					antes.erase(lado)
 		s += 6.0
-	# chão de grama e o lago de morango com a margem de areia de biscoito
+	# chão de grama e a água do GP (lago, rio, mar) com a margem de areia
+	var limites := _limites()
 	var chao := MeshInstance3D.new()
 	chao.name = "Chao"
 	var plano := PlaneMesh.new()
-	plano.size = Vector2(700, 700)
+	plano.size = Vector2.ONE * (maxf(limites.size.x, limites.size.y) + 560.0)
 	chao.mesh = plano
 	chao.material_override = CenarioVila.gramado()
-	chao.position = Vector3(68, 0, -25)
+	chao.position = Vector3(limites.get_center().x, 0, limites.get_center().y)
 	pista.add_child(chao)
-	var margem := Pecas3D.cilindro(pista, 1.0, 1.0, 0.1, LAGO + Vector3(0, 0.02, 0), Pecas3D.material(Color("#F6D2A2"), 0.9),
-		Vector3(LAGO_RAIOS.x + 3.0, 1, LAGO_RAIOS.y + 3.0))
-	(margem.mesh as CylinderMesh).radial_segments = 64
-	var agua := Pecas3D.material(Color("#FF86B8"), 0.06, 0.1)
-	var lago := Pecas3D.cilindro(pista, 1.0, 1.0, 0.1, LAGO + Vector3(0, 0.12, 0), agua, Vector3(LAGO_RAIOS.x, 1, LAGO_RAIOS.y))
-	(lago.mesh as CylinderMesh).radial_segments = 64
+	for dados in corrida.gp["aguas"]:
+		var centro: Vector3 = dados["centro"]
+		var raios: Vector2 = dados["raios"]
+		var beira: float = dados["beira"]
+		var margem := Pecas3D.cilindro(pista, 1.0, 1.0, 0.1, centro + Vector3(0, 0.02, 0), Pecas3D.material(Color(dados["margem"]), 0.9),
+			Vector3(raios.x + beira, 1, raios.y + beira))
+		(margem.mesh as CylinderMesh).radial_segments = 64
+		var agua := Pecas3D.material(Color(dados["cor"]), 0.06, 0.1)
+		var lago := Pecas3D.cilindro(pista, 1.0, 1.0, 0.1, centro + Vector3(0, 0.12, 0), agua, Vector3(raios.x, 1, raios.y))
+		lago.name = "Agua"
+		(lago.mesh as CylinderMesh).radial_segments = 64
 	_portico_largada(pista)
-	for k in Corrida.PORTAIS_EM.size():
+	for k in corrida.portais_em.size():
 		_portal(pista, k)
+
+
+## A pista vista de cima (x, z): o retângulo em volta dela.
+func _limites() -> Rect2:
+	var caixa := Rect2(Vector2(corrida.pontos[0].x, corrida.pontos[0].z), Vector2.ZERO)
+	for p: Vector3 in corrida.pontos:
+		caixa = caixa.expand(Vector2(p.x, p.z))
+	return caixa
 
 
 ## Asfalto de chocolate com granulado colorido, faixas tracejadas entre as
@@ -363,7 +381,7 @@ func _portico_largada(pai: Node3D) -> void:
 ## Portal do quiz: arco com quatro placas (A, B, C, D) nas cores das faixas,
 ## e as faixas pintadas no chão antes dele.
 func _portal(pai: Node3D, k: int) -> void:
-	var s := corrida.curva.get_closest_offset(Corrida.PORTAIS_EM[k])
+	var s := corrida.curva.get_closest_offset(corrida.portais_em[k])
 	var no := Node3D.new()
 	no.name = "Portal%d" % k
 	pai.add_child(no)
@@ -416,13 +434,24 @@ func _portal(pai: Node3D, k: int) -> void:
 
 # --- Cenário em volta ---------------------------------------------------------------------
 
-## Se dá para pôr uma coisa em `p` (longe da pista e fora do lago).
+## Se dá para pôr uma coisa em `p` (longe da pista, da arquibancada e fora da água).
 func _livre(p: Vector3, folga: float) -> bool:
 	var perto := corrida.curva.get_closest_point(p)
 	if Vector2(p.x - perto.x, p.z - perto.z).length() < Corrida.MEIA_LARGURA + 1.5 + folga:
 		return false
-	var no_lago := Vector2((p.x - LAGO.x) / (LAGO_RAIOS.x + 4.0), (p.z - LAGO.z) / (LAGO_RAIOS.y + 4.0))
-	return no_lago.length() > 1.0
+	if p.x > -26.0 - folga and p.x < -6.0 and p.z > -34.0 - folga and p.z < -2.0 + folga:
+		return false  # arquibancada
+	return _na_agua(p, 4.0) > 1.0
+
+
+## Distância "de elipse" até a água mais perto (< 1 = dentro dela, com `folga` metros a mais).
+func _na_agua(p: Vector3, folga: float) -> float:
+	var menor := INF
+	for dados in corrida.gp["aguas"]:
+		var centro: Vector3 = dados["centro"]
+		var raios: Vector2 = dados["raios"]
+		menor = minf(menor, Vector2((p.x - centro.x) / (raios.x + folga), (p.z - centro.z) / (raios.y + folga)).length())
+	return menor
 
 
 func _montar_cenario() -> void:
@@ -477,9 +506,104 @@ func _montar_cenario() -> void:
 						var p := _no_chao(corrida.ponto(s, lado * sorteio.randf_range(10.0, 16.0)))
 						if _livre(p, 1.5):
 							_boneco_de_neve(cenario, p)
+				"rio", "parque":
+					for vez in 2:
+						var p := _no_chao(corrida.ponto(s + vez * 3.5, lado * sorteio.randf_range(9.0, 26.0)))
+						if not _livre(p, 2.0):
+							continue
+						if zona == "rio" and sorteio.randf() < 0.45:
+							CenarioGP.coqueiro(cenario, p, sorteio.randf_range(6.0, 8.5), sorteio.randf_range(-0.15, 0.15), sorteio.randf() * TAU)
+						else:
+							CenarioGP.arvore_mata(cenario, p, sorteio.randf_range(0.8, 1.3), Color(["#3F8F45", "#5AA84E", "#2F7A3C"][sorteio.randi() % 3]))
+				"praia":
+					var p := _no_chao(corrida.ponto(s, lado * sorteio.randf_range(9.0, 22.0)))
+					var areia := _na_agua(p, 0.0)
+					if areia > 1.0 and _na_agua(p, _beira_maior()) < 1.0 and _livre_da_pista(p, 1.5):
+						if sorteio.randf() < 0.5:
+							CenarioGP.guarda_sol(cenario, p, Color(cores_pirulito[sorteio.randi() % cores_pirulito.size()]))
+						else:
+							CenarioGP.coqueiro(cenario, p, sorteio.randf_range(6.0, 9.0), sorteio.randf_range(-0.25, 0.25), sorteio.randf() * TAU)
+					elif _livre(p, 1.5) and sorteio.randf() < 0.7:
+						CenarioGP.coqueiro(cenario, p, sorteio.randf_range(6.5, 9.5), sorteio.randf_range(-0.2, 0.2), sorteio.randf() * TAU)
+				"colonial":
+					if n % 3 == 0:
+						var p := _no_chao(corrida.ponto(s, lado * sorteio.randf_range(13.0, 16.0)))
+						if _livre(p, 7.0):
+							CenarioGP.casaroes(cenario, p, _no_chao(corrida.ponto(s, 0.0)), 3, sorteio)
+					elif sorteio.randf() < 0.3:
+						var p := _no_chao(corrida.ponto(s, lado * (Corrida.MEIA_LARGURA + 2.4)))
+						if _livre(p, -1.5):
+							_lampiao(cenario, p)
+				"predios":
+					if sorteio.randf() < 0.7:
+						var p := _no_chao(corrida.ponto(s, lado * sorteio.randf_range(15.0, 30.0)))
+						if _livre(p, 8.0):
+							var largura := sorteio.randf_range(8.0, 12.0)
+							CenarioGP.predio(cenario, p, Vector3(largura, sorteio.randf_range(14.0, 42.0), largura),
+								Color(["#C9CED8", "#E8DCC4", "#B8C4D6", "#D8C8B8", "#A9B4C2"][sorteio.randi() % 5]))
+				"serra":
+					for vez in 2:
+						var p := _no_chao(corrida.ponto(s + vez * 3.5, lado * sorteio.randf_range(9.0, 28.0)))
+						if not _livre(p, 1.5):
+							continue
+						if sorteio.randf() < 0.75:
+							CenarioGP.arvore_mata(cenario, p, sorteio.randf_range(0.9, 1.5), Color(["#2F7A3C", "#3F8F45", "#4E7F3A"][sorteio.randi() % 3]))
+						else:
+							CenarioGP.pedra(cenario, p, sorteio.randf_range(1.0, 2.4))
 		s += 7.0
-	_montanhas(cenario)
+	for marco in corrida.gp["marcos"]:
+		var lugar: Vector3 = marco["lugar"]
+		CenarioGP.marco(cenario, marco, corrida.curva.get_closest_point(lugar))
+	match corrida.gp["fundo"]:
+		"sorvete":
+			_montanhas(cenario)
+		"morros":
+			_fundo_morros(cenario, sorteio, false)
+		"predios":
+			_fundo_morros(cenario, sorteio, true)
 	_arquibancada(cenario)
+
+
+func _livre_da_pista(p: Vector3, folga: float) -> bool:
+	var perto := corrida.curva.get_closest_point(p)
+	return Vector2(p.x - perto.x, p.z - perto.z).length() >= Corrida.MEIA_LARGURA + 1.5 + folga
+
+
+## A faixa de areia mais larga das águas do GP (praia).
+func _beira_maior() -> float:
+	var maior := 0.0
+	for dados in corrida.gp["aguas"]:
+		maior = maxf(maior, float(dados["beira"]))
+	return maior
+
+
+func _lampiao(pai: Node3D, p: Vector3) -> void:
+	var preto := Pecas3D.material(Color("#2B2B30"), 0.5, 0.4)
+	Pecas3D.cilindro(pai, 0.08, 0.12, 3.6, p + Vector3(0, 1.8, 0), preto)
+	Pecas3D.caixa(pai, Vector3(0.5, 0.6, 0.5), p + Vector3(0, 3.8, 0), CenarioVila.vidro_janela())
+	Pecas3D.cilindro(pai, 0.05, 0.4, 0.3, p + Vector3(0, 4.25, 0), preto)
+
+
+## Morros verdes em volta, longe da pista (e, na cidade grande, prédios na
+## frente deles fazendo a silhueta).
+func _fundo_morros(pai: Node3D, sorteio: RandomNumberGenerator, com_predios: bool) -> void:
+	var limites := _limites()
+	var centro := Vector3(limites.get_center().x, 0, limites.get_center().y)
+	var raio := limites.size.length() / 2.0
+	var verdes := [Color("#5E8F4A"), Color("#4E7F3A"), Color("#6E9E52"), Color("#557E44")]
+	for i in 16:
+		var a := i * TAU / 16.0 + sorteio.randf_range(-0.1, 0.1)
+		var longe := raio + sorteio.randf_range(70.0, 110.0)
+		var p := centro + Vector3(cos(a), 0, sin(a)) * longe
+		if _livre(p, 30.0):
+			CenarioGP.morro(pai, p, sorteio.randf_range(26.0, 42.0), verdes[i % verdes.size()])
+		if com_predios:
+			for k in 4:
+				var q := centro + Vector3(cos(a + k * 0.09), 0, sin(a + k * 0.09)) * (raio + sorteio.randf_range(36.0, 60.0))
+				if _livre(q, 10.0):
+					var largura := sorteio.randf_range(9.0, 14.0)
+					CenarioGP.predio(pai, q, Vector3(largura, sorteio.randf_range(30.0, 75.0), largura),
+						Color(["#C9CED8", "#B8C4D6", "#D8C8B8", "#9FA9B8"][sorteio.randi() % 4]))
 
 
 func _no_chao(p: Vector3) -> Vector3:
@@ -878,7 +1002,7 @@ func _tratar(e: Dictionary) -> void:
 		"volta":
 			if meu:
 				Audio.tocar("construir")
-				_mensagem("VOLTA FINAL!" if e["volta"] == Corrida.VOLTAS else "VOLTA %d" % e["volta"], 70, Color("#FFD23F"))
+				_mensagem("VOLTA FINAL!" if e["volta"] == corrida.voltas else "VOLTA %d" % e["volta"], 70, Color("#FFD23F"))
 		"fim":
 			_chegou()
 
@@ -904,14 +1028,17 @@ func _balancar_bloco(quem: int) -> void:
 
 func mostrar_inicio() -> void:
 	estado = "inicio"
-	corrida = Corrida.new()
+	corrida = Corrida.new(-1, [], gp_id)
+	_mapa.usar_corrida(corrida)
 	_criar_karts()
 	_hud.visible = false
 	_quadro.visible = false
 	for luz in _semaforo:
 		luz.emission = Color.BLACK
-	var coluna := _abrir_painel("Inicio", "CORRIDA DE DOCES", true)
-	_texto(coluna, "2 voltas pela vila, pela ponte do Lago de Morango, pelo Bosque de Pirulitos e pela Montanha de Sorvete. Nos PORTAIS DO QUIZ, passe pela faixa da resposta certa para ganhar TURBO!", 21, 540)
+	var coluna := _abrir_painel("Inicio", str(corrida.gp["nome"]), true)
+	coluna.get_node("Titulo").add_theme_font_size_override("font_size", 40)
+	coluna.add_child(_escolha_de_gp())
+	_texto(coluna, str(corrida.gp["texto"]), 19, 540)
 	var rivais := HBoxContainer.new()
 	rivais.alignment = BoxContainer.ALIGNMENT_CENTER
 	rivais.add_theme_constant_override("separation", 12)
@@ -930,10 +1057,11 @@ func mostrar_inicio() -> void:
 		cartao.add_child(foto)
 		var nome := _texto(cartao, c["nome"], 17, 110)
 		nome.add_theme_color_override("font_color", Color(CORES_KARTS[i]))
-	var recorde := Corrida.recorde()
-	var linha := "1º LUGAR: 40 MOEDAS + 30 AÇÚCAR  ·  CADA CUBO: +1 AÇÚCAR"
+	var recorde := Corrida.recorde(gp_id)
+	var primeiro := corrida.premio_do_lugar(1)
+	var linha := "1º LUGAR: %d MOEDAS + %d AÇÚCAR  ·  CADA CUBO: +1 AÇÚCAR" % [primeiro["moedas"], primeiro["acucar"]]
 	if recorde > 0.0:
-		linha += "\nRECORDE: %s  ·  VITÓRIAS: %d" % [Corrida.texto_tempo(recorde), Corrida.vitorias()]
+		linha += "\nRECORDE: %s  ·  MELHOR LUGAR: %dº" % [Corrida.texto_tempo(recorde), GPs.melhor_lugar(gp_id)]
 	_texto(coluna, linha, 19, 540)
 	var botoes := HBoxContainer.new()
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -941,6 +1069,77 @@ func mostrar_inicio() -> void:
 	coluna.add_child(botoes)
 	botoes.add_child(_botao("Sair", "VOLTAR", &"BotaoSecundario", Telas.voltar, 200))
 	botoes.add_child(_botao("Correr", "CORRER!", &"BotaoComprar", comecar, 260))
+
+
+## Cartões dos GPs (o mapinha da pista, a cidade e o estado): tocar num liberado
+## troca de GP (a pista é montada de novo); os outros mostram o que falta.
+func _escolha_de_gp() -> Control:
+	var rolagem := ScrollContainer.new()
+	rolagem.name = "GPs"
+	rolagem.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rolagem.custom_minimum_size = Vector2(572, 150)
+	var linha := HBoxContainer.new()
+	linha.add_theme_constant_override("separation", 8)
+	rolagem.add_child(linha)
+	for gp in GPs.LISTA:
+		var id: String = gp["id"]
+		var liberado := GPs.liberado(id)
+		var botao := Button.new()
+		botao.name = "GP_" + id
+		botao.custom_minimum_size = Vector2(106, 140)
+		botao.focus_mode = Control.FOCUS_NONE
+		botao.disabled = not liberado
+		botao.tooltip_text = gp["nome"] if liberado else "Chegue no pódio do GP anterior para liberar"
+		for estado_botao in ["normal", "hover", "pressed", "disabled"]:
+			var estilo := StyleBoxFlat.new()
+			estilo.bg_color = Color(gp["cor"]).darkened(0.25) if liberado else Color(0.25, 0.2, 0.35)
+			if estado_botao == "hover":
+				estilo.bg_color = estilo.bg_color.lightened(0.1)
+			estilo.set_corner_radius_all(14)
+			estilo.set_border_width_all(4 if id == gp_id else 2)
+			estilo.border_color = Color("#FFD23F") if id == gp_id else Color(1, 1, 1, 0.5)
+			botao.add_theme_stylebox_override(estado_botao, estilo)
+		var dentro := VBoxContainer.new()
+		dentro.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		dentro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dentro.add_theme_constant_override("separation", 0)
+		botao.add_child(dentro)
+		var mapa := MapaPista.new()
+		mapa.custom_minimum_size = Vector2(0, 74)
+		mapa.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		mapa.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mapa.largura = 3.0
+		mapa.modulate.a = 1.0 if liberado else 0.35
+		dentro.add_child(mapa)
+		mapa.usar_gp(gp)
+		var nome := Label.new()
+		nome.text = gp["cidade"] if gp["estado"] == "" else "%s\n%s" % [gp["cidade"], gp["estado"]]
+		if id == "vila":
+			nome.text = "VILA DOS\nDOCES"
+		nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		nome.theme_type_variation = &"SubtituloClaro"
+		nome.add_theme_font_size_override("font_size", 14)
+		nome.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dentro.add_child(nome)
+		var lugar := GPs.melhor_lugar(id)
+		var selo := Label.new()
+		selo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		selo.add_theme_font_size_override("font_size", 13)
+		selo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		selo.text = ("MELHOR: %dº" % lugar if lugar > 0 else "NOVO!") if liberado else "BLOQUEADO"
+		selo.add_theme_color_override("font_color", Color("#FFD23F") if liberado else Color(1, 1, 1, 0.6))
+		dentro.add_child(selo)
+		botao.pressed.connect(trocar_gp.bind(id))
+		linha.add_child(botao)
+	return rolagem
+
+
+## Troca de GP: guarda a escolha e monta a pista nova.
+func trocar_gp(id: String) -> void:
+	if id == gp_id or not GPs.escolher(id):
+		return
+	Audio.tocar("estouro", 1.1, -4.0)
+	Telas.recarregar()
 
 
 func comecar() -> void:
@@ -1073,6 +1272,8 @@ func _resultado(ganho: Dictionary) -> void:
 	if ganho["bau"] != "":
 		premios.add_child(Itens.ficha(Itens.bau(ganho["bau"]), "+1", 42))
 	extras.append("%d DE %d PORTAIS CERTOS  ·  %d CUBOS" % [corrida.jogador()["acertos"], corrida.portais.size(), corrida.cubos])
+	if ganho.get("liberou", "") != "":
+		extras.append("NOVO GP LIBERADO: %s!" % GPs.dados(ganho["liberou"])["nome"])
 	_texto(coluna, "\n".join(extras), 22)
 	var botoes := HBoxContainer.new()
 	botoes.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1151,6 +1352,22 @@ func _criar_interface() -> void:
 		rotulo.theme_type_variation = &"SubtituloClaro"
 		rotulo.add_theme_font_size_override("font_size", 19)
 		_lista.add_child(rotulo)
+	# minimapa da pista com os karts (canto de cima, à direita, embaixo do lugar)
+	var quadro_mapa := PanelContainer.new()
+	quadro_mapa.name = "Minimapa"
+	quadro_mapa.theme_type_variation = &"Etiqueta"
+	quadro_mapa.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	quadro_mapa.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	quadro_mapa.offset_left = -214
+	quadro_mapa.offset_right = -16
+	quadro_mapa.offset_top = 92
+	quadro_mapa.offset_bottom = 262
+	_hud.add_child(quadro_mapa)
+	_mapa = MapaPista.new()
+	_mapa.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mapa.largura = 5.0
+	quadro_mapa.add_child(_mapa)
+	_mapa.usar_corrida(corrida)
 	# quadro da pergunta (aparece perto de cada portal)
 	_quadro = PanelContainer.new()
 	_quadro.name = "QuadroPergunta"
@@ -1279,7 +1496,7 @@ func _etiqueta(pai: Control, icone: Texture2D) -> Label:
 
 
 func _atualizar_hud(delta: float) -> void:
-	_rotulo_volta.text = "VOLTA %d/%d" % [corrida.volta(0), Corrida.VOLTAS]
+	_rotulo_volta.text = "VOLTA %d/%d" % [corrida.volta(0), corrida.voltas]
 	_rotulo_tempo.text = Corrida.texto_tempo(corrida.tempo)
 	_rotulo_lugar.text = "%dº/%d" % [corrida.colocacao(0), corrida.corredores.size()]
 	if corrida.portal_ativo >= 0:

@@ -372,17 +372,26 @@ func _trocar_cena(caminho: String) -> void:
 	tween.tween_property(_cortina, "color:a", 0.0, DURACAO_TRANSICAO)
 
 
+## Monta a tela atual de novo (ex.: a corrida trocando de GP), sem mexer no histórico.
+func recarregar() -> void:
+	_trocar_cena(get_tree().current_scene.scene_file_path)
+
+
 ## Saindo da vila para outra tela: tira a vila da árvore (a troca de cena não a
-## apaga) e guarda, se o aparelho tem memória para isso. Indo para a própria
-## vila (ex.: mudou a qualidade), a guardada é descartada e ela é montada de novo.
+## apaga) e guarda, se o aparelho tem memória para isso. Entre outras telas (ex.:
+## cozinha -> corrida), a guardada continua guardada. Indo para a própria vila
+## sem poder reusar (ex.: mudou a qualidade), ela é montada de novo.
 func _guardar_vila(destino: String) -> void:
 	var atual := get_tree().current_scene
-	if destino == CENAS["vila"] or not (atual is Vila and atual.pode_guardar() and _cabe_vila_guardada()):
+	if destino == CENAS["vila"]:
 		descartar_vila()
 		return
+	if not atual is Vila:
+		return
 	descartar_vila()
-	atual.get_parent().remove_child(atual)  # deixa de ser a cena atual
-	_vila_guardada = atual
+	if atual.pode_guardar() and _cabe_vila_guardada():
+		atual.get_parent().remove_child(atual)  # deixa de ser a cena atual
+		_vila_guardada = atual
 
 
 func _vila_serve() -> bool:
@@ -406,6 +415,11 @@ func descartar_vila() -> void:
 	if is_instance_valid(_vila_guardada):
 		_vila_guardada.queue_free()
 	_vila_guardada = null
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(_vila_guardada):
+		_vila_guardada.free()  # o jogo fechando: ela está fora da árvore
 
 
 ## A vila guardada (para os testes).

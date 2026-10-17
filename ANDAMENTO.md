@@ -125,7 +125,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ### Bugs e pedidos do Sávio (11/10/2026) — o que ainda falta
 
-(Os números são os da lista original; 1, 2, 3, 4, 10, 15, 16 e 17 foram feitos em
+(Os números são os da lista original; 1, 2, 3, 4, 10, 12, 13, 15, 16 e 17 foram feitos em
 17/10, ver a seção abaixo.)
 
 5. **Batalha de doces como luta de verdade** (planejamento, depois): botões de
@@ -143,11 +143,8 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
    fica mais forte na arena (separado do nível do jogador).
 11. **Confeitaria gasta açúcar demais:** melhoria paga com MOEDAS que faz cada
    doce gastar menos açúcar (fixa, preço subindo por nível).
-12. **Corrida curta e limitada (futuro):** mais longa, mais moedas/açúcar; várias
-   PISTAS/GPs do Brasil e carros diferentes para escolher. Cada GP é de uma CIDADE,
-   com o estado junto: "GP de Valença (BA)", "GP de Salvador (BA)", "GP de Ouro Preto
-   (MG)", "GP de São Paulo (SP)"... (não GP de estado).
-13. **Minimapa na corrida:** mapinha da pista em miniatura (com a posição dos carros).
+12. (feito em 17/10: 5 GPs) **Corrida:** falta, se ele quiser, CARROS diferentes para
+   escolher e mais GPs (ex.: São Luís, Recife, Rio, Belo Horizonte, Curitiba...).
 14. **Minimapa da vila feio e embolado:** refazer, mais bonito e mais limpo.
 15. (feito em 17/10, ver abaixo) **Tela de carregamento demora muito.** Falta, se
    ainda achar lento: a primeira montagem da vila (juntar malhas em disco) e
@@ -195,11 +192,26 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
   vila fica guardada na memória e não é montada nem "aquecida" de novo, a não ser
   que algo dela tenha mudado); a barra de carregamento não espera mais 0,6 s à
   toa. Medidas em `docs/desempenho.md`.
+- (12, 13) **GPs da Corrida de Doces** (`scripts/gps.gd`): GP DA VILA DOS DOCES (a
+  pista de antes, 2 voltas), GP DE VALENÇA (BA) (centro histórico, ponte do Rio Una,
+  coqueiral, Mata Atlântica, igreja e a fábrica antiga), GP DE SALVADOR (BA) (Orla da
+  Barra com mar, areia, guarda-sóis e o farol, Elevador Lacerda, ladeiras do
+  Pelourinho), GP DE OURO PRETO (MG) (ladeiras que sobem 12 m, igrejas barrocas,
+  Serra do Itacolomi) e GP DE SÃO PAULO (SP) (reta dos boxes, Parque do Ibirapuera,
+  prédios da Paulista, museu suspenso, torres). Os das cidades têm 3 voltas, pistas
+  de 520 a 720 m (a da Vila tem 460 m), 3 portais por volta e prêmio 1,6x a 3,5x.
+  Cada GP libera chegando no pódio (1º a 3º) do anterior; recorde e melhor lugar
+  por GP (`Progresso.vila["gps"]`). Escolha nos cartões do início da corrida (com o
+  mapinha da pista); trocar de GP monta a pista nova (`Telas.recarregar`). Peças do
+  cenário em `componentes/corrida/cenario_gp.gd`.
+- (13) **Minimapa na corrida** (`componentes/corrida/mapa_pista.gd`): a pista de
+  cima, os portais e os 4 karts nas cores deles (o seu maior, com borda branca).
+- A vila guardada continua guardada entre outras telas (ex.: cozinha -> corrida).
 - Corrigido: a lista de perguntas recentes fazia o save parar de carregar no
   meio (erro ao converter em número); nunca chegou a ser publicado.
 - Testes novos (cozinha atende o 2º da fila, cliente desiste, janela de jogos,
   volta para a confeitaria, corrida sem perguntas repetidas, cubos ao desistir,
-  engrenagem da vila, vila guardada, save com a lista): 2121 verificações passando.
+  engrenagem da vila, vila guardada, save com a lista, GPs e minimapa): 2131 verificações passando.
 
 ### Rodada de 08/10/2026 — publicado na 0.16.0 (11/10/2026)
 

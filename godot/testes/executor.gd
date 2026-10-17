@@ -3120,13 +3120,15 @@ func _testar_tela_fabrica() -> void:
 func _testar_corrida() -> void:
 	_secao("corrida de doces")
 	var estatisticas: Dictionary = Progresso.estatisticas.duplicate(true)
+	var gps_antes: Dictionary = Progresso.vila.get("gps", {}).duplicate(true)
+	Progresso.vila["gps"] = {}
 	Progresso.estatisticas["corrida_vitorias"] = 2  # rivais médios
 	var c := Corrida.new(7, ["jujuba", "pacoca", "cocada"])
 	verificar(c.comprimento > 400.0 and c.comprimento < 520.0, "pista de uns 460 m (%d)" % c.comprimento)
 	verificar(c.corredores.size() == 4 and c.jogador()["jogador"] and c.corredores[1]["nome"] == "JUJUBA",
 		"4 karts: o seu e 3 rivais da coleção")
 	verificar(c.colocacao(0) == 4, "o jogador larga em último (para ultrapassar)")
-	verificar(c.portais.size() == Corrida.VOLTAS * Corrida.PORTAIS_EM.size() and c.portais[0] < c.portais[1]
+	verificar(c.portais.size() == c.voltas * c.portais_em.size() and c.voltas == 2 and c.portais[0] < c.portais[1]
 		and c.portais[2] > c.comprimento, "2 portais do quiz por volta")
 	var perguntas_ok := c.perguntas.size() == c.portais.size()
 	var ids := {}
@@ -3219,6 +3221,8 @@ func _testar_corrida() -> void:
 		and Confeitaria.acucar() == acucar + int(ganho["acucar"]) and ganho["acucar"] >= 30, "1º lugar: 40 moedas e 30 açúcar (+ cubos)")
 	verificar(ganho["recorde_novo"] and ganho["bau"] == "doce" and Baus.quantos("doce") == baus + 1
 		and Corrida.vitorias() == 1 and Corrida.recorde() > 0.0, "ganhar com recorde dá um baú de doce")
+	verificar(ganho["liberou"] == "valenca" and GPs.liberado("valenca") and not GPs.liberado("salvador")
+		and GPs.melhor_lugar("vila") == 1, "o pódio no GP da Vila libera o GP de Valença (BA)")
 	ganho = errada["corrida"].concluir()
 	verificar(not ganho["recorde_novo"] and ganho["bau"] == "" and ganho["moedas"] == Corrida.PREMIOS[ganho["lugar"] - 1]["moedas"],
 		"perder: prêmio menor, sem baú")
@@ -3226,6 +3230,31 @@ func _testar_corrida() -> void:
 	var facil: float = Corrida.new(3).corredores[1]["habilidade"]
 	Progresso.estatisticas["corrida_vitorias"] = 3
 	verificar(Corrida.new(3).corredores[1]["habilidade"] > facil + 0.2, "quem ganha corridas enfrenta rivais mais rápidos")
+	# GPs das cidades: pistas fechadas, mais longas, com mais voltas e prêmio maior
+	var gps_ok := true
+	var nomes := []
+	for gp in GPs.LISTA:
+		var pista := Corrida.new(5, ["jujuba", "pacoca", "cocada"], gp["id"])
+		var fechada := pista.ponto(0.0).distance_to(pista.ponto(pista.comprimento)) < 0.5
+		gps_ok = gps_ok and fechada and pista.portais.size() == pista.voltas * gp["portais"].size() \
+			and pista.perguntas.size() == pista.portais.size() and pista.zona(pista.comprimento * 0.5)["nome"] != "" \
+			and pista.portais[pista.portais.size() - 1] < pista.voltas * pista.comprimento
+		if gp["id"] != "vila":
+			gps_ok = gps_ok and pista.voltas == 3 and pista.comprimento > 500.0 and pista.premio_do_lugar(1)["moedas"] > 40
+		nomes.append(gp["nome"])
+	verificar(gps_ok and GPs.LISTA.size() >= 5, "GPs: %s" % ", ".join(nomes))
+	verificar("GP DE VALENÇA (BA)" in nomes and "GP DE OURO PRETO (MG)" in nomes, "cada GP tem a cidade e o estado no nome")
+	Progresso.estatisticas["perguntas_recentes"] = []
+	var valenca := _correr(Corrida.new(11, ["jujuba", "pacoca", "cocada"], "valenca"), true)
+	verificar(valenca["corrida"].acabou and valenca["acertos"] == 9 and valenca["voltas"] == 2
+		and valenca["corrida"].jogador()["fim"] > 1.5 * certa["corrida"].jogador()["fim"], "GP de Valença: 3 voltas, 9 portais, bem mais longo que o da Vila (%.1f s)" % valenca["corrida"].jogador()["fim"])
+	var premio_valenca: Dictionary = valenca["corrida"].concluir()
+	verificar(premio_valenca["moedas"] == valenca["corrida"].premio_do_lugar(premio_valenca["lugar"])["moedas"]
+		and GPs.recorde("valenca") > 0.0 and GPs.melhor_lugar("valenca") == premio_valenca["lugar"],
+		"o GP guarda o seu recorde e o melhor lugar")
+	verificar(not GPs.escolher("sao_paulo") and GPs.escolher("valenca") and GPs.escolhido() == "valenca", "só dá para escolher GP liberado")
+	Progresso.config["gp"] = "vila"
+	Progresso.vila["gps"] = gps_antes
 	Progresso.estatisticas = estatisticas
 
 
@@ -3360,6 +3389,32 @@ func _testar_tela_corrida() -> void:
 	tela.find_child("DeNovo", true, false).pressed.emit()
 	await get_tree().process_frame
 	verificar(tela.estado == "correndo" and tela.corrida != c, "CORRER DE NOVO começa outra corrida")
+	verificar(tela.find_child("Minimapa", true, false) != null and tela._mapa.corrida == tela.corrida,
+		"minimapa da pista com os karts")
+	# escolher o GP: os liberados trocam a pista; os outros ficam bloqueados
+	var gps_antes: Dictionary = Progresso.vila.get("gps", {}).duplicate(true)
+	Progresso.vila["gps"] = {"vila": {"lugar": 2, "recorde": 50.0}}
+	tela.mostrar_inicio()
+	await get_tree().process_frame
+	var cartao_valenca: Button = tela.find_child("GP_valenca", true, false)
+	var cartao_sp: Button = tela.find_child("GP_sao_paulo", true, false)
+	verificar(cartao_valenca != null and not cartao_valenca.disabled and cartao_sp != null and cartao_sp.disabled,
+		"cartões dos GPs: Valença liberado (pódio na Vila), São Paulo bloqueado")
+	cartao_valenca.pressed.emit()
+	var trocou := false
+	for i in 120:
+		await get_tree().create_timer(0.1).timeout
+		var atual := get_tree().current_scene
+		if atual and atual.name == "Corrida" and atual != tela and not Telas._trocando:
+			trocou = true
+			break
+	tela = get_tree().current_scene
+	verificar(trocou and tela.gp_id == "valenca" and tela.corrida.voltas == 3
+		and tela.find_child("Titulo", true, false).text == "GP DE VALENÇA (BA)", "tocar no GP de Valença monta a pista dele")
+	verificar(tela.find_children("Marco_*", "Node3D", true, false).size() > 0 or tela.find_child("Agua", true, false) != null,
+		"a pista de Valença tem o rio e os pontos da cidade")
+	Progresso.config["gp"] = "vila"
+	Progresso.vila["gps"] = gps_antes
 	Progresso.estatisticas = estatisticas
 
 

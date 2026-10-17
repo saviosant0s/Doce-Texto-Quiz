@@ -92,6 +92,7 @@ extends Node
 ##   --travadas    no fim, imprime os quadros mais lentos (tempo real, em ms) e quando
 ##                 aconteceram: as travadas de montar shader aparecem como picos
 ##   --espera=1.2  segundos até tirar o print
+##   --gp=salvador  corrida no GP dessa cidade (libera todos os GPs; ver GPs)
 
 
 ## Segundos já gravados nos modos de vídeo que jogam sozinhos (ver --duracao).
@@ -151,6 +152,10 @@ func _ready() -> void:
 		Progresso.config["camera_cozinha"] = int(args["camera_cozinha"])
 	if args.has("porta"):
 		Vila.ultima_porta = args["porta"]
+	if args.has("gp"):
+		for gp in GPs.LISTA:
+			Progresso.vila.get_or_add("gps", {})[gp["id"]] = {"lugar": 1, "recorde": 0.0}
+		Progresso.config["gp"] = args["gp"]
 	# evento da temporada: --evento=2026-10-20 (data do evento), --fichas=150
 	if args.has("evento"):
 		# --evento=natal: o dia do jogo em que esse tema está no meio (fora
