@@ -191,6 +191,16 @@ func _testar_migracao() -> void:
 	verificar(novo["niveis"][0]["aprovado"] and novo["niveis"][0]["estrelas"] == 2, "8 acertos antigos = aprovado, 2 estrelas")
 	verificar(not novo["niveis"][1]["aprovado"], "3 acertos antigos = não aprovado")
 	verificar(novo["config"]["volume_musica"] == 0.0, "música desligada vira volume 0")
+	# estatísticas com lista (as perguntas que saíram há pouco) carregam inteiras
+	if not Progresso.somente_memoria:
+		Progresso.estatisticas["perguntas_recentes"] = ["f1", "f2"]
+		Progresso.vila["teste_carregar"] = 1
+		Progresso.salvar()
+		Progresso.vila.erase("teste_carregar")
+		Progresso.carregar()
+		verificar(Progresso.estatisticas["perguntas_recentes"] == ["f1", "f2"] and Progresso.vila.get("teste_carregar") == 1,
+			"o save com a lista de perguntas recentes carrega até o fim")
+		Progresso.vila.erase("teste_carregar")
 
 
 # --- Revisão, conquistas e estatísticas -----------------------------------
@@ -736,15 +746,40 @@ func _testar_vila() -> void:
 	verificar(vila._portas["escola"]["folha"].rotation.y < -1.0, "a porta abre")
 	verificar(get_tree().current_scene == vila, "a tela do prédio espera a animação")
 	verificar(await _esperar_tela("Niveis"), "entrar na escola abre os níveis")
+	verificar(Telas.vila_guardada() == vila and not vila.is_inside_tree(), "a vila montada fica guardada enquanto está na escola")
 	await get_tree().create_timer(0.4).timeout
 	get_tree().current_scene.get_node("%Inicio").pressed.emit()
 	verificar(await _esperar_tela("Vila"), "o botão de casa dos níveis volta para a vila")
 	await get_tree().create_timer(0.3).timeout
+	verificar(get_tree().current_scene == vila and Telas.vila_guardada() == null and not vila._entrando
+		and vila.jogador.collision_mask != 0 and not Telas._carregando.visible,
+		"voltar para a vila é na hora: a mesma vila, sem montar de novo")
 	vila = get_tree().current_scene
 	var porta: Vector3 = vila._portas["escola"]["porta"]
 	verificar(vila.jogador.global_position.distance_to(porta) < 1.5, "volta na porta da escola")
 	await get_tree().create_timer(1.2).timeout
 	verificar(is_zero_approx(vila._portas["escola"]["folha"].rotation.y), "a porta fecha atrás do doce")
+	# o que a vila montou mudou fora dela (aqui, as animações): monta de novo
+	Telas.abrir("niveis")
+	await _esperar_tela("Niveis")
+	var animacoes: bool = Progresso.config.get("animacoes", true)
+	Progresso.config["animacoes"] = not animacoes
+	Telas.voltar()
+	var nova := false
+	for i in 100:
+		await get_tree().create_timer(0.1).timeout
+		var atual := get_tree().current_scene
+		if atual and atual.name == "Vila" and atual != vila:
+			nova = true
+			break
+	verificar(nova and not is_instance_valid(vila), "mudou o que a vila montou: ela é montada de novo")
+	Progresso.config["animacoes"] = animacoes
+	vila = get_tree().current_scene
+	Telas.ir_para("vila")  # a vila de volta com as animações
+	for i in 100:
+		await get_tree().create_timer(0.1).timeout
+		if get_tree().current_scene and get_tree().current_scene.name == "Vila" and get_tree().current_scene != vila:
+			break
 	Vila.ultima_porta = ""
 
 

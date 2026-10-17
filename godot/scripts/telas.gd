@@ -53,6 +53,10 @@ var _pendente := ""
 var _camada_avisos: CanvasLayer
 var _premio_atual: Control  # cartão de prêmio na tela (os outros esperam)
 var _trocando := false
+## A vila montada, guardada fora da árvore enquanto o jogador está numa tela
+## que saiu dela (Confeitaria, Escola, Corrida...): voltar é na hora, sem montar
+## e aquecer tudo de novo. Ver _guardar_vila e Vila.assinatura.
+var _vila_guardada: Vila
 ## Telas leves abertas POR CIMA da atual (ex.: missões na vila), sem trocar a
 ## cena: abrem e fecham na hora, sem recarregar a vila em 3D.
 const LEVES := ["missoes", "baus", "colecao"]
@@ -323,10 +327,21 @@ func _trocar_cena(caminho: String) -> void:
 	var tween := create_tween()
 	tween.tween_property(_cortina, "color:a", 1.0, DURACAO_TRANSICAO)
 	await tween.finished
+	var reusar := caminho == CENAS["vila"] and _vila_serve()
+	var vila := _vila_guardada
+	if reusar:
+		_vila_guardada = null
+		get_tree().change_scene_to_node(vila)
+	else:
+		_guardar_vila(caminho)
 	# telas 3D demoram um pouco para montar: mostra "carregando" com o doce
 	# companheiro (já desenhado antes de a montagem começar)
-	var pesada := caminho in [CENAS["vila"], CENAS["cozinha"], CENAS["corrida"]]
-	if pesada:
+	var pesada := not reusar and caminho in [CENAS["vila"], CENAS["cozinha"], CENAS["corrida"]]
+	if reusar:
+		while get_tree().current_scene != vila:  # entra no fim do quadro
+			await get_tree().process_frame
+		vila.reaparecer()
+	elif pesada:
 		_mostrar_carregando(CENAS.find_key(caminho))
 		await quadro_desenhado()
 		await _carregar_com_barra(caminho)
@@ -340,7 +355,7 @@ func _trocar_cena(caminho: String) -> void:
 	# telas 3D grandes (vila) "aquecem" atrás da cortina: desenham tudo uma vez
 	# para o celular preparar os materiais antes (senão trava ao aparecerem)
 	var cena := get_tree().current_scene
-	if cena and cena.has_method("aquecer"):
+	if cena and cena.has_method("aquecer") and not reusar:
 		await cena.aquecer()
 	if _carregando.visible:
 		_carregando.barra(100.0)
@@ -355,6 +370,47 @@ func _trocar_cena(caminho: String) -> void:
 		return
 	tween = create_tween()
 	tween.tween_property(_cortina, "color:a", 0.0, DURACAO_TRANSICAO)
+
+
+## Saindo da vila para outra tela: tira a vila da árvore (a troca de cena não a
+## apaga) e guarda, se o aparelho tem memória para isso. Indo para a própria
+## vila (ex.: mudou a qualidade), a guardada é descartada e ela é montada de novo.
+func _guardar_vila(destino: String) -> void:
+	var atual := get_tree().current_scene
+	if destino == CENAS["vila"] or not (atual is Vila and atual.pode_guardar() and _cabe_vila_guardada()):
+		descartar_vila()
+		return
+	descartar_vila()
+	atual.get_parent().remove_child(atual)  # deixa de ser a cena atual
+	_vila_guardada = atual
+
+
+func _vila_serve() -> bool:
+	if not is_instance_valid(_vila_guardada):
+		return false
+	if _vila_guardada.assinatura() != _vila_guardada.montada_com or not Vila.visita.is_empty():
+		descartar_vila()
+		return false
+	return true
+
+
+## Celular com pouca memória e navegador não guardam a vila.
+func _cabe_vila_guardada() -> bool:
+	if OS.has_feature("web"):
+		return false
+	var gb := Qualidade.memoria_gb()
+	return gb <= 0.0 or gb >= 3.5
+
+
+func descartar_vila() -> void:
+	if is_instance_valid(_vila_guardada):
+		_vila_guardada.queue_free()
+	_vila_guardada = null
+
+
+## A vila guardada (para os testes).
+func vila_guardada() -> Vila:
+	return _vila_guardada if is_instance_valid(_vila_guardada) else null
 
 
 ## Espera a tela ser desenhada (sem tela, nos testes, espera um quadro).
@@ -374,7 +430,7 @@ func _mostrar_carregando(lugar: String) -> void:
 ## a cada quadro, mesmo que o carregamento seja rápido); depois monta a tela
 ## (a montagem da vila trava um instante, com a barra quase cheia).
 func _carregar_com_barra(caminho: String) -> void:
-	await _encher_barra(30.0, 0.35)
+	await _encher_barra(30.0, 0.12)
 	var em_fundo := not OS.has_feature("web") and ResourceLoader.load_threaded_request(caminho) == OK
 	var pacote: PackedScene = null
 	if em_fundo:
@@ -384,7 +440,7 @@ func _carregar_com_barra(caminho: String) -> void:
 			_carregando.barra(lerpf(_carregando.valor_barra(), alvo, 0.3))
 			await get_tree().process_frame
 		pacote = ResourceLoader.load_threaded_get(caminho) as PackedScene
-	await _encher_barra(85.0, 0.25)
+	await _encher_barra(85.0, 0.1)
 	await quadro_desenhado()
 	if pacote:
 		get_tree().change_scene_to_packed(pacote)

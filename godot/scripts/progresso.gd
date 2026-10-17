@@ -48,6 +48,9 @@ var somente_memoria := false
 ## visita (Amigos.aplicar_visita) e o de verdade fica guardado à parte; nada é
 ## gravado em disco até voltar (terminar_visita).
 var visitando := false
+## Muda a cada vez que o progresso é zerado ou trocado (apagar, visita, carregar):
+## quem guarda coisas montadas com o progresso sabe que ficaram velhas.
+var geracao := 0
 var _guardado := {}
 
 
@@ -57,6 +60,7 @@ func _ready() -> void:
 
 
 func _zerar() -> void:
+	geracao += 1
 	niveis.clear()
 	for i in QUANTIDADE_NIVEIS:
 		niveis.append({
@@ -279,7 +283,7 @@ func carregar() -> void:
 		estatisticas_salvas["moedas_ganhas"] = moedas
 	estatisticas.merge(estatisticas_salvas, true)
 	for chave in estatisticas:
-		if chave != "tempo_total":
+		if chave != "tempo_total" and estatisticas[chave] is float:  # (perguntas_recentes é lista)
 			estatisticas[chave] = int(estatisticas[chave])
 	conquistas = dados.get("conquistas", {})
 	colecao.merge(dados.get("colecao", {}), true)

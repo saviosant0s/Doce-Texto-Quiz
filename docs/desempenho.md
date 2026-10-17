@@ -138,6 +138,34 @@ desenha a cena de novo. Com 4 faixas (como no ULTRA do computador), a corrida ia
 mil triângulos (o normal, 38 mil) e a sonda de reflexo é tirada uma vez só, na
 largada. Se ficar lento, o vigia de lentidão desce para a ALTA.
 
+## Carregamento mais rápido (17/10/2026)
+
+Pedido: "a tela de carregamento demora muito e aparece várias vezes". Medido só
+com o processador (`--headless`; sem placa de vídeo os quadros não contam), do
+toque até a tela nova aberta:
+
+| Troca | Antes | Agora |
+|---|---|---|
+| Prédio → vila (voltar) | 1,5 a 1,7 s + aquecer na placa | 0,3 s (só a cortina) |
+| Vila → cozinha | 0,96 s | 0,57 s |
+| Vila → corrida | 1,34 s | 0,94 s |
+| Vila (primeira vez) | 1,5 a 1,7 s | igual |
+
+- **A vila fica guardada** (`Telas._guardar_vila`): ao entrar num prédio, a vila
+  montada sai da árvore e fica na memória (~15 a 30 MB); ao voltar, é a mesma
+  vila, sem montar as peças, juntar as malhas nem "aquecer" os shaders de novo (no
+  celular, era a parte mais demorada). O doce sai pela porta e o topo, os avisos,
+  a história e o céu são atualizados (`Vila.reaparecer`). Se algo que a vila
+  montou mudou desde a montagem (doce companheiro, nível dele, qualidade, também
+  a que o vigia de lentidão baixou, evento, dia, tutorial, coleção, progresso
+  apagado ou visita, animações), ela é montada de novo (`Vila.assinatura`). Não
+  guarda no navegador nem em aparelhos com menos de 3,5 GB.
+- **A barra de carregamento não espera mais à toa:** ela andava no mínimo 0,6 s
+  mesmo com a cena já pronta; agora 0,2 s.
+
+O que ainda pesa na primeira vez da vila (processador): juntar as malhas
+(~0,2 a 0,8 s), as regiões (~0,1 a 0,3 s), o bairro e o evento.
+
 ## Próximos passos possíveis
 
 - Vila: menos triângulos nos blocos da vila (versões simplificadas dos prédios

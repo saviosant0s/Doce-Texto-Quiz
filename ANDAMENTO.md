@@ -125,7 +125,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ### Bugs e pedidos do Sávio (11/10/2026) — o que ainda falta
 
-(Os números são os da lista original; 1, 2, 3, 4, 10, 16 e 17 foram feitos em
+(Os números são os da lista original; 1, 2, 3, 4, 10, 15, 16 e 17 foram feitos em
 17/10, ver a seção abaixo.)
 
 5. **Batalha de doces como luta de verdade** (planejamento, depois): botões de
@@ -149,8 +149,9 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
    (MG)", "GP de São Paulo (SP)"... (não GP de estado).
 13. **Minimapa na corrida:** mapinha da pista em miniatura (com a posição dos carros).
 14. **Minimapa da vila feio e embolado:** refazer, mais bonito e mais limpo.
-15. **URGENTE: tela de carregamento demora muito** e aparece várias vezes (o jogo
-   troca muito de tela). Otimizar o carregamento (vila, cozinha, corrida...).
+15. (feito em 17/10, ver abaixo) **Tela de carregamento demora muito.** Falta, se
+   ainda achar lento: a primeira montagem da vila (juntar malhas em disco) e
+   guardar a cozinha também (ida e volta Confeitaria ↔ jogos).
 16. (feito em parte) **ULTRA embaçado no celular:** ver abaixo; perguntar ao Sávio
    se, depois de embaçar, a qualidade nas Configurações tinha descido sozinha.
 18. **Confeitaria acaba:** ele já melhorou as 3 coisas e não tem mais o que upar.
@@ -190,9 +191,15 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 - (17) **Engrenagem de CONFIGURAÇÕES na vila** (barra de cima, depois de "Casa"):
   abre as Configurações por cima da vila; se a qualidade gráfica mudou, ao fechar
   a vila recarrega sozinha já com os gráficos novos.
+- (15) **Carregamento mais rápido:** voltar de um prédio para a vila é na hora (a
+  vila fica guardada na memória e não é montada nem "aquecida" de novo, a não ser
+  que algo dela tenha mudado); a barra de carregamento não espera mais 0,6 s à
+  toa. Medidas em `docs/desempenho.md`.
+- Corrigido: a lista de perguntas recentes fazia o save parar de carregar no
+  meio (erro ao converter em número); nunca chegou a ser publicado.
 - Testes novos (cozinha atende o 2º da fila, cliente desiste, janela de jogos,
   volta para a confeitaria, corrida sem perguntas repetidas, cubos ao desistir,
-  engrenagem da vila): 2118 verificações passando.
+  engrenagem da vila, vila guardada, save com a lista): 2121 verificações passando.
 
 ### Rodada de 08/10/2026 — publicado na 0.16.0 (11/10/2026)
 

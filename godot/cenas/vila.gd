@@ -216,6 +216,7 @@ func _ready() -> void:
 	else:
 		_modo_visita()
 	usar_camera(int(Progresso.config.get("camera_vila_v2", Camera.PERTO)))
+	montada_com = assinatura()
 
 
 ## Chamado pelo Telas com a cortina ainda fechada: a câmera olha a vila
@@ -824,6 +825,54 @@ func _exit_tree() -> void:
 	CenarioVila.restaurar_qualidade(get_viewport(), _qualidade_antes)
 
 
+## O que o _ready montou e que muda fora da vila. Telas guarda a vila montada
+## enquanto o jogador está num prédio e só a reusa se isto não mudou desde a
+## montagem (`montada_com`); senão monta de novo, com o doce, a qualidade (também
+## a que o vigia de lentidão baixou) e o evento novos.
+var montada_com := {}
+
+
+func assinatura() -> Dictionary:
+	var doce := Colecao.companheiro()
+	if doce.is_empty():
+		doce = "brigadeiro"
+	return {"doce": doce, "nivel": Companheiros.nivel(doce), "qualidade": Qualidade.nivel(),
+		"confeitaria": Terrenos.estagio_confeitaria(), "evento": Eventos.atual(),
+		"colecao": Colecao.quantidade(), "progresso": Progresso.geracao, "animacoes": Telas.animacoes_continuas,
+		"tutorial": proximo_passo(), "dia": Terrenos.hoje()}
+
+
+## Pode ficar guardada (Telas): não na vila de um amigo nem no meio da abertura.
+func pode_guardar() -> bool:
+	return visita.is_empty() and not is_instance_valid(_abertura) and not camera_externa
+
+
+## Voltou de um prédio com a vila guardada: o doce sai pela porta, e o topo
+## mostra as moedas, o açúcar e as missões de agora.
+func reaparecer() -> void:
+	_qualidade_antes = CenarioVila.qualidade_3d(get_viewport())
+	_entrando = false
+	_cena_entrando = ""
+	_passos_entrada.clear()
+	_porta_atual = ""
+	_botao_entrar.visible = false
+	_dedos_em_botao.clear()
+	_joystick.soltar()
+	jogador.atravessar(false)
+	jogador.velocity = Vector3.ZERO
+	_sair_pela_porta()
+	_foco_aereo = jogador.global_position
+	for aviso in find_children("Aviso_*", "Label3D", false, false):
+		aviso.free()
+	_criar_avisos()
+	_atualizar_topo()
+	_atualizar_historia()
+	_atualizar_relogio()
+	if is_instance_valid(ceu):
+		ceu.atualizar(true)  # a hora e a chuva de agora
+	_mostrar_pendentes.call_deferred()
+
+
 func _enfeitar() -> void:
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = 613
@@ -932,6 +981,11 @@ func _criar_jogador() -> void:
 		jogador.id = visitante["doce"]  # quem visita anda com o próprio doce
 		jogador.nivel = visitante["nivel"]
 	add_child(jogador)
+	_sair_pela_porta()
+
+
+## O doce aparece na porta do prédio de onde saiu (ou na praça).
+func _sair_pela_porta() -> void:
 	if _portas.has(ultima_porta):
 		var porta: Vector3 = _portas[ultima_porta]["porta"]
 		jogador.global_position = porta + porta.direction_to(Vector3.ZERO) * 0.4
@@ -1205,6 +1259,8 @@ func _atualizar_relogio() -> void:
 
 
 func _atualizar_topo() -> void:
+	if not is_inside_tree():
+		return  # guardada (Telas) enquanto o jogador está noutra tela
 	var botao_evento := find_child("BotaoEvento", true, false) as Button
 	if botao_evento:
 		botao_evento.text = "EVENTO · %d %s%s" % [Eventos.fichas(), Eventos.dados()["ficha"], "  !" if Eventos.prontos() > 0 else ""]
@@ -1533,6 +1589,8 @@ func _criar_historia() -> void:
 	_atualizar_historia()
 	_atualizar_topo()
 	_atualizar_relogio()
+	if is_instance_valid(ceu):
+		ceu.atualizar(true)  # a hora e a chuva de agora
 	_mostrar_pendentes.call_deferred()
 
 

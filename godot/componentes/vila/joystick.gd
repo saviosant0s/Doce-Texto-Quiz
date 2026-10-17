@@ -55,6 +55,11 @@ func _gui_input(evento: InputEvent) -> void:
 		accept_event()
 
 
+## Solta o joystick (ex.: a vila voltou da tela de um prédio com ele apertado).
+func soltar() -> void:
+	_soltar()
+
+
 func _soltar() -> void:
 	dedo = -1
 	_mouse = false
