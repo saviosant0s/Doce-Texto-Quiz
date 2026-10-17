@@ -123,17 +123,11 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ## Onde parou
 
-### Bugs e pedidos do Sávio (11/10/2026) — fazer quando ele pedir
+### Bugs e pedidos do Sávio (11/10/2026) — o que ainda falta
 
-1. **Botão ENFRENTAR O CHEFÃO atrapalha na vila:** andando pela vila (ex.: para
-   entrar na Confeitaria), o botão de lutar com o chefão fica por cima e ele acaba
-   entrando na luta em vez de no prédio. Pedido: o botão só aparecer quando chegar
-   bem perto do chefão.
-3. **Confeitaria → JOGAR QUIZ:** no fim do quiz não tem botão para voltar à
-   confeitaria (só para o início/mapa). E em vez de só "jogar quiz", oferecer a
-   escolha de jogos que dão açúcar/moedas (quiz, corrida, Doce Match...).
-4. **Perguntas repetidas** na corrida e na batalha de doces (mesmas perguntas
-   sempre): variar/sortear sem repetir.
+(Os números são os da lista original; 1, 2, 3, 4, 10, 16 e 17 foram feitos em
+17/10, ver a seção abaixo.)
+
 5. **Batalha de doces como luta de verdade** (planejamento, depois): botões de
    golpe; perguntas entre os golpes; o GOLPE SUPREMO depende da pergunta (acertou,
    acerta; errou, erra) — mesma lógica do turbo na corrida.
@@ -147,10 +141,6 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
    para 5 clientes" faz o doce ANDAR SOZINHO até o lugar (se ele mexer, para).
 9. **XP de cada personagem:** quanto mais usa o doce, mais XP dele, sobe de nível e
    fica mais forte na arena (separado do nível do jogador).
-10. **Moedas da corrida "não somam":** conferido em 11/10 com teste novo — ao CHEGAR
-   no fim, moedas e açúcar entram no saldo. Quem sai no meio (voltar) não ganha
-   nada, nem os cubos pegos. Perguntar ao Sávio se foi isso; talvez dar os cubos
-   pegos mesmo saindo no meio.
 11. **Confeitaria gasta açúcar demais:** melhoria paga com MOEDAS que faz cada
    doce gastar menos açúcar (fixa, preço subindo por nível).
 12. **Corrida curta e limitada (futuro):** mais longa, mais moedas/açúcar; várias
@@ -161,14 +151,8 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 14. **Minimapa da vila feio e embolado:** refazer, mais bonito e mais limpo.
 15. **URGENTE: tela de carregamento demora muito** e aparece várias vezes (o jogo
    troca muito de tela). Otimizar o carregamento (vila, cozinha, corrida...).
-16. **URGENTE: no ULTRA do celular a tela fica toda embaçada** (0.17.1). Suspeitas
-   para investigar: o desfoque do fundo (DOF da câmera, VisualRealista.camera, ligado
-   na ALTA e no ULTRA) forte demais na tela do celular; o vigia de lentidão descendo a
-   qualidade e reduzindo a resolução 3D (ESCALA_3D); a sombra macia HIGH. Pedir um
-   print ao Sávio se não der para reproduzir.
-17. **Botão de CONFIGURAÇÕES dentro da vila** (e telas de jogo): mudar os gráficos
-   ali mesmo; se não der para aplicar na hora, a vila recarrega sozinha (volta pela
-   tela de carregamento) já com a qualidade nova.
+16. (feito em parte) **ULTRA embaçado no celular:** ver abaixo; perguntar ao Sávio
+   se, depois de embaçar, a qualidade nas Configurações tinha descido sozinha.
 18. **Confeitaria acaba:** ele já melhorou as 3 coisas e não tem mais o que upar.
    Precisa de progressão quase infinita (viciante): mais máquinas/doces para
    destravar, níveis sem fim com preço crescente, ampliar a loja (mesas, balcões,
@@ -176,11 +160,39 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
    evolução tem que APARECER NO VISUAL — ao evoluir, a confeitaria muda de cara,
    fica maior, ganha decoração, até um visual "premium" bem diferente da de
    iniciante (não só números de moeda/açúcar/venda subindo).
-2. **Cozinha da Confeitaria trava:** ele encheu a mão de brigadeiro, mas nenhum
-   cliente da fila pedia brigadeiro; não dá para jogar fora nem vender, e o jogo
-   fica parado. Ideia dele: poder atender qualquer cliente da fila que pediu o que
-   está na mão, mesmo com outro na frente (ou outra solução esperta: lixeira,
-   clientes pedirem o que existe no estoque...).
+
+### Rodada de 17/10/2026 — correções (lote 1: bugs e urgentes), ainda não publicada
+
+- (1) **Botão ENFRENTAR O CHEFÃO:** a área que mostra o botão ficou bem menor
+  (8x8 m em volta do chefão, era 17x17): só aparece quando o doce chega perto
+  dele, e não atrapalha mais quem passa pela praça para entrar nos prédios.
+- (2) **Cozinha não trava mais:** o balcão atende o PRIMEIRO cliente da fila que
+  pediu algum doce que está na mão (não só o da frente); quando o jogador
+  carrega um doce que ninguém da fila quer, o próximo cliente a chegar pede esse
+  doce; e cada cliente tem paciência (45 s): se não for atendido, vai embora
+  ("...") e abre lugar na fila.
+- (3) **Confeitaria → GANHAR AÇÚCAR:** o botão "JOGAR QUIZ" da cozinha virou
+  "GANHAR AÇÚCAR" e abre a janela de jogos (`componentes/escolher_jogo.gd`):
+  Quiz, Corrida, Torre, Fábrica e Doce Match em cartões grandes. O jogo
+  escolhido lembra de onde veio (`Telas.origem`); no fim do quiz o botão do
+  resultado vira "CONFEITARIA" e volta para a cozinha.
+- (4) **Perguntas sem repetir** na corrida e na batalha: `Jogo.perguntas_variadas`
+  guarda as últimas 120 perguntas que saíram (`estatisticas.perguntas_recentes`)
+  e sorteia primeiro as que não saíram, depois as mais antigas.
+- (10) **Cubos da corrida:** quem sai no meio da corrida leva o açúcar dos cubos
+  que já pegou (`Corrida.desistir`, com aviso). Ao chegar no fim, moedas e
+  açúcar já entravam (conferido com teste).
+- (16) **ULTRA embaçado no celular (mitigação):** sem desfoque de fundo (DOF) no
+  celular em nenhuma qualidade; ULTRA do celular mais leve (sombra macia MEDIUM,
+  2 faixas de sombra, grama e flores como na ALTA), para o vigia de lentidão não
+  derrubar a resolução. O vigia só desliga o "ULTRA de verdade" (Forward+) no
+  computador.
+- (17) **Engrenagem de CONFIGURAÇÕES na vila** (barra de cima, depois de "Casa"):
+  abre as Configurações por cima da vila; se a qualidade gráfica mudou, ao fechar
+  a vila recarrega sozinha já com os gráficos novos.
+- Testes novos (cozinha atende o 2º da fila, cliente desiste, janela de jogos,
+  volta para a confeitaria, corrida sem perguntas repetidas, cubos ao desistir,
+  engrenagem da vila): 2118 verificações passando.
 
 ### Rodada de 08/10/2026 — publicado na 0.16.0 (11/10/2026)
 

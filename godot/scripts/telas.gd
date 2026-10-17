@@ -41,6 +41,10 @@ var animacoes_continuas: bool:
 ## Falso quando o desenho é feito por software (sem aceleração de vídeo).
 var placa_rapida := true
 
+## Tela de onde o jogador saiu para jogar (ex.: "cozinha", ao ganhar açúcar pela
+## Confeitaria): o resultado do quiz volta para ela em vez da vila. Os outros
+## jogos voltam sozinhos (abrem lembrando a tela anterior).
+var origem := ""
 var _historico: Array[String] = []
 var _cortina: ColorRect
 var _carregando: Control  # cenas/carregamento.tscn em "modo cortina"
@@ -269,7 +273,27 @@ func _fechar_todas_por_cima() -> void:
 ## "Casa" do jogador: a Vila dos Doces (ou os níveis, em aparelhos sem placa
 ## de vídeo, onde a vila em 3D travaria).
 func ir_para_casa() -> void:
+	origem = ""
 	ir_para("vila" if placa_rapida else "niveis")
+
+
+## Janela para escolher um jogo que dá açúcar e moedas (ver EscolherJogo); no fim
+## do jogo, volta para a tela `de` (ex.: "cozinha").
+func mostrar_escolha_de_jogo(de: String) -> EscolherJogo:
+	var janela := EscolherJogo.new()
+	janela.origem = de
+	_camada_avisos.add_child(janela)
+	return janela
+
+
+## Do resultado do quiz, volta para a tela de origem (a Confeitaria).
+func voltar_para_origem() -> void:
+	var tela := origem
+	origem = ""
+	if tela == "cozinha":
+		ir_para("cozinha" if placa_rapida else "confeitaria")
+	else:
+		ir_para_casa()
 
 
 ## Minha Confeitaria: a cozinha 3D ou, sem placa de vídeo, o painel simples.

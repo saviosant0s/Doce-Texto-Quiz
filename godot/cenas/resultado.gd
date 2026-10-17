@@ -16,7 +16,13 @@ const PERSONAGENS_TITULO := {"noob": "maca_noob", "pro": "cupcake_pro", "mestre"
 
 func _ready() -> void:
 	var r := Jogo.resumo
-	%Inicio.pressed.connect(Telas.ir_para_casa)
+	if Telas.origem == "cozinha":  # veio da Confeitaria para ganhar açúcar: volta para ela
+		%Inicio.icon = preload("res://assets/icones/confeitaria.svg")
+		%Inicio.tooltip_text = "Voltar para a Confeitaria"
+		%Inicio.text = "CONFEITARIA"
+		%Inicio.pressed.connect(Telas.voltar_para_origem)
+	else:
+		%Inicio.pressed.connect(Telas.ir_para_casa)
 	if r.is_empty():
 		Telas.ir_para_casa.call_deferred()  # sem partida jogada (não devia acontecer)
 		return

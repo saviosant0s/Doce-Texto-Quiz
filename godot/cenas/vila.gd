@@ -1025,6 +1025,17 @@ func _criar_interface() -> void:
 	casa.tooltip_text = "Vila dos Doces: voltar ao início"
 	casa.pressed.connect(Telas.ir_para.bind("inicio"))
 	topo.add_child(casa)
+	var ajustes := Button.new()
+	ajustes.name = "Ajustes"
+	ajustes.theme_type_variation = &"BotaoIconeAmarelo"
+	ajustes.custom_minimum_size = Vector2(54, 54)
+	ajustes.icon = preload("res://assets/icones/engrenagem.svg")
+	ajustes.expand_icon = true
+	ajustes.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ajustes.focus_mode = Control.FOCUS_NONE
+	ajustes.tooltip_text = "Configurações (gráficos, som...)"
+	ajustes.pressed.connect(abrir_configuracoes)
+	topo.add_child(ajustes)
 	var progresso := BotoesProgresso.new()
 	progresso.name = "Progresso"
 	progresso.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -1176,6 +1187,16 @@ func _olhar_suave(alvo: Vector3, delta: float) -> Vector3:
 	return _olhar
 
 
+## Configurações por cima da vila (sem sair dela). Se a qualidade dos gráficos
+## mudou, a vila recarrega (passa pelo carregamento) já com a qualidade nova.
+func abrir_configuracoes() -> void:
+	var antes := Qualidade.nivel()
+	Telas.abrir_por_cima("configuracoes")
+	await Telas.por_cima_fechou
+	if is_inside_tree() and Qualidade.nivel() != antes:
+		Telas.ir_para("vila")
+
+
 ## Nível, missões, baús, açúcar e moedas do topo (depois de missões/baús).
 func _atualizar_relogio() -> void:
 	var rotulo := find_child("TextoRelogio", true, false) as Label
@@ -1275,7 +1296,7 @@ func voltar_da_visita() -> void:
 ## Na vila do amigo: o topo mostra de quem é a vila e o botão de voltar; o
 ## doce dele espera na praça (acenando) e não dá para mexer em nada.
 func _modo_visita() -> void:
-	for nome_no in ["Casa", "Progresso", "BotaoEvento", "Saldos", "Foto"]:
+	for nome_no in ["Casa", "Ajustes", "Progresso", "BotaoEvento", "Saldos", "Foto"]:
 		var no := _interface.find_child(nome_no, true, false) as Control
 		if no:
 			no.visible = false
@@ -1382,7 +1403,9 @@ func _criar_chefao() -> void:
 	_chefao = ChefaoVila.new()
 	_chefao.doce = Chefao.doce()
 	add_child(_chefao)
-	_area_chefao = BairroVila.area(self, "AreaChefao", Vector3(0, 1, 0), Vector3(17, 3, 17))
+	# (só bem perto da fonte: antes cobria a praça toda e o botão ENFRENTAR ficava
+	# por cima na hora de entrar nos prédios)
+	_area_chefao = BairroVila.area(self, "AreaChefao", Vector3(0, 1, 0), Vector3(8, 3, 8))
 	_area_chefao.body_entered.connect(_chegou_no_ponto.bind("chefao"))
 	_area_chefao.body_exited.connect(_saiu_do_ponto.bind("chefao"))
 	(func(): Telas.mostrar_aviso("%s INVADIU A PRAÇA! VÁ ATÉ A FONTE PARA ENFRENTAR!" % Chefao.nome())).call_deferred()

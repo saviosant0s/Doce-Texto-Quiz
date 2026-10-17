@@ -202,14 +202,15 @@ func acabou() -> bool:
 
 
 ## Sorteia a próxima pergunta (do nível do quiz do desafiante; sem repetir na
-## mesma luta), com as alternativas embaralhadas.
+## mesma luta e variando de uma luta para outra, ver Jogo.perguntas_variadas), com
+## as alternativas embaralhadas.
 func proxima_pergunta() -> Dictionary:
 	var nivel_quiz := int(desafiante["perguntas"])
 	var banco: Array = Jogo.niveis[nivel_quiz]["perguntas"].filter(func(p): return not p["id"] in _usadas)
 	if banco.is_empty():
 		_usadas.clear()
 		banco = Jogo.niveis[nivel_quiz]["perguntas"]
-	var original: Dictionary = banco[_sorteio.randi() % banco.size()].duplicate()
+	var original: Dictionary = Jogo.perguntas_variadas(banco, 1, _sorteio)[0].duplicate()
 	original["nivel"] = nivel_quiz
 	_usadas.append(original["id"])
 	var alternativas: Array = original["alternativas"].duplicate()

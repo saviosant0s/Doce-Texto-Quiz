@@ -99,10 +99,11 @@ static func liquido(tipo: String, simples: Material, centro := Vector2.ZERO, rai
 	return mat
 
 
-## Na ALTA, o fundo bem longe fica levemente desfocado (como numa câmera de
-## verdade; custa um passe de desfoque). Põe na câmera `camera`.
+## Na ALTA, no computador, o fundo bem longe fica levemente desfocado (como numa
+## câmera de verdade; custa um passe de desfoque). No celular, não: na tela
+## pequena parecia a imagem toda embaçada. Põe na câmera `camera`.
 static func camera(camera: Camera3D) -> void:
-	if not ligado() or Qualidade.nivel() < Qualidade.ALTA:
+	if not ligado() or Qualidade.nivel() < Qualidade.ALTA or Qualidade.celular():
 		camera.attributes = null
 		return
 	var foco := CameraAttributesPractical.new()
@@ -122,7 +123,7 @@ static func ambiente(ambiente: Environment) -> void:
 		return
 	RenderingServer.directional_soft_shadow_filter_set_quality([RenderingServer.SHADOW_QUALITY_SOFT_LOW,
 		RenderingServer.SHADOW_QUALITY_SOFT_LOW, RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM,
-		RenderingServer.SHADOW_QUALITY_SOFT_HIGH][Qualidade.nivel()])
+		RenderingServer.SHADOW_QUALITY_SOFT_HIGH if Qualidade.forward_plus() else RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM][Qualidade.nivel()])
 	if Qualidade.nivel() == Qualidade.ULTRA and Qualidade.forward_plus():
 		_ultra(ambiente)
 

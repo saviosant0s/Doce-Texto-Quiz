@@ -7,7 +7,8 @@ extends Node3D
 ## - Passando na frente da bandeja, o doce pega os doces e carrega em pilha.
 ## - Os clientes (moradores da vila) entram pela porta da direita e fazem fila
 ##   no balcão, cada um pedindo um doce; parando atrás do balcão, o doce
-##   entrega os pedidos. Quem é atendido paga, e as moedas ficam na mesinha do
+##   entrega os pedidos (a quem pediu o que está na mão, mesmo que não seja o
+##   primeiro da fila; quem espera demais vai embora). Quem é atendido paga, e as moedas ficam na mesinha do
 ##   caixa até o jogador passar lá.
 ## - Parando em cima de um círculo amarelo, constrói ou melhora a máquina (ou
 ##   aumenta quantos doces carrega), se tiver as moedas.
@@ -39,6 +40,8 @@ const RITMO_ENTREGAR := 0.16
 const TEMPO_CIRCULO := 1.2
 ## Chegada de clientes: um a cada tantos segundos (se a fila não estiver cheia).
 const INTERVALO_CLIENTES := Vector2(4.0, 7.0)
+## Cliente que espera tanto tempo sem ser atendido vai embora (e libera a fila).
+const PACIENCIA := 45.0
 ## Clientes que vêm sempre (os mascotes dos níveis); os doces da coleção
 ## também aparecem.
 const CLIENTES := ["bala_verde", "milho_doce", "fantasma"]
@@ -66,7 +69,7 @@ var carregando: Array[String] = []
 ## Moedas pagas e ainda não recolhidas (na mesinha do caixa).
 var caixa := 0
 ## Clientes: {"no": DoceAndante, "doce", "falta", "total", "estado"
-## ("chegando", "esperando", "saindo"), "balao": Label3D}.
+## ("chegando", "esperando", "saindo"), "balao": Label3D, "espera": segundos na fila}.
 var clientes: Array[Dictionary] = []
 
 var _camera: Camera3D
@@ -275,6 +278,14 @@ func _chegar_clientes(delta: float) -> void:
 	_proximo_cliente = randf_range(INTERVALO_CLIENTES.x, INTERVALO_CLIENTES.y)
 	var feitos: Array = Confeitaria.MAQUINAS.filter(func(m): return Confeitaria.construida(m["id"]))
 	var m: Dictionary = feitos.pick_random()
+	# está com um doce na mão que ninguém da fila pediu: o próximo cliente pede esse
+	# (antes dava para ficar travado com a mão cheia de um doce que ninguém queria)
+	for carregado in carregando:
+		var alguem_quer := clientes.any(func(c): return c["estado"] != "saindo" and c["doce"] == carregado)
+		var maquina: Array = feitos.filter(func(f): return f["doce"] == carregado)
+		if not alguem_quer and not maquina.is_empty():
+			m = maquina[0]
+			break
 	novo_cliente(m["doce"], randi_range(1, 2 + Confeitaria.nivel(m["id"])))
 
 
@@ -300,7 +311,8 @@ func novo_cliente(doce: String, quantos: int) -> Dictionary:
 	foto.no_depth_test = true
 	foto.position = Vector3(-0.4, 2.35, 0)
 	no.add_child(foto)
-	var cliente := {"no": no, "doce": doce, "falta": quantos, "total": quantos, "estado": "chegando", "balao": balao, "foto": foto}
+	var cliente := {"no": no, "doce": doce, "falta": quantos, "total": quantos, "estado": "chegando", "balao": balao,
+		"foto": foto, "espera": 0.0}
 	clientes.append(cliente)
 	_atualizar_balao(cliente)
 	return cliente
@@ -336,22 +348,34 @@ func _mover_cliente(cliente: Dictionary, delta: float) -> void:
 		if cliente["estado"] == "chegando":
 			cliente["estado"] = "esperando"
 		no.olhar_para(no.global_position + Vector3(0, 0, -1))  # de frente para o balcão
+	if cliente["estado"] == "esperando":
+		cliente["espera"] += delta
+		if cliente["espera"] > PACIENCIA and cliente["falta"] == cliente["total"]:
+			_desistir(cliente)
 	if cliente["estado"] == "saindo" and no.global_position.z > MEIO_FUNDO + 2.5:
 		clientes.erase(cliente)
 		no.queue_free()
 
 
-## Atrás do balcão, entrega os doces ao primeiro da fila (se tiver o que ele quer).
+## Cansou de esperar: vai embora sem comprar (e abre lugar na fila).
+func _desistir(cliente: Dictionary) -> void:
+	cliente["estado"] = "saindo"
+	cliente["balao"].text = "..."
+	cliente["foto"].visible = false
+
+
+## Atrás do balcão, entrega os doces ao primeiro da fila que pediu algo que o
+## jogador tem na mão (mesmo com outro na frente esperando outro doce).
 func _entregar_no_balcao(delta: float) -> void:
 	_relogio_entregar -= delta
 	if _relogio_entregar > 0.0 or carregando.is_empty() or not _no_balcao():
 		return
 	var primeiro: Dictionary = {}
 	for cliente in clientes:
-		if cliente["estado"] != "saindo":
+		if cliente["estado"] == "esperando" and cliente["doce"] in carregando:
 			primeiro = cliente
 			break
-	if primeiro.is_empty() or primeiro["estado"] != "esperando" or not primeiro["doce"] in carregando:
+	if primeiro.is_empty():
 		return
 	var saida := _desempilhar(primeiro["doce"])
 	_voar_ate(CenarioCozinha.mini_doce(self, primeiro["doce"]), saida, primeiro["no"].global_position + Vector3(0, 1.2, 0))
@@ -563,7 +587,7 @@ func _mostrar_dica() -> void:
 		if alvo == Vector3.INF and carregando.is_empty():
 			var tem_acucar := Confeitaria.MAQUINAS.any(func(m): return Confeitaria.construida(m["id"]) and Confeitaria.acucar() >= m["acucar"])
 			if not tem_acucar:
-				texto = "SEM AÇÚCAR! JOGUE O QUIZ (CADA ACERTO DÁ %d) OU OS MINIGAMES DA VILA" % Confeitaria.ACUCAR_POR_ACERTO
+				texto = "SEM AÇÚCAR! TOQUE EM GANHAR AÇÚCAR E ESCOLHA UM JOGO"
 	# sem açúcar: o botão do quiz pulsa, chamando para jogar
 	var falta_acucar := texto.begins_with("SEM AÇÚCAR")
 	_botao_quiz.pivot_offset = _botao_quiz.size / 2
@@ -800,7 +824,7 @@ func _criar_interface() -> void:
 	# atalho para o quiz: é lá que se ganha açúcar (e moedas)
 	_botao_quiz = Button.new()
 	_botao_quiz.name = "JogarQuiz"
-	_botao_quiz.text = "JOGAR O QUIZ"
+	_botao_quiz.text = "GANHAR AÇÚCAR"
 	_botao_quiz.icon = ICONE_ACUCAR
 	Itens.sem_tinta(_botao_quiz)
 	_botao_quiz.expand_icon = true
@@ -809,7 +833,8 @@ func _criar_interface() -> void:
 	_botao_quiz.custom_minimum_size = Vector2(240, 66)
 	_botao_quiz.size_flags_vertical = Control.SIZE_SHRINK_END
 	_botao_quiz.focus_mode = Control.FOCUS_NONE
-	_botao_quiz.pressed.connect(Telas.abrir.bind("niveis"))
+	# escolhe o jogo (quiz, corrida, torre, fábrica, Doce Match) e volta para cá no fim
+	_botao_quiz.pressed.connect(Telas.mostrar_escolha_de_jogo.bind("cozinha"))
 	baixo.add_child(_botao_quiz)
 
 

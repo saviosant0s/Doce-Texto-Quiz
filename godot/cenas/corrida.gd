@@ -92,7 +92,11 @@ func ao_voltar() -> void:
 	if is_instance_valid(_painel) and _painel.name == "Inicio":
 		Telas.voltar()
 	elif estado == "correndo":
-		mostrar_inicio()  # desistiu: sem prêmio
+		# desistiu: sem o prêmio do lugar, mas com o açúcar dos cubos que já pegou
+		var acucar := corrida.desistir()
+		mostrar_inicio()
+		if acucar > 0:
+			Telas.mostrar_aviso("+%d AÇÚCAR DOS CUBOS QUE VOCÊ PEGOU" % acucar)
 	else:
 		Telas.voltar()
 

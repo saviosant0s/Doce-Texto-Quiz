@@ -94,6 +94,37 @@ func iniciar_revisao() -> void:
 	Telas.ir_para("carregamento")
 
 
+## Quantas perguntas dos minijogos o jogo lembra (as últimas que apareceram).
+const RECENTES := 120
+
+
+## Perguntas para os minijogos (corrida, batalha): primeiro as que nunca
+## apareceram, depois as que faz mais tempo que não aparecem, em ordem sorteada
+## (antes cada partida sorteava do zero e as mesmas voltavam logo). Guarda as
+## escolhidas em Progresso.estatisticas["perguntas_recentes"].
+func perguntas_variadas(banco: Array, quantas: int, sorteio: RandomNumberGenerator) -> Array:
+	var recentes: Array = Progresso.estatisticas.get("perguntas_recentes", [])
+	var lista := banco.duplicate()
+	for i in range(lista.size() - 1, 0, -1):
+		var j := sorteio.randi() % (i + 1)
+		var troca = lista[i]
+		lista[i] = lista[j]
+		lista[j] = troca
+	# (find dá -1 para as nunca vistas; as mais antigas ficam no começo de recentes)
+	var ordem := {}
+	for p in lista:
+		ordem[p["id"]] = recentes.find(p["id"])
+	lista.sort_custom(func(a, b): return ordem[a["id"]] < ordem[b["id"]])
+	var escolhidas := lista.slice(0, quantas)
+	for p in escolhidas:
+		recentes.erase(p["id"])
+		recentes.append(p["id"])
+	while recentes.size() > RECENTES:
+		recentes.pop_front()
+	Progresso.estatisticas["perguntas_recentes"] = recentes
+	return escolhidas
+
+
 ## Zera a partida e sorteia as perguntas, sem trocar de tela.
 func preparar_partida(indice: int) -> void:
 	_zerar_partida()

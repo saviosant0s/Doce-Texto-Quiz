@@ -166,7 +166,8 @@ func _novo_corredor(doce: String, jogador: bool, habilidade: float, bonus: float
 		"acertos": 0, "proximo_portal": 0, "faixa_portal": -1, "pensar": 0.0, "auto": false})
 
 
-## As perguntas dos portais (fácil; médio e difícil entram com os títulos), sem repetir.
+## As perguntas dos portais (fácil; médio e difícil entram com os títulos), sem
+## repetir e variando de uma corrida para outra (Jogo.perguntas_variadas).
 func _sortear_perguntas() -> void:
 	var niveis := [0]
 	if Quiz.tem_titulo("noob"):
@@ -176,8 +177,7 @@ func _sortear_perguntas() -> void:
 	var banco := []
 	for n in niveis:
 		banco.append_array(Jogo.niveis[n]["perguntas"])
-	for i in portais.size():
-		var original: Dictionary = banco.pop_at(_sorteio.randi() % banco.size())
+	for original: Dictionary in Jogo.perguntas_variadas(banco, portais.size(), _sorteio):
 		var alternativas: Array = original["alternativas"].duplicate()
 		var correta: String = alternativas[int(original["resposta"])]
 		for k in range(alternativas.size() - 1, 0, -1):
@@ -558,6 +558,17 @@ func concluir() -> Dictionary:
 	Progresso.ganhar_moedas(moedas)  # também salva
 	return {"lugar": lugar, "tempo": meu_tempo, "moedas": moedas, "acucar": acucar, "bau": bau,
 		"recorde_novo": recorde_novo}
+
+
+## Saiu no meio da corrida: sem prêmio de lugar, mas leva o açúcar dos cubos que
+## já pegou. Retorna quanto açúcar ganhou.
+func desistir() -> int:
+	if acabou or cubos <= 0:
+		return 0
+	var acucar := cubos
+	cubos = 0
+	Confeitaria.ganhar_acucar(acucar)  # também salva
+	return acucar
 
 
 ## "1:05.3"

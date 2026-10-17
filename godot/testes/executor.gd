@@ -856,7 +856,17 @@ func _testar_cozinha() -> void:
 	cozinha.set_physics_process(false)  # o teste move o doce (e os clientes)
 	cozinha._proximo_cliente = 999.0  # sem clientes chegando sozinhos
 	var jogador := cozinha.jogador
-	verificar(cozinha.find_child("JogarQuiz", true, false) is Button, "botão de ir para o quiz na cozinha")
+	verificar(cozinha.find_child("JogarQuiz", true, false) is Button, "botão de ganhar açúcar na cozinha")
+	cozinha.find_child("JogarQuiz", true, false).pressed.emit()
+	var escolha := Telas.find_child("EscolherJogo", true, false)
+	verificar(escolha != null and escolha.find_child("Jogo_niveis", true, false) is Button
+		and escolha.find_child("Jogo_corrida", true, false) is Button and escolha.find_child("Jogo_doce_match", true, false) is Button,
+		"GANHAR AÇÚCAR: escolhe entre quiz, corrida, torre, fábrica e Doce Match")
+	if escolha:
+		escolha.fechar()
+	Telas.origem = "cozinha"
+	verificar(Telas.origem == "cozinha", "a escolha lembra que veio da Confeitaria (o quiz volta para ela)")
+	Telas.origem = ""
 	jogador.global_position = cozinha._circulos["brigadeiro"]["no"].global_position
 	await get_tree().create_timer(Cozinha.TEMPO_CIRCULO + 0.4).timeout
 	verificar(Confeitaria.construida("brigadeiro"), "parar no círculo constrói a panela")
@@ -878,6 +888,24 @@ func _testar_cozinha() -> void:
 	jogador.global_position = Cozinha.CAIXA + Vector3(1.0, 0, 0)
 	await get_tree().create_timer(0.3).timeout
 	verificar(cozinha.caixa == 0 and Progresso.moedas == moedas_antes + 6, "recolhe as moedas do caixa")
+	# o primeiro da fila quer outro doce: entrega ao segundo, que pediu o da mão
+	var outro_doce: String = Confeitaria.MAQUINAS.filter(func(m): return m["doce"] != "brigadeiro")[0]["doce"]
+	var quer_outro := cozinha.novo_cliente(outro_doce, 1)
+	var quer_brigadeiro := cozinha.novo_cliente("brigadeiro", 1)
+	for c in [quer_outro, quer_brigadeiro]:
+		c["estado"] = "esperando"
+	quer_outro["no"].global_position = Cozinha.FILA[0]
+	quer_brigadeiro["no"].global_position = Cozinha.FILA[1]
+	jogador.global_position = Cozinha.BALCAO + Vector3(0, 0, -1.0)
+	await get_tree().create_timer(0.6).timeout
+	verificar(quer_brigadeiro["estado"] == "saindo" and quer_outro["estado"] == "esperando" and cozinha.carregando.is_empty(),
+		"o balcão atende quem pediu o doce da mão, mesmo que não seja o primeiro da fila")
+	quer_outro["espera"] = Cozinha.PACIENCIA + 1.0
+	cozinha._mover_cliente(quer_outro, 0.1)
+	verificar(quer_outro["estado"] == "saindo", "quem espera demais vai embora (a fila nunca fica travada)")
+	cozinha.caixa = 0
+	cozinha._empilhar("brigadeiro", jogador.global_position)  # (sobra um na mão, para o teste da saída)
+	jogador.global_position = Cozinha.CAIXA + Vector3(2.5, 0, -2.0)
 	# câmeras: de cima -> perto -> 1ª pessoa, com paredes altas só nas de perto
 	cozinha.usar_camera(Cozinha.Camera.DE_CIMA)
 	verificar(not cozinha._paredes_altas.visible, "câmera de cima: cozinha aberta")
@@ -1769,6 +1797,25 @@ func _testar_telas_baus_e_missoes() -> void:
 	verificar(Telas.tela_por_cima() == null and get_tree().current_scene == vila and vila.process_mode == Node.PROCESS_MODE_INHERIT,
 		"voltar fecha os baús e a vila continua de onde estava")
 	verificar(vila.find_child("BausSurpresa", true, false).get_node("Bolinha").text == "1", "a bolinha dos baús já atualizou")
+	# configurações por cima da vila; mudar os gráficos recarrega a vila
+	vila.find_child("Ajustes", true, false).pressed.emit()
+	await get_tree().process_frame
+	verificar(Telas.tela_por_cima() != null and Telas.tela_por_cima().name == "Configuracoes" and get_tree().current_scene == vila,
+		"na vila, a engrenagem abre as configurações por cima")
+	var qualidade_antes := Qualidade.escolhida()
+	Qualidade.escolher(Qualidade.MEDIA if qualidade_antes != Qualidade.MEDIA else Qualidade.ALTA)
+	Telas.voltar()
+	var recarregou := false
+	for i in 150:
+		await get_tree().create_timer(0.1).timeout
+		var atual := get_tree().current_scene
+		if atual and atual != vila and atual.name == "Vila":
+			recarregou = true
+			break
+	verificar(recarregou, "mudou a qualidade: a vila recarrega com os gráficos novos")
+	Qualidade.escolher(qualidade_antes)
+	vila = get_tree().current_scene
+	await get_tree().create_timer(0.3).timeout
 	# missões
 	Progresso.missoes = Missoes.padrao()
 	Missoes.dia_fixo = 20500
@@ -3052,6 +3099,14 @@ func _testar_corrida() -> void:
 		perguntas_ok = perguntas_ok and p["alternativas"].size() == 4 and int(p["resposta"]) in [0, 1, 2, 3]
 		ids[p["id"]] = true
 	verificar(perguntas_ok and ids.size() == c.perguntas.size(), "uma pergunta diferente em cada portal, 4 faixas")
+	# a corrida seguinte (outro sorteio) traz perguntas que ainda não apareceram
+	var c2 := Corrida.new(8, ["jujuba", "pacoca", "cocada"])
+	var repetidas := c2.perguntas.filter(func(p): return ids.has(p["id"])).size()
+	verificar(repetidas == 0, "a corrida seguinte não repete as perguntas da anterior (%d repetidas)" % repetidas)
+	c2.cubos = 3
+	var acucar_desistiu := Confeitaria.acucar()
+	verificar(c2.desistir() == 3 and Confeitaria.acucar() == acucar_desistiu + 3 and c2.cubos == 0,
+		"saiu no meio da corrida: leva o açúcar dos cubos que pegou")
 	var limpo := true
 	for e in c.setas + c.pocas + c.blocos + c.cubos_pista:
 		for p in c.portais.slice(0, 2):
@@ -3097,14 +3152,20 @@ func _testar_corrida() -> void:
 	c.avancar(0.1)
 	verificar(c.cubos == 1, "o mesmo cubo não vale duas vezes na mesma volta")
 	# corrida inteira acertando tudo (tocando na resposta; fora dos portais,
-	# o piloto do teste pega as setas e desvia das poças e blocos)
+	# o piloto do teste pega as setas e desvia das poças e blocos). As perguntas
+	# dependem das que saíram antes (Jogo.perguntas_variadas): sem as recentes,
+	# a mesma semente dá sempre a mesma corrida.
+	var recentes: Array = Progresso.estatisticas.get("perguntas_recentes", [])
+	Progresso.estatisticas["perguntas_recentes"] = []
 	var certa := _correr(Corrida.new(11, ["jujuba", "pacoca", "cocada"]), true)
 	verificar(certa["corrida"].acabou and certa["acertos"] == 4 and certa["portais"] == 4, "acertando os 4 portais: 4 turbos")
 	verificar(certa["perguntas"] == 4 and certa["lento_na_pergunta"], "cada portal mostra a pergunta e o tempo fica lento")
 	verificar(certa["voltas"] == 1 and certa["corrida"].jogador()["fim"] > 25.0 and certa["corrida"].jogador()["fim"] < 80.0,
 		"2 voltas em menos de 1 min e 20 s (%.1f s)" % certa["corrida"].jogador()["fim"])
 	verificar(certa["corrida"].colocacao(0) == 1, "acertando tudo, ganha a corrida")
-	var errada := _correr(Corrida.new(11, ["jujuba", "pacoca", "cocada"]), false)
+	Progresso.estatisticas["perguntas_recentes"] = []
+	var errada := _correr(Corrida.new(4, ["jujuba", "pacoca", "cocada"]), false)
+	Progresso.estatisticas["perguntas_recentes"] = recentes
 	verificar(errada["acertos"] == 0 and errada["corrida"].jogador()["fim"] > certa["corrida"].jogador()["fim"] + 3.0,
 		"errando os portais fica bem mais lento")
 	verificar(errada["corrida"].colocacao(0) > 1, "errando tudo, perde a corrida")

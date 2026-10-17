@@ -167,12 +167,19 @@ static func _desistir_do_ultra() -> void:
 	escolher(padrao())
 
 
+## (no celular o ULTRA fica com a grama, as flores e a sombra da ALTA: o que muda é
+## o carro realista. Mais que isso derrubava o FPS, o vigia descia a qualidade
+## até a BAIXA e a imagem ficava embaçada, com a resolução 3D reduzida.)
+static func _nivel_pesado() -> int:
+	return mini(nivel(), ALTA) if celular() else nivel()
+
+
 static func grama() -> int:
-	return GRAMA[nivel()]
+	return GRAMA[_nivel_pesado()]
 
 
 static func flores() -> int:
-	return FLORES[nivel()]
+	return FLORES[_nivel_pesado()]
 
 
 static func sombras() -> bool:
