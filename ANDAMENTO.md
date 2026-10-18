@@ -7,8 +7,8 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.17.1 (Android, Windows e navegador; ULTRA no celular, F1). Antes: 0.16.1 só
-  conserta o ULTRA, que não existe no celular). O pacote do INPI
+- Versão atual: 0.18.0 (Android, Windows e navegador; GPs das cidades, Confeitaria sem fim,
+  vila guardada). Antes: 0.17.1 (ULTRA no celular, F1). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
@@ -141,7 +141,7 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 18. (feito em 17/10, ver abaixo) Falta, se ele quiser: mais MÁQUINAS (pudim,
    brownie...) e a cozinha crescer de tamanho (hoje só muda de cara e ganha mesas).
 
-### Rodada de 17/10/2026 — correções e pedidos do Sávio, ainda não publicada
+### Rodada de 17/10/2026 — correções e pedidos do Sávio, publicada na 0.18.0 (18/10/2026)
 
 - (1) **Botão ENFRENTAR O CHEFÃO:** a área que mostra o botão ficou bem menor
   (8x8 m em volta do chefão, era 17x17): só aparece quando o doce chega perto
