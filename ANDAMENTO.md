@@ -125,12 +125,9 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
 
 ### Bugs e pedidos do Sávio (11/10/2026) — o que ainda falta
 
-(Os números são os da lista original; só falta o 5 (e o que está anotado nos itens 12, 15, 16 e 18); o resto foi feito em
-17/10, ver a seção abaixo.)
+(Os números são os da lista original; o que sobrou são os extras anotados nos
+itens 12, 15, 16 e 18; o resto foi feito em 17/10 e 18/10, ver as seções abaixo.)
 
-5. **Batalha de doces como luta de verdade** (planejamento, depois): botões de
-   golpe; perguntas entre os golpes; o GOLPE SUPREMO depende da pergunta (acertou,
-   acerta; errou, erra) — mesma lógica do turbo na corrida.
 12. (feito em 17/10: 5 GPs) **Corrida:** falta, se ele quiser, CARROS diferentes para
    escolher e mais GPs (ex.: São Luís, Recife, Rio, Belo Horizonte, Curitiba...).
 15. (feito em 17/10, ver abaixo) **Tela de carregamento demora muito.** Falta, se
@@ -140,6 +137,22 @@ atalho de teclado, disquete...). **Não usar os logos oficiais do Word/Excel**
    se, depois de embaçar, a qualidade nas Configurações tinha descido sozinha.
 18. (feito em 17/10, ver abaixo) Falta, se ele quiser: mais MÁQUINAS (pudim,
    brownie...) e a cozinha crescer de tamanho (hoje só muda de cara e ganha mesas).
+
+### Rodada de 18/10/2026 — batalha como luta de verdade, ainda não publicada
+
+- (5) **Batalha de doces como LUTA DE VERDADE** (`scripts/batalha.gd`, `cenas/batalha.gd`),
+  por turnos:
+  - SUA VEZ: botões de golpe. SOCO (80% do ataque, sem risco), VOADORA (115%, mas
+    fica SEM GUARDA: errar a pergunta seguinte faz o golpe dele doer 1,5x) e
+    PIRUETA (150%, recarga de 3 turnos; alterna com a cambalhota na animação).
+  - VEZ DELE: a PERGUNTA RELÂMPAGO ("SEU MILHO VAI ATACAR! ACERTE PARA DESVIAR"):
+    acertou, o seu doce DESVIA (pula para trás) e ganha 1 de ENERGIA; errou ou
+    acabou o tempo, leva o golpe.
+  - GOLPE SUPREMO: com 3 de energia o botão acende; usar faz uma pergunta: acertou,
+    o supremo ACERTA (260% do ataque, +25% se responder em até 6 s; o tornado com
+    os raios); errou, ERRA (o outro desvia e o seu doce fica tonto). A energia zera.
+  - O fim mostra "N ACERTOS EM M PERGUNTAS"; a captura aceita --batalha=0,vcpS...
+- 2159 verificações passando.
 
 ### Rodada de 17/10/2026 — correções e pedidos do Sávio, publicada na 0.18.0 (18/10/2026)
 

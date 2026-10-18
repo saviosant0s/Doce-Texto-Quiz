@@ -1,11 +1,19 @@
 class_name Batalha
 extends RefCounted
 ## BATALHA DE DOCES (na Arena da vila): o seu time de até TAMANHO_TIME doces
-## da coleção contra o time de um desafiante. Cada rodada é uma pergunta do
-## quiz: acertou, o seu doce ataca; errou (ou acabou o tempo), o doce do
-## desafiante ataca. Resposta rápida bate mais forte; SUPER_COM acertos
-## seguidos enchem o SUPER (o ataque vale dobrado). Doce sem vida sai e entra
-## o próximo do time. Ganha quem derrubar o time inteiro do outro.
+## da coleção contra o time de um desafiante, numa LUTA DE VERDADE por turnos:
+## - SEU TURNO: você escolhe o golpe nos botões (GOLPES): SOCO (médio, sem
+##   risco), VOADORA (forte, mas fica sem guarda: errar a pergunta seguinte dói
+##   SEM_GUARDA vezes mais) e PIRUETA (muito forte, com recarga de alguns turnos).
+## - TURNO DO DESAFIANTE: entre os golpes vem a PERGUNTA RELÂMPAGO do quiz:
+##   acertou, o seu doce DESVIA do golpe dele e ganha 1 de ENERGIA; errou (ou
+##   acabou o tempo), leva o golpe.
+## - GOLPE SUPREMO: com a energia cheia (SUPER_COM), o botão acende; usar faz
+##   uma pergunta: acertou, o supremo ACERTA (DANO_SUPREMO, mais forte se
+##   responder rápido); errou, ERRA. Gasta a energia de qualquer jeito (a mesma
+##   ideia do turbo nos portais da corrida).
+## Doce sem vida sai e entra o próximo do time. Ganha quem derrubar o time
+## inteiro do outro.
 ##
 ## Vida e ataque vêm da raridade e do nível do doce (Companheiros): subir os
 ## doces de nível e ter doces raros deixa o time mais forte.
@@ -22,9 +30,18 @@ const ATAQUE_BASE := [34, 37, 40, 44]
 const VIDA_POR_NIVEL := 0.2  # +20% de vida por nível acima do 1 (subir o doce faz diferença)
 const ATAQUE_POR_NIVEL := 0.12  # +12% de ataque por nível
 const TAMANHO_TIME := 3
-const SUPER_COM := 3  # acertos seguidos para o SUPER
+const SUPER_COM := 3  # energia (desvios) para o GOLPE SUPREMO
 const TEMPO := 20.0  # segundos por pergunta
-const RAPIDO := 6.0  # respondeu em até 6 s: ataque RÁPIDO (+25%)
+const RAPIDO := 6.0  # respondeu o supremo em até 6 s: SUPREMO RÁPIDO (+25%)
+## Golpes dos botões: "dano" (vezes o ataque do doce), "recarga" (turnos até
+## poder usar de novo) e "aberto" (fica sem guarda até a próxima pergunta).
+const GOLPES := {
+	"soco": {"nome": "SOCO", "dano": 0.8, "recarga": 0, "aberto": false},
+	"voadora": {"nome": "VOADORA", "dano": 1.15, "recarga": 0, "aberto": true},
+	"pirueta": {"nome": "PIRUETA", "dano": 1.5, "recarga": 3, "aberto": false},
+}
+const DANO_SUPREMO := 2.6
+const SEM_GUARDA := 1.5  # errou a pergunta depois da voadora: o golpe dele dói mais
 const REVANCHE := 0.3  # parte do prêmio nas revanches
 const ACUCAR_DERROTA := 5  # perdeu: um pouquinho de açúcar pelo esforço
 ## XP de cada doce do time no fim da luta (nível de luta, ver Companheiros.ganhar_xp).
@@ -169,9 +186,15 @@ var meu_time: Array = []  # [{"id", "nivel", "vida", "vida_max", "ataque"}]
 var time_deles: Array = []
 var meu_atual := 0
 var deles_atual := 0
-var sequencia := 0  # acertos seguidos (o SUPER enche com SUPER_COM)
+var energia := 0  # desvios guardados (o GOLPE SUPREMO pede SUPER_COM)
+## "golpe" (sua vez de escolher), "defesa" (a pergunta relâmpago do golpe dele)
+## ou "supremo" (a pergunta do seu golpe supremo).
+var fase := "golpe"
+var sem_guarda := false
+var recargas := {}  # golpe -> turnos que faltam
 var pergunta: Dictionary = {}
-var rodadas := 0
+var rodadas := 0  # golpes seus (botões e supremos)
+var respondidas := 0  # perguntas respondidas (relâmpago e supremo)
 var acertos := 0
 var _usadas: Array = []
 var _sorteio := RandomNumberGenerator.new()
@@ -235,53 +258,136 @@ func proxima_pergunta() -> Dictionary:
 	return pergunta
 
 
-## Responde a pergunta da vez (`escolha` -1 = acabou o tempo; `tempo` =
-## segundos que levou). Retorna o que aconteceu:
-## {"acertou", "atacante": "meu"|"deles", "dano", "super", "rapido",
-##  "nocaute": bool, "entrou": id do próximo doce do lado atingido ("" se
-##  nenhum), "fim": "" | "venceu" | "perdeu"}.
-func responder(escolha: int, tempo: float) -> Dictionary:
-	if acabou() or pergunta.is_empty():
+# --- Turnos ---------------------------------------------------------------------------
+
+## Turnos que faltam para poder usar o golpe de novo (0 = pode).
+func recarga(tipo: String) -> int:
+	return int(recargas.get(tipo, 0))
+
+
+func pode_golpear(tipo: String) -> bool:
+	return fase == "golpe" and not acabou() and GOLPES.has(tipo) and recarga(tipo) == 0
+
+
+func pode_supremo() -> bool:
+	return fase == "golpe" and not acabou() and energia >= SUPER_COM
+
+
+## Seu golpe dos botões. Retorna {"atacante": "meu", "golpe", "dano", "nocaute",
+## "entrou", "fim"} ({} se não pode). Depois dele vem a pergunta relâmpago
+## (fase "defesa"), a não ser que a luta tenha acabado.
+func golpear(tipo: String) -> Dictionary:
+	if not pode_golpear(tipo):
 		return {}
 	rodadas += 1
+	var dados: Dictionary = GOLPES[tipo]
+	_passar_recargas()
+	recargas[tipo] = int(dados["recarga"])
+	sem_guarda = bool(dados["aberto"])
+	var dano := roundi(int(meu()["ataque"]) * float(dados["dano"]) * _sorteio.randf_range(0.9, 1.1))
+	var r := _bater_neles(dano)
+	r["golpe"] = tipo
+	fase = "golpe" if acabou() else "defesa"
+	return r
+
+
+## Usa o GOLPE SUPREMO: sorteia a pergunta dele (responder decide se acerta).
+func pedir_supremo() -> Dictionary:
+	if not pode_supremo():
+		return {}
+	rodadas += 1
+	_passar_recargas()
+	sem_guarda = false
+	fase = "supremo"
+	return proxima_pergunta()
+
+
+## Responde a pergunta da vez (`escolha` -1 = acabou o tempo; `tempo` = segundos
+## que levou):
+## - fase "defesa" (o golpe dele): acertou, DESVIA ("esquivou", +1 de energia);
+##   errou, leva o golpe (SEM_GUARDA vezes mais depois da voadora).
+## - fase "supremo": acertou, o supremo acerta (+25% se rápido); errou, erra
+##   ("errou"). A energia zera.
+## Retorna {"acertou", "atacante": "meu"|"deles", "golpe", "dano", "esquivou",
+##  "errou", "super", "rapido", "nocaute", "entrou", "fim"}.
+func responder(escolha: int, tempo: float) -> Dictionary:
+	if acabou() or pergunta.is_empty() or fase == "golpe":
+		return {}
 	var acertou := escolha == int(pergunta["resposta"])
-	var r := {"acertou": acertou, "super": false, "rapido": false, "nocaute": false, "entrou": "", "fim": ""}
-	var variacao := _sorteio.randf_range(0.9, 1.1)
+	pergunta = {}
+	respondidas += 1
 	if acertou:
 		acertos += 1
-		sequencia += 1
-		var dano := int(meu()["ataque"]) * variacao
-		if tempo <= RAPIDO:
-			dano *= 1.25
-			r["rapido"] = true
-		if sequencia >= SUPER_COM:
-			dano *= 2.0
-			r["super"] = true
-			sequencia = 0
-		r["atacante"] = "meu"
-		r["dano"] = roundi(dano)
-		var alvo: Dictionary = deles()
-		alvo["vida"] = maxi(0, int(alvo["vida"]) - int(r["dano"]))
-		if int(alvo["vida"]) <= 0:
-			r["nocaute"] = true
-			deles_atual += 1
-			r["entrou"] = deles().get("id", "")
+	var r: Dictionary
+	if fase == "supremo":
+		energia = 0
+		if acertou:
+			var dano := int(meu()["ataque"]) * DANO_SUPREMO * _sorteio.randf_range(0.95, 1.05)
+			var rapido := tempo <= RAPIDO
+			if rapido:
+				dano *= 1.25
+			r = _bater_neles(roundi(dano))
+			r["rapido"] = rapido
+		else:
+			r = _resultado("meu", 0)
+			r["errou"] = true
+		r["golpe"] = "supremo"
+		r["super"] = true
+		fase = "golpe" if acabou() else "defesa"
 	else:
-		sequencia = 0
-		r["atacante"] = "deles"
-		r["dano"] = roundi(int(deles()["ataque"]) * variacao)
-		var alvo: Dictionary = meu()
-		alvo["vida"] = maxi(0, int(alvo["vida"]) - int(r["dano"]))
-		if int(alvo["vida"]) <= 0:
-			r["nocaute"] = true
-			meu_atual += 1
-			r["entrou"] = meu().get("id", "")
+		if acertou:
+			energia = mini(SUPER_COM, energia + 1)
+			r = _resultado("deles", 0)
+			r["esquivou"] = true
+		else:
+			var dano := int(deles()["ataque"]) * _sorteio.randf_range(0.9, 1.1) * (SEM_GUARDA if sem_guarda else 1.0)
+			r = _bater_em_mim(roundi(dano))
+		r["golpe"] = "dele"
+		sem_guarda = false
+		fase = "golpe"
+	r["acertou"] = acertou
+	return r
+
+
+func _passar_recargas() -> void:
+	for tipo in recargas.keys():
+		recargas[tipo] = maxi(0, int(recargas[tipo]) - 1)
+
+
+func _resultado(atacante: String, dano: int) -> Dictionary:
+	return {"atacante": atacante, "dano": dano, "esquivou": false, "errou": false, "super": false, "rapido": false,
+		"nocaute": false, "entrou": "", "fim": "", "acertou": false}
+
+
+func _bater_neles(dano: int) -> Dictionary:
+	var r := _resultado("meu", dano)
+	var alvo: Dictionary = deles()
+	alvo["vida"] = maxi(0, int(alvo["vida"]) - dano)
+	if int(alvo["vida"]) <= 0:
+		r["nocaute"] = true
+		deles_atual += 1
+		r["entrou"] = deles().get("id", "")
+	_fim(r)
+	return r
+
+
+func _bater_em_mim(dano: int) -> Dictionary:
+	var r := _resultado("deles", dano)
+	var alvo: Dictionary = meu()
+	alvo["vida"] = maxi(0, int(alvo["vida"]) - dano)
+	if int(alvo["vida"]) <= 0:
+		r["nocaute"] = true
+		meu_atual += 1
+		r["entrou"] = meu().get("id", "")
+	_fim(r)
+	return r
+
+
+func _fim(r: Dictionary) -> void:
 	if venceu():
 		r["fim"] = "venceu"
 	elif perdeu():
 		r["fim"] = "perdeu"
-	pergunta = {}
-	return r
 
 
 ## Terminou a luta: dá o prêmio (vitória) ou o açúcar do esforço (derrota)

@@ -52,7 +52,8 @@ extends Node
 ##   --album       Vila: abre o álbum de fotos
 ##   --chefao=cce  Vila: enfrenta o chefão da praça e responde (c = certa, e = errada); --chefao= só abre a luta
 ##   --mapa        Vila: abre o mapa cheio; --regioes=ilha,bosque exploradas (e liberadas: nível 9 e títulos)
-##   --batalha=0,ccec  Arena: luta contra o desafiante 0 e responde (c = certa, e = errada)
+##   --batalha=0,vcpe  Arena: luta contra o desafiante 0; s/v/p = SOCO, VOADORA, PIRUETA,
+##                 S = SUPREMO, c/e = responde certo/errado
 ##   --batalha_time    Arena: abre a escolha do time; --arena_vencidos=3 já venceu os 3 primeiros
 ##   --corrida=120  Corrida: já correndo, com o seu kart a 120 m da largada (os rivais em volta);
 ##                 --corrida_turbo com turbo; --corrida_pergunta perto do 1º portal (a pergunta
@@ -79,8 +80,8 @@ extends Node
 ##   --video_evolucao=maca  Coleção: o doce evolui do nível 1 ao máximo, um nível de cada vez
 ##   --video_cozinha  Cozinha (com --confeitaria): o doce joga sozinho (pega nas bandejas,
 ##                 atende a fila no balcão, recolhe as moedas e melhora a máquina de maçã)
-##   --video_batalha / --video_chefao  luta jogando sozinha (responde certo depois de "ler"
-##                 por --leitura=1.4 s); --batalha_super: o 2º acerto é o SUPER e nocauteia;
+##   --video_batalha / --video_chefao  luta jogando sozinha (escolhe os golpes e responde certo
+##                 depois de "ler" por --leitura=1.4 s); --batalha_super: o 1º desvio enche o supremo;
 ##                 --desafiante=1 luta contra esse desafiante (use com --arena_vencidos)
 ##   --corrida_inicio=120  com o --trailer_corrida, já larga a 120 m
 ##   --abertura_sem_texto  a abertura sem legendas, faixas nem logo (só a câmera)
@@ -430,16 +431,23 @@ func _ready() -> void:
 		var arena: Node = get_tree().current_scene
 		var partes: PackedStringArray = args["batalha"].split(",")
 		arena.lutar(int(partes[0]))
+		# letras: s/v/p = SOCO, VOADORA, PIRUETA; S = SUPREMO; c/e = responde certo/errado
 		for letra in (partes[1] if partes.size() > 1 else ""):
-			while arena.luta != null and not arena.respondendo and not arena.luta.acabou():
+			while arena.luta != null and not arena.respondendo and not arena.escolhendo and not arena.luta.acabou():
 				await get_tree().process_frame
 			if arena.luta == null or arena.luta.acabou():
 				break
-			var certa := int(arena.luta.pergunta["resposta"])
-			arena.responder(certa if letra == "c" else (certa + 1) % arena.luta.pergunta["alternativas"].size())
+			if letra in ["s", "v", "p"] and arena.escolhendo:
+				arena.usar_golpe({"s": "soco", "v": "voadora", "p": "pirueta"}[letra])
+			elif letra == "S" and arena.escolhendo:
+				arena.luta.energia = Batalha.SUPER_COM
+				arena.usar_supremo()
+			elif arena.respondendo:
+				var certa := int(arena.luta.pergunta["resposta"])
+				arena.responder(certa if letra == "c" else (certa + 1) % arena.luta.pergunta["alternativas"].size())
 			await get_tree().process_frame
 		if partes.size() > 1 and arena.luta != null and not arena.luta.acabou():
-			while not arena.respondendo:
+			while not arena.respondendo and not arena.escolhendo:
 				await get_tree().process_frame
 	if args.has("batalha_time"):
 		await get_tree().create_timer(0.3).timeout
@@ -775,8 +783,8 @@ func _ready() -> void:
 			if args.has("golpe_inicial"):  # ordem fixa dos golpes (ver Batalha.GOLPES)
 				cena._proximo_golpe = int(args["golpe_inicial"])
 			if args.has("batalha_super"):
-				cena.luta.sequencia = Batalha.SUPER_COM - 2
-				cena.luta.deles()["vida"] = int(cena.luta.meu()["ataque"] * 2.6)
+				cena.luta.energia = Batalha.SUPER_COM - 1
+				cena.luta.deles()["vida"] = int(cena.luta.meu()["ataque"] * 3.4)
 		else:
 			cena.enfrentar_chefao()
 			luta_no = cena._luta_chefao
@@ -786,11 +794,25 @@ func _ready() -> void:
 			_tempo_video += get_process_delta_time()
 			if not is_instance_valid(luta_no) or luta_no.luta == null or luta_no.luta.acabou():
 				break
-			if luta_no.respondendo:
+			if luta_no.get("escolhendo"):
+				# a vez de escolher o golpe: o supremo se der, a pirueta, ou soco e voadora alternando
+				lendo += get_process_delta_time()
+				if lendo > 0.6:
+					var batalha: Batalha = luta_no.luta
+					_momento = "escolheu o golpe"
+					if batalha.pode_supremo():
+						luta_no.usar_supremo()
+					elif batalha.pode_golpear("pirueta"):
+						luta_no.usar_golpe("pirueta")
+					else:
+						luta_no.usar_golpe("voadora" if batalha.rodadas % 2 == 0 else "soco")
+					lendo = 0.0
+			elif luta_no.respondendo:
 				_momento = "esperando a resposta"
 				lendo += get_process_delta_time()
 				if lendo > float(args.get("leitura", "1.4")):
-					var errar: bool = str(args.get("errar", "")).split(",").has(str(luta_no.luta.rodadas))
+					var respondidas: int = luta_no.luta.get("respondidas") if luta_no.luta.get("respondidas") != null else luta_no.luta.rodadas
+					var errar: bool = str(args.get("errar", "")).split(",").has(str(respondidas))
 					var certa := int(luta_no.luta.pergunta["resposta"])
 					_momento = "errou: o chefão ataca" if errar else "acertou: o doce ataca"
 					luta_no.responder((certa + 1) % luta_no.luta.pergunta["alternativas"].size() if errar else certa)

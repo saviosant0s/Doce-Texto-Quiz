@@ -2392,35 +2392,56 @@ func _testar_batalha() -> void:
 	# time: só doces que tem; padrão = companheiro e os mais fortes
 	verificar(Batalha.time().size() >= 1 and Batalha.time().all(func(id): return Colecao.tem(id)), "o time padrão usa doces da coleção")
 	verificar(not Batalha.escolher_time([]) and not Batalha.escolher_time(["chocolate_que_nao_tenho"]), "time vazio ou com doce que não tem não vale")
-	# luta vencida respondendo tudo certo
+	# luta de verdade: na sua vez, o golpe dos botões; na dele, a pergunta relâmpago
 	var luta := Batalha.new(0, ["brigadeiro"], 7)
 	verificar(luta.meu()["id"] == "brigadeiro" and luta.deles()["id"] == "milho_doce", "luta: brigadeiro contra o Seu Milho")
+	verificar(luta.fase == "golpe" and luta.pode_golpear("soco") and luta.pode_golpear("voadora") and luta.pode_golpear("pirueta")
+		and not luta.pode_supremo(), "começa na sua vez: soco, voadora e pirueta (o supremo pede energia)")
+	var vida_deles := int(luta.deles()["vida"])
+	var r := luta.golpear("pirueta")
+	verificar(r["atacante"] == "meu" and r["golpe"] == "pirueta" and int(luta.deles()["vida"]) == vida_deles - int(r["dano"])
+		and r["dano"] > int(luta.meu()["ataque"]), "PIRUETA: o seu doce bate forte, sem pergunta")
+	verificar(luta.fase == "defesa" and not luta.pode_golpear("soco") and luta.golpear("soco").is_empty(),
+		"depois do seu golpe vem a vez dele (não dá para bater duas vezes)")
 	var p := luta.proxima_pergunta()
 	verificar(p["alternativas"].size() >= 2 and int(p["resposta"]) >= 0 and int(p["resposta"]) < p["alternativas"].size(),
-		"a pergunta da luta vem do quiz, com a resposta certa marcada")
-	var vida_deles := int(luta.deles()["vida"])
-	var r := luta.responder(int(p["resposta"]), 10.0)
-	verificar(r["acertou"] and r["atacante"] == "meu" and int(luta.deles()["vida"]) == vida_deles - int(r["dano"]) and not r["rapido"],
-		"acertou: o seu doce ataca")
-	p = luta.proxima_pergunta()
+		"a pergunta relâmpago vem do quiz, com a resposta certa marcada")
 	var minha_vida := int(luta.meu()["vida"])
+	r = luta.responder(int(p["resposta"]), 3.0)
+	verificar(r["acertou"] and r["esquivou"] and int(luta.meu()["vida"]) == minha_vida and luta.energia == 1 and luta.fase == "golpe",
+		"acertou a pergunta relâmpago: desvia do golpe dele e ganha energia")
+	verificar(luta.recarga("pirueta") > 0 and not luta.pode_golpear("pirueta"), "a pirueta tem recarga")
+	luta.golpear("voadora")
+	luta.proxima_pergunta()
+	minha_vida = int(luta.meu()["vida"])
 	r = luta.responder(-1, Batalha.TEMPO)
-	verificar(not r["acertou"] and r["atacante"] == "deles" and int(luta.meu()["vida"]) == minha_vida - int(r["dano"]) and luta.sequencia == 0,
-		"acabou o tempo: o doce do desafiante ataca e zera a sequência")
-	# rápido e super
-	for i in Batalha.SUPER_COM:
-		if luta.acabou():
-			break
-		p = luta.proxima_pergunta()
-		r = luta.responder(int(p["resposta"]), 1.0)
-	verificar(r["rapido"] and (r["super"] or luta.acabou()), "resposta rápida bate mais forte; 3 acertos seguidos = SUPER")
+	verificar(not r["acertou"] and r["atacante"] == "deles" and int(luta.meu()["vida"]) == minha_vida - int(r["dano"])
+		and int(r["dano"]) > int(luta.deles()["ataque"]), "errou depois da VOADORA: leva o golpe dele, mais forte (estava sem guarda)")
+	# energia cheia: GOLPE SUPREMO (a pergunta decide: acertou acerta, errou erra)
+	luta.energia = Batalha.SUPER_COM
+	verificar(luta.pode_supremo(), "energia cheia: o supremo acende")
+	var antes_supremo := int(luta.deles()["vida"])
+	p = luta.pedir_supremo()
+	r = luta.responder((int(p["resposta"]) + 1) % p["alternativas"].size(), 5.0)
+	verificar(r["errou"] and r["dano"] == 0 and int(luta.deles()["vida"]) == antes_supremo and luta.energia == 0,
+		"errou a pergunta do supremo: o supremo ERRA e a energia zera")
+	luta.proxima_pergunta()
+	luta.responder(int(luta.pergunta["resposta"]), 3.0)
+	luta.energia = Batalha.SUPER_COM
+	p = luta.pedir_supremo()
+	r = luta.responder(int(p["resposta"]), 1.0)
+	verificar(r["acertou"] and r["super"] and r["rapido"] and (r["dano"] > 2 * int(luta.meu()["ataque"]) or r["nocaute"]),
+		"acertou a pergunta do supremo (rápido): o supremo ACERTA em cheio")
 	var repetidas := {}
 	var repetiu := false
 	while not luta.acabou():
-		p = luta.proxima_pergunta()
-		repetiu = repetiu or repetidas.has(p["id"])
-		repetidas[p["id"]] = true
-		luta.responder(int(p["resposta"]), 3.0)
+		if luta.fase == "golpe":
+			luta.golpear("pirueta" if luta.pode_golpear("pirueta") else "voadora")
+		else:
+			p = luta.proxima_pergunta()
+			repetiu = repetiu or repetidas.has(p["id"])
+			repetidas[p["id"]] = true
+			luta.responder(int(p["resposta"]), 3.0)
 	verificar(luta.venceu() and not luta.perdeu() and not repetiu, "acertando tudo, vence a luta (sem repetir pergunta)")
 	var moedas := Progresso.moedas
 	var xp_brigadeiro := Companheiros.xp_total("brigadeiro")
@@ -2435,6 +2456,9 @@ func _testar_batalha() -> void:
 	var derrota := Batalha.new(1, ["brigadeiro", "bala"], 3)
 	var entrou := ""
 	while not derrota.acabou():
+		if derrota.fase == "golpe":
+			derrota.golpear("soco")
+			continue
 		derrota.proxima_pergunta()
 		var rr := derrota.responder(-1, Batalha.TEMPO)
 		if rr["nocaute"] and rr["entrou"] != "":
@@ -2449,8 +2473,14 @@ func _testar_batalha() -> void:
 	Progresso.vila["arena"]["vencidos"] = range(9)
 	var rei := Batalha.new(9, ["brigadeiro"], 1)
 	while not rei.acabou():
-		var pr := rei.proxima_pergunta()
-		rei.responder(int(pr["resposta"]), 2.0)
+		if rei.pode_supremo():
+			var ps := rei.pedir_supremo()
+			rei.responder(int(ps["resposta"]), 2.0)
+		elif rei.fase == "golpe":
+			rei.golpear("pirueta" if rei.pode_golpear("pirueta") else "voadora")
+		else:
+			var pr := rei.proxima_pergunta()
+			rei.responder(int(pr["resposta"]), 2.0)
 	var baus_antes := Baus.quantos("ouro")
 	var ganho_rei := rei.concluir()
 	verificar(rei.venceu() and ganho_rei.get("movel", "") == "trofeu_arena" and Casa.quantos("trofeu_arena") == 1
@@ -2847,42 +2877,58 @@ func _testar_tela_batalha() -> void:
 	verificar(cartao != null and cartao.find_child("Marca", true, false).visible, "cartões dos doces; o do time aparece marcado")
 	tela.lutar(0)
 	var limite := Time.get_ticks_msec() + 5000
-	while not tela.respondendo and Time.get_ticks_msec() < limite:
+	while not tela.escolhendo and Time.get_ticks_msec() < limite:
 		await get_tree().process_frame
-	verificar(tela.respondendo and tela._alternativas.get_child_count() >= 2, "a luta começa com uma pergunta")
+	verificar(tela.escolhendo and tela.find_child("Golpe_soco", true, false).visible and tela.find_child("Golpe_voadora", true, false) != null
+		and tela.find_child("Golpe_pirueta", true, false) != null and tela.find_child("Golpe_supremo", true, false).disabled,
+		"a luta começa na sua vez: botões de SOCO, VOADORA, PIRUETA e o SUPREMO apagado")
 	var vida := int(tela.luta.deles()["vida"])
-	tela.responder(int(tela.luta.pergunta["resposta"]))
+	tela.find_child("Golpe_voadora", true, false).pressed.emit()
 	limite = Time.get_ticks_msec() + 5000
 	var palavra := false
 	while not tela.respondendo and not tela.luta.acabou() and Time.get_ticks_msec() < limite:
 		palavra = palavra or tela.find_child("PalavraGolpe", true, false) != null
 		await get_tree().process_frame
-	verificar(int(tela.luta.deles()["vida"]) < vida, "acertou pela tela: o doce do desafiante perde vida")
+	verificar(int(tela.luta.deles()["vida"]) < vida and tela.ultimo_golpe == "voadora", "VOADORA pela tela: o doce do desafiante perde vida")
 	verificar(palavra, "o golpe tem a palavra de quadrinho (POW!, BAM!...)")
-	verificar(tela.ultimo_golpe in tela.GOLPES and not tela._visor_meu.segurar_pose,
-		"cada acerto é um golpe de luta (socos, voadora, pirueta ou cambalhota) e o doce volta à pose normal")
+	verificar(tela.respondendo and tela._alternativas.get_child_count() >= 2
+		and tela.find_child("AvisoPergunta", true, false).text.contains("DESVIAR"),
+		"depois vem a PERGUNTA RELÂMPAGO (acerte para desviar)")
 	verificar(tela._visor_meu.position == Vector2.ZERO and tela._visor_deles.position == Vector2.ZERO
-		and is_zero_approx(tela._visor_meu.rotation) and is_zero_approx(tela._visor_deles.rotation),
+		and is_zero_approx(tela._visor_meu.rotation) and is_zero_approx(tela._visor_deles.rotation) and not tela._visor_meu.segurar_pose,
 		"depois do golpe os dois doces voltam para o lugar")
+	var minha := int(tela.luta.meu()["vida"])
+	tela.responder(int(tela.luta.pergunta["resposta"]))
+	limite = Time.get_ticks_msec() + 5000
+	while not tela.escolhendo and not tela.luta.acabou() and Time.get_ticks_msec() < limite:
+		await get_tree().process_frame
+	verificar(tela.escolhendo and int(tela.luta.meu()["vida"]) == minha and tela.luta.energia == 1,
+		"acertou: o seu doce desvia, ganha energia e volta a sua vez")
 	tela.desistir()
-	# SUPER que nocauteia: raios atrás do atacante e o próximo do time entra
+	# SUPREMO que nocauteia: raios atrás do atacante e o próximo do time entra
 	Progresso.vila["arena"] = {"vencidos": [0], "time": [], "vitorias": 1}
 	tela.lutar(1)
 	limite = Time.get_ticks_msec() + 5000
-	while not tela.respondendo and Time.get_ticks_msec() < limite:
+	while not tela.escolhendo and Time.get_ticks_msec() < limite:
 		await get_tree().process_frame
-	tela.luta.sequencia = Batalha.SUPER_COM - 1
+	tela.luta.energia = Batalha.SUPER_COM
+	tela._sua_vez()
+	var botao_supremo: Button = tela.find_child("Golpe_supremo", true, false)
+	verificar(not botao_supremo.disabled, "energia cheia: o botão do GOLPE SUPREMO acende")
 	tela.luta.deles()["vida"] = 1
 	var primeiro: String = tela.luta.deles()["id"]
+	botao_supremo.pressed.emit()
+	verificar(tela.respondendo and tela.find_child("AvisoPergunta", true, false).text.contains("SUPREMO"),
+		"o supremo faz uma pergunta (acertou, acerta)")
 	tela.responder(int(tela.luta.pergunta["resposta"]))
 	limite = Time.get_ticks_msec() + 6000
 	var raios := false
-	while not tela.respondendo and not tela.luta.acabou() and Time.get_ticks_msec() < limite:
+	while not tela.respondendo and not tela.escolhendo and not tela.luta.acabou() and Time.get_ticks_msec() < limite:
 		raios = raios or tela.find_child("RaiosSuper", true, false) != null
 		await get_tree().process_frame
 	verificar(raios and tela.find_child("RaiosSuper", true, false) == null and tela.find_child("EscuroSuper", true, false) == null,
-		"SUPER: raios e arena escura durante o golpe, e somem depois")
-	verificar(tela.ultimo_golpe == "tornado", "o SUPER é o tornado com uppercut")
+		"SUPREMO: raios e arena escura durante o golpe, e somem depois")
+	verificar(tela.ultimo_golpe == "tornado", "o SUPREMO é o tornado com uppercut")
 	verificar(tela.luta.deles()["id"] != primeiro and is_equal_approx(tela._visor_deles.modulate.a, 1.0)
 		and tela._visor_deles.position == Vector2.ZERO and tela._visor_deles.scale == Vector2.ONE,
 		"nocaute: o próximo doce do desafiante entra e fica no lugar")

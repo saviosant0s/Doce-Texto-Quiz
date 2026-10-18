@@ -3,9 +3,11 @@ extends Control
 ## scripts/batalha.gd).
 ## - ARENA: o seu time e a escada de desafiantes (LUTAR / REVANCHE).
 ## - TROCAR TIME: escolha até 3 doces da sua coleção.
-## - LUTA: o seu doce (esquerda) contra o do desafiante (direita), cada um com
-##   a barra de vida e o time embaixo. A pergunta fica na parte de baixo: acertou,
-##   o seu doce avança e bate; errou ou acabou o tempo, apanha.
+## - LUTA DE VERDADE: o seu doce (esquerda) contra o do desafiante (direita),
+##   cada um com a barra de vida e o time embaixo. Na sua vez, os BOTÕES DE GOLPE
+##   (soco, voadora, pirueta e o GOLPE SUPREMO quando a energia enche); na vez
+##   dele, a PERGUNTA RELÂMPAGO: acertou, desvia; errou, apanha. O supremo também
+##   pergunta: acertou, acerta; errou, erra.
 ## - FIM: vitória (prêmio) ou derrota (açúcar do esforço e tentar de novo).
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
@@ -33,6 +35,11 @@ var _enunciado: Label
 var _barra_tempo: ProgressBar
 var _cor_tempo: StyleBoxFlat
 var _alternativas: GridContainer
+var _aviso_pergunta: Label
+var _quadro_golpes: PanelContainer
+var _botoes_golpe := {}  # "soco"/"voadora"/"pirueta"/"supremo" -> Button
+## A sua vez de escolher o golpe (os botões estão na tela).
+var escolhendo := false
 var _tempo_resta := 0.0
 var respondendo := false
 ## O último movimento de luta usado (para os testes).
@@ -46,7 +53,7 @@ func _ready() -> void:
 	_montar_topo()
 	mostrar_arena()
 	Telas.dica_primeira_vez("arena", "ARENA DOS DOCES",
-		"Monte um time com até 3 doces da sua coleção e desafie os lutadores da vila. Cada rodada é uma pergunta: acertou, o seu doce ataca; errou, leva um golpe. Responda rápido para bater mais forte e acerte 3 seguidas para o SUPER!")
+		"Na sua vez, escolha o golpe: SOCO, VOADORA ou PIRUETA. Na vez dele, acerte a PERGUNTA RELÂMPAGO para desviar e encher a energia. Energia cheia: GOLPE SUPREMO (acertou a pergunta, acerta; errou, erra)!")
 
 
 func ao_voltar() -> void:
@@ -193,7 +200,7 @@ func _montar_palco() -> void:
 	rotulo_super.theme_type_variation = &"SubtituloClaro"
 	rotulo_super.add_theme_font_size_override("font_size", 22)
 	rotulo_super.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rotulo_super.text = "SUPER"
+	rotulo_super.text = "ENERGIA"
 	meio.add_child(rotulo_super)
 	_super = HBoxContainer.new()
 	_super.name = "Super"
@@ -214,6 +221,13 @@ func _montar_palco() -> void:
 	var dentro := VBoxContainer.new()
 	dentro.add_theme_constant_override("separation", 8)
 	_quadro_pergunta.add_child(dentro)
+	_aviso_pergunta = Label.new()
+	_aviso_pergunta.name = "AvisoPergunta"
+	_aviso_pergunta.theme_type_variation = &"SubtituloClaro"
+	_aviso_pergunta.add_theme_font_size_override("font_size", 20)
+	_aviso_pergunta.add_theme_color_override("font_color", AMARELO)
+	_aviso_pergunta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dentro.add_child(_aviso_pergunta)
 	_enunciado = Label.new()
 	_enunciado.name = "Enunciado"
 	_enunciado.theme_type_variation = &"TituloClaro"
@@ -241,6 +255,30 @@ func _montar_palco() -> void:
 	_alternativas.add_theme_constant_override("h_separation", 10)
 	_alternativas.add_theme_constant_override("v_separation", 8)
 	dentro.add_child(_alternativas)
+	# botões de golpe (a sua vez)
+	_quadro_golpes = PanelContainer.new()
+	_quadro_golpes.name = "QuadroGolpes"
+	_quadro_golpes.theme_type_variation = &"PainelRoxo"
+	_quadro_golpes.visible = false
+	coluna.add_child(_quadro_golpes)
+	var linha := HBoxContainer.new()
+	linha.add_theme_constant_override("separation", 12)
+	_quadro_golpes.add_child(linha)
+	_botoes_golpe.clear()
+	for tipo in ["soco", "voadora", "pirueta", "supremo"]:
+		var botao := Button.new()
+		botao.name = "Golpe_" + tipo
+		botao.custom_minimum_size = Vector2(0, 92)
+		botao.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		botao.focus_mode = Control.FOCUS_NONE
+		botao.add_theme_font_size_override("font_size", 26)
+		botao.theme_type_variation = &"BotaoPremio" if tipo == "supremo" else (&"BotaoAzul" if tipo == "soco" else &"BotaoComprar")
+		if tipo == "supremo":
+			botao.pressed.connect(usar_supremo)
+		else:
+			botao.pressed.connect(usar_golpe.bind(tipo))
+		linha.add_child(botao)
+		_botoes_golpe[tipo] = botao
 
 
 ## Um lado da luta: plaquinha (nome, estrelas do nível, raridade e a barra de
@@ -667,12 +705,82 @@ func lutar(indice: int) -> void:
 	_balao('%s: "%s"' % [luta.desafiante["nome"], luta.desafiante["fala"]])
 	await get_tree().create_timer(1.9).timeout
 	if luta != null and not luta.acabou():
-		_nova_pergunta()
+		_sua_vez()
 
 
-func _nova_pergunta() -> void:
-	var p := luta.proxima_pergunta()
+## A sua vez: os botões de golpe (com a recarga da pirueta e a energia do supremo).
+func _sua_vez() -> void:
+	_quadro_pergunta.visible = false
+	_quadro_golpes.visible = true
+	escolhendo = true
+	var textos := {"soco": "SOCO", "voadora": "VOADORA\n(SEM GUARDA)", "pirueta": "PIRUETA"}
+	for tipo in textos:
+		var botao: Button = _botoes_golpe[tipo]
+		var falta := luta.recarga(tipo)
+		botao.text = textos[tipo] if falta == 0 else "%s\n(EM %d)" % [Batalha.GOLPES[tipo]["nome"], falta]
+		botao.disabled = not luta.pode_golpear(tipo)
+		botao.tooltip_text = "Dano: %d%% do ataque" % roundi(float(Batalha.GOLPES[tipo]["dano"]) * 100)
+	var supremo: Button = _botoes_golpe["supremo"]
+	supremo.disabled = not luta.pode_supremo()
+	supremo.text = "GOLPE SUPREMO!" if luta.pode_supremo() else "SUPREMO\n%d/%d" % [luta.energia, Batalha.SUPER_COM]
+	supremo.pivot_offset = supremo.size / 2.0
+	if luta.pode_supremo():
+		var pulsa := supremo.create_tween().set_loops(3)
+		pulsa.tween_property(supremo, "scale", Vector2.ONE * 1.07, 0.25)
+		pulsa.tween_property(supremo, "scale", Vector2.ONE, 0.25)
+
+
+## Tocou num golpe: o seu doce bate e vem a pergunta relâmpago (o golpe dele).
+func usar_golpe(tipo: String) -> void:
+	if not escolhendo or luta == null or not luta.pode_golpear(tipo):
+		return
+	escolhendo = false
+	_quadro_golpes.visible = false
+	Audio.tocar("pulo", 1.2, -6.0)
+	var r := luta.golpear(tipo)
+	await _animar_golpe(r)
+	if luta == null:
+		return
+	_seguir(r)
+
+
+## GOLPE SUPREMO: a pergunta decide se acerta.
+func usar_supremo() -> void:
+	if not escolhendo or luta == null or not luta.pode_supremo():
+		return
+	escolhendo = false
+	_quadro_golpes.visible = false
+	Audio.tocar("especial")
+	luta.pedir_supremo()
+	_mostrar_pergunta("GOLPE SUPREMO: ACERTE PARA ACERTAR!")
+
+
+## Depois de cada golpe: fim da luta, a pergunta relâmpago ou a sua vez.
+func _seguir(r: Dictionary) -> void:
+	_atualizar_super()
+	if r["fim"] != "":
+		_terminar()
+	elif luta.fase == "defesa":
+		_pergunta_relampago()
+	else:
+		_sua_vez()
+
+
+## A vez dele: o doce do desafiante se prepara e vem a pergunta para desviar.
+func _pergunta_relampago() -> void:
+	_visor_deles.pivot_offset = Vector2(_visor_deles.size.x / 2.0, _visor_deles.size.y * 0.8)
+	var prepara := create_tween()
+	prepara.tween_property(_visor_deles, "scale", Vector2(1.08, 0.92), 0.12)
+	prepara.tween_property(_visor_deles, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
+	luta.proxima_pergunta()
+	_mostrar_pergunta("%s VAI ATACAR! ACERTE PARA DESVIAR" % Batalha.nome_doce(luta.deles()["id"]))
+
+
+func _mostrar_pergunta(aviso: String) -> void:
+	var p := luta.pergunta
+	_quadro_golpes.visible = false
 	_quadro_pergunta.visible = true
+	_aviso_pergunta.text = aviso
 	_enunciado.text = str(p["enunciado"])
 	for filho in _alternativas.get_children():
 		_alternativas.remove_child(filho)
@@ -713,13 +821,11 @@ func responder(k: int) -> void:
 	if k < 0:
 		_texto_voando("ACABOU O TEMPO!", Vector2(0.5, 0.52), 34, 0.9)
 	await get_tree().create_timer(0.55).timeout
+	_quadro_pergunta.visible = false
 	await _animar_golpe(r)
 	if luta == null:
 		return
-	if r["fim"] != "":
-		_terminar()
-	else:
-		_nova_pergunta()
+	_seguir(r)
 
 
 ## O golpe é um movimento de luta de verdade, variando a cada acerto (ver
@@ -734,7 +840,8 @@ func _animar_golpe(r: Dictionary) -> void:
 	var alvo := _visor_deles if meu_bate else _visor_meu
 	var quem_apanha := "deles" if meu_bate else "meu"
 	var lado := 1.0 if meu_bate else -1.0  # para onde o atacante vai
-	var forte: bool = r["super"]
+	var forte: bool = r["super"] and not r["errou"]
+	var errou_golpe: bool = r["esquivou"] or r["errou"]
 	# até onde o atacante vai para encostar no outro (o doce ocupa ~40% da
 	# altura do visor; a câmera 3D segue a altura)
 	var distancia: float = ((alvo.get_parent() as Control).get_global_rect().get_center().x
@@ -742,12 +849,25 @@ func _animar_golpe(r: Dictionary) -> void:
 	var alcance := distancia - signf(distancia) * alvo.size.y * 0.36
 	for visor in [atacante, alvo]:
 		visor.pivot_offset = Vector2(visor.size.x / 2.0, visor.size.y * 0.8)  # gira e achata pelos pés
-	var golpe: String = "tornado" if forte else GOLPES[_proximo_golpe % GOLPES.size()]
-	if not forte:
-		_proximo_golpe += 1
+	# o movimento: o do botão (a pirueta alterna com a cambalhota), o tornado do
+	# supremo, e o do desafiante em rodízio
+	var golpe: String
+	match str(r.get("golpe", "")):
+		"soco":
+			golpe = "socos"
+		"voadora":
+			golpe = "voadora"
+		"pirueta":
+			golpe = "pirueta" if _proximo_golpe % 2 == 0 else "cambalhota"
+			_proximo_golpe += 1
+		"supremo":
+			golpe = "tornado"
+		_:
+			golpe = GOLPES[_proximo_golpe % GOLPES.size()]
+			_proximo_golpe += 1
 	ultimo_golpe = golpe
 	var extras: Array[Node] = []
-	if forte:
+	if r["super"]:
 		extras = _carregar_super(atacante)
 		await get_tree().create_timer(0.5).timeout
 		if luta == null:
@@ -769,6 +889,9 @@ func _animar_golpe(r: Dictionary) -> void:
 			await _golpe_tornado(atacante, alcance)
 	if luta == null:
 		_sumir(extras)
+		return
+	if errou_golpe:
+		await _golpe_no_ar(atacante, alvo, r, alcance, extras)
 		return
 	# contato: estouro, o alvo pisca branco e o mundo para um instante
 	var centro_alvo := alvo.get_global_rect().get_center()
@@ -822,7 +945,7 @@ func _animar_golpe(r: Dictionary) -> void:
 	var texto := "-%d" % r["dano"]
 	var cor := Color.WHITE
 	if r["super"]:
-		texto = "SUPER! " + texto
+		texto = "SUPREMO! " + texto
 		cor = Color("#FF6FAE")
 	elif r["rapido"]:
 		texto = "RÁPIDO! " + texto
@@ -868,6 +991,27 @@ func _animar_golpe(r: Dictionary) -> void:
 					_tremer(_palco, 7.0))
 			await cai.finished
 	_atualizar_bancos()
+
+
+## O golpe pega no ar: quem ia apanhar pula para trás e desvia (a pergunta
+## relâmpago certa) ou o supremo passa raspando (a pergunta do supremo errada).
+func _golpe_no_ar(atacante: Doce3D, alvo: Doce3D, r: Dictionary, alcance: float, extras: Array[Node]) -> void:
+	Audio.tocar("pulo", 1.3)
+	var desvia := create_tween().set_parallel()
+	desvia.tween_property(alvo, "position:x", 90.0 * signf(alcance), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	desvia.tween_property(alvo, "rotation", deg_to_rad(-10.0 * signf(alcance)), 0.16)
+	_pulinho(alvo, 90.0, 0.32)
+	desvia.chain().tween_property(alvo, "position:x", 0.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	desvia.parallel().tween_property(alvo, "rotation", 0.0, 0.35)
+	_rastro(alvo)
+	if r["esquivou"]:
+		_texto_pulando("DESVIOU! +1 ENERGIA", Vector2(0.28, 0.3), 44, VERDE)
+	else:
+		_texto_pulando("ERROU O SUPREMO!", Vector2(0.5, 0.3), 46, VERMELHO)
+		_estrelas_tontas(atacante.get_global_rect().get_center() + Vector2(0, -70))
+	_voltar_para_o_lugar(atacante)
+	_sumir(extras)
+	await get_tree().create_timer(0.7).timeout
 
 
 ## COMBO DE SOCOS: corre até perto em guarda e solta três socos alternando os
@@ -1185,27 +1329,31 @@ func _atualizar_bancos() -> void:
 			banco.add_child(foto)
 
 
+## A energia do GOLPE SUPREMO (uma estrela por desvio).
 func _atualizar_super() -> void:
+	if luta == null:
+		return
 	for i in _super.get_child_count():
 		var estrela: TextureRect = _super.get_child(i)
-		var cheia := i < luta.sequencia
+		var cheia := i < luta.energia
 		estrela.modulate = AMARELO if cheia else Color(0.2, 0.1, 0.3, 0.45)
 		estrela.pivot_offset = estrela.size / 2.0
 		estrela.scale = Vector2.ONE * (1.25 if cheia else 1.0)
-	if luta.sequencia == Batalha.SUPER_COM - 1:
-		_texto_voando("MAIS UM ACERTO: SUPER!", Vector2(0.5, 0.44), 28, 1.0)
 
 
 ## Sai da luta sem prêmio (voltar no meio).
 func desistir() -> void:
 	respondendo = false
+	escolhendo = false
 	luta = null
 	mostrar_arena()
 
 
 func _terminar() -> void:
 	respondendo = false
+	escolhendo = false
 	_quadro_pergunta.visible = false
+	_quadro_golpes.visible = false
 	var venceu := luta.venceu()
 	var ganho := luta.concluir()
 	if venceu:
@@ -1246,7 +1394,7 @@ func _terminar() -> void:
 			extras = "+ " + Casa.MOVEIS[ganho["movel"]]["nome"] + " PARA A MINHA CASA!"
 		if extras != "":
 			_texto(coluna, extras, 30)
-		_texto(coluna, "%d ACERTOS EM %d PERGUNTAS" % [luta.acertos, luta.rodadas], 24)
+		_texto(coluna, "%d ACERTOS EM %d PERGUNTAS" % [luta.acertos, luta.respondidas], 24)
 	else:
 		coluna.add_child(Itens.fichas_premio({"acucar": ganho["acucar"]}, 40))
 		_texto(coluna, "PELO ESFORÇO", 26)
