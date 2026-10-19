@@ -78,6 +78,11 @@ func pose_luta(nome: String, segundos := 0.12) -> void:
 	_animacao.pose_luta(nome, segundos)
 
 
+## Anda no lugar (pernas e braços balançando): a batalha liga enquanto o doce se mexe.
+func andar(sim: bool) -> void:
+	_animacao.andando = sim
+
+
 ## Evolução (ao melhorar na coleção): gira cada vez mais rápido brilhando até
 ## ficar branco, encolhe e, no clarão, aparece com o visual do nível novo,
 ## grande, e volta ao tamanho balançando.

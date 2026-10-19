@@ -138,21 +138,43 @@ itens 12, 15, 16 e 18; o resto foi feito em 17/10 e 18/10, ver as seções abaix
 18. (feito em 17/10, ver abaixo) Falta, se ele quiser: mais MÁQUINAS (pudim,
    brownie...) e a cozinha crescer de tamanho (hoje só muda de cara e ganha mesas).
 
-### Rodada de 18/10/2026 — batalha como luta de verdade, ainda não publicada
+### Rodada de 18-19/10/2026 — batalha em TEMPO REAL, ainda não publicada
 
-- (5) **Batalha de doces como LUTA DE VERDADE** (`scripts/batalha.gd`, `cenas/batalha.gd`),
-  por turnos:
-  - SUA VEZ: botões de golpe. SOCO (80% do ataque, sem risco), VOADORA (115%, mas
-    fica SEM GUARDA: errar a pergunta seguinte faz o golpe dele doer 1,5x) e
-    PIRUETA (150%, recarga de 3 turnos; alterna com a cambalhota na animação).
-  - VEZ DELE: a PERGUNTA RELÂMPAGO ("SEU MILHO VAI ATACAR! ACERTE PARA DESVIAR"):
-    acertou, o seu doce DESVIA (pula para trás) e ganha 1 de ENERGIA; errou ou
-    acabou o tempo, leva o golpe.
-  - GOLPE SUPREMO: com 3 de energia o botão acende; usar faz uma pergunta: acertou,
-    o supremo ACERTA (260% do ataque, +25% se responder em até 6 s; o tornado com
-    os raios); errou, ERRA (o outro desvia e o seu doce fica tonto). A energia zera.
-  - O fim mostra "N ACERTOS EM M PERGUNTAS"; a captura aceita --batalha=0,vcpS...
-- 2159 verificações passando.
+O Sávio pediu a luta "tipo jogo de futebol do celular": joystick para andar para
+frente e para trás e botões redondos para bater; de longe dá para bater também,
+mas de perto o golpe é certo. (Na primeira versão, de 18/10, era por turnos.)
+
+- **Regras** (`scripts/batalha.gd`, tudo em segundos e metros, testável sem tela):
+  - Arena de 10 m; cada doce começa a 2,5 m da sua ponta. `avancar(delta, direção)`
+    anda (3,6 m/s), roda o desafiante e solta os eventos ("prepara", "golpe",
+    "pergunta"). Um não atravessa o outro (1,3 m).
+  - Golpes (`GOLPES`): SOCO (12% do ataque, quase sem recarga), VOADORA (32%,
+    recarga 1,5 s, fica SEM GUARDA 0,8 s: o golpe dele dói 1,5x) e PIRUETA (60%,
+    recarga 5 s). Cada golpe tem duração (não anda nem bate outro) e EMPURRA o
+    outro para trás.
+  - Distância: até 2 m o golpe é CERTO; de longe o doce dá um bote e a chance cai
+    até 20% (7 m). A tela mostra "PERTO: GOLPE CERTO!" ou "LONGE: 45% DE ACERTAR".
+  - Desafiante: chega perto, mostra o AVISO "!" e bate (0,8 s depois no primeiro,
+    0,45 s no Rei do Chocolate). O golpe dele não alcança longe (3,5 m): quem se
+    afasta no aviso DESVIA. Os de cima da escada batem mais vezes.
+  - PERGUNTA RELÂMPAGO aos 4 s e depois a cada 9 s (a luta para): acertou, +1 de
+    ENERGIA e TURBO (golpes 30% mais fortes por 6 s); errou, ele bate de graça.
+  - GOLPE SUPREMO com 3 de energia: pergunta; acertou, acerta de qualquer
+    distância (200% do ataque, +25% se rápido); errou, erra.
+  - Nocaute: entra o próximo do time e cada um volta para o seu canto (a luta
+    espera 1,8 s).
+- **Tela** (`cenas/batalha.gd`): placar em cima (plaquinhas, energia, TURBO), os
+  doces andando no chão da arena (cada um numa "vaga" que segue a posição da luta;
+  o visor dentro faz os botes), JOYSTICK à esquerda (também A/D e setas) e os
+  BOTÕES REDONDOS à direita em arco (SOCO grande, VOADORA, PIRUETA com a recarga
+  girando, SUPREMO aceso quando enche; teclas J, K, L e I; 1-4 respondem).
+  Botão redondo novo: `componentes/batalha/botao_golpe.gd` (toque de vários dedos,
+  como o joystick). `Doce3D.andar()` mexe as pernas enquanto o doce anda.
+- Equilíbrio conferido com um robô (reação de 0,3 s): time nível 1 vence todos
+  acertando as perguntas; errando, perde dos 3 de cima. Lutas de 7 s a 55 s.
+- Captura: `--batalha=0,svp!lqSc` (s/v/p chega perto e bate; l longe; ! aviso;
+  q pergunta; S supremo; c/e responde). O `--video_batalha` joga sozinho.
+- 2183 verificações passando.
 
 ### Rodada de 17/10/2026 — correções e pedidos do Sávio, publicada na 0.18.0 (18/10/2026)
 

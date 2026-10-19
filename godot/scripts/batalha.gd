@@ -1,17 +1,21 @@
 class_name Batalha
 extends RefCounted
 ## BATALHA DE DOCES (na Arena da vila): o seu time de até TAMANHO_TIME doces
-## da coleção contra o time de um desafiante, numa LUTA DE VERDADE por turnos:
-## - SEU TURNO: você escolhe o golpe nos botões (GOLPES): SOCO (médio, sem
-##   risco), VOADORA (forte, mas fica sem guarda: errar a pergunta seguinte dói
-##   SEM_GUARDA vezes mais) e PIRUETA (muito forte, com recarga de alguns turnos).
-## - TURNO DO DESAFIANTE: entre os golpes vem a PERGUNTA RELÂMPAGO do quiz:
-##   acertou, o seu doce DESVIA do golpe dele e ganha 1 de ENERGIA; errou (ou
-##   acabou o tempo), leva o golpe.
-## - GOLPE SUPREMO: com a energia cheia (SUPER_COM), o botão acende; usar faz
-##   uma pergunta: acertou, o supremo ACERTA (DANO_SUPREMO, mais forte se
-##   responder rápido); errou, ERRA. Gasta a energia de qualquer jeito (a mesma
-##   ideia do turbo nos portais da corrida).
+## da coleção contra o time de um desafiante, numa LUTA EM TEMPO REAL (como os
+## jogos de luta e de futebol do celular): o JOYSTICK anda para frente e para
+## trás e os BOTÕES REDONDOS dão os golpes (GOLPES): SOCO (rápido), VOADORA
+## (forte, mas fica sem guarda um instante) e PIRUETA (muito forte, com recarga).
+## - DISTÂNCIA: de perto (até PERTO metros) o golpe é CERTO; de longe também dá
+##   para bater (o doce dá um bote), mas a chance de acertar cai com a distância.
+##   Golpe que acerta empurra o outro para trás.
+## - O DESAFIANTE anda sozinho, se prepara (o aviso "!", telegrafo() segundos) e
+##   ataca: dá tempo de se afastar para ele errar (os de cima avisam em cima da hora).
+## - PERGUNTA RELÂMPAGO: de tempos em tempos (INTERVALO_PERGUNTA) a luta para e
+##   vem uma pergunta do quiz: acertou, ganha 1 de ENERGIA e fica TURBINADO
+##   (golpes mais fortes por TEMPO_TURBO s); errou, o desafiante bate de graça.
+## - GOLPE SUPREMO: com a energia cheia (SUPER_COM), o botão acende; usar faz uma
+##   pergunta: acertou, o supremo ACERTA (DANO_SUPREMO, mais forte se rápido);
+##   errou, ERRA. A energia zera (a mesma ideia do turbo da corrida).
 ## Doce sem vida sai e entra o próximo do time. Ganha quem derrubar o time
 ## inteiro do outro.
 ##
@@ -30,18 +34,48 @@ const ATAQUE_BASE := [34, 37, 40, 44]
 const VIDA_POR_NIVEL := 0.2  # +20% de vida por nível acima do 1 (subir o doce faz diferença)
 const ATAQUE_POR_NIVEL := 0.12  # +12% de ataque por nível
 const TAMANHO_TIME := 3
-const SUPER_COM := 3  # energia (desvios) para o GOLPE SUPREMO
+const SUPER_COM := 3  # energia (perguntas relâmpago certas) para o GOLPE SUPREMO
 const TEMPO := 20.0  # segundos por pergunta
 const RAPIDO := 6.0  # respondeu o supremo em até 6 s: SUPREMO RÁPIDO (+25%)
-## Golpes dos botões: "dano" (vezes o ataque do doce), "recarga" (turnos até
-## poder usar de novo) e "aberto" (fica sem guarda até a próxima pergunta).
+## Golpes dos botões: "dano" (vezes o ataque do doce), "recarga" (segundos até
+## poder usar de novo), "duracao" (segundos do movimento: não anda nem bate
+## outro), "aberto" (segundos sem guarda depois dele: o golpe do outro dói
+## SEM_GUARDA vezes mais) e "empurra" (metros que o golpe certo empurra).
 const GOLPES := {
-	"soco": {"nome": "SOCO", "dano": 0.8, "recarga": 0, "aberto": false},
-	"voadora": {"nome": "VOADORA", "dano": 1.15, "recarga": 0, "aberto": true},
-	"pirueta": {"nome": "PIRUETA", "dano": 1.5, "recarga": 3, "aberto": false},
+	"soco": {"nome": "SOCO", "dano": 0.12, "recarga": 0.15, "duracao": 0.3, "aberto": 0.0, "empurra": 0.3},
+	"voadora": {"nome": "VOADORA", "dano": 0.32, "recarga": 1.5, "duracao": 0.55, "aberto": 0.8, "empurra": 1.0},
+	"pirueta": {"nome": "PIRUETA", "dano": 0.6, "recarga": 5.0, "duracao": 0.6, "aberto": 0.0, "empurra": 1.4},
 }
-const DANO_SUPREMO := 2.6
-const SEM_GUARDA := 1.5  # errou a pergunta depois da voadora: o golpe dele dói mais
+const DANO_SUPREMO := 2.0
+const EMPURRAO_SUPREMO := 2.0
+const DURACAO_SUPREMO := 1.0  # o tornado (não anda nem bate enquanto gira)
+const SEM_GUARDA := 1.5
+## A arena tem ARENA metros; cada doce começa a INICIO metros da sua ponta.
+const ARENA := 10.0
+const INICIO := 2.5
+const VELOCIDADE := 3.6  # metros por segundo
+const SEPARACAO := 1.3  # um não atravessa o outro
+const PERTO := 2.0  # até aqui o golpe é certo
+const LONGE := 7.0  # daqui para lá, a menor chance (CHANCE_LONGE)
+const CHANCE_LONGE := 0.2
+## O desafiante: dano por golpe (vezes o ataque dele), até onde o golpe dele
+## alcança (dá para fugir no aviso), o aviso antes de bater (ver telegrafo),
+## quanto dura o golpe e a pausa entre um ataque e outro (encurta nos
+## desafiantes mais fortes).
+const DANO_DELES := 0.3
+const ALCANCE_DELES := 3.5
+const TELEGRAFO := 0.8  # o aviso do primeiro desafiante...
+const TELEGRAFO_REI := 0.45  # ... e o do último (os de cima avisam mais em cima da hora)
+const DURACAO_DELES := 0.5
+const EMPURRAO_DELES := 0.9
+const PAUSA_DELES := Vector2(1.2, 2.4)
+const ENTRADA := 1.8  # nocaute: a luta espera o próximo do time entrar
+## Perguntas relâmpago: a primeira e o intervalo (segundos de luta).
+const PRIMEIRA_PERGUNTA := 4.0
+const INTERVALO_PERGUNTA := 9.0
+const TURBO := 1.3  # acertou a relâmpago: golpes mais fortes por TEMPO_TURBO s
+const TEMPO_TURBO := 6.0
+const DANO_DE_GRACA := 0.9  # errou a relâmpago: o golpe de graça dele (vezes o ataque)
 const REVANCHE := 0.3  # parte do prêmio nas revanches
 const ACUCAR_DERROTA := 5  # perdeu: um pouquinho de açúcar pelo esforço
 ## XP de cada doce do time no fim da luta (nível de luta, ver Companheiros.ganhar_xp).
@@ -186,12 +220,25 @@ var meu_time: Array = []  # [{"id", "nivel", "vida", "vida_max", "ataque"}]
 var time_deles: Array = []
 var meu_atual := 0
 var deles_atual := 0
-var energia := 0  # desvios guardados (o GOLPE SUPREMO pede SUPER_COM)
-## "golpe" (sua vez de escolher), "defesa" (a pergunta relâmpago do golpe dele)
-## ou "supremo" (a pergunta do seu golpe supremo).
-var fase := "golpe"
-var sem_guarda := false
-var recargas := {}  # golpe -> turnos que faltam
+var energia := 0  # perguntas relâmpago certas (o GOLPE SUPREMO pede SUPER_COM)
+## "luta" (andando e batendo), "pergunta" (a relâmpago, com a luta parada) ou
+## "supremo" (a pergunta do seu golpe supremo).
+var fase := "luta"
+var x_meu := INICIO
+var x_deles := ARENA - INICIO
+var tempo_luta := 0.0
+var recargas := {}  # golpe -> segundos que faltam
+var ocupado := 0.0  # segundos do seu golpe em andamento (não anda nem bate)
+var sem_guarda := 0.0  # segundos sem guarda (depois da voadora)
+var turbo := 0.0  # segundos de turbo (pergunta relâmpago certa)
+var entrada := 0.0  # segundos até o próximo do time entrar (depois de um nocaute)
+var proxima_pergunta_em := PRIMEIRA_PERGUNTA
+## O desafiante: "andando" ou "preparando" (o aviso antes do golpe).
+var estado_deles := "andando"
+var _espera_deles := 1.5
+var _prepara := 0.0
+var _ocupado_deles := 0.0
+var _distancia_preferida := 1.6
 var pergunta: Dictionary = {}
 var rodadas := 0  # golpes seus (botões e supremos)
 var respondidas := 0  # perguntas respondidas (relâmpago e supremo)
@@ -258,129 +305,256 @@ func proxima_pergunta() -> Dictionary:
 	return pergunta
 
 
-# --- Turnos ---------------------------------------------------------------------------
+# --- A luta em tempo real ----------------------------------------------------------------
 
-## Turnos que faltam para poder usar o golpe de novo (0 = pode).
-func recarga(tipo: String) -> int:
-	return int(recargas.get(tipo, 0))
+func distancia() -> float:
+	return x_deles - x_meu
+
+
+## Segundos entre o aviso ("!") e o golpe do desafiante: menos nos de cima da escada.
+func telegrafo() -> float:
+	return lerpf(TELEGRAFO, TELEGRAFO_REI, float(indice) / (DESAFIANTES.size() - 1))
+
+
+## Chance do seu golpe acertar a esta distância: certo de perto, menor de longe.
+static func chance(dist: float) -> float:
+	if dist <= PERTO:
+		return 1.0
+	return lerpf(1.0, CHANCE_LONGE, clampf((dist - PERTO) / (LONGE - PERTO), 0.0, 1.0))
+
+
+## Chance do golpe do desafiante: certo de perto, nenhuma a ALCANCE_DELES.
+static func chance_deles(dist: float) -> float:
+	if dist <= PERTO:
+		return 1.0
+	return clampf(1.0 - (dist - PERTO) / (ALCANCE_DELES - PERTO), 0.0, 1.0)
+
+
+## Segundos que faltam para poder usar o golpe de novo (0 = pode).
+func recarga(tipo: String) -> float:
+	return float(recargas.get(tipo, 0.0))
+
+
+## A luta está correndo (sem pergunta, sem nocaute esperando o próximo).
+func correndo() -> bool:
+	return fase == "luta" and not acabou() and entrada <= 0.0
 
 
 func pode_golpear(tipo: String) -> bool:
-	return fase == "golpe" and not acabou() and GOLPES.has(tipo) and recarga(tipo) == 0
+	return correndo() and ocupado <= 0.0 and GOLPES.has(tipo) and recarga(tipo) <= 0.0
 
 
 func pode_supremo() -> bool:
-	return fase == "golpe" and not acabou() and energia >= SUPER_COM
+	return correndo() and ocupado <= 0.0 and energia >= SUPER_COM
 
 
-## Seu golpe dos botões. Retorna {"atacante": "meu", "golpe", "dano", "nocaute",
-## "entrou", "fim"} ({} se não pode). Depois dele vem a pergunta relâmpago
-## (fase "defesa"), a não ser que a luta tenha acabado.
+## Avança a luta `delta` segundos com o joystick em `direcao` (-1 para trás, 1
+## para frente): anda, o desafiante decide o que fazer e chegam as perguntas.
+## Parada enquanto há pergunta (e um instante depois de um nocaute). Retorna os
+## eventos: {"tipo": "prepara"} (o aviso: ele vai bater), {"tipo": "golpe", ...}
+## (o golpe dele, como os de golpear, com "atacante": "deles") e {"tipo":
+## "pergunta", "pergunta": {...}} (a relâmpago; responda com responder).
+func avancar(delta: float, direcao: float) -> Array:
+	var eventos := []
+	if fase != "luta" or acabou():
+		return eventos
+	if entrada > 0.0:
+		entrada = maxf(0.0, entrada - delta)
+		return eventos
+	tempo_luta += delta
+	for tipo in recargas.keys():
+		recargas[tipo] = maxf(0.0, float(recargas[tipo]) - delta)
+	sem_guarda = maxf(0.0, sem_guarda - delta)
+	turbo = maxf(0.0, turbo - delta)
+	if ocupado > 0.0:
+		ocupado = maxf(0.0, ocupado - delta)
+	else:
+		x_meu = clampf(x_meu + clampf(direcao, -1.0, 1.0) * VELOCIDADE * delta, 0.0, x_deles - SEPARACAO)
+	_pensar_deles(delta, eventos)
+	if tempo_luta >= proxima_pergunta_em and estado_deles == "andando" and ocupado <= 0.0 \
+			and _ocupado_deles <= 0.0 and correndo():
+		proxima_pergunta_em = tempo_luta + INTERVALO_PERGUNTA
+		fase = "pergunta"
+		eventos.append({"tipo": "pergunta", "pergunta": proxima_pergunta()})
+	return eventos
+
+
+## O desafiante chega perto (às vezes fica mais longe), avisa e bate.
+func _pensar_deles(delta: float, eventos: Array) -> void:
+	if _ocupado_deles > 0.0:
+		_ocupado_deles = maxf(0.0, _ocupado_deles - delta)
+		return
+	var dist := distancia()
+	if estado_deles == "andando":
+		var vai := 0.0
+		if dist > _distancia_preferida + 0.3:
+			vai = -1.0
+		elif dist < _distancia_preferida - 0.3:
+			vai = 1.0
+		x_deles = clampf(x_deles + vai * VELOCIDADE * 0.8 * delta, x_meu + SEPARACAO, ARENA)
+		_espera_deles -= delta
+		if _espera_deles <= 0.0 and dist <= ALCANCE_DELES:
+			estado_deles = "preparando"
+			_prepara = telegrafo()
+			eventos.append({"tipo": "prepara"})
+	else:
+		_prepara -= delta
+		if _prepara <= 0.0:
+			estado_deles = "andando"
+			var mais_rapido := 1.0 - 0.05 * indice  # os desafiantes de cima batem mais vezes
+			_espera_deles = _sorteio.randf_range(PAUSA_DELES.x, PAUSA_DELES.y) * mais_rapido
+			_distancia_preferida = _sorteio.randf_range(1.3, 2.8)
+			eventos.append(_golpe_deles(DANO_DELES))
+
+
+## O golpe do desafiante (`forca` vezes o ataque dele; `certo` = não dá para
+## desviar, o de graça da pergunta errada).
+func _golpe_deles(forca: float, certo := false) -> Dictionary:
+	_ocupado_deles = DURACAO_DELES
+	var dist := distancia()
+	var acertou := certo or _sorteio.randf() < chance_deles(dist)
+	var r: Dictionary
+	if acertou:
+		var dano := int(deles()["ataque"]) * forca * (SEM_GUARDA if sem_guarda > 0.0 else 1.0) * _sorteio.randf_range(0.9, 1.1)
+		r = _bater_em_mim(maxi(1, roundi(dano)), EMPURRAO_DELES)
+	else:
+		r = _resultado("deles", 0)
+		r["esquivou"] = true
+	r["tipo"] = "golpe"
+	r["golpe"] = "dele"
+	r["acertou"] = acertou
+	r["distancia"] = dist
+	return r
+
+
+## Seu golpe dos botões (de qualquer distância: de perto é certo, de longe pode
+## errar). Retorna {"tipo": "golpe", "atacante": "meu", "golpe", "acertou",
+## "errou", "dano", "nocaute", "entrou", "fim", "distancia"} ({} se não pode).
 func golpear(tipo: String) -> Dictionary:
 	if not pode_golpear(tipo):
 		return {}
 	rodadas += 1
 	var dados: Dictionary = GOLPES[tipo]
-	_passar_recargas()
-	recargas[tipo] = int(dados["recarga"])
-	sem_guarda = bool(dados["aberto"])
-	var dano := roundi(int(meu()["ataque"]) * float(dados["dano"]) * _sorteio.randf_range(0.9, 1.1))
-	var r := _bater_neles(dano)
+	recargas[tipo] = float(dados["recarga"])
+	ocupado = float(dados["duracao"])
+	sem_guarda = maxf(sem_guarda, float(dados["aberto"]))
+	var dist := distancia()
+	var acertou := _sorteio.randf() < chance(dist)
+	var r: Dictionary
+	if acertou:
+		var dano := int(meu()["ataque"]) * float(dados["dano"]) * (TURBO if turbo > 0.0 else 1.0) * _sorteio.randf_range(0.9, 1.1)
+		r = _bater_neles(maxi(1, roundi(dano)), float(dados["empurra"]))
+		r["turbo"] = turbo > 0.0
+	else:
+		r = _resultado("meu", 0)
+		r["errou"] = true
+	r["tipo"] = "golpe"
 	r["golpe"] = tipo
-	fase = "golpe" if acabou() else "defesa"
+	r["acertou"] = acertou
+	r["distancia"] = dist
 	return r
 
 
-## Usa o GOLPE SUPREMO: sorteia a pergunta dele (responder decide se acerta).
+## Usa o GOLPE SUPREMO: a luta para e vem a pergunta dele (responder decide).
 func pedir_supremo() -> Dictionary:
 	if not pode_supremo():
 		return {}
 	rodadas += 1
-	_passar_recargas()
-	sem_guarda = false
 	fase = "supremo"
 	return proxima_pergunta()
 
 
 ## Responde a pergunta da vez (`escolha` -1 = acabou o tempo; `tempo` = segundos
-## que levou):
-## - fase "defesa" (o golpe dele): acertou, DESVIA ("esquivou", +1 de energia);
-##   errou, leva o golpe (SEM_GUARDA vezes mais depois da voadora).
-## - fase "supremo": acertou, o supremo acerta (+25% se rápido); errou, erra
-##   ("errou"). A energia zera.
-## Retorna {"acertou", "atacante": "meu"|"deles", "golpe", "dano", "esquivou",
-##  "errou", "super", "rapido", "nocaute", "entrou", "fim"}.
+## que levou), e a luta volta:
+## - fase "pergunta" (relâmpago): acertou, +1 de energia e TURBO; errou, o
+##   desafiante dá um golpe de graça (certo).
+## - fase "supremo": acertou, o supremo acerta de qualquer distância (+25% se
+##   rápido); errou, erra ("errou"). A energia zera.
+## Retorna o golpe que aconteceu (como golpear; "atacante": "ninguem" se
+## nenhum) com "acertou_pergunta" e "fase" (a pergunta respondida).
 func responder(escolha: int, tempo: float) -> Dictionary:
-	if acabou() or pergunta.is_empty() or fase == "golpe":
+	if acabou() or pergunta.is_empty() or fase == "luta":
 		return {}
 	var acertou := escolha == int(pergunta["resposta"])
+	var de_onde := fase
 	pergunta = {}
 	respondidas += 1
 	if acertou:
 		acertos += 1
+	fase = "luta"
 	var r: Dictionary
-	if fase == "supremo":
+	if de_onde == "supremo":
 		energia = 0
+		ocupado = DURACAO_SUPREMO
 		if acertou:
 			var dano := int(meu()["ataque"]) * DANO_SUPREMO * _sorteio.randf_range(0.95, 1.05)
 			var rapido := tempo <= RAPIDO
 			if rapido:
 				dano *= 1.25
-			r = _bater_neles(roundi(dano))
+			r = _bater_neles(roundi(dano), EMPURRAO_SUPREMO)
 			r["rapido"] = rapido
 		else:
 			r = _resultado("meu", 0)
 			r["errou"] = true
 		r["golpe"] = "supremo"
 		r["super"] = true
-		fase = "golpe" if acabou() else "defesa"
+		r["acertou"] = acertou
+	elif acertou:
+		energia = mini(SUPER_COM, energia + 1)
+		turbo = TEMPO_TURBO
+		r = _resultado("ninguem", 0)
 	else:
-		if acertou:
-			energia = mini(SUPER_COM, energia + 1)
-			r = _resultado("deles", 0)
-			r["esquivou"] = true
-		else:
-			var dano := int(deles()["ataque"]) * _sorteio.randf_range(0.9, 1.1) * (SEM_GUARDA if sem_guarda else 1.0)
-			r = _bater_em_mim(roundi(dano))
-		r["golpe"] = "dele"
-		sem_guarda = false
-		fase = "golpe"
-	r["acertou"] = acertou
+		r = _golpe_deles(DANO_DE_GRACA, true)
+	r["tipo"] = "golpe"
+	r["acertou_pergunta"] = acertou
+	r["fase"] = de_onde
 	return r
-
-
-func _passar_recargas() -> void:
-	for tipo in recargas.keys():
-		recargas[tipo] = maxi(0, int(recargas[tipo]) - 1)
 
 
 func _resultado(atacante: String, dano: int) -> Dictionary:
 	return {"atacante": atacante, "dano": dano, "esquivou": false, "errou": false, "super": false, "rapido": false,
-		"nocaute": false, "entrou": "", "fim": "", "acertou": false}
+		"turbo": false, "nocaute": false, "entrou": "", "fim": "", "acertou": false}
 
 
-func _bater_neles(dano: int) -> Dictionary:
+## Bate no doce deles (e empurra `empurra` metros para trás).
+func _bater_neles(dano: int, empurra: float) -> Dictionary:
 	var r := _resultado("meu", dano)
 	var alvo: Dictionary = deles()
 	alvo["vida"] = maxi(0, int(alvo["vida"]) - dano)
+	x_deles = minf(ARENA, x_deles + empurra)
 	if int(alvo["vida"]) <= 0:
 		r["nocaute"] = true
 		deles_atual += 1
 		r["entrou"] = deles().get("id", "")
+		_recomecar()
 	_fim(r)
 	return r
 
 
-func _bater_em_mim(dano: int) -> Dictionary:
+func _bater_em_mim(dano: int, empurra: float) -> Dictionary:
 	var r := _resultado("deles", dano)
 	var alvo: Dictionary = meu()
 	alvo["vida"] = maxi(0, int(alvo["vida"]) - dano)
+	x_meu = maxf(0.0, x_meu - empurra)
 	if int(alvo["vida"]) <= 0:
 		r["nocaute"] = true
 		meu_atual += 1
 		r["entrou"] = meu().get("id", "")
+		_recomecar()
 	_fim(r)
 	return r
+
+
+## Nocaute: cada um volta para o seu canto e a luta espera o próximo entrar.
+func _recomecar() -> void:
+	x_meu = INICIO
+	x_deles = ARENA - INICIO
+	estado_deles = "andando"
+	_espera_deles = 1.2
+	_ocupado_deles = 0.0
+	ocupado = 0.0
+	sem_guarda = 0.0
+	entrada = ENTRADA
 
 
 func _fim(r: Dictionary) -> void:

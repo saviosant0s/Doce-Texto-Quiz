@@ -3,11 +3,13 @@ extends Control
 ## scripts/batalha.gd).
 ## - ARENA: o seu time e a escada de desafiantes (LUTAR / REVANCHE).
 ## - TROCAR TIME: escolha até 3 doces da sua coleção.
-## - LUTA DE VERDADE: o seu doce (esquerda) contra o do desafiante (direita),
-##   cada um com a barra de vida e o time embaixo. Na sua vez, os BOTÕES DE GOLPE
-##   (soco, voadora, pirueta e o GOLPE SUPREMO quando a energia enche); na vez
-##   dele, a PERGUNTA RELÂMPAGO: acertou, desvia; errou, apanha. O supremo também
-##   pergunta: acertou, acerta; errou, erra.
+## - LUTA EM TEMPO REAL (como os jogos de futebol do celular): o JOYSTICK (ou
+##   A/D, setas) anda para frente e para trás e os BOTÕES REDONDOS batem (SOCO,
+##   VOADORA, PIRUETA; teclas J, K, L). De perto o golpe é certo; de longe o doce
+##   dá um bote e pode errar (a chance aparece embaixo). O "!" em cima do doce
+##   dele avisa que ele vai bater: afaste-se para ele errar. De vez em quando
+##   vem a PERGUNTA RELÂMPAGO (acertou: energia e turbo; errou: apanha) e, com a
+##   energia cheia, o GOLPE SUPREMO (tecla I) também pergunta.
 ## - FIM: vitória (prêmio) ou derrota (açúcar do esforço e tentar de novo).
 
 const ICONE_VOLTAR := preload("res://assets/icones/voltar.svg")
@@ -15,12 +17,19 @@ const BRILHO := preload("res://assets/doce_match/brilho.svg")
 const RAIOS := preload("res://assets/itens/raios.svg")
 ## Palavra de história em quadrinhos no golpe (o SUPER tem a dele).
 const PALAVRAS_GOLPE := ["POW!", "TUM!", "BAM!", "PAF!", "TOMA!"]
-## Movimentos de luta, um por golpe, em rodízio (o SUPER é o "tornado").
-const GOLPES := ["socos", "voadora", "pirueta", "cambalhota"]
+## Movimentos do desafiante, um por golpe, em rodízio (o seu SUPREMO é o "tornado").
+const GOLPES := ["soco", "voadora", "pirueta", "cambalhota"]
 const FOTOS := "res://assets/doces_3d/fotos/%s.png"
 const VERDE := Color("#7BE07B")
 const AMARELO := Color("#F4E038")
 const VERMELHO := Color("#FF5A5A")
+## Botões redondos: cor e tamanho (o SOCO, o mais usado, é o maior).
+const BOTOES := {
+	"soco": {"texto": "SOCO", "cor": Color("#4FA3FF"), "raio": 70.0},
+	"voadora": {"texto": "VOA-\nDORA", "cor": Color("#FF8A3D"), "raio": 52.0},
+	"pirueta": {"texto": "PIRU-\nETA", "cor": Color("#B05CFF"), "raio": 52.0},
+	"supremo": {"texto": "SUPRE-\nMO", "cor": Color("#FF4FA0"), "raio": 56.0},
+}
 
 var luta: Batalha
 var _painel: Control
@@ -29,17 +38,33 @@ var _topo_titulo: Label
 var _visor_meu: Doce3D
 var _visor_deles: Doce3D
 var _lado := {}  # "meu"/"deles" -> {"nome": Label, "vida": ProgressBar, "texto": Label, "banco": HBoxContainer}
+var _vagas := {}  # "meu"/"deles" -> Control que segue a posição da luta (o visor dentro faz os golpes)
+## Posição mostrada de cada doce (metros): segue a da luta suave (o empurrão
+## vira um deslize). Congelada no lado que vai apanhar até o golpe encostar.
+var _x_tela := {"meu": 0.0, "deles": 0.0}
+var _congelado := {}
+var _atacando := {}  # visor -> true enquanto vai até o outro (não começa outro golpe)
+var _voltas := {}  # visor -> tweens da volta para o lugar (o próximo golpe corta)
 var _super: HBoxContainer
+var _rotulo_turbo: Label
+var _aviso_deles: Label
+var _controles: Control
+var _joystick: Joystick
+var _botoes := {}  # "soco"/"voadora"/"pirueta"/"supremo" -> BotaoGolpe
+var _rotulo_chance: Label
 var _quadro_pergunta: PanelContainer
 var _enunciado: Label
 var _barra_tempo: ProgressBar
 var _cor_tempo: StyleBoxFlat
 var _alternativas: GridContainer
 var _aviso_pergunta: Label
-var _quadro_golpes: PanelContainer
-var _botoes_golpe := {}  # "soco"/"voadora"/"pirueta"/"supremo" -> Button
-## A sua vez de escolher o golpe (os botões estão na tela).
-var escolhendo := false
+## A luta está rodando (depois da entrada dos doces; para no fim).
+var em_luta := false
+## Direção forçada do joystick (testes e capturas; NAN = joystick e teclado).
+var direcao_forcada := NAN
+var _esperando := false  # mostrando a resposta: a luta espera um instante
+var _fila := ""  # golpe apertado no meio de outro: sai assim que der
+var _terminou := false
 var _tempo_resta := 0.0
 var respondendo := false
 ## O último movimento de luta usado (para os testes).
@@ -53,7 +78,7 @@ func _ready() -> void:
 	_montar_topo()
 	mostrar_arena()
 	Telas.dica_primeira_vez("arena", "ARENA DOS DOCES",
-		"Na sua vez, escolha o golpe: SOCO, VOADORA ou PIRUETA. Na vez dele, acerte a PERGUNTA RELÂMPAGO para desviar e encher a energia. Energia cheia: GOLPE SUPREMO (acertou a pergunta, acerta; errou, erra)!")
+		"Ande com o JOYSTICK e bata com os BOTÕES REDONDOS: de perto o golpe é certo, de longe pode errar. Apareceu o ! em cima dele? Afaste-se! Acerte as PERGUNTAS RELÂMPAGO para encher a energia e soltar o GOLPE SUPREMO!")
 
 
 func ao_voltar() -> void:
@@ -67,16 +92,45 @@ func ao_voltar() -> void:
 
 
 func _process(delta: float) -> void:
-	if not respondendo:
+	if respondendo:
+		_tempo_resta = maxf(0.0, _tempo_resta - delta)
+		_barra_tempo.value = _tempo_resta
+		# o tempo vai do verde ao vermelho e pisca nos últimos segundos
+		var fracao := _tempo_resta / Batalha.TEMPO
+		_cor_tempo.bg_color = VERDE if fracao > 0.5 else (AMARELO if fracao > 0.25 else VERMELHO)
+		_barra_tempo.modulate.a = 1.0 if _tempo_resta > 5.0 else 0.6 + 0.4 * absf(sin(_tempo_resta * 6.0))
+		if _tempo_resta <= 0.0:
+			responder(-1)
+	if luta == null or not is_instance_valid(_palco):
 		return
-	_tempo_resta = maxf(0.0, _tempo_resta - delta)
-	_barra_tempo.value = _tempo_resta
-	# o tempo vai do verde ao vermelho e pisca nos últimos segundos
-	var fracao := _tempo_resta / Batalha.TEMPO
-	_cor_tempo.bg_color = VERDE if fracao > 0.5 else (AMARELO if fracao > 0.25 else VERMELHO)
-	_barra_tempo.modulate.a = 1.0 if _tempo_resta > 5.0 else 0.6 + 0.4 * absf(sin(_tempo_resta * 6.0))
-	if _tempo_resta <= 0.0:
-		responder(-1)
+	if em_luta and not _esperando and luta.fase == "luta" and not luta.acabou():
+		for evento in luta.avancar(delta, _direcao()):
+			_evento(evento)
+		if _fila != "" and luta.pode_golpear(_fila) and not _atacando.get(_visor_meu, false):
+			var tipo := _fila
+			_fila = ""
+			usar_golpe(tipo)
+	_posicionar(delta)
+	_atualizar_controles()
+
+
+func _unhandled_input(evento: InputEvent) -> void:
+	if luta == null or not evento is InputEventKey or not evento.pressed or evento.echo:
+		return
+	if respondendo:
+		var n: int = evento.keycode - KEY_1
+		if n >= 0 and n < _alternativas.get_child_count():
+			responder(n)
+		return
+	match evento.keycode:
+		KEY_J, KEY_SPACE:
+			usar_golpe("soco")
+		KEY_K:
+			usar_golpe("voadora")
+		KEY_L:
+			usar_golpe("pirueta")
+		KEY_I:
+			usar_supremo()
 
 
 # --- Montagem ------------------------------------------------------------------------
@@ -124,8 +178,8 @@ func _montar_fundo() -> void:
 	chao.add_theme_stylebox_override("panel", estilo)
 	chao.anchor_left = 0.08
 	chao.anchor_right = 0.92
-	chao.anchor_top = 0.42
-	chao.anchor_bottom = 0.62
+	chao.anchor_top = 0.45
+	chao.anchor_bottom = 0.69
 	add_child(chao)
 
 
@@ -160,7 +214,9 @@ func _montar_topo() -> void:
 	topo.add_child(etiqueta)
 
 
-## Monta a luta: os dois lados, o super no meio e o quadro da pergunta.
+## Monta a luta: os doces no chão da arena, o placar em cima (plaquinhas, a
+## energia e o turbo), o joystick e os botões redondos embaixo e o quadro da
+## pergunta (escondido).
 func _montar_palco() -> void:
 	if is_instance_valid(_palco):
 		_palco.queue_free()
@@ -170,35 +226,63 @@ func _montar_palco() -> void:
 	_palco.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_palco)
 	move_child(_palco, get_node("Topo").get_index())  # o topo (voltar) fica por cima
-	var coluna := VBoxContainer.new()
-	coluna.set_anchors_preset(PRESET_FULL_RECT)
-	coluna.offset_left = 20
-	coluna.offset_right = -20
-	coluna.offset_top = 84
-	coluna.offset_bottom = -14
-	coluna.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	coluna.add_theme_constant_override("separation", 8)
-	_palco.add_child(coluna)
-	var lados := HBoxContainer.new()
-	lados.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	lados.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	coluna.add_child(lados)
-	_visor_meu = _montar_lado(lados, "meu")
+	# os doces: cada um numa "vaga" que anda pela arena (o visor dentro dela faz
+	# os botes, pulos e piruetas)
+	var arena := Control.new()
+	arena.name = "Arena"
+	arena.set_anchors_preset(PRESET_FULL_RECT)
+	arena.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_palco.add_child(arena)
+	_vagas.clear()
+	_visor_meu = _montar_doce(arena, "meu")
+	_visor_deles = _montar_doce(arena, "deles")
+	# o "!" do aviso: o doce dele vai bater
+	_aviso_deles = Label.new()
+	_aviso_deles.name = "AvisoGolpe"
+	_aviso_deles.theme_type_variation = &"TituloClaro"
+	_aviso_deles.add_theme_font_size_override("font_size", 58)
+	_aviso_deles.add_theme_color_override("font_color", Color.WHITE)
+	_aviso_deles.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_aviso_deles.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_aviso_deles.custom_minimum_size = Vector2(76, 76)
+	var bolinha := StyleBoxFlat.new()
+	bolinha.bg_color = Color("#FF3B5C")
+	bolinha.set_corner_radius_all(999)
+	bolinha.set_border_width_all(5)
+	bolinha.border_color = Color.WHITE
+	bolinha.shadow_color = Color(0, 0, 0, 0.35)
+	bolinha.shadow_size = 6
+	_aviso_deles.add_theme_stylebox_override("normal", bolinha)
+	_aviso_deles.text = "!"
+	_aviso_deles.visible = false
+	_aviso_deles.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# placar: as plaquinhas dos dois lados e, no meio, a energia e o turbo
+	var placar := HBoxContainer.new()
+	placar.name = "Placar"
+	placar.set_anchors_preset(PRESET_TOP_WIDE)
+	placar.offset_left = 20
+	placar.offset_right = -20
+	placar.offset_top = 84
+	placar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	placar.add_theme_constant_override("separation", 14)
+	_palco.add_child(placar)
+	_montar_lado(placar, "meu")
 	var meio := VBoxContainer.new()
-	meio.alignment = BoxContainer.ALIGNMENT_CENTER
-	meio.custom_minimum_size = Vector2(150, 0)
+	meio.alignment = BoxContainer.ALIGNMENT_BEGIN
+	meio.custom_minimum_size = Vector2(170, 0)
 	meio.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lados.add_child(meio)
+	meio.add_theme_constant_override("separation", 0)
+	placar.add_child(meio)
 	var vs := Label.new()
 	vs.name = "VS"
 	vs.theme_type_variation = &"Numero"
-	vs.add_theme_font_size_override("font_size", 64)
+	vs.add_theme_font_size_override("font_size", 46)
 	vs.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vs.text = "VS"
 	meio.add_child(vs)
 	var rotulo_super := Label.new()
 	rotulo_super.theme_type_variation = &"SubtituloClaro"
-	rotulo_super.add_theme_font_size_override("font_size", 22)
+	rotulo_super.add_theme_font_size_override("font_size", 18)
 	rotulo_super.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rotulo_super.text = "ENERGIA"
 	meio.add_child(rotulo_super)
@@ -209,15 +293,118 @@ func _montar_palco() -> void:
 	for i in Batalha.SUPER_COM:
 		var estrela := TextureRect.new()
 		estrela.texture = BRILHO
-		estrela.custom_minimum_size = Vector2(34, 34)
+		estrela.custom_minimum_size = Vector2(32, 32)
 		estrela.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		_super.add_child(estrela)
-	_visor_deles = _montar_lado(lados, "deles")
-	# pergunta
+	_rotulo_turbo = Label.new()
+	_rotulo_turbo.name = "Turbo"
+	_rotulo_turbo.theme_type_variation = &"TituloClaro"
+	_rotulo_turbo.add_theme_font_size_override("font_size", 24)
+	_rotulo_turbo.add_theme_color_override("font_color", Color("#FF9A3D"))
+	_rotulo_turbo.add_theme_constant_override("outline_size", 8)
+	_rotulo_turbo.add_theme_color_override("font_outline_color", Color("#3B2A5C"))
+	_rotulo_turbo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_rotulo_turbo.text = "TURBO!"
+	_rotulo_turbo.visible = false
+	meio.add_child(_rotulo_turbo)
+	_montar_lado(placar, "deles")
+	_palco.add_child(_aviso_deles)  # por cima do placar
+	_montar_controles()
+	_montar_pergunta()
+
+
+## Um doce na arena: a vaga (posição na luta) com o visor 3D dentro.
+func _montar_doce(arena: Control, quem: String) -> Doce3D:
+	var vaga := Control.new()
+	vaga.name = "Vaga_" + quem
+	vaga.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arena.add_child(vaga)
+	_vagas[quem] = vaga
+	var visor := Doce3D.new()
+	visor.name = "Doce_" + quem
+	visor.giravel = false
+	visor.distancia = 6.3  # cabe a coroa dos doces de nível alto
+	visor.angulo_inicial = 0.55 if quem == "meu" else -0.55  # um de frente para o outro
+	visor.set_anchors_preset(PRESET_FULL_RECT)
+	visor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vaga.add_child(visor)
+	return visor
+
+
+## Joystick (esquerda), a chance de acertar (meio) e os botões redondos (direita,
+## em arco em volta do SOCO, como nos jogos de futebol).
+func _montar_controles() -> void:
+	_controles = Control.new()
+	_controles.name = "Controles"
+	_controles.set_anchors_preset(PRESET_FULL_RECT)
+	_controles.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_palco.add_child(_controles)
+	_joystick = Joystick.new()
+	_joystick.name = "Joystick"
+	_joystick.anchor_top = 1.0
+	_joystick.anchor_bottom = 1.0
+	_joystick.offset_left = 28
+	_joystick.offset_right = 228
+	_joystick.offset_top = -224
+	_joystick.offset_bottom = -24
+	_controles.add_child(_joystick)
+	var direita := Control.new()  # um ponto no canto de baixo à direita
+	direita.name = "Botoes"
+	direita.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	direita.anchor_left = 1.0
+	direita.anchor_right = 1.0
+	direita.anchor_top = 1.0
+	direita.anchor_bottom = 1.0
+	_controles.add_child(direita)
+	# centros em relação ao canto de baixo à direita
+	var lugares := {"soco": Vector2(-104, -100), "voadora": Vector2(-246, -74), "pirueta": Vector2(-224, -208),
+		"supremo": Vector2(-96, -250)}
+	_botoes.clear()
+	for tipo in BOTOES:
+		var dados: Dictionary = BOTOES[tipo]
+		var botao := BotaoGolpe.new()
+		botao.name = "Golpe_" + tipo
+		botao.texto = dados["texto"]
+		botao.cor = dados["cor"]
+		var raio: float = dados["raio"]
+		botao.size = Vector2.ONE * raio * 2.0
+		botao.position = lugares[tipo] - Vector2.ONE * raio
+		if tipo == "supremo":
+			botao.apertado.connect(usar_supremo)
+		else:
+			botao.apertado.connect(usar_golpe.bind(tipo))
+		direita.add_child(botao)
+		_botoes[tipo] = botao
+	_rotulo_chance = Label.new()
+	_rotulo_chance.name = "Chance"
+	_rotulo_chance.theme_type_variation = &"TituloClaro"
+	_rotulo_chance.add_theme_font_size_override("font_size", 26)
+	_rotulo_chance.add_theme_constant_override("outline_size", 10)
+	_rotulo_chance.add_theme_color_override("font_outline_color", Color("#2E1D4A"))
+	_rotulo_chance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_rotulo_chance.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_rotulo_chance.set_anchors_preset(PRESET_CENTER_BOTTOM)
+	_rotulo_chance.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_rotulo_chance.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_rotulo_chance.offset_bottom = -40
+	_controles.add_child(_rotulo_chance)
+
+
+## O quadro da pergunta (relâmpago e supremo), embaixo, por cima dos controles.
+func _montar_pergunta() -> void:
 	_quadro_pergunta = PanelContainer.new()
 	_quadro_pergunta.name = "QuadroPergunta"
 	_quadro_pergunta.theme_type_variation = &"PainelRoxo"
-	coluna.add_child(_quadro_pergunta)
+	_quadro_pergunta.anchor_left = 0.5
+	_quadro_pergunta.anchor_right = 0.5
+	_quadro_pergunta.anchor_top = 1.0
+	_quadro_pergunta.anchor_bottom = 1.0
+	_quadro_pergunta.offset_left = -500
+	_quadro_pergunta.offset_right = 500
+	_quadro_pergunta.offset_bottom = -12
+	_quadro_pergunta.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_quadro_pergunta.visible = false
+	_palco.add_child(_quadro_pergunta)
 	var dentro := VBoxContainer.new()
 	dentro.add_theme_constant_override("separation", 8)
 	_quadro_pergunta.add_child(dentro)
@@ -255,35 +442,11 @@ func _montar_palco() -> void:
 	_alternativas.add_theme_constant_override("h_separation", 10)
 	_alternativas.add_theme_constant_override("v_separation", 8)
 	dentro.add_child(_alternativas)
-	# botões de golpe (a sua vez)
-	_quadro_golpes = PanelContainer.new()
-	_quadro_golpes.name = "QuadroGolpes"
-	_quadro_golpes.theme_type_variation = &"PainelRoxo"
-	_quadro_golpes.visible = false
-	coluna.add_child(_quadro_golpes)
-	var linha := HBoxContainer.new()
-	linha.add_theme_constant_override("separation", 12)
-	_quadro_golpes.add_child(linha)
-	_botoes_golpe.clear()
-	for tipo in ["soco", "voadora", "pirueta", "supremo"]:
-		var botao := Button.new()
-		botao.name = "Golpe_" + tipo
-		botao.custom_minimum_size = Vector2(0, 92)
-		botao.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		botao.focus_mode = Control.FOCUS_NONE
-		botao.add_theme_font_size_override("font_size", 26)
-		botao.theme_type_variation = &"BotaoPremio" if tipo == "supremo" else (&"BotaoAzul" if tipo == "soco" else &"BotaoComprar")
-		if tipo == "supremo":
-			botao.pressed.connect(usar_supremo)
-		else:
-			botao.pressed.connect(usar_golpe.bind(tipo))
-		linha.add_child(botao)
-		_botoes_golpe[tipo] = botao
 
 
-## Um lado da luta: plaquinha (nome, estrelas do nível, raridade e a barra de
-## vida com rastro), o doce 3D e o time embaixo.
-func _montar_lado(pai: Control, quem: String) -> Doce3D:
+## Um lado do placar: plaquinha (nome, estrelas do nível, raridade e a barra
+## de vida com rastro) e o time embaixo.
+func _montar_lado(pai: Control, quem: String) -> void:
 	var coluna := VBoxContainer.new()
 	coluna.name = "Lado_" + quem
 	coluna.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -298,35 +461,36 @@ func _montar_lado(pai: Control, quem: String) -> Doce3D:
 	estilo.set_border_width_all(4)
 	estilo.content_margin_left = 14
 	estilo.content_margin_right = 14
-	estilo.content_margin_top = 6
-	estilo.content_margin_bottom = 8
+	estilo.content_margin_top = 4
+	estilo.content_margin_bottom = 6
 	estilo.shadow_color = Color(0, 0, 0, 0.35)
 	estilo.shadow_size = 6
 	placa.add_theme_stylebox_override("panel", estilo)
 	coluna.add_child(placa)
 	var dentro := VBoxContainer.new()
-	dentro.add_theme_constant_override("separation", 2)
+	dentro.add_theme_constant_override("separation", 0)
 	placa.add_child(dentro)
 	var linha := HBoxContainer.new()
 	linha.add_theme_constant_override("separation", 8)
 	dentro.add_child(linha)
 	var nome := Label.new()
 	nome.theme_type_variation = &"TituloClaro"
-	nome.add_theme_font_size_override("font_size", 26)
+	nome.add_theme_font_size_override("font_size", 24)
 	nome.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nome.clip_text = true
 	linha.add_child(nome)
 	var raridade := Label.new()
 	raridade.theme_type_variation = &"TituloClaro"
-	raridade.add_theme_font_size_override("font_size", 18)
+	raridade.add_theme_font_size_override("font_size", 16)
 	linha.add_child(raridade)
 	var estrelas := Label.new()
 	estrelas.theme_type_variation = &"TituloClaro"
-	estrelas.add_theme_font_size_override("font_size", 20)
+	estrelas.add_theme_font_size_override("font_size", 17)
 	estrelas.add_theme_color_override("font_color", Color("#FFC83D"))
 	dentro.add_child(estrelas)
 	# barra de vida: a de trás (branca) vai atrás da de cor, devagar (rastro do golpe)
 	var barras := Control.new()
-	barras.custom_minimum_size = Vector2(0, 24)
+	barras.custom_minimum_size = Vector2(0, 22)
 	dentro.add_child(barras)
 	var rastro := _barra(Color(1, 1, 1, 0.85), Color(0, 0, 0, 0.4))
 	barras.add_child(rastro)
@@ -335,36 +499,20 @@ func _montar_lado(pai: Control, quem: String) -> Doce3D:
 	barras.add_child(vida)
 	var texto := Label.new()
 	texto.theme_type_variation = &"TituloClaro"
-	texto.add_theme_font_size_override("font_size", 18)
+	texto.add_theme_font_size_override("font_size", 16)
 	texto.add_theme_constant_override("outline_size", 6)
 	texto.add_theme_color_override("font_outline_color", Color("#2E1D4A"))
 	texto.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	texto.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	texto.set_anchors_preset(PRESET_FULL_RECT)
 	barras.add_child(texto)
-	# o doce fica numa "vaga" fora do container: dá para ele avançar e tremer
-	var vaga := Control.new()
-	vaga.name = "Vaga"
-	vaga.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vaga.custom_minimum_size = Vector2(0, 150)
-	vaga.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	coluna.add_child(vaga)
-	var visor := Doce3D.new()
-	visor.name = "Doce_" + quem
-	visor.giravel = false
-	visor.distancia = 6.3  # cabe a coroa dos doces de nível alto
-	visor.angulo_inicial = 0.55 if quem == "meu" else -0.55  # um de frente para o outro
-	visor.set_anchors_preset(PRESET_FULL_RECT)
-	visor.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vaga.add_child(visor)
 	var banco := HBoxContainer.new()
 	banco.name = "Banco"
-	banco.alignment = BoxContainer.ALIGNMENT_CENTER
+	banco.alignment = BoxContainer.ALIGNMENT_BEGIN if quem == "meu" else BoxContainer.ALIGNMENT_END
 	banco.add_theme_constant_override("separation", 6)
 	coluna.add_child(banco)
 	_lado[quem] = {"nome": nome, "vida": vida, "rastro": rastro, "texto": texto, "banco": banco,
 		"cheio": vida.get_theme_stylebox("fill"), "estilo": estilo, "raridade": raridade, "estrelas": estrelas}
-	return visor
 
 
 ## Barra redonda de uma cor (vida, ataque...), ocupando o pai inteiro.
@@ -394,7 +542,9 @@ static func estrelas(nivel: int) -> String:
 
 func mostrar_arena() -> void:
 	luta = null
+	em_luta = false
 	respondendo = false
+	_esperando = false
 	if is_instance_valid(_palco):
 		_palco.queue_free()
 	_topo_titulo.text = "ARENA DOS DOCES"
@@ -677,20 +827,30 @@ func lutar(indice: int) -> void:
 		return
 	_fechar_painel()
 	luta = Batalha.new(indice, Batalha.time())
+	var esta := luta
+	em_luta = false
+	_terminou = false
+	_esperando = false
+	respondendo = false
+	_fila = ""
+	_atacando.clear()
+	_voltas.clear()
 	_topo_titulo.text = "ARENA · " + str(luta.desafiante["nome"])
 	_montar_palco()
 	_mostrar_lutador("meu", true)
 	_mostrar_lutador("deles", true)
 	_atualizar_super()
-	_quadro_pergunta.visible = false
 	Audio.tocar("especial")
-	# entrada: os doces deslizam de cada lado, o VS bate na tela e o
-	# desafiante provoca num balão
-	_visor_meu.position.x = -500.0
-	_visor_deles.position.x = 500.0
+	# entrada: os doces entram andando, cada um do seu lado, o VS bate na tela e
+	# o desafiante provoca num balão
+	_congelado = {"meu": true, "deles": true}
+	_x_tela = {"meu": -2.0, "deles": Batalha.ARENA + 2.0}
 	var entrada := create_tween().set_parallel()
-	entrada.tween_property(_visor_meu, "position:x", 0.0, 0.55).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	entrada.tween_property(_visor_deles, "position:x", 0.0, 0.55).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	entrada.tween_method(func(v: float): _x_tela["meu"] = v, -2.0, luta.x_meu, 1.0) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	entrada.tween_method(func(v: float): _x_tela["deles"] = v, Batalha.ARENA + 2.0, luta.x_deles, 1.0) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	entrada.chain().tween_callback(func(): if luta == esta: _congelado.clear())
 	var vs: Label = _palco.find_child("VS", true, false)
 	vs.pivot_offset = vs.size / 2.0
 	vs.scale = Vector2.ONE * 3.0
@@ -704,81 +864,141 @@ func lutar(indice: int) -> void:
 			_tremer(_palco, 10.0))
 	_balao('%s: "%s"' % [luta.desafiante["nome"], luta.desafiante["fala"]])
 	await get_tree().create_timer(1.9).timeout
-	if luta != null and not luta.acabou():
-		_sua_vez()
+	if luta == esta and not luta.acabou():
+		em_luta = true
+		Audio.tocar("largada")
+		_texto_pulando("LUTEM!", Vector2(0.5, 0.42), 72, AMARELO)
 
 
-## A sua vez: os botões de golpe (com a recarga da pirueta e a energia do supremo).
-func _sua_vez() -> void:
-	_quadro_pergunta.visible = false
-	_quadro_golpes.visible = true
-	escolhendo = true
-	var textos := {"soco": "SOCO", "voadora": "VOADORA\n(SEM GUARDA)", "pirueta": "PIRUETA"}
-	for tipo in textos:
-		var botao: Button = _botoes_golpe[tipo]
-		var falta := luta.recarga(tipo)
-		botao.text = textos[tipo] if falta == 0 else "%s\n(EM %d)" % [Batalha.GOLPES[tipo]["nome"], falta]
-		botao.disabled = not luta.pode_golpear(tipo)
-		botao.tooltip_text = "Dano: %d%% do ataque" % roundi(float(Batalha.GOLPES[tipo]["dano"]) * 100)
-	var supremo: Button = _botoes_golpe["supremo"]
-	supremo.disabled = not luta.pode_supremo()
-	supremo.text = "GOLPE SUPREMO!" if luta.pode_supremo() else "SUPREMO\n%d/%d" % [luta.energia, Batalha.SUPER_COM]
-	supremo.pivot_offset = supremo.size / 2.0
-	if luta.pode_supremo():
-		var pulsa := supremo.create_tween().set_loops(3)
-		pulsa.tween_property(supremo, "scale", Vector2.ONE * 1.07, 0.25)
-		pulsa.tween_property(supremo, "scale", Vector2.ONE, 0.25)
+## Joystick (só para os lados) e teclado (A/D e setas).
+func _direcao() -> float:
+	if not is_nan(direcao_forcada):
+		return direcao_forcada
+	var teclas := float(Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)) \
+		- float(Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT))
+	var direcao := _joystick.vetor.x + teclas if is_instance_valid(_joystick) else teclas
+	return 0.0 if absf(direcao) < 0.2 else clampf(direcao, -1.0, 1.0)
 
 
-## Tocou num golpe: o seu doce bate e vem a pergunta relâmpago (o golpe dele).
+## Tamanho do doce na tela, a linha do chão e onde fica cada metro da arena.
+func _tamanho_doce() -> float:
+	return clampf(size.y * 0.5, 240.0, 420.0)
+
+
+func _chao() -> float:
+	return size.y * 0.6
+
+
+func _na_tela(x: float) -> float:
+	var margem := _tamanho_doce() * 0.42
+	return margem + x / Batalha.ARENA * (size.x - 2.0 * margem)
+
+
+## Os doces na tela seguem a posição da luta (suave: o empurrão vira um
+## deslize) e mexem as pernas enquanto andam.
+func _posicionar(delta: float) -> void:
+	var lado := _tamanho_doce()
+	for quem in ["meu", "deles"]:
+		var antes: float = _x_tela[quem]
+		if not _congelado.get(quem, false):
+			var alvo: float = luta.x_meu if quem == "meu" else luta.x_deles
+			_x_tela[quem] = lerpf(antes, alvo, 1.0 - exp(-14.0 * delta))
+		var vaga: Control = _vagas[quem]
+		vaga.size = Vector2.ONE * lado
+		vaga.position = Vector2(_na_tela(_x_tela[quem]) - lado / 2.0, _chao() - lado * 0.8)
+		var visor := _visor_meu if quem == "meu" else _visor_deles
+		visor.andar(delta > 0.0 and absf(_x_tela[quem] - antes) / delta > 0.5 and not visor.segurar_pose)
+	if is_instance_valid(_aviso_deles):
+		# em cima da cabeça do doce dele
+		var vaga_deles: Control = _vagas["deles"]
+		_aviso_deles.position = vaga_deles.position + Vector2((lado - _aviso_deles.size.x) / 2.0, lado * 0.24 - _aviso_deles.size.y)
+
+
+## Recarga dos botões, o supremo aceso, o turbo e a chance de acertar.
+func _atualizar_controles() -> void:
+	if not is_instance_valid(_controles):
+		return
+	var correndo := em_luta and luta.correndo()
+	for tipo in ["soco", "voadora", "pirueta"]:
+		var total := float(Batalha.GOLPES[tipo]["recarga"])
+		_botoes[tipo].atualizar(clampf(luta.recarga(tipo) / total, 0.0, 1.0), correndo)
+	_botoes["supremo"].atualizar(0.0, correndo and luta.pode_supremo(), correndo and luta.energia >= Batalha.SUPER_COM,
+		"%d/%d" % [luta.energia, Batalha.SUPER_COM])
+	_rotulo_turbo.visible = luta.turbo > 0.0
+	if _rotulo_turbo.visible:
+		_rotulo_turbo.modulate.a = 0.6 + 0.4 * absf(sin(luta.turbo * 8.0))
+	var chance := Batalha.chance(luta.distancia())
+	var texto := "PERTO: GOLPE CERTO!" if chance >= 1.0 else "LONGE: %d%% DE ACERTAR" % roundi(chance * 100.0)
+	if texto != _rotulo_chance.text:
+		_rotulo_chance.text = texto
+		_rotulo_chance.add_theme_color_override("font_color",
+			VERDE if chance >= 1.0 else (AMARELO if chance >= 0.5 else Color("#FFB36B")))
+
+
+## O que a luta avisou: o desafiante vai bater, bateu, ou chegou a pergunta.
+func _evento(e: Dictionary) -> void:
+	match str(e["tipo"]):
+		"prepara":
+			_avisar_golpe_deles()
+		"golpe":
+			_executar(e)
+		"pergunta":
+			Audio.tocar("bip", 1.2)
+			_mostrar_pergunta("PERGUNTA RELÂMPAGO! ACERTE: +1 ENERGIA E TURBO")
+
+
+## O aviso: "!" em cima do doce dele, que se encolhe para o bote.
+func _avisar_golpe_deles() -> void:
+	Audio.tocar("bip", 0.8, -4.0)
+	_visor_deles.preparar_golpe()
+	_visor_deles.pose_luta("guarda", 0.1)
+	_aviso_deles.visible = true
+	_aviso_deles.pivot_offset = _aviso_deles.size / 2.0
+	_aviso_deles.scale = Vector2.ONE * 0.2
+	var pulo := _aviso_deles.create_tween()
+	pulo.tween_property(_aviso_deles, "scale", Vector2.ONE * 1.25, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pulo.tween_property(_aviso_deles, "scale", Vector2.ONE, 0.1)
+	pulo.tween_interval(maxf(0.1, luta.telegrafo() - 0.22))
+	pulo.tween_callback(func(): _aviso_deles.visible = false)
+
+
+## Tocou num botão de golpe: bate na hora (se estiver no meio de outro golpe,
+## sai logo depois).
 func usar_golpe(tipo: String) -> void:
-	if not escolhendo or luta == null or not luta.pode_golpear(tipo):
+	if luta == null or not em_luta or _esperando:
 		return
-	escolhendo = false
-	_quadro_golpes.visible = false
-	Audio.tocar("pulo", 1.2, -6.0)
-	var r := luta.golpear(tipo)
-	await _animar_golpe(r)
-	if luta == null:
+	if not luta.pode_golpear(tipo) or _atacando.get(_visor_meu, false):
+		if luta.correndo() and luta.recarga(tipo) <= 0.3:
+			_fila = tipo
 		return
-	_seguir(r)
+	_fila = ""
+	_executar(luta.golpear(tipo))
 
 
-## GOLPE SUPREMO: a pergunta decide se acerta.
+## GOLPE SUPREMO: a luta para e a pergunta decide se acerta.
 func usar_supremo() -> void:
-	if not escolhendo or luta == null or not luta.pode_supremo():
+	if luta == null or not em_luta or _esperando or not luta.pode_supremo():
 		return
-	escolhendo = false
-	_quadro_golpes.visible = false
 	Audio.tocar("especial")
 	luta.pedir_supremo()
 	_mostrar_pergunta("GOLPE SUPREMO: ACERTE PARA ACERTAR!")
 
 
-## Depois de cada golpe: fim da luta, a pergunta relâmpago ou a sua vez.
-func _seguir(r: Dictionary) -> void:
-	_atualizar_super()
-	if r["fim"] != "":
+## Anima um golpe e, se ele acabou com a luta, termina.
+func _executar(r: Dictionary) -> void:
+	if r.is_empty():
+		return
+	await _animar_golpe(r)
+	if luta != null and r["fim"] != "" and not _terminou:
 		_terminar()
-	elif luta.fase == "defesa":
-		_pergunta_relampago()
-	else:
-		_sua_vez()
-
-
-## A vez dele: o doce do desafiante se prepara e vem a pergunta para desviar.
-func _pergunta_relampago() -> void:
-	_visor_deles.pivot_offset = Vector2(_visor_deles.size.x / 2.0, _visor_deles.size.y * 0.8)
-	var prepara := create_tween()
-	prepara.tween_property(_visor_deles, "scale", Vector2(1.08, 0.92), 0.12)
-	prepara.tween_property(_visor_deles, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
-	luta.proxima_pergunta()
-	_mostrar_pergunta("%s VAI ATACAR! ACERTE PARA DESVIAR" % Batalha.nome_doce(luta.deles()["id"]))
 
 
 func _mostrar_pergunta(aviso: String) -> void:
 	var p := luta.pergunta
-	_quadro_golpes.visible = false
+	_fila = ""
+	_joystick.soltar()
+	_controles.visible = false
+	_aviso_deles.visible = false
 	_quadro_pergunta.visible = true
 	_aviso_pergunta.text = aviso
 	_enunciado.text = str(p["enunciado"])
@@ -803,11 +1023,14 @@ func _mostrar_pergunta(aviso: String) -> void:
 	respondendo = true
 
 
-## Responde (k = -1: acabou o tempo). Mostra a certa, anima o golpe e segue.
+## Responde (k = -1: acabou o tempo). Mostra a certa e a luta volta: a
+## relâmpago certa dá energia e turbo; errada, ele bate; o supremo acerta ou erra.
 func responder(k: int) -> void:
 	if not respondendo or luta == null:
 		return
 	respondendo = false
+	_esperando = true
+	var esta := luta
 	var certa := int(luta.pergunta["resposta"])
 	for i in _alternativas.get_child_count():
 		var b: Button = _alternativas.get_child(i)
@@ -817,44 +1040,56 @@ func responder(k: int) -> void:
 		elif i == k:
 			b.modulate = VERMELHO.lightened(0.3)
 	var r := luta.responder(k, Batalha.TEMPO - _tempo_resta)
-	Audio.tocar("acerto" if r["acertou"] else "erro")
+	Audio.tocar("acerto" if r["acertou_pergunta"] else "erro")
 	if k < 0:
 		_texto_voando("ACABOU O TEMPO!", Vector2(0.5, 0.52), 34, 0.9)
 	await get_tree().create_timer(0.55).timeout
-	_quadro_pergunta.visible = false
-	await _animar_golpe(r)
-	if luta == null:
+	if luta != esta:
 		return
-	_seguir(r)
+	_esperando = false
+	_quadro_pergunta.visible = false
+	_controles.visible = not luta.acabou()
+	if r["fase"] == "pergunta" and r["acertou_pergunta"]:
+		Audio.tocar("turbo")
+		_texto_pulando("TURBO! +1 ENERGIA", Vector2(0.5, 0.36), 50, Color("#FF9A3D"))
+		_faiscas(_visor_meu.get_global_rect().get_center(), 26, true)
+		_atualizar_super()
+		return
+	_executar(r)
 
 
-## O golpe é um movimento de luta de verdade, variando a cada acerto (ver
-## GOLPES): combo de socos, voadora, pirueta ou cambalhota; o SUPER é o tornado
-## com uppercut (a arena escurece e raios giram atrás do atacante). No contato o
-## mundo para um instante (raios, anel, POW!, faíscas e tremida) e o alvo reage:
-## é empurrado (socos, voadora, pirueta), esmagado (cambalhota) ou lançado para
-## o alto (uppercut). Nocaute: sai voando girando e o próximo do time cai do alto.
+## O golpe é um movimento de luta de verdade: o SOCO (um bote rápido), a
+## VOADORA, a PIRUETA (alterna com a cambalhota) e o SUPREMO (o tornado com
+## uppercut: a arena escurece e raios giram atrás do atacante); o desafiante
+## usa os movimentos em rodízio. Quem vai apanhar fica parado até o golpe
+## encostar; no contato o mundo para um instante (raios, POW!, faíscas e
+## tremida) e o alvo desliza para trás (o empurrão da luta). Errou (de longe):
+## o alvo pula para trás e o golpe pega no ar. Nocaute: sai voando girando e o
+## próximo do time cai do alto.
 func _animar_golpe(r: Dictionary) -> void:
+	if r.is_empty() or r["atacante"] == "ninguem" or not is_instance_valid(_palco):
+		return
 	var meu_bate: bool = r["atacante"] == "meu"
 	var atacante := _visor_meu if meu_bate else _visor_deles
 	var alvo := _visor_deles if meu_bate else _visor_meu
+	var quem_bate := "meu" if meu_bate else "deles"
 	var quem_apanha := "deles" if meu_bate else "meu"
 	var lado := 1.0 if meu_bate else -1.0  # para onde o atacante vai
 	var forte: bool = r["super"] and not r["errou"]
 	var errou_golpe: bool = r["esquivou"] or r["errou"]
+	_congelado[quem_apanha] = true
 	# até onde o atacante vai para encostar no outro (o doce ocupa ~40% da
-	# altura do visor; a câmera 3D segue a altura)
-	var distancia: float = ((alvo.get_parent() as Control).get_global_rect().get_center().x
-		- (atacante.get_parent() as Control).get_global_rect().get_center().x)
+	# altura do visor)
+	var distancia: float = _vagas[quem_apanha].get_global_rect().get_center().x - _vagas[quem_bate].get_global_rect().get_center().x
 	var alcance := distancia - signf(distancia) * alvo.size.y * 0.36
+	if absf(alcance) < 4.0:
+		alcance = 4.0 * lado
 	for visor in [atacante, alvo]:
 		visor.pivot_offset = Vector2(visor.size.x / 2.0, visor.size.y * 0.8)  # gira e achata pelos pés
-	# o movimento: o do botão (a pirueta alterna com a cambalhota), o tornado do
-	# supremo, e o do desafiante em rodízio
 	var golpe: String
 	match str(r.get("golpe", "")):
 		"soco":
-			golpe = "socos"
+			golpe = "soco"
 		"voadora":
 			golpe = "voadora"
 		"pirueta":
@@ -866,6 +1101,8 @@ func _animar_golpe(r: Dictionary) -> void:
 			golpe = GOLPES[_proximo_golpe % GOLPES.size()]
 			_proximo_golpe += 1
 	ultimo_golpe = golpe
+	_parar_volta(atacante)
+	_atacando[atacante] = true
 	var extras: Array[Node] = []
 	if r["super"]:
 		extras = _carregar_super(atacante)
@@ -875,10 +1112,11 @@ func _animar_golpe(r: Dictionary) -> void:
 			return
 	# de perfil, olhando para o outro doce
 	atacante.segurar_pose = true
-	create_tween().tween_property(atacante.pivo(), "rotation", Vector3(0, atacante.angulo_inicial * 2.3, 0), 0.12)
+	atacante.andar(false)
+	create_tween().tween_property(atacante.pivo(), "rotation", Vector3(0, atacante.angulo_inicial * 2.3, 0), 0.1)
 	match golpe:
-		"socos":
-			await _golpe_socos(atacante, alvo, alcance)
+		"soco":
+			await _golpe_soco(atacante, alcance)
 		"voadora":
 			await _golpe_voadora(atacante, alcance)
 		"pirueta":
@@ -887,7 +1125,9 @@ func _animar_golpe(r: Dictionary) -> void:
 			await _golpe_cambalhota(atacante, alcance)
 		"tornado":
 			await _golpe_tornado(atacante, alcance)
-	if luta == null:
+	_atacando[atacante] = false
+	_congelado[quem_apanha] = false  # o alvo desliza: o empurrão do golpe
+	if luta == null or not is_instance_valid(alvo):
 		_sumir(extras)
 		return
 	if errou_golpe:
@@ -896,27 +1136,32 @@ func _animar_golpe(r: Dictionary) -> void:
 	# contato: estouro, o alvo pisca branco e o mundo para um instante
 	var centro_alvo := alvo.get_global_rect().get_center()
 	var contato := centro_alvo - Vector2(alvo.size.x * 0.16 * signf(alcance), 0)
-	Audio.tocar("explosao" if forte else "estouro")
+	var leve := golpe == "soco"
+	Audio.tocar("explosao" if forte else "estouro", 1.25 if leve else 1.0, -5.0 if leve else 0.0)
 	if forte:
 		Audio.tocar("explosao", 0.7, -4.0)
 	alvo.apanhar(forte or golpe == "cambalhota")
 	alvo.modulate = Color(3, 3, 3)
-	_impacto(contato, forte)
-	_faiscas(contato, 44 if forte else 22, forte)
-	_tremer(_palco, 18.0 if forte else 9.0)
-	await get_tree().create_timer(0.12 if forte else 0.07).timeout
-	if luta == null:
+	if leve:
+		_faiscas(contato + Vector2(0, randf_range(-30, 20)), 10, false)
+		_tremer(_palco, 4.0)
+	else:
+		_impacto(contato, forte)
+		_faiscas(contato, 44 if forte else 22, forte)
+		_tremer(_palco, 18.0 if forte else 9.0)
+	await get_tree().create_timer(0.12 if forte else (0.03 if leve else 0.07)).timeout
+	if luta == null or not is_instance_valid(alvo):
 		_sumir(extras)
 		return
-	var reacao := create_tween().set_parallel()
+	var reacao := create_tween()
 	reacao.tween_property(alvo, "modulate", Color(1, 0.45, 0.45), 0.08)
-	reacao.chain().tween_property(alvo, "modulate", Color.WHITE, 0.35)
+	reacao.tween_property(alvo, "modulate", Color.WHITE, 0.3)
 	match golpe:
 		"cambalhota":
 			# esmagado pela pisada: achata e volta como mola
 			alvo.scale = Vector2(1.35, 0.55)
 			var mola := create_tween()
-			mola.tween_property(alvo, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+			mola.tween_property(alvo, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 		"tornado":
 			# lançado para o alto pelo uppercut, gira e cai quicando
 			alvo.pivot_offset = alvo.size / 2.0
@@ -932,13 +1177,10 @@ func _animar_golpe(r: Dictionary) -> void:
 					Audio.tocar("chape", 1.1, -4.0)
 					_tremer(_palco, 8.0))
 	if golpe != "tornado":
-		# empurrado para trás, inclinado, e volta balançando
-		var empurra := create_tween().set_parallel()
-		empurra.tween_property(alvo, "position:x", (40.0 if golpe == "cambalhota" else 70.0) * signf(alcance), 0.12) \
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		empurra.tween_property(alvo, "rotation", deg_to_rad(16.0 * lado), 0.12)
-		empurra.chain().tween_property(alvo, "position:x", 0.0, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-		empurra.parallel().tween_property(alvo, "rotation", 0.0, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		# inclina para trás e volta balançando
+		var inclina := create_tween()
+		inclina.tween_property(alvo, "rotation", deg_to_rad((8.0 if leve else 16.0) * lado), 0.1)
+		inclina.tween_property(alvo, "rotation", 0.0, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	# o atacante volta para o lugar num pulo para trás
 	_voltar_para_o_lugar(atacante)
 	_sumir(extras)
@@ -950,152 +1192,154 @@ func _animar_golpe(r: Dictionary) -> void:
 	elif r["rapido"]:
 		texto = "RÁPIDO! " + texto
 		cor = AMARELO
-	var onde := Vector2(0.72 if meu_bate else 0.28, 0.3)
-	_texto_pulando(texto, onde, 56 if r["super"] else 46, cor)
-	_atualizar_vida(quem_apanha)
+	elif r["turbo"]:
+		cor = Color("#FF9A3D")
+	var onde := Vector2(centro_alvo.x / size.x, (centro_alvo.y - alvo.size.y * 0.12) / size.y)
+	_texto_pulando(texto, onde, 56 if r["super"] else (34 if leve else 46), cor)
+	_atualizar_vida(quem_apanha, false, 0 if r["nocaute"] else -1)
 	_atualizar_super()
-	# (o alvo termina de reagir: 0,12 + 0,45 s; lançado, 0,7 s)
-	await get_tree().create_timer(0.75 if golpe == "tornado" else 0.6).timeout
+	if not r["nocaute"]:
+		return
+	# nocaute: tonto, sai voando girando e o próximo do time cai do alto
+	await get_tree().create_timer(0.3 if golpe != "tornado" else 0.7).timeout
+	if luta == null or not is_instance_valid(alvo):
+		return
+	Audio.tocar("caixa", 0.8)
+	alvo.desmaiar()
+	_texto_pulando("NOCAUTE!", onde + Vector2(0, 0.08), 48, Color.WHITE)
+	_estrelas_tontas(alvo.get_global_rect().get_center() + Vector2(0, -70))
+	await get_tree().create_timer(0.25).timeout
+	if luta == null or not is_instance_valid(alvo):
+		return
+	alvo.pivot_offset = alvo.size / 2.0
+	var voa := create_tween().set_parallel()
+	voa.tween_property(alvo, "position", Vector2(420.0 * signf(alcance), -280.0), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	voa.tween_property(alvo, "rotation", TAU * 2.0 * lado, 0.45)
+	voa.tween_property(alvo, "scale", Vector2.ONE * 0.4, 0.45)
+	voa.tween_property(alvo, "modulate:a", 0.0, 0.25).set_delay(0.2)
+	Audio.tocar("pulo", 0.7)
+	await voa.finished
+	if not is_instance_valid(alvo):
+		return
+	alvo.position = Vector2.ZERO
+	alvo.rotation = 0.0
+	alvo.scale = Vector2.ONE
 	if luta == null:
 		return
-	if r["nocaute"]:
-		Audio.tocar("caixa", 0.8)
-		alvo.desmaiar()
-		_texto_pulando("NOCAUTE!", onde + Vector2(0, 0.08), 48, Color.WHITE)
-		_estrelas_tontas(centro_alvo + Vector2(0, -70))
-		await get_tree().create_timer(0.3).timeout
-		# sai voando girando
-		alvo.pivot_offset = alvo.size / 2.0
-		var voa := create_tween().set_parallel()
-		voa.tween_property(alvo, "position", Vector2(420.0 * signf(alcance), -280.0), 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		voa.tween_property(alvo, "rotation", TAU * 2.0 * lado, 0.55)
-		voa.tween_property(alvo, "scale", Vector2.ONE * 0.4, 0.55)
-		voa.tween_property(alvo, "modulate:a", 0.0, 0.3).set_delay(0.25)
-		Audio.tocar("pulo", 0.7)
-		await voa.finished
-		alvo.position = Vector2.ZERO
-		alvo.rotation = 0.0
-		alvo.scale = Vector2.ONE
-		if luta == null:
-			return
-		if r["entrou"] != "":
-			# o próximo do time cai do alto e quica
-			_mostrar_lutador(quem_apanha, false)
-			alvo.position.y = -600.0
-			alvo.modulate.a = 1.0
-			var cai := create_tween()
-			cai.tween_property(alvo, "position:y", 0.0, 0.55).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-			get_tree().create_timer(0.22).timeout.connect(func():
-				if is_instance_valid(_palco):
-					Audio.tocar("chape", 1.2, -4.0)
-					_tremer(_palco, 7.0))
-			await cai.finished
-	_atualizar_bancos()
+	if r["entrou"] != "":
+		# o próximo do time cai do alto e quica
+		_mostrar_lutador(quem_apanha, false)
+		alvo.position.y = -600.0
+		alvo.modulate.a = 1.0
+		var cai := create_tween()
+		cai.tween_property(alvo, "position:y", 0.0, 0.45).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+		get_tree().create_timer(0.18).timeout.connect(func():
+			if is_instance_valid(_palco):
+				Audio.tocar("chape", 1.2, -4.0)
+				_tremer(_palco, 7.0))
+		await cai.finished
+	if luta != null:
+		_atualizar_bancos()
 
 
-## O golpe pega no ar: quem ia apanhar pula para trás e desvia (a pergunta
-## relâmpago certa) ou o supremo passa raspando (a pergunta do supremo errada).
+## O golpe pega no ar: quem ia apanhar pula para trás e desvia (o dele, de
+## longe ou no aviso), ou o seu passa raspando (de longe, ou o supremo com a
+## pergunta errada).
 func _golpe_no_ar(atacante: Doce3D, alvo: Doce3D, r: Dictionary, alcance: float, extras: Array[Node]) -> void:
 	Audio.tocar("pulo", 1.3)
 	var desvia := create_tween().set_parallel()
-	desvia.tween_property(alvo, "position:x", 90.0 * signf(alcance), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	desvia.tween_property(alvo, "rotation", deg_to_rad(-10.0 * signf(alcance)), 0.16)
-	_pulinho(alvo, 90.0, 0.32)
-	desvia.chain().tween_property(alvo, "position:x", 0.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	desvia.parallel().tween_property(alvo, "rotation", 0.0, 0.35)
+	desvia.tween_property(alvo, "position:x", 70.0 * signf(alcance), 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	desvia.tween_property(alvo, "rotation", deg_to_rad(-10.0 * signf(alcance)), 0.14)
+	_pulinho(alvo, 70.0, 0.28)
+	desvia.chain().tween_property(alvo, "position:x", 0.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	desvia.parallel().tween_property(alvo, "rotation", 0.0, 0.3)
 	_rastro(alvo)
+	var em_cima := alvo.get_global_rect().get_center() - Vector2(0, alvo.size.y * 0.12)
+	var onde := Vector2(em_cima.x / size.x, em_cima.y / size.y)
 	if r["esquivou"]:
-		_texto_pulando("DESVIOU! +1 ENERGIA", Vector2(0.28, 0.3), 44, VERDE)
-	else:
+		_texto_pulando("DESVIOU!", onde, 40, VERDE)
+	elif r["super"]:
 		_texto_pulando("ERROU O SUPREMO!", Vector2(0.5, 0.3), 46, VERMELHO)
 		_estrelas_tontas(atacante.get_global_rect().get_center() + Vector2(0, -70))
+	else:
+		_texto_pulando("ERROU!", onde, 36, Color("#FFB36B"))
 	_voltar_para_o_lugar(atacante)
 	_sumir(extras)
-	await get_tree().create_timer(0.7).timeout
+	await get_tree().create_timer(0.3).timeout
 
 
-## COMBO DE SOCOS: corre até perto em guarda e solta três socos alternando os
-## braços (os dois primeiros com faisquinhas; o terceiro é o golpe).
-func _golpe_socos(atacante: Doce3D, alvo: Doce3D, alcance: float) -> void:
-	atacante.pose_luta("guarda", 0.1)
-	Audio.tocar("pulo", 1.3, -6.0)
-	var corre := create_tween().set_parallel()
-	corre.tween_property(atacante, "position:x", alcance * 0.88, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	_pulinho(atacante, 24.0, 0.18)
-	await corre.finished
-	for i in 3:
-		if luta == null:
-			return
-		atacante.pose_luta("soco_d" if i % 2 == 0 else "soco_e", 0.05)
-		var avanca := create_tween()
-		avanca.tween_property(atacante, "position:x", alcance * (0.94 + 0.03 * i), 0.05)
-		await get_tree().create_timer(0.06).timeout
-		if i < 2:
-			var ponto := alvo.get_global_rect().get_center() - Vector2(alvo.size.x * 0.16 * signf(alcance), randf_range(-40, 30))
-			_faiscas(ponto, 8, false)
-			Audio.tocar("estouro", 1.3 + 0.15 * i, -6.0)
-			_tremer(alvo, 5.0)
-			alvo.modulate = Color(2, 2, 2)
-			create_tween().tween_property(alvo, "modulate", Color.WHITE, 0.1)
-			atacante.pose_luta("guarda", 0.06)
-			await get_tree().create_timer(0.08).timeout
+## SOCO: um bote até o outro (mais longo de longe) e o soco, alternando os braços.
+func _golpe_soco(atacante: Doce3D, alcance: float) -> void:
+	atacante.pose_luta("soco_d" if _proximo_golpe % 2 == 0 else "soco_e", 0.05)
+	_proximo_golpe += 1
+	Audio.tocar("pulo", 1.5, -9.0)
+	var tempo := 0.08 + absf(alcance) / 4000.0
+	var bote := create_tween()
+	bote.tween_property(atacante, "position:x", alcance * 0.94, tempo).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_pulinho(atacante, 10.0 + absf(alcance) * 0.05, tempo)
+	await bote.finished
 
 
 ## VOADORA: se agacha, pula alto com uma perna esticada e o corpo para trás.
 func _golpe_voadora(atacante: Doce3D, alcance: float) -> void:
 	atacante.preparar_golpe()
-	atacante.pose_luta("guarda", 0.1)
-	await get_tree().create_timer(0.14).timeout
-	if luta == null:
+	atacante.pose_luta("guarda", 0.08)
+	await get_tree().create_timer(0.1).timeout
+	if luta == null or not is_instance_valid(atacante):
 		return
-	atacante.pose_luta("voadora", 0.1)
+	atacante.pose_luta("voadora", 0.08)
 	Audio.tocar("pulo", 1.0)
 	var pivo := atacante.pivo()
-	create_tween().tween_property(pivo, "rotation:x", -0.35, 0.12)
+	create_tween().tween_property(pivo, "rotation:x", -0.35, 0.1)
+	var tempo := 0.22 + absf(alcance) / 6000.0
 	var pulo := create_tween().set_parallel()
-	pulo.tween_property(atacante, "position:x", alcance * 0.95, 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	pulo.tween_property(atacante, "rotation", deg_to_rad(12.0 * signf(alcance)), 0.3)
+	pulo.tween_property(atacante, "position:x", alcance * 0.95, tempo).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	pulo.tween_property(atacante, "rotation", deg_to_rad(12.0 * signf(alcance)), tempo)
 	var arco := create_tween()
-	arco.tween_property(atacante, "position:y", -170.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	arco.tween_property(atacante, "position:y", -30.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	arco.tween_property(atacante, "position:y", -150.0, tempo / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	arco.tween_property(atacante, "position:y", -30.0, tempo / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await pulo.finished
 
 
 ## PIRUETA: gira duas vezes com os braços abertos indo até o outro doce.
 func _golpe_pirueta(atacante: Doce3D, alcance: float) -> void:
-	atacante.pose_luta("aberto", 0.1)
+	atacante.pose_luta("aberto", 0.08)
 	Audio.tocar("pulo", 1.5, -4.0)
 	var pivo := atacante.pivo()
 	var frente := atacante.angulo_inicial * 2.3
+	var tempo := 0.26 + absf(alcance) / 6000.0
 	var gira := create_tween().set_parallel()
-	gira.tween_property(pivo, "rotation:y", frente + TAU * 2.0, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	gira.tween_property(atacante, "position:x", alcance * 0.95, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_pulinho(atacante, 30.0, 0.34)
+	gira.tween_property(pivo, "rotation:y", frente + TAU * 2.0, tempo).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	gira.tween_property(atacante, "position:x", alcance * 0.95, tempo).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_pulinho(atacante, 30.0, tempo)
 	await gira.finished
-	pivo.rotation.y = frente  # (as voltas inteiras acabaram)
+	if is_instance_valid(pivo):
+		pivo.rotation.y = frente  # (as voltas inteiras acabaram)
 
 
 ## CAMBALHOTA: se agacha, dá um mortal para a frente no ar e cai pisando.
 func _golpe_cambalhota(atacante: Doce3D, alcance: float) -> void:
 	atacante.preparar_golpe()
-	await get_tree().create_timer(0.12).timeout
-	if luta == null:
+	await get_tree().create_timer(0.08).timeout
+	if luta == null or not is_instance_valid(atacante):
 		return
-	atacante.pose_luta("encolhido", 0.1)
+	atacante.pose_luta("encolhido", 0.08)
 	Audio.tocar("pulo", 0.9)
 	var pivo := atacante.pivo()
+	var tempo := 0.3 + absf(alcance) / 6000.0
 	var pulo := create_tween().set_parallel()
-	pulo.tween_property(atacante, "position:x", alcance * 0.92, 0.38).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	pulo.tween_property(pivo, "rotation:x", TAU, 0.36).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	pulo.tween_property(atacante, "position:x", alcance * 0.92, tempo).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	pulo.tween_property(pivo, "rotation:x", TAU, tempo).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	var arco := create_tween()
-	arco.tween_property(atacante, "position:y", -230.0, 0.19).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	arco.tween_property(atacante, "position:y", -40.0, 0.19).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	arco.tween_property(atacante, "position:y", -200.0, tempo / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	arco.tween_property(atacante, "position:y", -40.0, tempo / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await pulo.finished
-	pivo.rotation.x = 0.0
+	if is_instance_valid(pivo):
+		pivo.rotation.x = 0.0
 	atacante.pose_luta("guarda", 0.06)
 
 
-## TORNADO (SUPER): gira três vezes de braços abertos, deixando rastro, e
+## TORNADO (SUPREMO): gira três vezes de braços abertos, deixando rastro, e
 ## termina num uppercut que lança o outro doce para o alto.
 func _golpe_tornado(atacante: Doce3D, alcance: float) -> void:
 	atacante.pose_luta("aberto", 0.08)
@@ -1108,7 +1352,7 @@ func _golpe_tornado(atacante: Doce3D, alcance: float) -> void:
 	for i in 4:
 		get_tree().create_timer(0.07 * (i + 1)).timeout.connect(_rastro.bind(atacante))
 	await gira.finished
-	if luta == null:
+	if luta == null or not is_instance_valid(atacante):
 		return
 	pivo.rotation.y = frente
 	atacante.pose_luta("uppercut", 0.06)
@@ -1124,18 +1368,28 @@ func _pulinho(visor: Control, altura: float, segundos: float) -> void:
 	arco.tween_property(visor, "position:y", 0.0, segundos / 2.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 
-## Depois do golpe: pulo para trás até o lugar, pose normal e de frente de novo.
+## Depois do golpe: pulo para trás até o lugar (na vaga), pose normal e de
+## frente de novo. O próximo golpe corta a volta (ver _parar_volta).
 func _voltar_para_o_lugar(visor: Doce3D) -> void:
+	_parar_volta(visor)
 	visor.pose_luta("normal", 0.2)
 	var volta := create_tween().set_parallel()
-	volta.tween_property(visor, "position:x", 0.0, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	volta.tween_property(visor, "rotation", 0.0, 0.32)
-	volta.tween_property(visor, "modulate", Color.WHITE, 0.3)
-	volta.tween_property(visor.pivo(), "rotation", Vector3(0, visor.angulo_inicial, 0), 0.32)
+	volta.tween_property(visor, "position:x", 0.0, 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	volta.tween_property(visor, "rotation", 0.0, 0.26)
+	volta.tween_property(visor, "modulate", Color.WHITE, 0.25)
+	volta.tween_property(visor.pivo(), "rotation", Vector3(0, visor.angulo_inicial, 0), 0.26)
 	var queda := create_tween()
-	queda.tween_property(visor, "position:y", -40.0, 0.12).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	queda.tween_property(visor, "position:y", 0.0, 0.18).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	queda.tween_property(visor, "position:y", -30.0, 0.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	queda.tween_property(visor, "position:y", 0.0, 0.14).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	volta.chain().tween_callback(func(): visor.segurar_pose = false)
+	_voltas[visor] = [volta, queda]
+
+
+func _parar_volta(visor: Doce3D) -> void:
+	for tween: Tween in _voltas.get(visor, []):
+		if tween.is_valid():
+			tween.kill()
+	_voltas.erase(visor)
 
 
 ## Vitória: mortal para trás e os braços para o alto.
@@ -1298,13 +1552,13 @@ func _mostrar_lutador(quem: String, inicio: bool) -> void:
 	_atualizar_bancos()
 
 
-func _atualizar_vida(quem: String, na_hora := false) -> void:
+## `vida_forcada` >= 0: mostra essa vida (o nocauteado, que já saiu da vez, vai a zero).
+func _atualizar_vida(quem: String, na_hora := false, vida_forcada := -1) -> void:
 	var dados: Dictionary = luta.meu() if quem == "meu" else luta.deles()
 	var l: Dictionary = _lado[quem]
-	# o nocauteado já saiu da vez: a barra vai a zero
 	var vida := 0 if dados.is_empty() else int(dados["vida"])
-	if not dados.is_empty() and l["vida"].max_value != int(dados["vida_max"]):
-		vida = 0
+	if vida_forcada >= 0:
+		vida = vida_forcada
 	var fracao := float(vida) / maxf(1.0, l["vida"].max_value)
 	l["cheio"].bg_color = VERDE if fracao > 0.5 else (AMARELO if fracao > 0.25 else VERMELHO)
 	l["texto"].text = "♥ %d / %d" % [vida, l["vida"].max_value]
@@ -1329,14 +1583,14 @@ func _atualizar_bancos() -> void:
 			banco.add_child(foto)
 
 
-## A energia do GOLPE SUPREMO (uma estrela por desvio).
+## A energia do GOLPE SUPREMO (uma estrela por pergunta relâmpago certa).
 func _atualizar_super() -> void:
 	if luta == null:
 		return
 	for i in _super.get_child_count():
 		var estrela: TextureRect = _super.get_child(i)
 		var cheia := i < luta.energia
-		estrela.modulate = AMARELO if cheia else Color(0.2, 0.1, 0.3, 0.45)
+		estrela.modulate = AMARELO if cheia else Color(1, 1, 1, 0.28)
 		estrela.pivot_offset = estrela.size / 2.0
 		estrela.scale = Vector2.ONE * (1.25 if cheia else 1.0)
 
@@ -1344,16 +1598,18 @@ func _atualizar_super() -> void:
 ## Sai da luta sem prêmio (voltar no meio).
 func desistir() -> void:
 	respondendo = false
-	escolhendo = false
+	em_luta = false
 	luta = null
 	mostrar_arena()
 
 
 func _terminar() -> void:
+	_terminou = true
+	em_luta = false
 	respondendo = false
-	escolhendo = false
 	_quadro_pergunta.visible = false
-	_quadro_golpes.visible = false
+	_controles.visible = false
+	_aviso_deles.visible = false
 	var venceu := luta.venceu()
 	var ganho := luta.concluir()
 	if venceu:
