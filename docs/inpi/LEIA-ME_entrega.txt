@@ -1,0 +1,51 @@
+DOCE TEXTO QUIZ - versão {VERSAO}
+Jogo educativo de perguntas e respostas sobre editores de texto e planilhas
+(Word e Excel).
+
+Autores: Sávio Santos Rocha, Natalí Rocha e Talita Argolo
+Orientação: Eduardo Cambruzzi, Peterson Lobato, Alba Rogéria e Nelson Valente
+Instituto Federal da Bahia (IFBA) - Campus Valença - Técnico em Informática, Turma 613
+
+A descrição completa do programa está no arquivo
+"Doce_Texto_Quiz_Memorial_Descritivo_v{VERSAO}.pdf", enviado junto com este pacote.
+
+
+COMO JOGAR
+==========
+
+1 - Executaveis\Windows\DoceTextoQuiz.exe
+    Computador com Windows (64 bits). Não precisa instalar: é só abrir o arquivo.
+    Se aparecer "O Windows protegeu o computador", clique em "Mais informações"
+    e depois em "Executar assim mesmo" (o aviso aparece porque o programa não
+    tem assinatura digital paga; o arquivo é seguro).
+
+1 - Executaveis\Android\DoceTextoQuiz.apk
+    Celular ou tablet Android 7 ou mais novo (64 bits). Copie o arquivo para o
+    celular e toque nele para instalar; se o Android pedir, permita instalar
+    "de fontes desconhecidas". O jogo é jogado com o celular deitado.
+    Versão para qualquer celular Android (32 e 64 bits):
+    https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
+
+No navegador (sem instalar nada):
+    https://saviosant0s.github.io/Doce-Texto-Quiz/
+
+O jogo não precisa de internet, não pede permissões e não coleta dados pessoais.
+
+
+CÓDIGO-FONTE (registro no INPI)
+===============================
+
+2 - Codigo-fonte\doce_texto_quiz_codigo_fonte_v{VERSAO}.zip
+    Código-fonte do programa (GDScript, motor Godot 4.7).
+
+2 - Codigo-fonte\HASH_SHA-512.txt
+    Resumo digital (hash SHA-512) do arquivo acima, informado no pedido de
+    registro de programa de computador no INPI:
+    {HASH}
+
+    IMPORTANTE: o arquivo .zip do código-fonte deve ser guardado exatamente como
+    está (sem abrir e salvar de novo, sem renomear o conteúdo): qualquer alteração
+    muda o hash.
+
+Projeto completo (com imagens, sons e histórico):
+    https://github.com/saviosant0s/Doce-Texto-Quiz

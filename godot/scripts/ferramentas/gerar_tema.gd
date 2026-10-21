@@ -62,11 +62,26 @@ func _init() -> void:
 	t.set_stylebox("panel", "EtiquetaAmarela", etiqueta_amarela)
 
 	# --- Botões
-	botao(t, "Button", AMARELO, AMARELO_CLARO, AMARELO_ESCURO, ROXO, bebas, 44, 18)
-	botao(t, "BotaoRoxo", ROXO, Color("#8F69C4"), ROXO_ESCURO, AMARELO, bebas, 40, 18)
-	botao(t, "Alternativa", AMARELO, AMARELO_CLARO, AMARELO_ESCURO, ROXO, texto_forte, 28, 18)
+	# Os botões retangulares são "de bala" (texturas de ferramentas/gerar_botoes.py:
+	# brilho em cima e listrinhas de papel de bala), com uma cor para cada
+	# função, todas da mesma paleta:
+	#   Button (amarelo)      ação principal (jogar, continuar, entrar)
+	#   Alternativa (amarelo) respostas do quiz e opções (letra mais fina)
+	#   BotaoRoxo             aba ou opção escolhida
+	#   BotaoSecundario (creme) voltar, fechar, agora não, abas não escolhidas
+	#   BotaoComprar (menta)  comprar, construir, evoluir, usar
+	#   BotaoPremio (morango) resgatar, coletar, abrir prêmio
+	#   BotaoAzul (céu)       ir para outro lugar (loja, decorar, mapa, falar)
+	#   BotaoPerigo (vermelho) apagar, desistir
+	botao_bala(t, "Button", "amarelo", ROXO, bebas, 44)
+	botao_bala(t, "BotaoRoxo", "roxo", AMARELO, bebas, 40)
+	botao_bala(t, "Alternativa", "amarelo", ROXO, texto_forte, 28)
+	botao_bala(t, "BotaoSecundario", "creme", ROXO, bebas, 36)
+	botao_bala(t, "BotaoComprar", "menta", Color.WHITE, bebas, 36)
+	botao_bala(t, "BotaoPremio", "morango", Color.WHITE, bebas, 36)
+	botao_bala(t, "BotaoAzul", "ceu", Color.WHITE, bebas, 36)
+	botao_bala(t, "BotaoPerigo", "vermelho", Color.WHITE, bebas, 36)
 	botao(t, "BotaoIcone", ROXO, Color("#8F69C4"), ROXO_ESCURO, AMARELO, bebas, 32, 999, 14)
-	botao(t, "BotaoPerigo", VERMELHO, Color("#EE6B6F"), VERMELHO_ESCURO, Color.WHITE, bebas, 36, 18)
 	botao(t, "BotaoIconeAmarelo", AMARELO, AMARELO_CLARO, AMARELO_ESCURO, ROXO, bebas, 32, 999, 14)
 	# cartão de nível: botão grande amarelo
 	botao(t, "CartaoNivel", AMARELO, AMARELO_CLARO, AMARELO_ESCURO, ROXO, bebas, 40, 28, 20)
@@ -147,6 +162,38 @@ func caixa(cor: Color, raio: int, margem: int, sombra := false) -> StyleBoxFlat:
 		s.shadow_size = 12
 		s.shadow_offset = Vector2(0, 6)
 	return s
+
+
+## Botão "de bala" com textura (assets/ui/botoes/<cor>*.png, 9 fatias: os
+## cantos arredondados ficam do mesmo tamanho em qualquer botão; o meio repete
+## as listrinhas).
+func botao_bala(t: Theme, nome: String, cor: String, cor_texto: Color, fonte: Font, tamanho: int) -> void:
+	if nome != "Button":
+		t.set_type_variation(nome, "Button")
+	var estados := {"normal": "", "hover": "_hover", "pressed": "_apertado", "hover_pressed": "_apertado", "disabled": "_desativado"}
+	for estado in estados:
+		var s := StyleBoxTexture.new()
+		s.texture = load("res://assets/ui/botoes/%s%s.png" % [cor, estados[estado]])
+		s.texture_margin_left = 20
+		s.texture_margin_right = 20
+		s.texture_margin_top = 18
+		s.texture_margin_bottom = 24
+		s.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+		s.content_margin_left = 22
+		s.content_margin_right = 22
+		s.content_margin_top = 11 + (5 if estado.ends_with("pressed") else 0)
+		s.content_margin_bottom = 11 + (0 if estado.ends_with("pressed") else 0)
+		t.set_stylebox(estado, nome, s)
+	t.set_stylebox("focus", nome, StyleBoxEmpty.new())
+	t.set_font("font", nome, fonte)
+	t.set_font_size("font_size", nome, tamanho)
+	for estado in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
+		t.set_color(estado, nome, cor_texto)
+	t.set_color("font_disabled_color", nome, Color(cor_texto, 0.6))
+	for estado in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_hover_pressed_color", "icon_focus_color"]:
+		t.set_color(estado, nome, cor_texto)
+	t.set_constant("h_separation", nome, 12)
+	t.set_constant("icon_max_width", nome, 48)
 
 
 ## Botão "de bala": base colorida com uma borda inferior mais escura que afunda ao apertar.

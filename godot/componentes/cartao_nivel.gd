@@ -2,7 +2,7 @@ extends Button
 ## Cartão clicável de um nível: personagem, estrelas e recorde, ou cadeado se
 ## o nível ainda não foi liberado.
 
-const ICONE_ESTRELA := preload("res://assets/icones/estrela.svg")
+const ICONE_ESTRELA := Itens.ESTRELA
 const ICONE_CADEADO := preload("res://assets/icones/cadeado.svg")
 
 var _indice := 0
@@ -25,7 +25,7 @@ func configurar(indice: int, nivel: Dictionary) -> void:
 		estrela.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		estrela.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var ganhou: bool = i < progresso["estrelas"]
-		estrela.modulate = Cores.AMARELO if ganhou else Color(1, 1, 1, 0.22)
+		estrela.modulate = Color.WHITE if ganhou else Itens.ESTRELA_APAGADA
 		%Estrelas.add_child(estrela)
 	# Altura da caixa roxa com estrelas e texto, para os cartões bloqueados
 	# (só com estrelas) ficarem do mesmo tamanho dos outros

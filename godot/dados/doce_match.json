@@ -1,0 +1,668 @@
+{
+ "_comentario": "Níveis do Doce Match (ver scripts/doce_match.gd). objetivos: pontos (meta), coletar (peca, quantidade), gelatina (limpar toda a camada 'g' do desenho). estrelas: pontos para 1, 2 e 3 estrelas (vencer vale ao menos 1). Calibrados com um robô que joga guloso (testes/calibrar_doce_match.gd).",
+ "niveis": [
+  {
+   "numero": 1,
+   "jogadas": 15,
+   "tipos": 5,
+   "objetivos": [
+    {
+     "tipo": "pontos",
+     "meta": 1500
+    }
+   ],
+   "estrelas": [
+    1500,
+    4000,
+    5500
+   ]
+  },
+  {
+   "numero": 2,
+   "jogadas": 15,
+   "tipos": 5,
+   "objetivos": [
+    {
+     "tipo": "pontos",
+     "meta": 2500
+    }
+   ],
+   "estrelas": [
+    2500,
+    3800,
+    5200
+   ]
+  },
+  {
+   "numero": 3,
+   "jogadas": 15,
+   "tipos": 5,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "planilha",
+     "quantidade": 15
+    }
+   ],
+   "estrelas": [
+    2300,
+    4100,
+    5700
+   ]
+  },
+  {
+   "numero": 4,
+   "jogadas": 16,
+   "tipos": 5,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    2600,
+    4700,
+    6500
+   ],
+   "gelatina": [
+    "........",
+    "........",
+    "..gggg..",
+    "..gggg..",
+    "..gggg..",
+    "..gggg..",
+    "........",
+    "........"
+   ]
+  },
+  {
+   "numero": 5,
+   "jogadas": 14,
+   "tipos": 5,
+   "objetivos": [
+    {
+     "tipo": "pontos",
+     "meta": 4000
+    }
+   ],
+   "estrelas": [
+    4000,
+    5700,
+    7900
+   ]
+  },
+  {
+   "numero": 6,
+   "jogadas": 20,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "folha",
+     "quantidade": 20
+    }
+   ],
+   "estrelas": [
+    2400,
+    4400,
+    6100
+   ]
+  },
+  {
+   "numero": 7,
+   "jogadas": 24,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    3000,
+    5300,
+    7400
+   ],
+   "gelatina": [
+    "........",
+    "........",
+    "........",
+    "gggggggg",
+    "gggggggg",
+    "........",
+    "........",
+    "........"
+   ]
+  },
+  {
+   "numero": 8,
+   "jogadas": 20,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "grafico",
+     "quantidade": 15
+    },
+    {
+     "tipo": "pontos",
+     "meta": 3000
+    }
+   ],
+   "estrelas": [
+    3000,
+    4100,
+    5700
+   ]
+  },
+  {
+   "numero": 9,
+   "jogadas": 32,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    3000,
+    5400,
+    7600
+   ],
+   "gelatina": [
+    "gg....gg",
+    "g......g",
+    "........",
+    "........",
+    "........",
+    "........",
+    "g......g",
+    "gg....gg"
+   ]
+  },
+  {
+   "numero": 10,
+   "jogadas": 19,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "celula",
+     "quantidade": 14
+    },
+    {
+     "tipo": "coletar",
+     "peca": "tecla",
+     "quantidade": 14
+    }
+   ],
+   "estrelas": [
+    2300,
+    4100,
+    5700
+   ]
+  },
+  {
+   "numero": 11,
+   "jogadas": 18,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "pontos",
+     "meta": 4400
+    }
+   ],
+   "estrelas": [
+    4400,
+    5500,
+    6600
+   ]
+  },
+  {
+   "numero": 12,
+   "jogadas": 35,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    3900,
+    7000,
+    9800
+   ],
+   "gelatina": [
+    "g......g",
+    ".g....g.",
+    "..g..g..",
+    "...gg...",
+    "...gg...",
+    "..g..g..",
+    ".g....g.",
+    "g......g"
+   ]
+  },
+  {
+   "numero": 13,
+   "jogadas": 24,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    },
+    {
+     "tipo": "coletar",
+     "peca": "disquete",
+     "quantidade": 15
+    }
+   ],
+   "estrelas": [
+    2600,
+    4700,
+    6500
+   ],
+   "gelatina": [
+    "........",
+    "........",
+    "..gggg..",
+    "..gggg..",
+    "..gggg..",
+    "..gggg..",
+    "........",
+    "........"
+   ]
+  },
+  {
+   "numero": 14,
+   "jogadas": 22,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "planilha",
+     "quantidade": 28
+    }
+   ],
+   "estrelas": [
+    3000,
+    5400,
+    7600
+   ]
+  },
+  {
+   "numero": 15,
+   "jogadas": 40,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    4400,
+    7900,
+    11000
+   ],
+   "gelatina": [
+    "gggggggg",
+    "g......g",
+    "g......g",
+    "g......g",
+    "g......g",
+    "g......g",
+    "g......g",
+    "gggggggg"
+   ]
+  },
+  {
+   "numero": 16,
+   "jogadas": 17,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "pontos",
+     "meta": 4800
+    }
+   ],
+   "estrelas": [
+    4800,
+    6000,
+    7200
+   ]
+  },
+  {
+   "numero": 17,
+   "jogadas": 22,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "folha",
+     "quantidade": 18
+    },
+    {
+     "tipo": "coletar",
+     "peca": "grafico",
+     "quantidade": 18
+    }
+   ],
+   "estrelas": [
+    3000,
+    5300,
+    7400
+   ]
+  },
+  {
+   "numero": 18,
+   "jogadas": 38,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    4400,
+    8000,
+    11100
+   ],
+   "gelatina": [
+    "........",
+    "........",
+    "........",
+    "........",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg"
+   ]
+  },
+  {
+   "numero": 19,
+   "jogadas": 22,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "tecla",
+     "quantidade": 22
+    },
+    {
+     "tipo": "pontos",
+     "meta": 5000
+    }
+   ],
+   "estrelas": [
+    5000,
+    6200,
+    7400
+   ]
+  },
+  {
+   "numero": 20,
+   "jogadas": 32,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    3300,
+    5900,
+    8200
+   ],
+   "gelatina": [
+    ".gg..gg.",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg",
+    ".gggggg.",
+    "..gggg..",
+    "...gg...",
+    "........"
+   ]
+  },
+  {
+   "numero": 21,
+   "jogadas": 24,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    },
+    {
+     "tipo": "coletar",
+     "peca": "celula",
+     "quantidade": 20
+    }
+   ],
+   "estrelas": [
+    2400,
+    4400,
+    6100
+   ],
+   "gelatina": [
+    "........",
+    "........",
+    "........",
+    "gggggggg",
+    "gggggggg",
+    "........",
+    "........",
+    "........"
+   ]
+  },
+  {
+   "numero": 22,
+   "jogadas": 17,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "pontos",
+     "meta": 4200
+    }
+   ],
+   "estrelas": [
+    4200,
+    5200,
+    6200
+   ]
+  },
+  {
+   "numero": 23,
+   "jogadas": 24,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "disquete",
+     "quantidade": 26
+    }
+   ],
+   "estrelas": [
+    3100,
+    5600,
+    7700
+   ]
+  },
+  {
+   "numero": 24,
+   "jogadas": 42,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    3100,
+    5600,
+    7800
+   ],
+   "gelatina": [
+    "gggggggg",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg"
+   ]
+  },
+  {
+   "numero": 25,
+   "jogadas": 22,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "coletar",
+     "peca": "planilha",
+     "quantidade": 22
+    },
+    {
+     "tipo": "coletar",
+     "peca": "folha",
+     "quantidade": 22
+    }
+   ],
+   "estrelas": [
+    3000,
+    5400,
+    7500
+   ]
+  },
+  {
+   "numero": 26,
+   "jogadas": 37,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    },
+    {
+     "tipo": "coletar",
+     "peca": "grafico",
+     "quantidade": 22
+    }
+   ],
+   "estrelas": [
+    3900,
+    7000,
+    9700
+   ],
+   "gelatina": [
+    "gg....gg",
+    "g......g",
+    "........",
+    "........",
+    "........",
+    "........",
+    "g......g",
+    "gg....gg"
+   ]
+  },
+  {
+   "numero": 27,
+   "jogadas": 17,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "pontos",
+     "meta": 4600
+    }
+   ],
+   "estrelas": [
+    4600,
+    5800,
+    7000
+   ]
+  },
+  {
+   "numero": 28,
+   "jogadas": 30,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    }
+   ],
+   "estrelas": [
+    3700,
+    6600,
+    9100
+   ],
+   "gelatina": [
+    "g......g",
+    ".g....g.",
+    "..g..g..",
+    "...gg...",
+    "...gg...",
+    "..g..g..",
+    ".g....g.",
+    "g......g"
+   ]
+  },
+  {
+   "numero": 29,
+   "jogadas": 38,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    },
+    {
+     "tipo": "coletar",
+     "peca": "tecla",
+     "quantidade": 20
+    }
+   ],
+   "estrelas": [
+    4100,
+    7400,
+    10200
+   ],
+   "gelatina": [
+    "gggggggg",
+    "g......g",
+    "g......g",
+    "g......g",
+    "g......g",
+    "g......g",
+    "g......g",
+    "gggggggg"
+   ]
+  },
+  {
+   "numero": 30,
+   "jogadas": 30,
+   "tipos": 6,
+   "objetivos": [
+    {
+     "tipo": "gelatina"
+    },
+    {
+     "tipo": "coletar",
+     "peca": "planilha",
+     "quantidade": 26
+    }
+   ],
+   "estrelas": [
+    3500,
+    6200,
+    8600
+   ],
+   "gelatina": [
+    ".gg..gg.",
+    "gggggggg",
+    "gggggggg",
+    "gggggggg",
+    ".gggggg.",
+    "..gggg..",
+    "...gg...",
+    "........"
+   ]
+  }
+ ]
+}

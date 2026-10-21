@@ -29,7 +29,10 @@ func _ready() -> void:
 		linha.add_theme_constant_override("separation", 14)
 		%Numeros.add_child(linha)
 		for numero in NUMEROS.slice(i, i + 2):
-			linha.add_child(_criar_numero(numero[0], numero[1]))
+			var valor: String = numero[0]
+			if numero[1] == "PERGUNTAS":
+				valor = str(Jogo.total_de_perguntas())  # sempre o número de verdade
+			linha.add_child(_criar_numero(valor, numero[1]))
 	var fonte_perfil := FontVariation.new()
 	fonte_perfil.base_font = NUNITO
 	fonte_perfil.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): 800}
