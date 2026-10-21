@@ -7,8 +7,9 @@ uma nova sessão do Claude) continuar o trabalho sem depender da conversa.
 - Código principal: branch `main` (trabalho novo em branches, com PR)
 - Jogo no navegador: https://saviosant0s.github.io/Doce-Texto-Quiz/
 - APK: https://saviosant0s.github.io/Doce-Texto-Quiz/apk/doce-texto-quiz.apk
-- Versão atual: 0.18.0 (Android, Windows e navegador; GPs das cidades, Confeitaria sem fim,
-  vila guardada). Antes: 0.17.1 (ULTRA no celular, F1). O pacote do INPI
+- Versão atual: 0.19.0 (Android, Windows e navegador; batalha em tempo real com
+  joystick e botões redondos). Antes: 0.18.0 (GPs das cidades, Confeitaria sem fim,
+  vila guardada). O pacote do INPI
   (`/entrega/`, memorial) continua sendo o da 0.5.1.
 - Pendências que dependem de pessoas (imagens, direitos, @ do Instagram,
   revisão das perguntas, testes no celular): `PENDENCIAS.md`
@@ -138,7 +139,7 @@ itens 12, 15, 16 e 18; o resto foi feito em 17/10 e 18/10, ver as seções abaix
 18. (feito em 17/10, ver abaixo) Falta, se ele quiser: mais MÁQUINAS (pudim,
    brownie...) e a cozinha crescer de tamanho (hoje só muda de cara e ganha mesas).
 
-### Rodada de 18-19/10/2026 — batalha em TEMPO REAL, ainda não publicada
+### Rodada de 18-19/10/2026 — batalha em TEMPO REAL, publicada na 0.19.0 (21/10/2026)
 
 O Sávio pediu a luta "tipo jogo de futebol do celular": joystick para andar para
 frente e para trás e botões redondos para bater; de longe dá para bater também,
